@@ -46,7 +46,7 @@ const manifestFromDatabase = {
 }
 
 // This function is an internal util, but we may want to test it in tests so we export it here for now.
-function validateProjectID(id){
+export function validateProjectID(id){
    if(id){
       try{
          id = parseInt(id)
@@ -61,41 +61,51 @@ function validateProjectID(id){
 }
 
 // This function is an internal util, but we may want to test it in tests so we export it here for now.
-function findTheManifestById(id=null){
+export function findTheManifestById(id=null){
    if(id && id===7085) {return manifestFromDatabase}
    return null
+}
+
+// Send a successful response with the appropriate JSON
+export function respondWithJSON(res, json){
+   const id = json["@id"] ?? json.id ?? null
+   res.set("Content-Type", "application/json; charset=utf-8")
+   res.location(id)
+   res.status(200)
+   res.json(json)
+}
+
+// Send a failure response with the proper code and message
+export function respondWithError(status, message, res){
+   res.status(status).send(message)
 }
 
 // Route performs the job
 router.route('/:id')
    .get((req, res, next) => {
       if(!validateProjectID(req.params.id)){
-         res.status(400).send('The TPEN3 project ID must be a number')
-         return
+         respondWithError(400, 'The TPEN3 project ID must be a number', res)
       }
       const manifestObj = findTheManifestById(req.params.id)
       if(manifestObj){
-         res.set("Content-Type", "application/json; charset=utf-8")
-         res.location(man["@id"])
-         res.status(200)
-         res.json(manifestObj)
+         respondWithJSON(res, manifestObj)
       }
       else{
-         res.status(404).send(`TPEN 3 project "${req.params.id}" does not exist.`)
+         respondWithError(404, `TPEN 3 project "${req.params.id}" does not exist.`, res)
       }
    })
    .all((req, res, next) => {
-      res.status(405).send('Improper request method, please use GET.')
+      respondWithError(405, 'Improper request method, please use GET.', res)
    })
 
 
 // Router is set up correctly...
 router.route('/')
    .get((req, res, next) => {
-      res.status(400).send('Improper request.  There was no project ID.')
+      respondWithError(400, 'Improper request.  There was no project ID.', res)
    })
    .all((req, res, next) => {
-      res.status(405).send('Improper request method, please use GET.')
+      respondWithError(405, 'Improper request method, please use GET.', res)
    })
 
-export {router as default, validateProjectID as validateProjectID, findTheManifestById as findTheManifestById}
+export {router as default}

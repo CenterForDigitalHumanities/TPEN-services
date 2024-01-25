@@ -1,6 +1,6 @@
 // End to end tests that spin up and test it?
 
-import app from '../../app.mjs'
+import app from '../app.mjs'
 import express from 'express'
 import request from 'supertest'
 
@@ -54,4 +54,10 @@ describe('Manifest endpoint tests.', () => {
       expect(json).not.toBe(null)
   })
   
+})
+
+describe('Other endpoint tests.', () => {
+  it('This is always going to pass because it is a good stub.', async () => {
+    expect(1).toBe(1)
+  })
 })

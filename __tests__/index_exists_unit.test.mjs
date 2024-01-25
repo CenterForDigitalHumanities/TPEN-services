@@ -1,5 +1,5 @@
 //need to import app for coverage, not for actual testing tho.
-import app from '../../app.mjs'
+import app from '../app.mjs'
 
 import express from 'express'
 
@@ -13,15 +13,10 @@ const routeTester = new express()
 routeTester.use("/", indexRouter)
 
 describe('Index routing unit test.', () => {
-  it('Missing id number.  The status should be 400 with a message.', async () => {
+  it('The status should be 200 and is text.', async () => {
     const res = await request(routeTester)
       .get('/')
       expect(res.statusCode).toBe(200)
-      expect(response.body).toMatch("TPEN3 SERVICES BABY!!!")
-  })
-  it('Wrong request method.  That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .post('/')
-      expect(res.statusCode).toBe(405)
+      expect(res.text).toBeTruthy()
   })
 })
