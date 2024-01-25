@@ -76,7 +76,7 @@ export function respondWithJSON(res, json){
 }
 
 // Send a failure response with the proper code and message
-export function respondWithError(status, message, res){
+export function respondWithError(res, status, message ){
    res.status(status).send(message)
 }
 
@@ -84,28 +84,28 @@ export function respondWithError(status, message, res){
 router.route('/:id')
    .get((req, res, next) => {
       if(!validateProjectID(req.params.id)){
-         respondWithError(400, 'The TPEN3 project ID must be a number', res)
+         respondWithError(res, 400, 'The TPEN3 project ID must be a number')
       }
       const manifestObj = findTheManifestById(req.params.id)
       if(manifestObj){
          respondWithJSON(res, manifestObj)
       }
       else{
-         respondWithError(404, `TPEN 3 project "${req.params.id}" does not exist.`, res)
+         respondWithError(res, 404, `TPEN 3 project "${req.params.id}" does not exist.`)
       }
    })
    .all((req, res, next) => {
-      respondWithError(405, 'Improper request method, please use GET.', res)
+      respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
 
 // Router is set up correctly...
 router.route('/')
    .get((req, res, next) => {
-      respondWithError(400, 'Improper request.  There was no project ID.', res)
+      respondWithError(res, 400, 'Improper request.  There was no project ID.')
    })
    .all((req, res, next) => {
-      respondWithError(405, 'Improper request method, please use GET.', res)
+      respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
 export {router as default}

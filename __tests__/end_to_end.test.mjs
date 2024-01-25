@@ -57,7 +57,9 @@ describe('Manifest endpoint tests.', () => {
 })
 
 describe('Other endpoint tests.', () => {
+
   it('This is always going to pass because it is a good stub.', async () => {
     expect(1).toBe(1)
   })
+  
 })
