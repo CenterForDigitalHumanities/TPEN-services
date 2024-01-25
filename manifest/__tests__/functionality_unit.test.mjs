@@ -5,6 +5,7 @@ import {validateProjectID, findTheManifestById} from '../index.mjs'
 
 // You can mock the import of the functions in the index.js manifest router without bringing in the functions
 
+// These test the pieces of functionality in the route that make it work.
 describe('Detect missing id number', () => {
   it('Project validation must be false.', () => {
     expect(validateProjectID()).toBe(false)
@@ -30,4 +31,4 @@ describe('TPEN3 project does exist', () => {
   })
 })
 
-
+//What I am wondering is - is this the place to run the route on its own end-to-end style?
