@@ -1,6 +1,5 @@
 /* GET a TPEN3 project manifest.  Returns Bad Request if the project id is not provided. */
 
-//var express = require('express')
 import express from 'express'
 let router = express.Router()
 const manifestFromDatabase = {
@@ -48,13 +47,12 @@ const manifestFromDatabase = {
 
 // This function is an internal util, but we may want to test it in tests so we export it here for now.
 function validateProjectID(id){
-   console.log(`id is ${id}`)
    if(id){
       try{
          id = parseInt(id)
       }
       catch(err){
-         console.log(err)
+         console.error(err)
          return false
       }
       return true   

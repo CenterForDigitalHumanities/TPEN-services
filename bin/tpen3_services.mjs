@@ -3,21 +3,16 @@
 /**
  * Module dependencies.
  */
-//var app = require('../app')
 import app from '../app.mjs'
-//var debug = require('debug')('tpen3_services:server')
 import debug from 'debug'
 debug('tpen3_services:server')
-//var http = require('http')
 import http from 'http'
-//const dotenv = require('dotenv')
 import dotenv from 'dotenv'
 dotenv.config()
 
 /**
  * Get port from environment and store in Express.
  */
-
 const port = normalizePort(process.env.PORT ?? '3001')
 app.set('port', port)
 
@@ -25,7 +20,7 @@ app.set('port', port)
  * Create HTTP server.
  */
 
-var server = http.createServer(app)
+let server = http.createServer(app)
 /**
  * Listen on provided port, on all network interfaces.
  */
@@ -71,7 +66,7 @@ function onError(error) {
     throw error
   }
 
-  var bind = typeof port === 'string'
+  let bind = typeof port === 'string'
     ? 'Pipe ' + port
     : 'Port ' + port
 
@@ -96,8 +91,8 @@ function onError(error) {
 
 function onListening() {
   console.log("LISTENING ON "+port)
-  var addr = server.address()
-  var bind = typeof addr === 'string'
+  const addr = server.address()
+  const bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port
   debug('Listening on ' + bind)
