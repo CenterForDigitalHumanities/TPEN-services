@@ -61,8 +61,8 @@ function validateProjectID(id){
 }
 
 // This function is an internal util, but we may want to test it in tests so we export it here for now.
-function findTheManifestById(id){
-   if(id && id===7085) {return man}
+function findTheManifestById(id=null){
+   if(id && id===7085) {return manifestFromDatabase}
    return null
 }
 

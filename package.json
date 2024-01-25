@@ -21,7 +21,8 @@
    "scripts": {
       "start": "node ./bin/tpen3_services.mjs",
       "test": "jest",
-      "runtest": "node ./bin/testApp.mjs"
+      "runtest": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+      "testapp": "node ./bin/testApp.mjs"
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",
