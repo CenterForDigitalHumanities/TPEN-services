@@ -2,6 +2,7 @@
    "name": "TPEN3 Services",
    "version": "0.0.0",
    "description": "TPEN3 Services for data interaction.",
+   "type": "module",
    "keywords": [
       "rerum",
       "annotation",
@@ -18,9 +19,9 @@
    "author": "Research Computing Group <research.computing@slu.edu> (https://slu.edu)",
    "repository": "github:CenterForDigitalHumanities/rerum_server_nodejs",
    "scripts": {
-      "start": "node ./bin/tpen3_services.js",
+      "start": "node ./bin/tpen3_services.mjs",
       "test": "jest",
-      "runtest": "node ./bin/testApp.js"
+      "runtest": "node ./bin/testApp.mjs"
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",

@@ -1,21 +1,27 @@
 #!/usr/bin/env node
 
-var createError = require('http-errors')
-var express = require('express')
-var path = require('path')
-var cookieParser = require('cookie-parser')
-var dotenv = require('dotenv')
-var dotenvExpand = require('dotenv-expand')
-var storedEnv = dotenv.config()
+import createError from 'http-errors'
+import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import cookieParser from 'cookie-parser'
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
+
+let storedEnv = dotenv.config()
 dotenvExpand.expand(storedEnv)
-var logger = require('morgan')
-const cors = require('cors')
 
-var indexRouter = require('./index.js')
-var manifestRouter = require('./manifest/index.js')
-var projectRouter = require('./project/index.js')
+import logger from 'morgan'
+import cors from 'cors'
+import indexRouter from './index.mjs'
+import manifestRouter from './manifest/index.mjs'
+//import projectRouter from './project/index.mjs'
 
-var app = express()
+let app = express()
 
 //Middleware to use
 
@@ -67,7 +73,7 @@ app.use(express.static(path.join(__dirname, 'public')))
  */ 
 app.all('*', (req, res, next) => {
   if(process.env.DOWN === "true"){
-      res.status(503).json({"message":"TPEN3 services are down for updates or maintenance at this time.  We aplologize for the inconvenience.  Try again later."})
+      res.status(503).json({"message":"TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later."})
   }
   else{
       next() //pass on to the next app.use
@@ -75,7 +81,7 @@ app.all('*', (req, res, next) => {
 })
 
 app.use('/', indexRouter)
-app.use('/project', projectRouter)
+//app.use('/project', projectRouter)
 app.use('/manifest', manifestRouter)
 
 //catch 404 because of an invalid site path
@@ -85,4 +91,4 @@ app.use(function(req, res, next) {
     res.end()
 })
 
-module.exports = app
+export {app as default}

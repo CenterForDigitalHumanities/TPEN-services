@@ -1,8 +1,9 @@
 /* GET a TPEN3 project manifest.  Returns Bad Request if the project id is not provided. */
 
-var express = require('express')
-var router = express.Router()
-const man = {
+//var express = require('express')
+import express from 'express'
+let router = express.Router()
+const manifestFromDatabase = {
    "@context":"http://iiif.io/api/presentation/2/context.json",
    "@id":"https://t-pen.org/TPEN/manifest/7085/manifest.json",
    "@type":"sc:Manifest",
@@ -45,25 +46,44 @@ const man = {
    ]
 }
 
+// This function is an internal util, but we may want to test it in tests so we export it here for now.
+function validateProjectID(id){
+   console.log(`id is ${id}`)
+   if(id){
+      try{
+         id = parseInt(id)
+      }
+      catch(err){
+         console.log(err)
+         return false
+      }
+      return true   
+   } 
+   return false
+}
+
+// This function is an internal util, but we may want to test it in tests so we export it here for now.
 function findTheManifestById(id){
-   if(id) return man
+   if(id && id===7085) {return man}
    return null
 }
 
 // Route performs the job
 router.route('/:id')
    .get((req, res, next) => {
+      if(!validateProjectID(req.params.id)){
+         res.status(400).send('The TPEN3 project ID must be a number')
+         return
+      }
       const manifestObj = findTheManifestById(req.params.id)
-      const goodManifest = (manifestObj && manifestObj["@id"])
-      if(goodManifest){
+      if(manifestObj){
          res.set("Content-Type", "application/json; charset=utf-8")
          res.location(man["@id"])
          res.status(200)
-         res.json(man)
-         //res.json(findTheManifestById(id))   
+         res.json(manifestObj)
       }
       else{
-         res.status(500).send('Bad NEWS')
+         res.status(404).send(`TPEN 3 project "${req.params.id}" does not exist.`)
       }
    })
    .all((req, res, next) => {
@@ -74,10 +94,10 @@ router.route('/:id')
 // Router is set up correctly...
 router.route('/')
    .get((req, res, next) => {
-     res.status(400).send('Improper request.  There was no project ID.')
+      res.status(400).send('Improper request.  There was no project ID.')
    })
    .all((req, res, next) => {
       res.status(405).send('Improper request method, please use GET.')
    })
 
-module.exports = router
+export {router as default, validateProjectID as validateProjectID, findTheManifestById as findTheManifestById}

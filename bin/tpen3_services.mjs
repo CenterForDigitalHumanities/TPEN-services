@@ -3,17 +3,22 @@
 /**
  * Module dependencies.
  */
-var app = require('../app')
-var debug = require('debug')('tpen3_services:server')
-var http = require('http')
-const dotenv = require('dotenv')
+//var app = require('../app')
+import app from '../app.mjs'
+//var debug = require('debug')('tpen3_services:server')
+import debug from 'debug'
+debug('tpen3_services:server')
+//var http = require('http')
+import http from 'http'
+//const dotenv = require('dotenv')
+import dotenv from 'dotenv'
 dotenv.config()
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT ?? '3001')
+const port = normalizePort(process.env.PORT ?? '3001')
 app.set('port', port)
 
 /**
