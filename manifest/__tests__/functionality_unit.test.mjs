@@ -8,7 +8,7 @@ import {validateProjectID, findTheManifestById} from '../index.mjs'
 // These test the pieces of functionality in the route that make it work.
 describe('Manifest endpoint functionality unit test (just testing helper functions).', () => {
 
-  it('Project validation must be false.', () => {
+  it('No TPEN3 project id provided.  Project validation must be false.', () => {
     expect(validateProjectID()).toBe(false)
   })
   it('Detect TPEN3 project does not exist.  The query for a TPEN3 project must be null.', async () => {
