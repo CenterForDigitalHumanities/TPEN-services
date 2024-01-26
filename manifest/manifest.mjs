@@ -1,51 +1,36 @@
-//The fetching and validating and what it should look like would all be in here.
+import * as utils from "../utilities/shared.mjs"
 
-// const { MongoClient, ObjectId } = require('mongodb')
-// const dotenv = require('dotenv')
-// dotenv.config()
+// This function is an internal util, but we may want to test it in tests so we export it here for now.
+export function validateProjectID(id){
+	if(id){
+	  	try{
+	     	id = parseInt(id)
+	       	return true   
+	  	}
+		catch(no){}
+	} 
+	return false
+}
 
-// const client = new MongoClient(process.env.MONGO_CONNECTION_STRING)
-// exports.newID = () => new ObjectId().toHexString()
-// exports.connected = async function () {
-//     // Send a ping to confirm a successful connection
-//     await client.db("admin").command({ ping: 1 }).catch(err => err)
-//     return true
-// }
-// exports.db = client.db(process.env.MONGODBNAME)?.collection(process.env.MONGODBCOLLECTION)
-// const connect = async () => {
-//         await client.connect()
-//         console.dir({
-//             db : process.env.MONGODBNAME,
-//             coll : process.env.MONGODBCOLLECTION
-//         })
-// }
-// connect().catch(console.dir)
-
-// /**
-//  * Find a single record based on a query object.
-//  * @param {JSON} matchDoc Query Object to match properties.
-//  * @param {JSON} options Just mongodb passthru for now
-//  * @param {function} callback Callback function if needed
-//  * @returns Single matched document or `null` if there is none found.
-//  * @throws MongoDB error if matchDoc is malformed or server is unreachable; E11000 duplicate key error collection
-//  */
-// function getMatching(matchDoc, options, callback) {
-//     return db.findOne(matchDoc, options, (err, doc) => {
-//         if (typeof callback === 'function') return callback(err, doc)
-//         if (err) throw err
-//         return doc
-//     })
-// }
-
-// function isObject(obj) {
-//     return obj?.constructor == Object
-// }
-
-// function isValidURL(url) {
-//     try {
-//         new URL(url)
-//         return true
-//     } catch (_) {
-//         return false
-//     }
-// }
+// This function is an internal util, but we may want to test it in tests so we export it here for now.
+export async function findTheManifestById(id=null){
+   const mockPause = new Promise((resolve, reject) => {
+     setTimeout(() => {
+       resolve(null)
+     }, 3500)
+   })
+   let manifest = null
+   if(id){
+      if(id && id===7085) {
+         manifest = await fetch("https://t-pen.org/TPEN/manifest/7085").then(resp => resp.json()).catch(err => {
+            console.error(err)
+            return null
+         })
+      }
+   }
+   // Mock the scenario where it takes a couple seconds to look for but not find the Manifest.
+   if(manifest === null){
+      manifest = mockPause.then(val => {return null})
+   }
+   return manifest
+}

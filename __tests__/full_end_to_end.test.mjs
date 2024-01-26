@@ -4,15 +4,36 @@ import app from '../app.mjs'
 import express from 'express'
 import request from 'supertest'
 
-describe('Invalid site path', () => {
-  it('Should return a graceful 404', async () => {
+/**
+ * The route uses the json, set, status and location functions on the res object. 
+ * type() - Sets the type (content-type) of response
+ * status() - Sets the status code of the response
+ * send() - Set the text of the response
+ * 
+ * The test creates a simple mock response object that duplicates what the Express response object would do in the real application.
+ */ 
+describe('App index test. #e2e', () => {
+
+  it('responds to / with a 200 status and and the index.html page.', async () => {
     const res = await request(app)
-      .post('/potato/')
-      expect(res.statusCode).toBe(404)
+      .get('/')
+      expect(res.statusCode).toBe(200)
+      expect(res.type).toMatch(/html/)
   })
+
 })
 
-describe('Manifest endpoint tests in the full end to end test.', () => {
+describe('Invalid site path test. #e2e', () => {
+
+  it('returns a graceful 404', async () => {
+    const res = await request(app)
+      .get('/potato/')
+      expect(res.statusCode).toBe(404)
+  })
+
+})
+
+describe('Manifest endpoint tests in the full end to end test. #e2e', () => {
 
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(app)
@@ -64,7 +85,7 @@ describe('Manifest endpoint tests in the full end to end test.', () => {
   
 })
 
-describe('Other endpoint tests.', () => {
+describe('Other endpoint tests. #e2e', () => {
 
   it('This is always going to pass because it is a good stub.', async () => {
     expect(1).toBe(1)

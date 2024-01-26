@@ -21,8 +21,10 @@
    "scripts": {
       "start": "node ./bin/tpen3_services.mjs",
       "test": "jest",
-      "runtest": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-      "testapp": "node ./bin/testApp.mjs"
+      "unitTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",
+      "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
+      "existsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",
+      "functionsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t functions_unit "
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",

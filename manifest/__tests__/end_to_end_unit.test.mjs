@@ -1,15 +1,14 @@
 //need to import app for coverage, not for actual testing tho.
-import app from '../../app.mjs'
+//import app from '../../app.mjs'
 
 import {default as manifestRouter} from '../index.mjs'
 import express from 'express'
-
 import request from 'supertest'
 
 const routeTester = new express()
 routeTester.use("/manifest", manifestRouter)
 
-describe('Manifest endpoint end to end unit test (spinning up the endpoint and using it).', () => {
+describe('Manifest endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
