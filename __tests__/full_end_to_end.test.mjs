@@ -4,6 +4,14 @@ import app from '../app.mjs'
 import express from 'express'
 import request from 'supertest'
 
+describe('Invalid site path', () => {
+  it('Should return a graceful 404', async () => {
+    const res = await request(app)
+      .post('/potato/')
+      expect(res.statusCode).toBe(404)
+  })
+})
+
 describe('Manifest endpoint tests in the full end to end test.', () => {
 
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
