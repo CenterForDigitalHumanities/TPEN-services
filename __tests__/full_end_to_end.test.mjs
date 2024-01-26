@@ -4,7 +4,7 @@ import app from '../app.mjs'
 import express from 'express'
 import request from 'supertest'
 
-describe('Manifest endpoint tests.', () => {
+describe('Manifest endpoint tests in the full end to end test.', () => {
 
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(app)

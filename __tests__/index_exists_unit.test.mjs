@@ -31,9 +31,8 @@ import {respondWithText} from '../index.mjs'
  * 
  * The test creates a simple mock response object that duplicates what the Express response object would do in the real application.
  */ 
-describe('App index availability test', () => {
+describe('App index availability test (via a mocked request to responder function in /index.mjs).', () => {
   it('responds to /', () => {
-    let params = {}
     const req = {}
     const res = { 
       type: function(input){

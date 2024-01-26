@@ -26,7 +26,7 @@ import express from 'express'
  * 
  * The test creates a simple mock response object that duplicates what the Express response object would do in the real application.
  */ 
-describe('Manifest endpoint availability tests', () => {
+describe('Manifest endpoint availability unit test (via a proper mocked manifest endpoint request).', () => {
   it('responds to /manifest/id', () => {
     let params = {}
     const req = {}
