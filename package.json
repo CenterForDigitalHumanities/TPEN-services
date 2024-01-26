@@ -21,6 +21,7 @@
    "scripts": {
       "start": "node ./bin/tpen3_services.mjs",
       "test": "jest",
+      "allTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
       "unitTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",
       "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
       "existsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",
