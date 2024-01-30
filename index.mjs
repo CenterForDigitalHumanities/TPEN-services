@@ -3,9 +3,9 @@ import * as utils from './utilities/shared.mjs'
 
 let router = express.Router()
 
-// Send a successful response with a text message (not an HTML page yet)
+// Send a successful response with a public index.html page
 export function respondWithHTML(res){
-  res.sendFile('index.html')
+  res.status(200).sendFile('index.html').end()
 }
 
 router

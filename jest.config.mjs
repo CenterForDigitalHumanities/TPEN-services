@@ -32,7 +32,6 @@ let config = {
   collectCoverageFrom: [
       //"**/*.js",
       "**/manifest/index.mjs",
-      "**/project/index.mjs",
       "**/app.mjs",
       "**/index.mjs"
   ],

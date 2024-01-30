@@ -13,17 +13,18 @@ export function respondWithManifest(res, manifest){
    res.location(id)
    res.status(200)
    res.json(manifest)
+   res.end()
 }
 
 // Route performs the job
 router.route('/:id')
    .get(async (req, res, next) => {
       let id = req.params.id
-      if(!logic.validateProjectID(id)){
+      if(!utils.validateProjectID(id)){
          utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
       }
       id = parseInt(id)
-      const manifestObj = await logic.findTheManifestById(id)
+      const manifestObj = await logic.findTheManifestByID(id)
       if(manifestObj){
          respondWithManifest(res, manifestObj)
       }
