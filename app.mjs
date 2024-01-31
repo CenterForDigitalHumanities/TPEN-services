@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
+/** Server initializer for the app.  Registers all the route paths. */ 
+
 import createError from 'http-errors'
 import express from 'express'
 import path from 'path'
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
@@ -19,7 +21,7 @@ import logger from 'morgan'
 import cors from 'cors'
 import indexRouter from './index.mjs'
 import manifestRouter from './manifest/index.mjs'
-//import projectRouter from './project/index.mjs'
+import * as logic from './manifest/manifest.mjs'
 
 let app = express()
 
@@ -81,7 +83,7 @@ app.all('*', (req, res, next) => {
 })
 
 app.use('/', indexRouter)
-//app.use('/project', projectRouter)
+app.use('/project', manifestRouter)
 app.use('/manifest', manifestRouter)
 
 //catch 404 because of an invalid site path
