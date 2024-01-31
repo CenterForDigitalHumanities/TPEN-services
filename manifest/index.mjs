@@ -1,4 +1,4 @@
-/* GET a TPEN3 project manifest.  Returns Bad Request if the project id is not provided. */
+/** Route handler for the /manifest endpoint */
 
 import express from 'express'
 import * as logic from './manifest.mjs'

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/** Server initializer for the app.  Registers all the route paths. */ 
+
 import createError from 'http-errors'
 import express from 'express'
 import path from 'path'

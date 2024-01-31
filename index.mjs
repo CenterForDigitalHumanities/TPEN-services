@@ -1,3 +1,6 @@
+/** Route handler for the site index.  Return the landing page index.html. */
+
+
 import express from 'express'
 import * as utils from './utilities/shared.mjs'
 

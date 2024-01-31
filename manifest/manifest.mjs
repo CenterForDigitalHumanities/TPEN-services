@@ -1,6 +1,7 @@
+/** Logic for the /manifest endpoint */
+
 import * as utils from "../utilities/shared.mjs"
 
-// This function is an internal util, but we may want to test it in tests so we export it here for now.
 export async function findTheManifestByID(id=null){
    let manifest = null
    if(!utils.validateProjectID(id)) return manifest
