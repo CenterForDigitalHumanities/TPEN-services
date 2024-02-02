@@ -1,5 +1,10 @@
 
-// This function is an internal util, but we may want to test it in tests so we export it here for now.
+
+/**
+ * Check if the supplied input is valid JSON or not.
+ * @param input A string or Object that should be JSON conformant.
+ * @return boolean For whether or not the supplied input was JSON conformant.
+ */ 
 export function isValidJSON(input=""){
    if(input){
       try{
@@ -11,8 +16,13 @@ export function isValidJSON(input=""){
    return false
 }
 
+/**
+ * Check if the supplied input is a valid integer TPEN Project ID
+ * @param input A string which should be a valid Integer number
+ * @return boolean For whether or not the supplied string was a valid Integer number
+ */ 
 export function validateProjectID(id){
-   if(id){
+   if(!isNaN(id)){
       try{
          id = parseInt(id)
          return true   
@@ -25,7 +35,6 @@ export function validateProjectID(id){
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message ){
    res.status(status).send(message)
-   res.end()
 }
 
 // Send a successful response with the appropriate JSON
@@ -34,5 +43,4 @@ export function respondWithJSON(res, status, json){
    res.set("Content-Type", "application/json; charset=utf-8")
    res.status(status)
    res.json(json)
-   res.end()
 }

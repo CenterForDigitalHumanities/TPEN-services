@@ -3,8 +3,32 @@
 import express from 'express'
 import * as logic from './manifest.mjs'
 import * as utils from '../utilities/shared.mjs'
+import cors from 'cors'
 
 let router = express.Router()
+router.use(
+  cors({
+    "methods" : "GET",
+    "allowedHeaders" : [
+      'Content-Type',
+      'Content-Length',
+      'Allow',
+      'Authorization',
+      'Location',
+      'ETag',
+      'Connection',
+      'Keep-Alive',
+      'Date',
+      'Cache-Control',
+      'Last-Modified',
+      'Link',
+      'X-HTTP-Method-Override'
+    ],
+    "exposedHeaders" : "*",
+    "origin" : "*",
+    "maxAge" : "600"
+  })
+)
 
 // Send a successful response with the appropriate JSON
 export function respondWithManifest(res, manifest){
@@ -13,10 +37,9 @@ export function respondWithManifest(res, manifest){
    res.location(id)
    res.status(200)
    res.json(manifest)
-   res.end()
 }
 
-// Route performs the job
+// Expect an /{id} as part of the route, like /manifest/123
 router.route('/:id')
    .get(async (req, res, next) => {
       let id = req.params.id
@@ -36,8 +59,7 @@ router.route('/:id')
       utils.respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
-
-// Router is set up correctly...
+// Handle lack of an /{id} as part of the route
 router.route('/')
    .get((req, res, next) => {
       utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')
