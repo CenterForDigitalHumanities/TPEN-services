@@ -21,6 +21,7 @@ import logger from 'morgan'
 import cors from 'cors'
 import indexRouter from './index.mjs'
 import manifestRouter from './manifest/index.mjs'
+import pageRouter from './page/controller.mjs'
 import * as logic from './manifest/manifest.mjs'
 
 let app = express()
@@ -50,6 +51,7 @@ app.all('*', (req, res, next) => {
 
 app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
+app.use('/page', pageRouter)
 
 //catch 404 because of an invalid site path
 app.use(function(req, res, next) {
