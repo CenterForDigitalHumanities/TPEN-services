@@ -1,0 +1,50 @@
+name: TPEN3 Services production deploy on push to main.
+on:
+  push:
+    branches: main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: "21"
+      - name: Cache node modules
+        uses: actions/cache@master
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies and run the test
+        run: |
+          npm install
+          npm run allTests
+  deploy:
+    needs:
+      - test
+    strategy:
+      matrix:
+        machines:
+          - vlcdhprdp01
+    runs-on: ${{ matrix.machines }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Deploy the app on the server
+        run: |
+          if [[ ! -e /srv/node/logs/tpen3_services.txt ]]; then
+              mkdir -p /srv/node/logs
+              touch /srv/node/logs/tpen3_services.txt
+          fi
+          cd /srv/node/tpen-services/
+          pm2 stop tpen_services
+          git stash
+          git pull
+          npm install
+          pm2 start -i max bin/tpen3_services.mjs
