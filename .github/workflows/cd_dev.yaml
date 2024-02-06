@@ -65,4 +65,4 @@ jobs:
           git checkout ${{ github.head_ref }}
           git pull
           npm install
-          pm2 --slient start -i max bin/tpen3_services.mjs
+          pm2 -s start -i max bin/tpen3_services.mjs
