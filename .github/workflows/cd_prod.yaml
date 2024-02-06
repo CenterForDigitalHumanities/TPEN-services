@@ -47,4 +47,4 @@ jobs:
           git stash
           git pull
           npm install
-          pm2 start -i max bin/tpen3_services.mjs
+          pm2 -s start -i max bin/tpen3_services.mjs
