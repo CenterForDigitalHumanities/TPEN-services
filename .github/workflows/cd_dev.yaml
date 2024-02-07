@@ -3,6 +3,7 @@ on:
   pull_request:
     branches: main
 jobs:
+  if: ${{ github.event_name !== 'push' }}
   merge-branch:
     runs-on: ubuntu-latest
     steps:
