@@ -1,6 +1,9 @@
 name: TPEN3 Services tests on any push
 on:
   push:
+    branches:
+      - '*'
+      - '!main'
 jobs:
   test:
     runs-on: ubuntu-latest
