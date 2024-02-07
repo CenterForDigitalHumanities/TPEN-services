@@ -1,4 +1,4 @@
-/** Route handler for the /manifest endpoint */
+/** Route handler for the /manifest endpoint  */
 
 import express from 'express'
 import * as logic from './manifest.mjs'
