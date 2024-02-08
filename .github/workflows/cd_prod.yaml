@@ -1,4 +1,4 @@
-name: TPEN3 Services production deploy on push to main.
+name: TPEN3 Services production deploy on push to main
 on:
   push:
     branches: main
