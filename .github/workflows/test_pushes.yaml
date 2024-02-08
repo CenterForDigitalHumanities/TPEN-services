@@ -17,7 +17,6 @@ jobs:
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
-          echo ${{ github.ref.split("/").pop() }}
           echo ${GITHUB_REF}
           echo ${GITHUB_REF##*/}
     outputs: 
