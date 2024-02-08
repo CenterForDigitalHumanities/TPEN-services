@@ -14,11 +14,13 @@ jobs:
         id: find-pull-request
         with:
           branch: ${{ github.head_ref }}
+    outputs: 
+      status: steps.find-pull-request.outputs.number
   test:
     runs-on: ubuntu-latest
     needs:
       - checkpr
-    if: checkpr.find-pull-request.outputs.number == 0
+    if: needs.checkpr.outputs.status == 0
     steps:
       - uses: actions/checkout@master
       - name: Setup Node.js
