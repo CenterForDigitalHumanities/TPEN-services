@@ -14,9 +14,9 @@ jobs:
         id: find-pull-request
         with:
           branch: ${{ github.head_ref }}
-      - if: steps.find-pull-request.outputs.number == 0
       - uses: actions/checkout@master
       - name: Setup Node.js
+        if: steps.find-pull-request.outputs.number == 0
         uses: actions/setup-node@master
         with:
           node-version: "21"
