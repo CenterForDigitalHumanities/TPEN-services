@@ -1,22 +1,9 @@
 name: TPEN3 Services dev deploy on PR to main
 on:
-  pull_request:
-    branches: main
+  push:
+    branches: development
 jobs:
-  merge-branch:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Merge with main
-        uses: devmasx/merge-branch@master
-        with:
-          type: now
-          from_branch: main
-          target_branch: ${{ github.head_ref }}
-          github_token: ${{ secrets.BRY_PAT }}
-          message: Merge main into this branch to deploy to dev for testing.
   test:
-    needs: merge-branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -39,11 +26,9 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run allTests
+          npm run E2Etests
   deploy:
-    if: github.event.pull_request.draft == false
     needs:
-      - merge-branch
       - test
     strategy:
       matrix:
@@ -62,7 +47,7 @@ jobs:
           pm2 stop tpen3_services
           git stash
           git pull
-          git checkout ${{ github.head_ref }}
+          git checkout development
           git pull
           npm install
           pm2 -s start -i max bin/tpen3_services.mjs

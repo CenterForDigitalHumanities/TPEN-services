@@ -4,6 +4,7 @@ on:
     branches:
       - '*'
       - '!main'
+      - '!development'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -35,3 +36,4 @@ jobs:
         run: |
           npm install
           npm run unitTests
+          

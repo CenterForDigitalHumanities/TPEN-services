@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run allTests
+          npm run E2Etests
   deploy:
     needs:
       - test
