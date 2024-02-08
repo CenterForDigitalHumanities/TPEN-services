@@ -13,7 +13,7 @@ jobs:
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
-          branch: ${{ github.ref.split("/").pop() }}
+          branch: cd-and-servers
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
