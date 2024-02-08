@@ -9,6 +9,9 @@ jobs:
   checkpr:
     runs-on: ubuntu-latest
     steps:
+      - name: Get branch name from push
+        env:
+          BranchName: ${GITHUB_REF##*/}
       - name: Find Pull Request
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
@@ -17,15 +20,15 @@ jobs:
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
-          echo ${GITHUB_REF}
           echo ${GITHUB_REF##*/}
+          echo ${BranchName}
     outputs: 
-      number: steps.find-pull-request.outputs.number > 0
+      number: steps.find-pull-request.outputs.number
   test:
     runs-on: ubuntu-latest
     needs:
       - checkpr
-    if: needs.checkpr.outputs.number
+    if: needs.checkpr.outputs.number > 0
     steps:
       - uses: actions/checkout@master
       - name: Setup Node.js
