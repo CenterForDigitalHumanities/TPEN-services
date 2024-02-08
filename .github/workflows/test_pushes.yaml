@@ -15,7 +15,9 @@ jobs:
         with:
           branch: ${{ github.head_ref }}
       - name: What is the number
-        run: echo ${{ steps.find-pull-request.outputs.number }}
+        run: |
+          echo ${{ steps.find-pull-request.outputs.number }}
+          echo ${{ github.head_ref }}
     outputs: 
       number: steps.find-pull-request.outputs.number
   test:
