@@ -8,10 +8,8 @@ on:
 jobs:
   checkpr:
     runs-on: ubuntu-latest
-    env:
-      BranchName: 
     steps:
-      - name: Set the environment variable
+      - name: Set the environment variable to be processed as a string for the next steps.
         run: echo BranchName=${GITHUB_REF##*/} >> $GITHUB_ENV
       - name: Find Pull Request
         uses: juliangruber/find-pull-request-action@v1
@@ -21,9 +19,6 @@ jobs:
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
-          echo ${GITHUB_REF##*/}
-          echo ${{ env.BranchName }}
-          echo $BranchName
     outputs: 
       number: steps.find-pull-request.outputs.number
   test:
