@@ -15,6 +15,7 @@ jobs:
         with:
           branch: ${{ github.head_ref }}
         if: steps.find-pull-request.outputs.number > 0
+        run: exit 1
   test:
     needs:
       - checkpr
