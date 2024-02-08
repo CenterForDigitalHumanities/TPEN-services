@@ -15,7 +15,7 @@ jobs:
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
-          branch: ${{ BranchName }}
+          branch: ${{ env.BranchName }}
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
