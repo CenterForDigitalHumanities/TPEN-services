@@ -9,14 +9,13 @@ jobs:
   checkpr:
     runs-on: ubuntu-latest
     steps:
-      - name: Get branch name from push
+      - name: Find Pull Request
         env:
           BranchName: ${GITHUB_REF##*/}
-      - name: Find Pull Request
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
-          branch: cd-and-servers
+          branch: ${{ BranchName }}
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
