@@ -8,19 +8,19 @@ on:
 jobs:
   checkpr:
     runs-on: ubuntu-latest
+    env:
+      BranchName: ${GITHUB_REF##*/}
     steps:
       - name: Find Pull Request
-        env:
-          BranchName: ${GITHUB_REF##*/}
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
-          branch: ${{ env.BranchName }}
+          branch: $BranchName
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
           echo ${GITHUB_REF##*/}
-          echo ${{ env.BranchName }}
+          echo $BranchName
     outputs: 
       number: steps.find-pull-request.outputs.number
   test:
