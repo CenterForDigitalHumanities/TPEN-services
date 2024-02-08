@@ -9,7 +9,7 @@ jobs:
   checkpr:
     runs-on: ubuntu-latest
     env:
-      BranchName: ${{GITHUB_REF##*/}}
+      BranchName: ${{ GITHUB_REF##*/ }}
     steps:
       - name: Find Pull Request
         uses: juliangruber/find-pull-request-action@v1
