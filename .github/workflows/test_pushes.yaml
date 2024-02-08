@@ -9,13 +9,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: juliangruber/find-pull-request-action@v1
+      - uses: actions/checkout@master
       - name: Find Pull Request
+      - uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
           branch: ${{ github.head_ref }}
-      - if: steps.find-pull-request.outputs.number == 0
-      - uses: actions/checkout@master
+      if: ${{ steps.find-pull-request.outputs.number }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
