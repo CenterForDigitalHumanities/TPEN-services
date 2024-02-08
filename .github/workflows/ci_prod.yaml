@@ -1,6 +1,6 @@
 name: TPEN3 Services end to end tests on PR to main
 on:
-  pull-request:
+  pull_request:
     branches: main
 jobs:
   test:
