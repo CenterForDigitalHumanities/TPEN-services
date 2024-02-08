@@ -12,7 +12,7 @@ jobs:
       BranchName: 
     steps:
       - name: Set the environment variable
-        run: echo BranchName=${ GITHUB_REF#*\/ } >> $GITHUB_ENV
+        run: echo BranchName=${GITHUB_REF##*/} >> $GITHUB_ENV
       - name: Find Pull Request
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
