@@ -13,11 +13,11 @@ jobs:
         uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
-          branch: ${{ github.head_ref }}
+          branch: ${{ github.ref }}
       - name: What is the number
         run: |
           echo ${{ steps.find-pull-request.outputs.number }}
-          echo ${{ github.head_ref }}
+          echo ${{ github.ref }}
     outputs: 
       number: steps.find-pull-request.outputs.number
   test:
