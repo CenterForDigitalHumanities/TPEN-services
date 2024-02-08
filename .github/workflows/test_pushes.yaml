@@ -1,4 +1,4 @@
-name: TPEN3 Services unit test all pushes (except for main and development)
+name: TPEN3 Services unit test all pushes
 on:
   push:
     branches:
@@ -35,4 +35,3 @@ jobs:
         run: |
           npm install
           npm run unitTests
-          
