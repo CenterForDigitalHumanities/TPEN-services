@@ -1,20 +1,20 @@
-name: TPEN3 Services unit test all pushes
+name: TPEN3 Services unit test all pushes (except for main and development)
 on:
   push:
     branches:
       - '*'
       - '!main'
+      - '!development'
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - uses: juliangruber/find-pull-request-action@v1
       - name: Find Pull Request
-        uses: juliangruber/find-pull-request-action@v1
         id: find-pull-request
         with:
           branch: ${{ github.head_ref }}
       if: steps.find-pull-request.outputs.number == 0
-      - uses: actions/checkout@master
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
@@ -35,3 +35,4 @@ jobs:
         run: |
           npm install
           npm run unitTests
+          
