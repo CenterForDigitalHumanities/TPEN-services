@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - checkpr
-    if: steps.find-pull-request.outputs.number == 0
+    if: checkpr.find-pull-request.outputs.number == 0
     steps:
       - uses: actions/checkout@master
       - name: Setup Node.js
