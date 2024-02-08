@@ -6,6 +6,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@master
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
@@ -25,7 +26,7 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run E2Etests
+          npm run allTests
   deploy:
     needs:
       - test
