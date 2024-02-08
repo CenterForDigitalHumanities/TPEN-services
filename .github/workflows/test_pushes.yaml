@@ -20,7 +20,7 @@ jobs:
         run: |
           echo ${{ steps.find-pull-request.outputs.number  }}
           echo ${GITHUB_REF##*/}
-          echo ${BranchName}
+          echo ${{ env.BranchName }}
     outputs: 
       number: steps.find-pull-request.outputs.number
   test:
