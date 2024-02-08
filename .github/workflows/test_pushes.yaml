@@ -6,7 +6,7 @@ on:
       - '!main'
       - '!development'
 jobs:
-  test:
+  checkpr:
     runs-on: ubuntu-latest
     steps:
       - name: Find Pull Request
@@ -14,7 +14,12 @@ jobs:
         id: find-pull-request
         with:
           branch: ${{ github.head_ref }}
-        if: steps.find-pull-request.outputs.number == 0    
+        if: steps.find-pull-request.outputs.number > 0
+        run: 'exit 1'  
+  test:
+    needs:
+      - checkpr
+    steps:
       - uses: actions/checkout@master
       - name: Setup Node.js
         uses: actions/setup-node@master
