@@ -18,7 +18,7 @@ jobs:
           branch: ${{ env.BranchName }}
       - name: Set the PR number as a processable string by making it an env variable.
         run: |
-          echo PRnumber=${{steps.find-pull-request.outputs.number}} >> $GITHUB_ENV
+          echo PRnumber=${steps.find-pull-request.outputs.number} >> $GITHUB_ENV
           echo $BranchName
           echo $PRnumber
     outputs: 
