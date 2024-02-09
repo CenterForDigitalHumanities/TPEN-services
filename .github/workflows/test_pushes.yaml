@@ -29,8 +29,6 @@ jobs:
     if: needs.getpr.outputs.number == ''
     steps:
       - uses: actions/checkout@master
-      - name: Check the PR variable
-        run: echo ${{ needs.getpr.outputs.number  }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
