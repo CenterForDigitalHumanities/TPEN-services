@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - checkpr
-    if: needs.checkpr.outputs.number == ""
+    if: needs.checkpr.outputs.number == ''
     steps:
       - uses: actions/checkout@master
       - name: Setup Node.js
