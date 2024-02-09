@@ -1,0 +1,52 @@
+name: TPEN3 Services unit tests on any push
+on:
+  push:
+    branches:
+      - '*'
+      - '!main'
+      - '!development'
+jobs:
+  check_for_open_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the branch name as a processable string by making it an env variable.
+        run: echo BranchName=${GITHUB_REF##*/} >> $GITHUB_ENV
+      - name: Find Pull Request
+        uses: juliangruber/find-pull-request-action@v1
+        id: find-pull-request
+        with:
+          branch: ${{ env.BranchName }}
+      - name: Make the PR number a processable string.  Output that string for the next job.
+        run: |
+          echo Name $BranchName
+          echo PRnumber=${{steps.find-pull-request.outputs.number}} >> $GITHUB_ENV
+    outputs: 
+      number: ${{ env.PRnumber }}
+  test:
+    runs-on: ubuntu-latest
+    needs:
+      - check_for_open_pr
+    if: needs.check_for_open_pr.outputs.number == ''
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: "21"
+      - name: Cache node modules
+        uses: actions/cache@master
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies and run the test
+        run: |
+          npm install
+          npm run unitTests
+          
