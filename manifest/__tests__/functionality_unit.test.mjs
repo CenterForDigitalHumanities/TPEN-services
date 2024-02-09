@@ -7,12 +7,11 @@
  * 
  * */
 
+//need to import app for coverage, not for actual testing tho.
 import app from '../../app.mjs'
-// This is specifically the Manifest router and related util functions
 import {findTheManifestByID} from '../manifest.mjs'
 import {validateProjectID} from '../../utilities/shared.mjs'
 
-// These test the pieces of functionality in the route that make it work.
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
 
   it('No TPEN3 project id provided.  Project validation must be false.', () => {
