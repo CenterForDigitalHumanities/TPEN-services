@@ -1,5 +1,10 @@
-/** Route handler for the site index.  Return the landing page index.html. */
-
+/** 
+ * Route handler for the site index.  Return the landing page index.html.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
 
 import express from 'express'
 import * as utils from './utilities/shared.mjs'
