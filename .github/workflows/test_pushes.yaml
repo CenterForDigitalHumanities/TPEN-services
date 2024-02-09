@@ -16,13 +16,17 @@ jobs:
         id: find-pull-request
         with:
           branch: ${{ env.BranchName }}
+      - name: What is the number
+        run: |
+          echo ${{ steps.find-pull-request.outputs.number  }}
+          echo ${{ steps.find-pull-request.outputs.number == ''  }}
     outputs: 
       number: steps.find-pull-request.outputs.number
   test:
     runs-on: ubuntu-latest
     needs:
       - checkpr
-    if: needs.checkpr.outputs.number == ''
+    if: needs.checkpr.outputs.number == ""
     steps:
       - uses: actions/checkout@master
       - name: Setup Node.js
