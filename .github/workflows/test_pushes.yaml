@@ -6,9 +6,10 @@ on:
       - '!main'
       - '!development'
 jobs:
-  getpr:
+  test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@master
       - name: Set the branch name as a processable string by making it an env variable.
         run: echo BranchName=${GITHUB_REF##*/} >> $GITHUB_ENV
       - name: Find Pull Request
@@ -17,18 +18,8 @@ jobs:
         with:
           branch: ${{ env.BranchName }}
       - name: Set the PR number as a processable string by making it an env variable.
-        run: |
-          echo Name $BranchName
-          echo PRnumber=${{steps.find-pull-request.outputs.number}} >> $GITHUB_ENV
-    outputs: 
-      number: ${{ env.PRnumber }}
-  test:
-    runs-on: ubuntu-latest
-    needs:
-      - getpr
-    if: needs.getpr.outputs.number == ''
-    steps:
-      - uses: actions/checkout@master
+        run: echo PRnumber=${{steps.find-pull-request.outputs.number}} >> $GITHUB_ENV
+        if: $PRnumber == ''
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
