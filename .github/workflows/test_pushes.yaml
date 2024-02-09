@@ -6,7 +6,7 @@ on:
       - '!main'
       - '!development'
 jobs:
-  checkpr:
+  getpr:
     runs-on: ubuntu-latest
     steps:
       - name: Set the branch name as a processable string by making it an env variable.
@@ -26,11 +26,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs:
-      - checkpr
+      - getpr
     steps:
       - uses: actions/checkout@master
       - name: Check the PR variable
-        run: echo ${{ needs.checkpr.outputs.number  }}
+        run: echo ${{ needs.getpr.outputs.number  }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
