@@ -1,3 +1,11 @@
+/** 
+ * Test to check if the /manifest endpoint is registered with the app.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
+
 //need to import app for coverage, not for actual testing tho.
 import app from '../../app.mjs'
 

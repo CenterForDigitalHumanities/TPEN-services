@@ -1,5 +1,14 @@
+/** 
+ * Activate the /manifest endpoint with Express.
+ * Perform endpoint calls that test the end to end functionality of the route.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
+
 //need to import app for coverage, not for actual testing tho.
-//import app from '../../app.mjs'
+import app from '../../app.mjs'
 
 import {default as manifestRouter} from '../index.mjs'
 import express from 'express'

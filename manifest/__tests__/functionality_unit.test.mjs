@@ -1,4 +1,12 @@
-//need to import app for coverage, not for actual testing tho.
+/** 
+ * Test the various pieces of logic contained within the /manifest endpoint.
+ * This should not spin up Express and should not perform end to end tests by calling the endpoint.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
+
 import app from '../../app.mjs'
 // This is specifically the Manifest router and related util functions
 import {findTheManifestByID} from '../manifest.mjs'
@@ -19,8 +27,4 @@ describe('Manifest endpoint functionality unit test (just testing helper functio
     expect(manifest).not.toBe(null)
   })
 
-})
-
-// If you are doing just findManifestById, but you screw up the route, that won't be detected here.
-// The end to end test would fail, this would succeed.  You now have a very narrow band to look at.
-// It is worth having both, but removing the redundant test 
+}) 

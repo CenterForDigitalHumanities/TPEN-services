@@ -1,4 +1,10 @@
-/** Route handler for the /manifest endpoint */
+/** 
+ * Route handler for the /manifest endpoint.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
 
 import express from 'express'
 import * as logic from './manifest.mjs'
