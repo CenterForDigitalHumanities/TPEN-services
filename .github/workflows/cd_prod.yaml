@@ -1,4 +1,4 @@
-name: TPEN3 Services production deploy on push to main
+name: api.t-pen.org deploy on push to main
 on:
   push:
     branches: main
@@ -46,6 +46,7 @@ jobs:
           cd /srv/node/tpen-services/
           pm2 stop tpen_services
           git stash
+          git checkout main
           git pull
           npm install
           pm2 -s start -i max bin/tpen3_services.mjs

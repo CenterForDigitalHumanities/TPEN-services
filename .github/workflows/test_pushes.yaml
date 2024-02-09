@@ -1,4 +1,4 @@
-name: TPEN3 Services tests on any push (except pushes to main and development)
+name: TPEN3 Services unit tests on any push
 on:
   push:
     branches:
