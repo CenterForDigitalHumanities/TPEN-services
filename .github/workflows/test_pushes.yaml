@@ -16,7 +16,7 @@ jobs:
         id: find-pull-request
         with:
           branch: ${{ env.BranchName }}
-      - name: Set the branch name as a processable string by making it an env variable.
+      - name: Set the PR number as a processable string by making it an env variable.
         run: |
           echo PRnumber=${{steps.find-pull-request.outputs.number}} >> $GITHUB_ENV
           echo $BranchName
