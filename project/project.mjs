@@ -26,9 +26,7 @@ export async function findTheProjectByID(id = null) {
 
   // Mock the scenario where it takes a couple seconds to look for but not find the Project.
   if (project === null) {
-    project = mockPause.then((val) => {
-      return null
-    })
+    project = await mockPause
   }
   return project
 }
