@@ -21,7 +21,7 @@ import logger from 'morgan'
 import cors from 'cors'
 import indexRouter from './index.mjs'
 import manifestRouter from './manifest/index.mjs'
-import pageRouter from './page/controller.mjs'
+import pageRouter from './page/index.mjs'
 import * as logic from './manifest/manifest.mjs'
 
 let app = express()
