@@ -32,6 +32,18 @@ export function validateProjectID(id){
    return false
 }
 
+export function validateLineID(id) {
+   if (!isNaN(id)) {
+     try {
+       id = parseInt(id);
+       return true;
+     } catch (error) {
+       console.error(error);
+     }
+   }
+   return false;
+ }
+
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message ){
    res.status(status).send(message)
