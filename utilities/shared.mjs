@@ -32,7 +32,16 @@ export function validateProjectID(id){
    return false
 }
 
-
+export function validatePageID(id){
+   if(!isNaN(id)){
+      try{
+         id = parseInt(id)
+         return true   
+      }
+      catch(no){}
+   } 
+   return false
+}
 
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message ){
