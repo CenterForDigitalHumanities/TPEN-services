@@ -22,7 +22,9 @@ import cors from 'cors'
 import indexRouter from './index.mjs'
 import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
+import pageRouter from './page/index.mjs'
 import * as logic from './manifest/manifest.mjs'
+import lineRouter from './line/index.mjs'
 
 let app = express()
 
@@ -55,6 +57,8 @@ app.all('*', (req, res, next) => {
 app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project', projectRouter)
+app.use('/line', lineRouter) 
+app.use('/page', pageRouter)
 
 //catch 404 because of an invalid site path
 app.use(function(req, res, next) {
