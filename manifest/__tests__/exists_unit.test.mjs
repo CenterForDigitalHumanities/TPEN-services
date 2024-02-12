@@ -6,7 +6,7 @@
  * 
  * */
 
-//need to import app for coverage, not for actual testing tho.
+//need to import app to check for the route
 import app from '../../app.mjs'
 
 describe('Manifest endpoint availability unit test (via a check on the app routes). #exists_unit', () => {

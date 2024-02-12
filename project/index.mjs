@@ -1,5 +1,4 @@
 /** Route handler for the /project endpoint */
-
 import express from 'express'
 import * as logic from './project.mjs'
 import * as utils from '../utilities/shared.mjs'
@@ -44,7 +43,7 @@ router
   .route('/:id')
   .get(async (req, res, next) => {
     let id = req.params.id
-    if (!utils.validateProjectID(id)) {
+    if (!utils.validateID(id)) {
       utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
     }
     id = parseInt(id)
@@ -69,4 +68,4 @@ router
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 
-export { router as default }
+export default router

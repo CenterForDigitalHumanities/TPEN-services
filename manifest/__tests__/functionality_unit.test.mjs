@@ -7,15 +7,13 @@
  * 
  * */
 
-//need to import app for coverage, not for actual testing tho.
-import app from '../../app.mjs'
 import {findTheManifestByID} from '../manifest.mjs'
-import {validateProjectID} from '../../utilities/shared.mjs'
+import {validateID} from '../../utilities/shared.mjs'
 
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
 
   it('No TPEN3 project id provided.  Project validation must be false.', () => {
-    expect(validateProjectID()).toBe(false)
+    expect(validateID()).toBe(false)
   })
   it('Detect TPEN3 project does not exist.  The query for a TPEN3 project must be null.', async () => {
     const manifest = await findTheManifestByID(-111)

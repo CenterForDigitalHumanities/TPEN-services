@@ -1,4 +1,4 @@
-import {default as lineRouter} from '../index.mjs'
+import lineRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
 

@@ -34,7 +34,7 @@ router.route('/:id')
     try {
       let id = req.params.id
 
-      if (!utils.validateProjectID(id)) {
+      if (!utils.validateID(id)) {
         return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
       }
 

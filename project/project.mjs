@@ -1,11 +1,10 @@
 /** Logic for the /project endpoint */
-
 import * as utils from '../utilities/shared.mjs'
 import * as fs from 'fs'
 
 export async function findTheProjectByID(id = null) {
   let project = null
-  if (!utils.validateProjectID(id)) return project
+  if (!utils.validateID(id)) return project
 
   // Mock a pause for endpoints that fail, to mock the time it takes for some async stuff to decide it failed.
   const mockPause = new Promise((resolve, reject) => {

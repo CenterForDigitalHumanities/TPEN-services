@@ -1,9 +1,9 @@
 import { findLineById } from '../line.mjs'
-import { validateProjectID } from '../../utilities/shared.mjs'
+import { validateID } from '../../utilities/shared.mjs'
 
 describe('Line endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
   it('No TPEN3 line ID provided. Line ID validation must be false.', () => {
-    expect(validateProjectID()).toBe(false)
+    expect(validateID()).toBe(false)
   })
 
   it('Detect TPEN3 line does not exist. The query for a TPEN3 line must be null.', async () => {

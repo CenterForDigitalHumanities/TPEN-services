@@ -8,8 +8,6 @@
 
 import * as utils from "../utilities/shared.mjs"
 
-
-
 /**
  * Go into the database to get the Project information for the id input.
  * The Project will have a Manifest associated with it.  
@@ -22,7 +20,7 @@ export async function findTheManifestByID(id=null){
    let manifest = null
 
    // A bad ID will not find a Project, therefore not a Manifest either.
-   if(!utils.validateProjectID(id)) return manifest
+   if(!utils.validateID(id)) return manifest
 
    // Mock a pause for endpoints that fail, to mock the time it takes for some async stuff to decide it failed.
    const mockPause = new Promise((resolve, reject) => {
