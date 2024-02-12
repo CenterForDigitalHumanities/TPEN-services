@@ -3,7 +3,7 @@ import * as utils from "../utilities/shared.mjs"
 export async function findPageById(id = null) {
     let page = null;
   
-    if (!utils.validatePageID(id)) {
+    if (!utils.validateID(id)) {
       return page;
     }
   

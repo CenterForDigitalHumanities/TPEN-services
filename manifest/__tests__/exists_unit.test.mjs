@@ -1,4 +1,12 @@
-//need to import app for coverage, not for actual testing tho.
+/** 
+ * Test to check if the /manifest endpoint is registered with the app.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
+
+//need to import app to check for the route
 import app from '../../app.mjs'
 
 describe('Manifest endpoint availability unit test (via a check on the app routes). #exists_unit', () => {

@@ -3,7 +3,7 @@ import * as utils from '../utilities/shared.mjs'
 export async function findLineById(id = null) {
   let line = null
 
-  if (!utils.validateProjectID(id)) {
+  if (!utils.validateID(id)) {
     return line
   }
 

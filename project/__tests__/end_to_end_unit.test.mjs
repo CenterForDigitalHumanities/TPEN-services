@@ -1,7 +1,4 @@
-//need to import app for coverage, not for actual testing tho.
-//import app from '../../app.mjs'
-
-import {default as projectRouter} from '../index.mjs'
+import projectRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
 

@@ -23,7 +23,6 @@ import indexRouter from './index.mjs'
 import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
 import pageRouter from './page/index.mjs'
-import * as logic from './manifest/manifest.mjs'
 import lineRouter from './line/index.mjs'
 
 let app = express()

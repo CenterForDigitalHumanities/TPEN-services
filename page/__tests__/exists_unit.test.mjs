@@ -1,4 +1,3 @@
-//need to import app for coverage, not for actual testing tho.
 import app from '../../app.mjs'
 
 describe('page endpoint availability unit test (via a check on the app routes). #exists_unit', () => {
