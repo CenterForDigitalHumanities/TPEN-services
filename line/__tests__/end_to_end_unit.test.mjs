@@ -37,22 +37,22 @@ describe('Line endpoint end to end unit test (spinning up the endpoint and using
 
   it('Call to /line with a TPEN 3 line "${id}" does not exist. The status should be 404 with a message.', async () => {
     try {
-      const res = await request(routeTester).get('/line/1257');
-      console.log('Response Body:', res.body);  
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toBeTruthy();
+      const res = await request(routeTester).get('/line/1257')
+      console.log('Response Body:', res.body)
+      expect(res.statusCode).toBe(404)
+      expect(res.body).toBeTruthy()
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error)
     }
-  });
+  })
   it('Call to /line with a valid TPEN3 line ID. The status should be 200 with a JSON line in the body.', async () => {
     try {
-      const res = await request(routeTester).get('/line/123'); 
-      console.log('Response Body:', res.body);
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toBeTruthy();
+      const res = await request(routeTester).get('/line/123') 
+      console.log('Response Body:', res.body)
+      expect(res.statusCode).toBe(200)
+      expect(res.body).toBeTruthy()
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error)
     }
-  });
+  })
 })
