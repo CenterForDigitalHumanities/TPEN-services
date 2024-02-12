@@ -43,9 +43,6 @@ export function validatePageID(id){
    return false
 }
 
-
-
-
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message ){
    res.status(status).send(message)
