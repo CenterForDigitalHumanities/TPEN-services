@@ -1,59 +1,50 @@
-/** 
- * Activate the /manifest endpoint with Express.
- * Perform endpoint calls that test the end to end functionality of the route.
- * 
- * @author Bryan Haberberger
- * https://github.com/thehabes 
- * 
- * */
-
-import manifestRouter from '../index.mjs'
+import pageRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
 
 const routeTester = new express()
-routeTester.use("/manifest", manifestRouter)
+routeTester.use("/page", pageRouter)
 
-describe('Manifest endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+describe('page endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
-      .post('/manifest/')
+      .post('/page/')
       expect(res.statusCode).toBe(405)
       expect(res.body).toBeTruthy()
   })
 
   it('PUT instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
-      .put('/manifest/')
+      .put('/page/')
       expect(res.statusCode).toBe(405)
       expect(res.body).toBeTruthy()
   })
 
   it('PATCH instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
-      .patch('/manifest/')
+      .patch('/page/')
       expect(res.statusCode).toBe(405)
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /manifest without a TPEN3 project ID.  The status should be 400 with a message.', async () => {
+  it('Call to /page without a TPEN3 page ID.  The status should be 400 with a message.', async () => {
     const res = await request(routeTester)
-      .get('/manifest/')
+      .get('/page/')
       expect(res.statusCode).toBe(400)
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /manifest with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
+  it('Call to /page with a TPEN3 page ID that does not exist.  The status should be 404 with a message.', async () => {
     const res = await request(routeTester)
-      .get('/manifest/0001')
+      .get('/page/0001')
       expect(res.statusCode).toBe(404)
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /manifest with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Manifest in the body.', async () => {
+  it('Call to /page with a TPEN3 page ID that does  exist.  The status should be 200 with a JSON page in the body.', async () => {
     const res = await request(routeTester)
-      .get('/manifest/7085')
+      .get('/page/123')
       let json = res.body
       try{
         json = JSON.parse(JSON.stringify(json))

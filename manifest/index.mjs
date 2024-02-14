@@ -1,4 +1,10 @@
-/** Route handler for the /manifest endpoint */
+/** 
+ * Route handler for the /manifest endpoint.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
+ * 
+ * */
 
 import express from 'express'
 import * as logic from './manifest.mjs'
@@ -43,7 +49,7 @@ export function respondWithManifest(res, manifest){
 router.route('/:id')
    .get(async (req, res, next) => {
       let id = req.params.id
-      if(!utils.validateProjectID(id)){
+      if(!utils.validateID(id)){
          utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
       }
       id = parseInt(id)
@@ -68,4 +74,4 @@ router.route('/')
       utils.respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
-export {router as default}
+export default router

@@ -1,5 +1,3 @@
-
-
 /**
  * Check if the supplied input is valid JSON or not.
  * @param input A string or Object that should be JSON conformant.
@@ -21,7 +19,7 @@ export function isValidJSON(input=""){
  * @param input A string which should be a valid Integer number
  * @return boolean For whether or not the supplied string was a valid Integer number
  */ 
-export function validateProjectID(id){
+export function validateID(id){
    if(!isNaN(id)){
       try{
          id = parseInt(id)
