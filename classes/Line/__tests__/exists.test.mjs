@@ -20,7 +20,7 @@ describe('Line Class looks how we expect it to. #Line_exists_unit', () => {
     const json = line.asJSON()
     expect(json).toBeInstanceOf(Object)
     expect(json.type).toBe('Annotation')
-    expect(json['@context'].toBe("http://www.w3.org/ns/anno.jsonld"))
+    expect(json['@context']).toBe("http://www.w3.org/ns/anno.jsonld")
     expect(json.body).toBeDefined()
     expect(json.target).toBeDefined()
   })
