@@ -20,7 +20,7 @@ describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
     const canvas = page.asCanvas()
     expect(canvas).toBeInstanceOf(Object)
     expect(canvas.type).toBe('Annotation')
-    expect(canvas['@context'].toBe("http://iiif.io/api/presentation/3/context.json"))
+    expect(canvas['@context']).toBe("http://iiif.io/api/presentation/3/context.json")
     expect(canvas.height).toBeDefined()
     expect(canvas.width).toBeDefined()
   })
