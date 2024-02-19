@@ -27,7 +27,7 @@ export class Layer {
         return Promise.resolve(new Layer())
     }
 
-    delete() {
+    remove() {
         return Promise.resolve()
     }
 
