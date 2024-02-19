@@ -13,4 +13,29 @@ export class Layer {
     set id(id) {
         this.layer.id = id
     }
+
+    asJSON() {
+        return {
+            type: 'Range',
+            '@context': 'http://www.w3.org/ns/anno.jsonld',
+            items: this.layer.body || [],
+            target: this.layer.target || '',
+        }
+    }
+
+    create() {
+        return Promise.resolve(new Layer())
+    }
+
+    delete() {
+        return Promise.resolve()
+    }
+
+    save() {
+        return Promise.resolve()
+    }
+
+    fetch() {
+        return Promise.resolve(new Layer())
+    }
 }
