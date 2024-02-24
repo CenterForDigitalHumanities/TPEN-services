@@ -18,8 +18,8 @@ export class Line {
         return {
             type: 'Annotation',
             '@context': 'http://www.w3.org/ns/anno.jsonld',
-            body: this.annotation.body || '',
-            target: this.annotation.target || '',
+            body: this.annotation.body ?? '',
+            target: this.annotation.target ?? '',
         };
     }
 
