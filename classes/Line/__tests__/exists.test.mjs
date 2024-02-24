@@ -12,7 +12,16 @@ describe('Line Class looks how we expect it to. #Line_exists_unit', () => {
     expect(line.create).toBeInstanceOf(Function)
     expect(line.delete).toBeInstanceOf(Function)
     expect(line.save).toBeInstanceOf(Function)
-    expect(line.fetch).toBeInstanceOf(Function)
+    expect(line.getParentPage).toBeInstanceOf(Function); 
+    expect(line.getPreviousLine).toBeInstanceOf(Function);
+    expect(line.getNextLine).toBeInstanceOf(Function);
+    expect(line.getParentCollection).toBeInstanceOf(Function); 
+    expect(line.embedReferencedDocuments).toBeInstanceOf(Function);
+    expect(line.fetchMetadata).toBeInstanceOf(Function); 
+    expect(line.fetchHTMLDocument).toBeInstanceOf(Function); 
+    expect(line.update).toBeInstanceOf(Function); 
+    expect(line.setTextContent).toBeInstanceOf(Function); 
+    expect(line.setImageLink).toBeInstanceOf(Function);
   })
 
   it('configures a correct Annotation', () => {
