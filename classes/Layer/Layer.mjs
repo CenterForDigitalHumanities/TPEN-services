@@ -70,4 +70,9 @@ export class Layer {
     embedReferencedDocuments() {
         return Promise.resolve()
     }
+
+    // Method to add a page to the layer
+    addPage(page) {
+        return Promise.resolve()
+    }
 }

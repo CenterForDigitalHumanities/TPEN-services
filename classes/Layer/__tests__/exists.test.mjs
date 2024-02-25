@@ -20,6 +20,7 @@ describe('Layer Class looks how we expect it to. #Layer_exists_unit', () => {
     expect(layer.getTextBlob).toBeInstanceOf(Function)
     expect(layer.fetchHTMLDocuments).toBeInstanceOf(Function)
     expect(layer.embedReferencedDocuments).toBeInstanceOf(Function)
+    expect(layer.addPage).toBeInstanceOf(Function)
   })
 
   it('configures a correct Annotation', () => {
