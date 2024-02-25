@@ -10,9 +10,16 @@ describe('Layer Class looks how we expect it to. #Layer_exists_unit', () => {
   it('has useful methods', () => {
     expect(layer.asJSON).toBeInstanceOf(Function)
     expect(layer.create).toBeInstanceOf(Function)
-    expect(layer.remove).toBeInstanceOf(Function)
+    expect(layer.delete).toBeInstanceOf(Function)
     expect(layer.save).toBeInstanceOf(Function)
-    expect(layer.fetch).toBeInstanceOf(Function)
+    expect(layer.getSiblingLayer).toBeInstanceOf(Function)
+    expect(layer.getSiblingLayers).toBeInstanceOf(Function)
+    expect(layer.getPages).toBeInstanceOf(Function)
+    expect(layer.getLines).toBeInstanceOf(Function)
+    expect(layer.getImageLinks).toBeInstanceOf(Function)
+    expect(layer.getTextBlob).toBeInstanceOf(Function)
+    expect(layer.fetchHTMLDocuments).toBeInstanceOf(Function)
+    expect(layer.embedReferencedDocuments).toBeInstanceOf(Function)
   })
 
   it('configures a correct Annotation', () => {

@@ -18,8 +18,8 @@ export class Layer {
         return {
             type: 'Range',
             '@context': 'http://www.w3.org/ns/anno.jsonld',
-            items: this.layer.body || [],
-            target: this.layer.target || '',
+            items: this.layer.body ?? [],
+            target: this.layer.target ?? '',
         }
     }
 
@@ -27,7 +27,7 @@ export class Layer {
         return Promise.resolve(new Layer())
     }
 
-    remove() {
+    delete() {
         return Promise.resolve()
     }
 
@@ -37,5 +37,37 @@ export class Layer {
 
     fetch() {
         return Promise.resolve(new Layer())
+    }
+
+    getSiblingLayers() {
+        return Promise.resolve('Array of all sibling layers in this Layer\'s Manifest')
+    }
+
+    getSiblingLayer(id) {
+        return Promise.resolve('A specific sibling layer in this Layer\'s Manifest')
+    }
+
+    getPages() {
+        return Promise.resolve('Array of Page objects')
+    }
+
+    getLines() {
+        return Promise.resolve('Array of Line objects in all pages')
+    }
+
+    getImageLinks() {
+        return Promise.resolve('Array of image links in all pages')
+    }
+
+    getTextBlob() {
+        return Promise.resolve('Text contents of pages')
+    }
+
+    fetchHTMLDocuments() {
+        return Promise.resolve('HTML documents of pages')
+    }
+
+    embedReferencedDocuments() {
+        return Promise.resolve()
     }
 }
