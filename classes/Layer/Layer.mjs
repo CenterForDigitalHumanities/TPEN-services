@@ -17,7 +17,7 @@ export class Layer {
     asJSON() {
         return {
             type: 'Range',
-            '@context': 'http://www.w3.org/ns/anno.jsonld',
+            '@context': 'https://iiif.io/api/presentation/3.0/',
             items: this.layer.body ?? [],
             target: this.layer.target ?? '',
         }
@@ -39,14 +39,6 @@ export class Layer {
         return Promise.resolve(new Layer())
     }
 
-    getSiblingLayers() {
-        return Promise.resolve('Array of all sibling layers in this Layer\'s Manifest')
-    }
-
-    getSiblingLayer(id) {
-        return Promise.resolve('A specific sibling layer in this Layer\'s Manifest')
-    }
-
     getPages() {
         return Promise.resolve('Array of Page objects')
     }
@@ -65,10 +57,6 @@ export class Layer {
 
     fetchHTMLDocuments() {
         return Promise.resolve('HTML documents of pages')
-    }
-
-    embedReferencedDocuments() {
-        return Promise.resolve()
     }
 
     // Method to add a page to the layer
