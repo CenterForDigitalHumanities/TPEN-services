@@ -1,20 +1,25 @@
 export class Line {
     constructor(line = {}) {
-        this.annotation = line;
+        this.annotation = line
         if (!this.annotation.id) {
-            this.annotation.id = Date.now().toString(); 
+            this.annotation.id = Date.now().toString()
         }
     }
 
     get id() {
-        return this.annotation.id;
+        return this.annotation.id
     }
 
     set id(id) {
-        this.annotation.id = id;
+        this.annotation.id = id
     }
-
-    asJSON() {
+    embedReferencedDocuments() {
+        console.log('Referenced documents embedded.')
+        return Promise.resolve();
+      }
+  
+      asJSON() {
+        this.embedReferencedDocuments();
         return {
             type: 'Annotation',
             '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -24,73 +29,69 @@ export class Line {
     }
 
  // Set text content
-    setTextContent(text) {
-        if (typeof text === 'string') {
-            this.annotation.body = text;
-        } else {
-            throw new Error('Text content must be a string');
-        }
+ setTextContent(text) {
+    if (typeof text !== 'string') {
+        throw new Error('Text content must be a string')
     }
+    this.annotation.body = text
+}
 
     // Set image link
-    setImageLink(url) {
-        if (typeof url === 'string' && /^https?:\/\//.test(url)) {
-            this.annotation.target = url;
-        } else {
-            throw new Error('Image link must be a valid URL');
-        }
+   setImageLink(url) {
+    if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
+        throw new Error('Image link must be a valid URL')
     }
+    this.annotation.target = url
+}
     //create a line 
     create() {
-        return Promise.resolve(new Line());
+        return Promise.resolve(new Line())
     }
     //Save the line 
     save() {
-        return Promise.resolve();
+        return Promise.resolve()
     }
 
     // Fetch the parent Annotation Page
     getParentPage() {
-        return Promise.resolve(new AnnotationPage());
+        return Promise.resolve(new AnnotationPage())
     }
 
     // Fetch previous line
     getPreviousLine() {
-        return Promise.resolve(new Line());
+        return Promise.resolve(new Line())
     }
 
     // Fetch next line
     getNextLine() {
-        return Promise.resolve(new Line());
+        return Promise.resolve(new Line())
     }
 
     // Fetch parent Annotation Collection (Layer)
     getParentCollection() {
-        return Promise.resolve(new AnnotationCollection());
+        return Promise.resolve(new AnnotationCollection())
     }
 
-    // Embed referenced documents
-    embedReferencedDocuments() {
-        return Promise.resolve();
+    // to get metadata only
+    getMetadata() {
+        return Promise.resolve('Get only metadata of the page')
     }
-
-    // Fetch metadata only
+    //Fetch metadata only
     fetchMetadata() {
-        return Promise.resolve(new Line());
+        // Calling  the internal getMetadata method
+        return this.getMetadata();
     }
-
-    // Fetch HTML document
-    fetchHTMLDocument() {
-        return Promise.resolve('<html><body>This is the HTML document content.</body></html>');
+    asHTML() {
+        return Promise.resolve('<html><body>This is the HTML document content.</body></html>')
     }
 
     // Update the line
     update() {
-        return Promise.resolve(new Line());
+        return Promise.resolve(new Line())
     }
 
     // Delete the line
     delete() {
-        return Promise.resolve();
+        return Promise.resolve()
     }
 }
