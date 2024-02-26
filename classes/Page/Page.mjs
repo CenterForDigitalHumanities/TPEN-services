@@ -22,16 +22,16 @@ export class Page {
             id:this.page.id ?? 0,
             height: this.page.height ?? 0,
             width: this.page.width ?? 0,
-            label: this.page.label ?? '',
-            summary: this.page.summary ?? '',
-            thumbnail: this.page.thumbnail ?? '',
-            navDate:this.page.navDate ?? '',
-            placeHolderCanvas:this.page.placeHolderCanvas ?? '',
-            accompanyingCanvas:this.accompanyingCanvas ?? '',
-            duration:this.duration ?? '',
-            start:this.start ?? '',
-            rendering:this.rendering ?? '',
-            items:this.items ?? [],
+            //label: this.page.label ?? '',
+            //summary: this.page.summary ?? '',
+            //thumbnail: this.page.thumbnail ?? '',
+            //navDate:this.page.navDate ?? '',
+            //placeHolderCanvas:this.page.placeHolderCanvas ?? '',
+            //accompanyingCanvas:this.accompanyingCanvas ?? '',
+            //duration:this.duration ?? '',
+            //start:this.start ?? '',
+            //rendering:this.rendering ?? '',
+            //items:this.items ?? [],
         };
     }
 
@@ -55,10 +55,16 @@ export class Page {
         return Promise.resolve(new Page())
     }
 
-    // Method to add membership reference to manifest
-    addMembershipToManifest() {
-        return Promise.resolve()
+   // Method to add membership reference to manifest
+    addMembershipToManifest(manifest) {
+    // Assuming manifest is a reference to the Manifest container object
+    // Add the current page to the manifest's membership reference
+    manifest.addPageMembership(this.page);
+    
+    // Return a promise indicating that the operation is complete
+    return Promise.resolve();
     }
+
 
     // Method to get the previous page
     getPreviousPage() {
@@ -71,19 +77,25 @@ export class Page {
     }
 
 
-    // Method to handle text blob
-    handleTextBlob(blob) {
-        return Promise.resolve('Text blob handled')
+ // Method to handle text blob
+    handleTextBlob(lines) {
+    // Assuming lines is an array of Line objects
+    // If you want to return a continuous concatenated string
+    const continuousText = lines.map(line => line.body).join('');
+    // If you want to return an array of Line.body strings
+    const lineBodies = lines.map(line => line.body);
+    // Depending on your desired behavior, you can choose which one to return
+    return Promise.resolve(continuousText);
+    // Or return Promise.resolve(lineBodies);
     }
 
     // Method to handle image annotation
+    // Method to handle image annotation
     handleImageAnnotation(url) {
-        return Promise.resolve('image annotation handled')
-    }
-
-    // Method to get parent page
-    getParentPage() {
-        return Promise.resolve('Parent page retrieved')
+    // Assuming url is the URL of the image being annotated
+    // Here you would process the annotation and determine how to handle it
+    // For now, let's just return the URL as it is
+    return Promise.resolve(url);
     }
 
     // Method to get sibling pages
@@ -91,10 +103,6 @@ export class Page {
         return Promise.resolve('sibling pages retrieved')
     }
 
-    // Method to get children pages
-    getChildrenPages() {
-        return Promise.resolve('children pages retrieved')
-    }
 
     // Method to get project
     getProject() {
@@ -104,12 +112,8 @@ export class Page {
     // Method to get parent/sibling/children/project information
     getPageInfo(type) {
         switch(type) {
-            case 'parent':
-                return Promise.resolve('Parent page information retrieved')
             case 'siblings':
                 return Promise.resolve('Sibling pages information retrieved')
-            case 'children':
-                return Promise.resolve('Children pages information retrieved')
             case 'project':
                 return Promise.resolve('Project information retrieved')
             default:
@@ -117,19 +121,16 @@ export class Page {
         }
     }
 
-    // Method to embed referenced documents
-    embedDocuments() {
-        return Promise.resolve('Documents embedded')
-    }
+
 
     // Method to retrieve metadata only
     getMetadata() {
         return Promise.resolve('Metadata of the page');
     }
 
-    // Method to retrieve HTML document
-    getHTMLDocument() {
-        return Promise.resolve('<html><head><title>Page HTML Document</title></head><body><h1>Hello, World!</h1></body></html>');
+    // Method to retrieve as HTML document
+    asHTML() {
+        return Promise.resolve('<html><body>This is the HTML document content.</body></html>')
     }
 
 }
