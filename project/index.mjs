@@ -48,11 +48,16 @@ router
       return
     }
     id = parseInt(id)
-    const projectObj = await logic.findTheProjectByID(id)
-    if (projectObj) {
-      respondWithProject(res, projectObj)
-    } else {
-      utils.respondWithError(res, 404, `TPEN 3 project "${req.params.id}" does not exist.`)
+
+    try {
+      const projectObj = await logic.findTheProjectByID(id)
+      if (projectObj) {
+        respondWithProject(res, projectObj)
+      } else {
+        utils.respondWithError(res, 404, `TPEN3 project "${req.params.id}" does not exist.`)
+      }
+    } catch (err) {
+      utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
     }
   })
   .all((req, res, next) => {
