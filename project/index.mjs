@@ -45,7 +45,7 @@ router
     let id = req.params.id
     if (!utils.validateID(id)) {
       utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
-      return;
+      return
     }
     id = parseInt(id)
     const projectObj = await logic.findTheProjectByID(id)
