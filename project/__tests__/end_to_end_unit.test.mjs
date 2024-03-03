@@ -35,6 +35,20 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       expect(res.body).toBeTruthy()
   })
 
+  it('Call to /project with a non-numeric project ID.  The status should be 400 with a message.', async () => {
+    const res = await request(routeTester)
+      .get('/project/abc')
+      expect(res.statusCode).toBe(400)
+      expect(res.body).toBeTruthy()
+  })
+
+  it('Call to /project with a partially numeric project ID.  The status should be 400 with a message.', async () => {
+    const res = await request(routeTester)
+      .get('/project/abc123')
+      expect(res.statusCode).toBe(400)
+      expect(res.body).toBeTruthy()
+  })
+
   it('Call to /project with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
     const res = await request(routeTester)
       .get('/project/0001')
@@ -45,6 +59,7 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
   it('Call to /project with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Project in the body.', async () => {
     const res = await request(routeTester)
       .get('/project/7085')
+      expect(res.statusCode).toBe(200)
       let json = res.body
       try{
         json = JSON.parse(JSON.stringify(json))
