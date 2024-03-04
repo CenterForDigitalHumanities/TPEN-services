@@ -1,9 +1,9 @@
 import express from 'express'
 import * as utils from '../utilities/shared.mjs'
-import cors from 'cors'
 import { findLineById } from './line.mjs'
+import cors from 'cors'
 
-let router = express.Router()
+const router = express.Router()
 
 router.use(
   cors({
@@ -29,43 +29,30 @@ router.use(
   })
 )
 
-router.route('/:id')
-  .get(async (req, res, next) => {
-    try {
-      let id = req.params.id
+router.get('/:id', async (req, res) => {
+  try {
+    const id = req.params.id
 
-      if (!utils.validateID(id)) {
-        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
-      }
-
-      id = parseInt(id)
-
-      const lineObject = await findLineById(id)
-
-      if (lineObject !== null) {
-        respondWithLine(res, lineObject)
-      } else {
-        return utils.respondWithError(res, 404, `TPEN 3 line "${id}" does not exist.`)
-      }
-    } catch (error) {
-      console.error(error)
-      return utils.respondWithError(res, 500, 'Internal Server Error')
+    if (!utils.validateID(id)) {
+      return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
     }
-  })
-  .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  })
-router.route('/')
-  .get((req, res, next) => {
-    return utils.respondWithError(res, 400, 'Improper request.  There was no line ID.')
-  })
-  .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  })
 
-function respondWithLine(res, lineObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.status(200).json(lineObject)
-}
+    const options = req.query
+    const lineObject = await findLineById(id, options)
+
+    if (lineObject !== null) {
+      res.status(200).json(lineObject)
+    } else {
+      return utils.respondWithError(res, 404, `TPEN 3 line "${id}" does not exist.`)
+    }
+  } catch (error) {
+    console.error(error)
+    return utils.respondWithError(res, 500, 'Internal Server Error')
+  }
+})
+
+router.all('/:id', (req, res) => {
+  return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+})
 
 export default router
