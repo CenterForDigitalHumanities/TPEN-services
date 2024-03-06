@@ -1,6 +1,7 @@
 import DatabaseController from './DatabaseController'
+import test from 'node:test'
 
-const dbController = new DatabaseController('your-mongodb-connection-string')
+const dbController = new DatabaseController('mongodb://localhost:12707/testTpen')
 
 beforeAll(async () => {
     await dbController.connect()

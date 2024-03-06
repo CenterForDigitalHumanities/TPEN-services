@@ -19,8 +19,8 @@ class DatabaseController {
         return result
     }
 
-    async read(collection, query) {
-        const result = await this.db.collection(collection).findOne(query)
+    async read(collection, id) {
+        const result = await this.db.collection(collection).findOne(id)
         return result
     }
 
