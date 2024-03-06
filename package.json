@@ -1,5 +1,5 @@
 {
-   "name": "TPEN3 Services",
+   "name": "tpen3-services",
    "version": "0.0.0",
    "description": "TPEN3 Services for data interaction.",
    "type": "module",
