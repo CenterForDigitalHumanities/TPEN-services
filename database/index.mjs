@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb'
 
 class DatabaseController {
     constructor(uri) {
-        this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+        this.client = new MongoClient(uri)
     }
 
     async connect() {
@@ -15,6 +15,7 @@ class DatabaseController {
     }
 
     async create(collection, document) {
+        await this.connect() // this shouldn't fail?
         const result = await this.db.collection(collection).insertOne(document)
         return result
     }

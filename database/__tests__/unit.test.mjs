@@ -1,4 +1,4 @@
-import DatabaseController from './DatabaseController'
+import DatabaseController from '../index.mjs'
 
 const dbController = new DatabaseController('mongodb://localhost:12707/testTpen')
 
@@ -10,7 +10,7 @@ afterAll(async () => {
     await dbController.close()
 })
 
-describe('Project collection methods',()=>{
+describe('Project collection methods #_unit #db',()=>{
     it('creates a new project', async () => {
         const project = { name: 'Test Project', description: 'This is a test project.' }
         const result = await dbController.createProject(project)
