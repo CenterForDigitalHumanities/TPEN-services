@@ -24,6 +24,8 @@ import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
 import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
+import {default as DatabaseController} from './database/index.mjs'
+const dbController = new DatabaseController('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000')
 
 let app = express()
 
