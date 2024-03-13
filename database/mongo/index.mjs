@@ -1,13 +1,26 @@
 import { MongoClient } from 'mongodb'
 
 class DatabaseController {
+
     constructor(uri, name=process.env.MONGODBNAME) {
         this.client = new MongoClient(uri)
         this.db = this.client.db(name)
     }
 
     async connect() {
-        await this.client.connect()
+        try {
+            this.conn = await this.client.connect()
+            console.log("MongoDB Connection Estabsliehd")
+            console.log(process.env.MONGODB)
+            return this.conn
+          } 
+          catch (err) {
+            this.conn = null
+            console.log("MongoDB Connection Failed")
+            console.log(process.env.MONGODB)
+            console.error(err)
+            throw err
+          } 
     }
 
     async close() {
@@ -15,7 +28,9 @@ class DatabaseController {
     }
 
     async create(collection, document) {
+        console.log("MONGODB CREATING...")
         const result = await this.db.collection(collection).insertOne(document)
+        console.log(result)
         return result
     }
 
@@ -57,7 +72,7 @@ class DatabaseController {
 
     // UserPreferences methods
     async updateUserPreferences(userId, preferences) {
-        return this.update('userPreferences', { userId }, preferences)
+        return this.update('userPreferences', { _id: userId }, preferences)
     }
 }
 

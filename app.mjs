@@ -24,8 +24,11 @@ import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
 import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
-import {default as DatabaseController} from './database/index.mjs'
-const dbController = new DatabaseController('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000')
+
+// import {default as MongoDBController} from './database/mongo/index.mjs'
+// import {default as MariaDBController} from './database/maria/index.mjs'
+// const mongoDbController = new MongoDBController(process.env.MONGODB)
+// const mariaDbController = new MariaDBController(process.env.MARIADB)
 
 let app = express()
 

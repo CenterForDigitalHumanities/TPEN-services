@@ -1,6 +1,11 @@
 import {default as DatabaseController} from '../index.mjs'
+// If tests run independent of app.js, then the test needs to register the .env middleware
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
+let storedEnv = dotenv.config()
+dotenvExpand.expand(storedEnv)
 
-const dbController = new DatabaseController('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000')
+const dbController = new DatabaseController(process.env.MONGODB)
 
 beforeAll(async () => {
    return await dbController.connect()
@@ -10,7 +15,7 @@ afterAll(async () => {
    return await dbController.close()
 })
 
-describe('Project collection methods #_unit #db',()=>{
+describe('Project collection methods #functions_unit #db',()=>{
     it('creates a new project', async () => {
         const project = { name: 'Test Project', description: 'This is a test project.' }
         const result = await dbController.createProject(project)
