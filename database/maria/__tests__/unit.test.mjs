@@ -1,4 +1,5 @@
 import {default as DatabaseController} from '../index.mjs'
+
 // If tests run independent of app.js, then the test needs to register the .env middleware
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
@@ -20,6 +21,5 @@ describe('A MARIADB stub test that is always true.  #exists_unit #db',()=>{
         expect(true).toBeTruthy()
     })
 })
-
 
 // Add more tests for the remaining methods...

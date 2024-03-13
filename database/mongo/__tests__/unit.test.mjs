@@ -1,4 +1,5 @@
 import {default as DatabaseController} from '../index.mjs'
+
 // If tests run independent of app.js, then the test needs to register the .env middleware
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
