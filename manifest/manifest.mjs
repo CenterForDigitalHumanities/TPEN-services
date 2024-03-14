@@ -7,6 +7,7 @@
  * */
 
 import * as utils from "../utilities/shared.mjs"
+import {MongoDBController as m} from "../app.mjs"
 
 /**
  * Go into the database to get the Project information for the id input.
@@ -52,4 +53,9 @@ export async function findTheManifestByID(id=null){
    }
 
    return manifest
+}
+
+export async function createManifest(manifestJSON){
+   const created = await m.create("test", manifestJSON)
+   return created
 }

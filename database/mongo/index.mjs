@@ -27,11 +27,12 @@ class DatabaseController {
         await this.client.close()
     }
 
-    async create(collection, document) {
+    async create(collection, data) {
         console.log("MONGODB CREATING...")
-        const result = await this.db.collection(collection).insertOne(document)
+        const result = await this.db.collection(collection).insertOne(data)
         console.log(result)
-        return result
+        data["@id"] = process.env.SERVERULR+"/created/"+result.insertedId
+        return data
     }
 
     async read(collection, id) {
