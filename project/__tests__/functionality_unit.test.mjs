@@ -1,4 +1,4 @@
-import {findTheProjectByID} from '../project.mjs'
+import {findTheProjectByID, createProject} from '../project.mjs'
 import {validateID} from '../../utilities/shared.mjs'
 
 // These test the pieces of functionality in the route that make it work.
@@ -14,6 +14,10 @@ describe('Project endpoint functionality unit test (just testing helper function
   it('TPEN3 project does exist.  Finding the project results in the project JSON', async () => {
     let project = await findTheProjectByID(7085)
     expect(project).not.toBe(null)
+  })
+  it('TPEN3 project can be created', async () => {
+    let project = await createProject({"Test":"TPEN3 Project"})
+    expect(project["@id"]).toBeTruthy()
   })
 
 })

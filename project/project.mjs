@@ -1,6 +1,12 @@
 /** Logic for the /project endpoint */
 import * as utils from '../utilities/shared.mjs'
 import * as fs from 'fs'
+import * as MongoDBController from '../database/mongo/index.mjs'
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
+let storedEnv = dotenv.config()
+dotenvExpand.expand(storedEnv)
+
 
 export async function findTheProjectByID(id = null) {
   let project = null
@@ -28,4 +34,9 @@ export async function findTheProjectByID(id = null) {
     project = await mockPause
   }
   return project
+}
+
+export async function createProject(proj){
+  let newProj = await MongoDBController.create(process.env.TPENPROJECTS, proj)
+  return newProj
 }

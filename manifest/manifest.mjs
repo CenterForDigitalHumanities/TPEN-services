@@ -8,10 +8,6 @@
 
 import * as utils from "../utilities/shared.mjs"
 
-// TODO pull in a connected db controller.  It should not have to connect every time an endpoint is called.
-//import MongoController from '../database/mongo/index.mjs'
-//const MongoDBController = new MongoController(process.env.MONGODB)
-
 /**
  * Go into the database to get the Project information for the id input.
  * The Project will have a Manifest associated with it.  

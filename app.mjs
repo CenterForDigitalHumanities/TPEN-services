@@ -23,8 +23,6 @@ import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
 import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
-// import MongoController from './database/mongo/index.mjs'
-// import MariaController from './database/maria/index.mjs'
 
 let app = express()
 
