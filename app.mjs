@@ -23,8 +23,8 @@ import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
 import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
-import {default as MongoController} from './database/mongo/index.mjs'
-import {default as MariaController} from './database/maria/index.mjs'
+// import MongoController from './database/mongo/index.mjs'
+// import MariaController from './database/maria/index.mjs'
 
 let app = express()
 
@@ -66,11 +66,4 @@ app.use(function(req, res, next) {
     res.status(404).send(msg)  
 })
 
-// Open and hold a single database connection for the app?  This is better than making and closing a connection per request IMO.
-// Export these along with their connection so routes can import them.  Connections are closed when the app stops, or close() is called manually.
-const MongoDBController = new MongoController(process.env.MONGODB)
-const MariaDBController = new MariaController(process.env.MARIADB)
-MongoDBController.connect()
-MariaDBController.connect()
-
-export {app as default, MongoDBController, MariaDBController}
+export {app as default}

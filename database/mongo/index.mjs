@@ -5,6 +5,7 @@ class DatabaseController {
     constructor(uri, name=process.env.MONGODBNAME) {
         this.client = new MongoClient(uri)
         this.db = this.client.db(name)
+        this.connect()
     }
 
     async connect() {
@@ -31,7 +32,7 @@ class DatabaseController {
         console.log("MONGODB CREATING...")
         const result = await this.db.collection(collection).insertOne(data)
         console.log(result)
-        data["@id"] = process.env.SERVERULR+"/created/"+result.insertedId
+        data["@id"] = process.env.SERVERURL+"created/"+result.insertedId
         return data
     }
 
@@ -47,7 +48,10 @@ class DatabaseController {
 
     // Project methods
     async createProject(project) {
-        return this.create('projects', project)
+        console.log("CREATE PROJECT")
+        const data = await this.create('projects', project)
+        console.log(data)
+        return data
     }
 
     async assignToolToProject(projectId, tool) {

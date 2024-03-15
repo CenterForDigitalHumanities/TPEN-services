@@ -20,7 +20,7 @@ describe('Project collection methods #functions_unit #db',()=>{
     it('creates a new project', async () => {
         const project = { name: 'Test Project', description: 'This is a test project.' }
         const result = await dbController.createProject(project)
-        expect(result.insertedId).toBeTruthy()
+        expect(result["@id"]).toBeTruthy()
     })
     
     it('assigns a new tool to the project', async () => {

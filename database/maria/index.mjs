@@ -1,12 +1,12 @@
 import { default as mariadb } from 'mariadb'
 
 class DatabaseController {
-    constructor(uri, name=process.env.MONGODBNAME) {
+    constructor(uri, name=process.env.MARIADBNAME) {
         this.client = mariadb.createPool({
              host: process.env.MARIADB, 
              user: process.env.MARIADBUSER, 
              password: process.env.MARIADBPASSWORD,
-             database: process.env.MARIADBNAME,
+             database: name,
              connectionLimit: 55
         })
     }

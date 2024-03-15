@@ -7,7 +7,10 @@
  * */
 
 import * as utils from "../utilities/shared.mjs"
-import {MongoDBController as m} from "../app.mjs"
+
+// TODO pull in a connected db controller.  It should not have to connect every time an endpoint is called.
+//import MongoController from '../database/mongo/index.mjs'
+//const MongoDBController = new MongoController(process.env.MONGODB)
 
 /**
  * Go into the database to get the Project information for the id input.
@@ -55,7 +58,7 @@ export async function findTheManifestByID(id=null){
    return manifest
 }
 
-export async function createManifest(manifestJSON){
-   const created = await m.create("test", manifestJSON)
-   return created
-}
+// export async function createManifest(manifestJSON){
+//    const created = await MongoDBController.create("test", manifestJSON)
+//    return created
+// }

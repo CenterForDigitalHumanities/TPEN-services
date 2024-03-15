@@ -45,23 +45,6 @@ export function respondWithManifest(res, manifest){
    res.json(manifest)
 }
 
-// Send a successful response with the appropriate JSON
-export function respondWithCreatedManifest(res, manifest){
-   res.set("Content-Type", "application/json; charset=utf-8")
-   res.status(201)
-   res.json(manifest)
-}
-
-// Expect an /{id} as part of the route, like /manifest/123
-router.route('/create')
-   .post(async (req, res, next) => {
-      const created = await logic.createManifest(req.body)
-      respondWithCreatedManifest(res, created)
-   })
-   .all((req, res, next) => {
-      utils.respondWithError(res, 405, 'Improper request method, please use POST.')
-   })
-
 // Expect an /{id} as part of the route, like /manifest/123
 router.route('/:id')
    .get(async (req, res, next) => {
