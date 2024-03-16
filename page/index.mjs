@@ -69,8 +69,11 @@ router.route('/:id?')
     }
   })
 
-  //post API handler
+  //post /put API handler
   .post(async (req, res, next) => {
+    utils.respondWithError(res, 405, 'Improper request method, please use GET.');
+  })
+  .put(async (req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.');
   })
 
