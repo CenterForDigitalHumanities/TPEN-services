@@ -29,13 +29,100 @@ router.use(
   })
 )
 
-// Send a successful response with the appropriate JSON
+// Send a successful response with the appropriate JSON or alternate response based on params
 export function respondWithProject(res, project) {
   const id = project['@id'] ?? project.id ?? null
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.location(id)
-  res.status(200)
-  res.json(project)
+
+  let textType = req.query.text
+  let image = req.query.image
+  let lookup = req.query.lookup
+  let view = req.query.view
+  let responseType = [textType, image, lookup, view]
+    .find(elem => elem !== undefined) // Only one response type is valid
+
+  let embed = req.query.embed
+
+  if (!responseType || responseType === view && view == "json") {
+    res.set('Content-Type', 'application/json; charset=utf-8')
+    res.location(id)
+    res.status(200)
+    res.json(project)
+    return
+  }
+
+  let retVal;
+  switch (responseType) {
+
+    case textType:
+      switch (textType) {
+        case "blob":
+          res.set('Content-Type', 'text/plain; charset=utf-8')
+          // return: a complete blob of text of all lines concatenated
+          retVal = new Blob(
+            project.layers.map(layer =>
+              db.getByID(layer).getLines().map(line => line.textualBody).join(" ")
+            ).join(" ")
+          )
+          break
+        case "layers":
+          res.set('Content-Type', 'application/json; charset=utf-8')
+          retVal = project.layers.map(layer => db.getByID(layer))          
+          break
+        case "pages":
+          res.set('Content-Type', 'application/json; charset=utf-8')
+          retVal = project.layers.flatMap(layer => db.getByID(layer).getPages())
+          break
+        case "lines":
+          res.set('Content-Type', 'application/json; charset=utf-8')
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "text" must be "blob," "layers," "pages," or "lines."')
+          break
+      }
+
+    case image:
+      switch (image) {
+        case "thumb":
+          res.set('Content-Type', 'text/uri-list; charset=utf-8')
+          // return: the URL of the default resolution of a thumbnail from the Manifest
+          // make sure to handle this differently if req.query.embed is true
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "image" must be "thumbnail."')
+          break
+      }
+      break
+
+    case lookup:
+      switch (lookup) {
+        case "manifest":
+          // return: (layers[], annotations[], metadata[], group) find the related document or Array of documents and return that instead, the version allowed without authentication
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "lookup" must be "manifest."')
+          break
+      }
+      break
+
+    case view:
+      switch (view) {
+        case "xml":
+          res.set('Content-Type', 'text/xml; charset=utf-8')
+          // is a chance to get the document as an XML file
+          break
+        case "html":
+          res.set('Content-Type', 'text/html; charset=utf-8')
+          //  is a readonly viewer HTML Document presenting the project data
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "view" must be "json," "xml," or "html."')
+          break
+      }
+  }
 }
 
 // Expect an /{id} as part of the route, like /project/123
