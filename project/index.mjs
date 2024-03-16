@@ -123,6 +123,8 @@ export function respondWithProject(res, project) {
           break
       }
   }
+
+  res.status(200).send(retVal)
 }
 
 // Expect an /{id} as part of the route, like /project/123
