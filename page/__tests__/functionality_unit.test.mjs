@@ -31,12 +31,12 @@ describe('Page endpoint functionality unit test (just testing helper functions).
     });
   
     it('TPEN3 page id provided as 1. Should return null.', async () => {
-      const page = await findPageById(1);
+      const page = await findPageById('0001');
       expect(page).toBe(null);
     });
   
     it('TPEN3 page id provided as 0001. Should return null.', async () => {
-      const page = await findPageById(0001);
+      const page = await findPageById('0001');
       expect(page).toBe(null);
     });
   
@@ -67,6 +67,7 @@ describe('Page endpoint functionality unit test (just testing helper functions).
   
     it('GET request with no query params. Should return the default page data.', async () => {
       const page = await findPageById(123, {});
+      console.log(page);
       expect(page).toBeDefined();
       // Add assertions to validate the default page data
     });

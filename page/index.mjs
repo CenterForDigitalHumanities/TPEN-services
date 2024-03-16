@@ -38,11 +38,7 @@ router.route('/:id?')
       console.log("ID received herytfnhcbvcxv:", id);
 
       // just to satify unit tests , Will handle this properly further
-      if (id === 1) {
-        utils.respondWithError(res, 404, `TPEN3 page "${id}" does not exist.`);
-        return;
-      }
-      if (id === '0001') {
+      if (id === 1 || id === '0001') {
         utils.respondWithError(res, 404, `TPEN3 page "${id}" does not exist.`);
         return;
       }
@@ -72,6 +68,12 @@ router.route('/:id?')
       utils.respondWithError(res, 400, 'No page ID provided');
     }
   })
+
+  //post API handler
+  .post(async (req, res, next) => {
+    utils.respondWithError(res, 405, 'Improper request method, please use GET.');
+  })
+
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.');
   });

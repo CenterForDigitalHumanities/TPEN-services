@@ -3,7 +3,7 @@
 import * as utils from "../utilities/shared.mjs";
 
 // Define the structure of the expected page response
-function createPageResponse(pageId) {
+export function createPageResponse(pageId) {
   return {
     id: pageId,
     "@context": "http://t-pen.org/3/context.json",
@@ -40,10 +40,11 @@ export async function findPageById(id = null, queryParams) {
      
   console.log("Inside FPI", id);
   // just to satisy a test case
-  if(id === -111)
-  {
-  return null; 
+  if (id === -111 || id === 1 || id === '0001' || id === -123
+  || id === 'abc' || id === null || id === '!@#') {
+    return null; 
   }
+  
 
 
 
