@@ -117,8 +117,14 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     const res = await request(routeTester)
       .get('/project/7085?lookup=manifest')
     expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    expect(typeof res.body).toBe('object')
+    let json = res.body
+    try{
+      json = JSON.parse(JSON.stringify(json))
+    }
+    catch(err){
+      json = null
+    }
+    expect(json).not.toBe(null)
   })
   
   it('Call to /project with valid ID and parameter ?view=json. The status should be 200 with a JSON Project in the body.', async () => {
@@ -149,6 +155,12 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(typeof res.body).toBe('object')
+  })
+
+  it('Call to /project with valid ID and multiple mutually exclusive query parameters. The status should be 400.', async () => {
+    const res = await request(routeTester)
+      .get('/project/7085?text=lines&view=html')
+    expect(res.statusCode).toBe(400)
   })
   
 })

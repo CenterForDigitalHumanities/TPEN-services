@@ -37,18 +37,20 @@ export function respondWithProject(req, res, project) {
   let image = req.query.image
   let lookup = req.query.lookup
   let view = req.query.view
-  let responseType = [textType, image, lookup, view]
-    .find(elem => elem !== undefined) // Only one response type is valid
+
+  let passedQueries = [textType, image, lookup, view]
+    .filter(elem => elem !== undefined)
+  let responseType = null
+  if (passedQueries.length > 1) {
+    utils.respondWithError(res, 400, 
+      'Improper request. Only one response type may be queried.'
+    )
+    return
+  } else if (passedQueries.length === 1) {
+    responseType = passedQueries[0]
+  }
 
   let embed = req.query.embed
-
-  if (!responseType || responseType === view && view == "json") {
-    res.set('Content-Type', 'application/json; charset=utf-8')
-    res.location(id)
-    res.status(200)
-    res.json(project)
-    return
-  }
 
   let retVal;
   switch (responseType) {
@@ -68,16 +70,22 @@ export function respondWithProject(req, res, project) {
         case "layers":
           res.set('Content-Type', 'application/json; charset=utf-8')
           /* retVal = project.layers.map(layer => db.getByID(layer)) */
-          retVal = [['mock text'], ['mock text']]
+          retVal = [  
+            { "name": "Layer.name", "id": "#AnnotationCollectionId", "textContent": "concatenated blob" }  
+          ]
           break
         case "pages":
           res.set('Content-Type', 'application/json; charset=utf-8')
           /* retVal = project.layers.flatMap(layer => db.getByID(layer).getPages()) */
-          retVal = [['mock text'], ['mock text']]
+          retVal = [  
+            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": "concatenated blob" }  
+          ]
           break
         case "lines":
           res.set('Content-Type', 'application/json; charset=utf-8')
-          retVal = [['mock text'], ['mock text']]
+          retVal = [  
+            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": [{ "id" : "#AnnotationId", "textualBody" : "single annotation content" }]}  
+          ]
           break
         default:
           utils.respondWithError(res, 400, 
@@ -105,7 +113,12 @@ export function respondWithProject(req, res, project) {
       switch (lookup) {
         case "manifest":
           // return: (layers[], annotations[], metadata[], group) find the related document or Array of documents and return that instead, the version allowed without authentication
-          retVal = [['mock text'], ['mock text']]
+          retVal = {
+            "@context":"http://iiif.io/api/presentation/2/context.json",
+            "@id":"https://t-pen.org/TPEN/manifest/7085/manifest.json",
+            "@type":"sc:Manifest",
+            "label":"Ct Interlinear Glosses Mt 5",
+          }
           break
         default:
           utils.respondWithError(res, 400, 
@@ -119,16 +132,29 @@ export function respondWithProject(req, res, project) {
         case "xml":
           res.set('Content-Type', 'text/xml; charset=utf-8')
           // is a chance to get the document as an XML file
+          retVal = new DocumentFragment()
+          retVal.innerHTML = '<xml><id>7085</id></xml>'
           break
         case "html":
           res.set('Content-Type', 'text/html; charset=utf-8')
           //  is a readonly viewer HTML Document presenting the project data
+          retVal = new DocumentFragment()
+          retVal.innerHTML = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
           break
+        case "json":
+          break // Let the default case of the switch(responseType) handle this
         default:
           utils.respondWithError(res, 400, 
             'Improper request.  Parameter "view" must be "json," "xml," or "html."')
           break
       }
+    
+    default:
+      res.set('Content-Type', 'application/json; charset=utf-8')
+      res.location(id)
+      res.status(200)
+      res.json(project)
+      return
   }
 
   res.location(id).status(200).send(retVal)
