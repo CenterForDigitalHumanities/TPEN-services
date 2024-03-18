@@ -30,7 +30,7 @@ router.use(
 )
 
 // Send a successful response with the appropriate JSON or alternate response based on params
-export function respondWithProject(res, project) {
+export function respondWithProject(req, res, project) {
   const id = project['@id'] ?? project.id ?? null
 
   let textType = req.query.text
@@ -141,7 +141,7 @@ router
     try {
       const projectObj = await logic.findTheProjectByID(id)
       if (projectObj) {
-        respondWithProject(res, projectObj)
+        respondWithProject(req, res, projectObj)
       } else {
         utils.respondWithError(res, 404, `TPEN3 project "${req.params.id}" does not exist.`)
       }
