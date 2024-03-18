@@ -58,34 +58,40 @@ export function respondWithProject(req, res, project) {
         case "blob":
           res.set('Content-Type', 'text/plain; charset=utf-8')
           // return: a complete blob of text of all lines concatenated
-          retVal = new Blob(
+          /* retVal = new Blob(
             project.layers.map(layer =>
               db.getByID(layer).getLines().map(line => line.textualBody).join(" ")
             ).join(" ")
-          )
+          ) */
+          retVal = new Blob('mock text')
           break
         case "layers":
           res.set('Content-Type', 'application/json; charset=utf-8')
-          retVal = project.layers.map(layer => db.getByID(layer))          
+          /* retVal = project.layers.map(layer => db.getByID(layer)) */
+          retVal = [['mock text'], ['mock text']]
           break
         case "pages":
           res.set('Content-Type', 'application/json; charset=utf-8')
-          retVal = project.layers.flatMap(layer => db.getByID(layer).getPages())
+          /* retVal = project.layers.flatMap(layer => db.getByID(layer).getPages()) */
+          retVal = [['mock text'], ['mock text']]
           break
         case "lines":
           res.set('Content-Type', 'application/json; charset=utf-8')
+          retVal = [['mock text'], ['mock text']]
           break
         default:
           utils.respondWithError(res, 400, 
             'Improper request.  Parameter "text" must be "blob," "layers," "pages," or "lines."')
           break
       }
+      break
 
     case image:
       switch (image) {
         case "thumb":
           res.set('Content-Type', 'text/uri-list; charset=utf-8')
           // return: the URL of the default resolution of a thumbnail from the Manifest
+          retVal = 'https://example.com'
           // make sure to handle this differently if req.query.embed is true
           break
         default:
@@ -99,6 +105,7 @@ export function respondWithProject(req, res, project) {
       switch (lookup) {
         case "manifest":
           // return: (layers[], annotations[], metadata[], group) find the related document or Array of documents and return that instead, the version allowed without authentication
+          retVal = [['mock text'], ['mock text']]
           break
         default:
           utils.respondWithError(res, 400, 
@@ -124,7 +131,7 @@ export function respondWithProject(req, res, project) {
       }
   }
 
-  res.status(200).send(retVal)
+  res.location(id).status(200).send(retVal)
 }
 
 // Expect an /{id} as part of the route, like /project/123
