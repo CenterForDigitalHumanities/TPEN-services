@@ -1,34 +1,24 @@
-import * as utils from '../utilities/shared.mjs';
+import * as utils from '../utilities/shared.mjs'
 
 export async function findLineById(id = null, options = {}) {
-  let line = null;
-  
-  // Check if the ID is null or undefined
+  let line = null
   if (id === null || id === undefined) {
-    return line;
+    return line
   }
-
-  // Validate the ID using the utility function
   if (!utils.validateID(id)) {
-    return line;
+    return line
   }
-
-  // Mocking database call
-  const lineFromDB = mockGetByID(id);
-
+  const lineFromDB = mockGetByID(id)
   if (lineFromDB !== null) {
-    // Handle special parameters
     if (options.text === 'blob') {
-      return { text: lineFromDB.textualBody };
+      return { text: lineFromDB.textualBody }
     } else if (options.image === 'full') {
-      return { image: lineFromDB.canvas };
+      return { image: lineFromDB.canvas }
     } else if (options.image === 'line') {
-      return { image: `some line image URL for id ${id}` };
+      return { image: `some line image URL for id ${id}` }
     } else if (options.lookup) {
-      // Handle lookup parameter
-      return { relatedDocument: `some ${options.lookup} document for id ${id}` };
+      return { relatedDocument: `some ${options.lookup} document for id ${id}` }
     } else {
-      // Default response if no special parameters provided
       const jsonResponse = {
         '@context': lineFromDB['@context'],
         id: lineFromDB.id,
@@ -40,37 +30,26 @@ export async function findLineById(id = null, options = {}) {
         layer: lineFromDB.layer,
         viewer: lineFromDB.viewer,
         license: lineFromDB.license
-      };
-
-      // Handle additional parameters
+      }
       if (options.view === 'xml') {
-        // Return XML representation of the document
-        return generateXML(lineFromDB);
+        return generateXML(lineFromDB)
       } else if (options.view === 'html') {
-        // Return HTML viewer document
-        return generateHTML(lineFromDB);
+        return generateHTML(lineFromDB)
       }
-
-      // Handle embed parameter
       if (options.embed === true) {
-        return { expandedDocument: jsonResponse };
+        return { expandedDocument: jsonResponse }
       }
 
-      return jsonResponse;
+      return jsonResponse
     }
   }
 
-  return line;
+  return line
 }
-
 function mockGetByID(id) {
-  // Mock implementation of getByID function
-  // For now, return null for non-existing IDs
   if (id !== 123) {
-    return null;
+    return null
   }
-
-  // For existing ID, return a sample line object
   return {
     id: `#${id}`,
     '@context': 'http://t-pen.org/3/context.json',
@@ -82,12 +61,12 @@ function mockGetByID(id) {
     layer: '#AnnotationCollectionId',
     viewer: `https://static.t-pen.org/#ProjectId/#PageId/#LineId${id}`,
     license: 'CC-BY'
-  };
+  }
 }
 
 function generateXML(lineData) {
   // Generate XML representation of the line data
-  return `<line><id>${lineData.id}</id><text>${lineData.textualBody}</text></line>`;
+  return `<line><id>${lineData.id}</id><text>${lineData.textualBody}</text></line>`
 }
 
 function generateHTML(lineData) {
