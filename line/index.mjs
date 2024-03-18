@@ -1,9 +1,9 @@
-import express from 'express';
-import * as utils from '../utilities/shared.mjs';
-import cors from 'cors';
-import { findLineById } from './line.mjs';
+import express from 'express'
+import * as utils from '../utilities/shared.mjs'
+import cors from 'cors'
+import { findLineById } from './line.mjs'
 
-const router = express.Router();
+const router = express.Router()
 
 router.use(cors({
   methods: 'GET',
@@ -25,46 +25,46 @@ router.use(cors({
   exposedHeaders: '*',
   origin: '*',
   maxAge: '600'
-}));
+}))
 
 router.route('/:id')
   .get(async (req, res, next) => {
     try {
-      let id = req.params.id;
+      let id = req.params.id
 
       if (!utils.validateID(id)) {
-        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number');
+        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
       }
 
-      id = parseInt(id);
+      id = parseInt(id)
 
-      const lineObject = await findLineById(id);
+      const lineObject = await findLineById(id)
 
-      if (lineObject !== null) {
-        respondWithLine(res, lineObject);
+      if (lineObject.statusCode === 404) {
+        return utils.respondWithError(res, 404, lineObject.body)
       } else {
-        return utils.respondWithError(res, 404, `TPEN 3 line "${id}" does not exist.`);
+        respondWithLine(res, lineObject)
       }
     } catch (error) {
-      console.error(error);
-      return utils.respondWithError(res, 500, 'Internal Server Error');
+      console.error(error)
+      return utils.respondWithError(res, 500, 'Internal Server Error')
     }
   })
   .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.');
-  });
+    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  })
 
 router.route('/')
   .get((req, res, next) => {
-    return utils.respondWithError(res, 400, 'Improper request.  There was no line ID.');
+    return utils.respondWithError(res, 400, 'Improper request.  There was no line ID.')
   })
   .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.');
-  });
+    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  })
 
 function respondWithLine(res, lineObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8');
-  res.status(200).json(lineObject);
+  res.set('Content-Type', 'application/json; charset=utf-8')
+  res.status(200).json(lineObject)
 }
 
-export default router;
+export default router
