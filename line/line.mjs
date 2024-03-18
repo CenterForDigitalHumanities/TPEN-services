@@ -2,13 +2,17 @@ import * as utils from '../utilities/shared.mjs'
 
 export async function findLineById(id = null, options = {}) {
   let line = null
+
   if (id === null || id === undefined) {
     return line
   }
+
   if (!utils.validateID(id)) {
     return line
   }
+
   const lineFromDB = mockGetByID(id)
+
   if (lineFromDB !== null) {
     if (options.text === 'blob') {
       return { text: lineFromDB.textualBody }
@@ -31,6 +35,7 @@ export async function findLineById(id = null, options = {}) {
         viewer: lineFromDB.viewer,
         license: lineFromDB.license
       }
+
       if (options.view === 'xml') {
         return generateXML(lineFromDB)
       } else if (options.view === 'html') {
@@ -47,6 +52,7 @@ export async function findLineById(id = null, options = {}) {
   return line
 }
 function mockGetByID(id) {
+
   if (id !== 123) {
     return null
   }
@@ -66,7 +72,7 @@ function mockGetByID(id) {
 
 function generateXML(lineData) {
   // Generate XML representation of the line data
-  return `<line><id>${lineData.id}</id><text>${lineData.textualBody}</text></line>`
+  return `<line><id>${lineData.id}</id><text>${lineData.textualBody}</text></line>`;
 }
 
 function generateHTML(lineData) {
