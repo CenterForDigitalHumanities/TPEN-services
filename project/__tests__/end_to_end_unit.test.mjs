@@ -130,15 +130,15 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
   it('Call to /project with valid ID and parameter ?view=json. The status should be 200 with a JSON Project in the body.', async () => {
     const res = await request(routeTester)
       .get('/project/7085')
-      expect(res.statusCode).toBe(200)
-      let json = res.body
-      try{
-        json = JSON.parse(JSON.stringify(json))
-      }
-      catch(err){
-        json = null
-      }
-      expect(json).not.toBe(null)
+    expect(res.statusCode).toBe(200)
+    let json = res.body
+    try{
+      json = JSON.parse(JSON.stringify(json))
+    }
+    catch(err){
+      json = null
+    }
+    expect(json).not.toBe(null)
   })
 
   it('Call to /project with valid ID and parameter ?view=xml. The status should be 200 with an XML document in the body.', async () => {

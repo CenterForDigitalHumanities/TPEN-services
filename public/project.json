@@ -1,16 +1,16 @@
 {
-"id": "#ProjectId",
-"@context": "http://t-pen.org/3/context.json",
-"@type": "CreativeWork",
-"creator": "https://store.rerum.io/v1/id/hash",
-"group": "#GroupId",
-"layers": [
-   "#LayerId"
-],
-"lastModified": "#PageId",
-"viewer": "https://static.t-pen.org/#ProjectId",
-"license": "CC-BY",
-"manifest": "https://example.com/manifest.json",
-"tools": [],
-"options": {}
+   "id": "#ProjectId",
+   "@context": "http://t-pen.org/3/context.json",
+   "@type": "CreativeWork",
+   "creator": "https://store.rerum.io/v1/id/hash",
+   "group": "#GroupId",
+   "layers": [
+      "#LayerId"
+   ],
+   "lastModified": "#PageId",
+   "viewer": "https://static.t-pen.org/#ProjectId",
+   "license": "CC-BY",
+   "manifest": "https://example.com/manifest.json",
+   "tools": [],
+   "options": {}
 }
