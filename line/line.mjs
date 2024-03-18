@@ -1,27 +1,26 @@
-import * as utils from '../utilities/shared.mjs'
+import * as utils from '../utilities/shared.mjs';
 
 export async function findLineById(id = null, options = {}) {
-  let line = null
+  let line = null;
 
   if (id === null || id === undefined) {
-    return line
+    return line;
   }
 
   if (!utils.validateID(id)) {
-    return line
+    return line;
   }
-
-  const lineFromDB = mockGetByID(id)
+  const lineFromDB = mockGetByID(id);
 
   if (lineFromDB !== null) {
     if (options.text === 'blob') {
-      return { text: lineFromDB.textualBody }
+      return { text: lineFromDB.textualBody };
     } else if (options.image === 'full') {
-      return { image: lineFromDB.canvas }
+      return { image: lineFromDB.canvas };
     } else if (options.image === 'line') {
-      return { image: `some line image URL for id ${id}` }
+      return { image: `some line image URL for id ${id}` };
     } else if (options.lookup) {
-      return { relatedDocument: `some ${options.lookup} document for id ${id}` }
+      return { relatedDocument: `some ${options.lookup} document for id ${id}` };
     } else {
       const jsonResponse = {
         '@context': lineFromDB['@context'],
@@ -34,27 +33,27 @@ export async function findLineById(id = null, options = {}) {
         layer: lineFromDB.layer,
         viewer: lineFromDB.viewer,
         license: lineFromDB.license
-      }
+      };
 
       if (options.view === 'xml') {
-        return generateXML(lineFromDB)
+        return generateXML(lineFromDB);
       } else if (options.view === 'html') {
-        return generateHTML(lineFromDB)
+        return generateHTML(lineFromDB);
       }
       if (options.embed === true) {
-        return { expandedDocument: jsonResponse }
+        return { expandedDocument: jsonResponse };
       }
 
-      return jsonResponse
+      return jsonResponse;
     }
   }
 
-  return line
+  return line;
 }
-function mockGetByID(id) {
 
+function mockGetByID(id) {
   if (id !== 123) {
-    return null
+    return null;
   }
   return {
     id: `#${id}`,
@@ -67,7 +66,7 @@ function mockGetByID(id) {
     layer: '#AnnotationCollectionId',
     viewer: `https://static.t-pen.org/#ProjectId/#PageId/#LineId${id}`,
     license: 'CC-BY'
-  }
+  };
 }
 
 function generateXML(lineData) {
@@ -86,4 +85,22 @@ function generateHTML(lineData) {
       </body>
     </html>
   `;
+}
+  const mockPause = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(null);
+    }, 1500);
+  });
+
+  const linesArray = [
+    { id: 123, text: "Hey TPEN Works on 123" },
+  ];
+
+  line = linesArray.find((line) => line.id === id) || null;
+
+  if (line === null) {
+    line = await mockPause;
+  }
+
+  return line;
 }
