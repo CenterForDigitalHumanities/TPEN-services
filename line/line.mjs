@@ -18,7 +18,7 @@ export async function findLineById(id = null, options = {}) {
   });
 
   const linesArray = [
-    { id: 123, text: "Hey TPEN Works on 123" },
+    { id: 123, text: 'Hey TPEN Works on 123', '@context': 'http://t-pen.org/3/context.json', '@type': 'Annotation', creator: 'https://store.rerum.io/v1/id/hash', project: '#ProjectId', canvas: 'https://example.com/canvas.json', layer: '#AnnotationCollectionId', viewer: 'https://static.t-pen.org/#ProjectId/#PageId/#LineId123', license: 'CC-BY' }
   ];
 
   line = linesArray.find((line) => line.id === id) || null;
@@ -29,13 +29,14 @@ export async function findLineById(id = null, options = {}) {
 
   if (line !== null) {
     if (options.text === 'blob') {
-      return { text: line.textualBody };
+      return { 'Content-Type': 'text/plain', body: line.text };
     } else if (options.image === 'full') {
-      return { image: line.canvas };
+      // Assuming line.canvas contains the full image
+      return { 'Content-Type': 'image/jpeg', body: line.canvas };
     } else if (options.image === 'line') {
-      return { image: `some line image URL for id ${id}` };
+      return { 'Content-Type': 'image/jpeg', body: `some line image URL for id ${id}` };
     } else if (options.lookup) {
-      return { relatedDocument: `some ${options.lookup} document for id ${id}` };
+      return { 'Content-Type': 'text/plain', body: `some ${options.lookup} document for id ${id}` };
     } else {
       const jsonResponse = {
         '@context': line['@context'],
@@ -51,15 +52,15 @@ export async function findLineById(id = null, options = {}) {
       };
 
       if (options.view === 'xml') {
-        return generateXML(line);
+        return { 'Content-Type': 'text/xml', body: generateXML(line) };
       } else if (options.view === 'html') {
-        return generateHTML(line);
+        return { 'Content-Type': 'text/html', body: generateHTML(line) };
       }
       if (options.embed === true) {
-        return { expandedDocument: jsonResponse };
+        return { 'Content-Type': 'application/json', body: JSON.stringify({ expandedDocument: jsonResponse }) };
       }
 
-      return jsonResponse;
+      return { 'Content-Type': 'application/json', body: JSON.stringify(jsonResponse) };
     }
   }
 
