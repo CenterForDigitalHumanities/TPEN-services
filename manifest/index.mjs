@@ -74,4 +74,13 @@ router.route('/')
       utils.respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
+// Handle a post request which creates the JSON and sends back the id
+router.route('/')
+   .get((req, res, next) => {
+      utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+   })
+
 export default router

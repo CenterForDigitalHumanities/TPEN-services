@@ -54,7 +54,7 @@ export async function findTheManifestByID(id=null){
    return manifest
 }
 
-// export async function createManifest(manifestJSON){
-//    const created = await MongoDBController.create("test", manifestJSON)
-//    return created
-// }
+export async function createManifest(manifestJSON){
+   const created = await MongoDBController.create("test", manifestJSON)
+   return created
+}
