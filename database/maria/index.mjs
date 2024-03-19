@@ -1,17 +1,25 @@
 import { default as mariadb } from 'mariadb'
 
 class DatabaseController {
-    constructor(uri, name=process.env.MARIADBNAME) {
-        this.client = mariadb.createPool({
-             host: process.env.MARIADB, 
-             user: process.env.MARIADBUSER, 
-             password: process.env.MARIADBPASSWORD,
-             database: name,
-             connectionLimit: 55
-        })
+    constructor(connect=false) {
+        // try to establish the client and connect
+        if(connect) await this.connect()
     }
 
     async connect() {
+        try{
+            this.client = mariadb.createPool({
+                host: process.env.MARIADB, 
+                user: process.env.MARIADBUSER, 
+                password: process.env.MARIADBPASSWORD,
+                database: name,
+                connectionLimit: 55
+            })
+        }
+        catch(err){
+            console.error(err)
+            throw new Error(`Cannot establish MariaDB client to connect to.`)
+        }
         try {
             this.conn = await this.client.getConnection()
             console.log("MariaDB Connection Estabsliehd")

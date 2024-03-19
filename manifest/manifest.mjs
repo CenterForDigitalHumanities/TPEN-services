@@ -6,7 +6,10 @@
  * 
  * */
 
+import Database from "../database/index.mjs"
 import * as utils from "../utilities/shared.mjs"
+
+const database = new Database()
 
 /**
  * Go into the database to get the Project information for the id input.

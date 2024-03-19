@@ -1,38 +1,43 @@
 import fetch from 'node-fetch'
 
-import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
-let storedEnv = dotenv.config()
-dotenvExpand.expand(storedEnv)
+class DatabaseController{
 
-export async function connected() {
-    // Send a ping to confirm a successful connection
-    await db.collection(process.env.TPENPROJECTS).command({ ping: 1 }).catch(err => {return false})
-    return true
-}
+    constructor() {
+        // Establish constants
+        
+    }
+    
+    /** Other modules do not connect or close */
+    async function connect() {
+        // No need for this, but maybe we can stub it to be like "no no no not here good try tho"
+    }
 
-export async function create(collection, data) {
-    console.log("MONGODB CREATING...")
-    const result = await db.collection(collection).insertOne(data)
-    console.log(result)
-    data["@id"] = process.env.SERVERURL+"created/"+result.insertedId
-    return data
-}
+    /** Other modules do not connect or close */
+    async close() {
+        // No need for this, but maybe we can stub it to be like "no no no not here good try tho"
+    }
 
-export async function update(collection, query, update) {
-    const result = await db.collection(collection).updateOne(query, { $set: update })
-    return result
-}
+    async connected() {
+        // Send a /query to ping TinyPen
+    }
 
-export async function remove(collection, id) {
-    const result = await db.collection(collection).deleteOne(query, { $set: update })
-    return result
-}
+    async create(collection, data) {
+        // tinypen/create
+    }
 
-/**
- * Get by property matches and return all objects that match
- */ 
-export async function query(collection, params={"bryan_says_you_will_find":"nothing"}){
-    const results = await db.collection(collection).find(params)
-    return results
+    async update(collection, query, update) {
+        // tinypen/update
+    }
+
+    async remove(collection, id) {
+        // tinypen/delete
+    }
+
+    /**
+     * Get by property matches and return all objects that match
+     */ 
+    async query(collection, params={"bryan_says_you_will_find":"nothing"}){
+        // tinypen/query
+    }   
+
 }

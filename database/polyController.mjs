@@ -9,10 +9,13 @@ import MongoController from "./mongo/index.mjs"
 
 class PolyController {
     constructor(dbControllerName=null) {
+        if(dbControllerName) this.chooseController(dbControllerName)
+    }
+
+    async chooseController(dbControllerName=null){
         if(dbControllerName === null){
-            throw new Error("You must instantiate with ones of the dbs: 'mongo' 'maria' 'tiny'")
+            throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
         }
-        this.dbControllerName = dbControllerNam
         switch(dbControllerName){
             case "mongo":
                 this.controller = new MongoController()
@@ -27,6 +30,13 @@ class PolyController {
                 this.controller = null
                 throw new Error(`No registered db for '${dbControllerName}'`)     
         }
+        if(this.controller) this.controller.connect()    
+    }
+    
+    // end the connection to the active controller and start an active connection with the provided controller
+    async connectToController(dbControllerName){
+        this.controller.close()
+        this.chooseController(dbControllerName)
     }
 
     // Check that the chosen controller has an active connection
