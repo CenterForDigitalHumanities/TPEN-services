@@ -42,9 +42,7 @@ router.route('/:id')
 
       if (lineObject.statusCode === 404) {
         return utils.respondWithError(res, 404, lineObject.body)
-      } else {
-        respondWithLine(res, lineObject)
-      }
+      } 
     } catch (error) {
       console.error(error)
       return utils.respondWithError(res, 500, 'Internal Server Error')

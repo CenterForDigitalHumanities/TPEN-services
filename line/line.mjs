@@ -1,15 +1,15 @@
-import * as utils from '../utilities/shared.mjs';
+import * as utils from '../utilities/shared.mjs'
 
 export async function findLineById(id = null, options = {}) {
   if (id === null || id === undefined || !utils.validateID(id)) {
-    return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: null };
+    return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: null }
   }
 
   const mockPause = new Promise((resolve) => {
     setTimeout(() => {
-      resolve(null);
-    }, 1500);
-  });
+      resolve(null)
+    }, 1500)
+  })
 
   const linesArray = [
     {
@@ -24,32 +24,30 @@ export async function findLineById(id = null, options = {}) {
       viewer: 'https://static.t-pen.org/#ProjectId/#PageId/#LineId123',
       license: 'CC-BY',
     },
-  ];
+  ]
 
-  let line = linesArray.find((line) => line.id === id) || (await mockPause);
+  let line = linesArray.find((line) => line.id === id) || (await mockPause)
 
   if (line === null || line.id !== id) {
-    return { statusCode: 404, body: `TPEN 3 line "${id}" does not exist.` };
+    return { statusCode: 404, body: `TPEN 3 line "${id}" does not exist.` }
   }
 
-  switch (options.text) {
-    case 'blob':
-      return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: line.text };
-    default:
-      break;
-  }
+  if (options.text === 'blob') {
+  return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: line.text }
+}
+
 
   switch (options.image) {
     case 'full':
-      return { statusCode: 200, headers: { 'Content-Type': 'image/jpeg' }, body: line.canvas };
+      return { statusCode: 200, headers: { 'Content-Type': 'image/jpeg' }, body: line.canvas }
     case 'line':
-      return { statusCode: 200, headers: { 'Content-Type': 'image/jpeg' }, body: `some line image URL for id ${id}` };
+      return { statusCode: 200, headers: { 'Content-Type': 'image/jpeg' }, body: `some line image URL for id ${id}` }
     default:
-      break;
+      break
   }
 
   if (options.lookup) {
-    return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: `some ${options.lookup} document for id ${id}` };
+    return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: `some ${options.lookup} document for id ${id}` }
   }
 
   const jsonResponse = {
@@ -63,27 +61,26 @@ export async function findLineById(id = null, options = {}) {
     layer: line.layer,
     viewer: line.viewer,
     license: line.license,
-  };
-
+  }
   switch (options.view) {
     case 'xml':
-      return { statusCode: 200, headers: { 'Content-Type': 'text/xml' }, body: generateXML(line) };
+      return { statusCode: 200, headers: { 'Content-Type': 'text/xml' }, body: generateXML(line) }
     case 'html':
-      return { statusCode: 200, headers: { 'Content-Type': 'text/html' }, body: generateHTML(line) };
+      return { statusCode: 200, headers: { 'Content-Type': 'text/html' }, body: generateHTML(line) }
     default:
-      break;
+      break
   }
 
   if (options.embed === true) {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expandedDocument: jsonResponse }) };
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expandedDocument: jsonResponse }) }
   }
 
-  return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: jsonResponse };
+  return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: jsonResponse }
 }
 
 function generateXML(lineData) {
   // Generate XML representation of the line data
-  return `<line><id>${lineData.id}</id><text>${lineData.text}</text></line>`;
+  return `<line><id>${lineData.id}</id><text>${lineData.text}</text></line>`
 }
 
 function generateHTML(lineData) {
@@ -96,5 +93,5 @@ function generateHTML(lineData) {
         <p>${lineData.text}</p>
       </body>
     </html>
-  `;
+  `
 }
