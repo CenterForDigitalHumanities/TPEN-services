@@ -8,7 +8,12 @@ class DatabaseController{
 
     constructor() {
         // Establish constants
-        
+        this.URLS = {}
+        this.URLS.CREATE = "https://dev.tiny.t-pen.org/create"
+        this.URLS.UPDATE = "https://dev.tiny.t-pen.org/update"
+        this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwrite"
+        this.URLS.QUERY = "https://dev.tiny.t-pen.org/query"
+        this.URLS.DELETE = "https://dev.tiny.t-pen.org/delete"
     }
     
     /** Other modules do not connect or close */
@@ -25,24 +30,106 @@ class DatabaseController{
         // Send a /query to ping TinyPen
     }
 
-    async create(collection, data) {
-        // tinypen/create
-    }
-
-    async update(collection, query, update) {
-        // tinypen/update
-    }
-
-    async remove(collection, id) {
-        // tinypen/delete
+    /**
+     * Use the TinyPEN query endpoint to find JSON objects matching the supplied property values.
+     * @return the found JSON as an Array or Error
+     */ 
+    async query(data) {
+        return await fetch(this.URLS.QUERY,{
+            method: 'post',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        })
+        .then(resp => resp.json())
+        .catch(err => {
+            console.error(err)
+            throw err
+        })
     }
 
     /**
-     * Get by property matches and return all objects that match
+     * Use the TinyPEN create endpoint to create the supplied JSON object.
+     * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
+     * @return the created JSON or Error
      */ 
-    async query(collection, params={"bryan_says_you_will_find":"nothing"}){
-        // tinypen/query
-    }   
+    async create(data) {
+        return await fetch(this.URLS.CREATE,{
+            method: 'post',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        })
+        .then(resp => resp.json())
+        .catch(err => {
+            console.error(err)
+            throw err
+        })
+    }
+
+    /**
+     * Use the TinyPEN update endpoint to create the supplied JSON object.
+     * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
+     * @return the updated JSON or Error
+     */ 
+    async update(data) {
+        return await fetch(this.URLS.UPDATE,{
+            method: 'put',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        })
+        .then(resp => resp.json())
+        .catch(err => {
+            console.error(err)
+            throw err
+        })
+    }
+
+    /**
+     * Use the TinyPEN overwrite endpoint to create the supplied JSON object.
+     * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
+     * @return the updated JSON or Error
+     */ 
+    async overwrite(data) {
+        return await fetch(this.URLS.OVERWRITE,{
+            method: 'put',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        })
+        .then(resp => resp.json())
+        .catch(err => {
+            console.error(err)
+            throw err
+        })
+    }
+
+    /**
+     * Use the TinyPEN delete endpoint to create the supplied JSON object.
+     * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
+     * @return the created JSON or Error
+     */ 
+    async remove(data) {
+        return await fetch(this.URLS.DELETE,{
+            method: 'delete',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        })
+        .then(resp => {
+            if(!resp.ok) throw new Error("Could not delete data")
+        })
+        .catch(err => {
+            console.error(err)
+            throw err
+        })
+    }
 
 }
 
