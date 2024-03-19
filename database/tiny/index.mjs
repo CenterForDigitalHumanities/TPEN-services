@@ -14,6 +14,7 @@ class DatabaseController{
         this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwrite"
         this.URLS.QUERY = "https://dev.tiny.t-pen.org/query"
         this.URLS.DELETE = "https://dev.tiny.t-pen.org/delete"
+        console.log("TINY API established")
     }
     
     /** Other modules do not connect or close */

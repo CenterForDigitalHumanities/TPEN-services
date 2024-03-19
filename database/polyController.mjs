@@ -30,7 +30,7 @@ class PolyController {
                 this.controller = null
                 throw new Error(`No registered db for '${dbControllerName}'`)     
         }
-        if(this.controller) await this.controller.connect()    
+        if(this.controller !== null) await this.controller.connect()    
     }
     
     // end the connection to the active controller and start an active connection with the provided controller

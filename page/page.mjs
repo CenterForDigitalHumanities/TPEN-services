@@ -1,4 +1,8 @@
 import * as utils from "../utilities/shared.mjs"
+import Database from "../database/polyController.mjs"
+
+const database = new Database()
+database.chooseController("tiny")
 
 export async function findPageById(id = null) {
     let page = null;

@@ -1,4 +1,4 @@
-import { default as mariadb } from 'mariadb'
+import mariadb from 'mariadb'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
 let storedEnv = dotenv.config()
@@ -16,7 +16,7 @@ class DatabaseController {
                 host: process.env.MARIADB, 
                 user: process.env.MARIADBUSER, 
                 password: process.env.MARIADBPASSWORD,
-                database: name,
+                database: process.env.MARIADBNAME,
                 connectionLimit: 55
             })
         }
@@ -26,7 +26,7 @@ class DatabaseController {
         }
         try {
             this.conn = await this.client.getConnection()
-            console.log("MariaDB Connection Estabsliehd")
+            console.log("MariaDB Connection Established")
             console.log(process.env.MARIADB)
         } 
         catch (err) {
@@ -45,7 +45,6 @@ class DatabaseController {
     async create(table, document) {
         // TODO insert statement
         //const result = await this.conn.query(`INSERT INTO ${table} value (${document})`);
-        console.log("MARIADB CREATING...")
         const result = {"hello" : "Bryan"}
         console.log(result)
         return result
@@ -60,6 +59,7 @@ class DatabaseController {
     }
 
     async update(table, document, matchParams) {
+        // TODO update statement
         //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`);
         const result = {"hello" : "Bryan"}
         console.log(result)

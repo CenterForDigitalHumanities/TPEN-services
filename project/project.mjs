@@ -1,5 +1,10 @@
 /** Logic for the /project endpoint */
-import * as utils from '../utilities/shared.mjs'
+import Database from "../database/polyController.mjs"
+import * as utils from "../utilities/shared.mjs"
+
+const database = new Database()
+database.chooseController("maria")
+
 import * as fs from 'fs'
 
 export async function findTheProjectByID(id = null) {
