@@ -1,9 +1,13 @@
 import { default as mariadb } from 'mariadb'
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
+let storedEnv = dotenv.config()
+dotenvExpand.expand(storedEnv)
 
 class DatabaseController {
     constructor(connect=false) {
         // try to establish the client and connect
-        if(connect) await this.connect()
+        if(connect) this.connect()
     }
 
     async connect() {

@@ -40,7 +40,8 @@
       "mariadb": "^3.2.3",
       "mongodb": "^6.4.0",
       "morgan": "^1.10.0",
-      "nock": "~13.4.0"
+      "nock": "~13.4.0",
+      "node-fetch": "^3.3.2"
    },
    "devDependencies": {
       "@jest-mock/express": "^2.0.2",

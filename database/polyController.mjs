@@ -30,11 +30,11 @@ class PolyController {
                 this.controller = null
                 throw new Error(`No registered db for '${dbControllerName}'`)     
         }
-        if(this.controller) this.controller.connect()    
+        if(this.controller) await this.controller.connect()    
     }
     
     // end the connection to the active controller and start an active connection with the provided controller
-    async connectToController(dbControllerName){
+    async connectToNewController(dbControllerName){
         this.controller.close()
         this.chooseController(dbControllerName)
     }

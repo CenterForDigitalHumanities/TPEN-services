@@ -6,10 +6,11 @@
  * 
  * */
 
-import Database from "../database/index.mjs"
+import Database from "../database/polyController.mjs"
 import * as utils from "../utilities/shared.mjs"
 
 const database = new Database()
+database.chooseController("mongo")
 
 /**
  * Go into the database to get the Project information for the id input.
@@ -58,6 +59,6 @@ export async function findTheManifestByID(id=null){
 }
 
 export async function createManifest(manifestJSON){
-   const created = await MongoDBController.create("test", manifestJSON)
+   const created = await database.create("test", manifestJSON)
    return created
 }

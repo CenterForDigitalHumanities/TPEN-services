@@ -1,4 +1,8 @@
 import fetch from 'node-fetch'
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
+let storedEnv = dotenv.config()
+dotenvExpand.expand(storedEnv)
 
 class DatabaseController{
 
@@ -8,7 +12,7 @@ class DatabaseController{
     }
     
     /** Other modules do not connect or close */
-    async function connect() {
+    async connect() {
         // No need for this, but maybe we can stub it to be like "no no no not here good try tho"
     }
 
@@ -41,3 +45,5 @@ class DatabaseController{
     }   
 
 }
+
+export default DatabaseController

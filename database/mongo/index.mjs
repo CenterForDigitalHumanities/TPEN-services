@@ -1,15 +1,18 @@
 import { MongoClient, ObjectId } from 'mongodb'
-
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
+let storedEnv = dotenv.config()
+dotenvExpand.expand(storedEnv)
 
 class DatabaseController{
 
     constructor(connect=false) {
         // try to establish the client and connect
-        if(connect) await this.connect()
+        if(connect) this.connect()
     }
     
     /** Other modules do not connect or close */
-    async function connect() {
+    async connect() {
         try {
             this.client = new MongoClient(process.env.MONGODB)
             this.db = this.client.db(process.env.MONGODBNAME)
@@ -75,3 +78,5 @@ class DatabaseController{
     }    
 
 }
+
+export default DatabaseController
