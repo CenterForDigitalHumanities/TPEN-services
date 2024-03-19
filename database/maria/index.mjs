@@ -54,8 +54,6 @@ class DatabaseController {
         return result
     }
 
-    // Project methods
-
 }
 
 export default DatabaseController
