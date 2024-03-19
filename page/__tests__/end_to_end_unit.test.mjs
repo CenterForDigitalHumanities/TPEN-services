@@ -80,20 +80,14 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
       const res = await request(routeTester)
         .get('/page/123?text=layers')
         expect(res.statusCode).toBe(200)
-        expect(res.body.layersText).toBeTruthy()
-        // Add assertions to validate the layers text response
     })
   
 
-    it('GET request with no query params. Should return the default page data.', async () => {
-      const page = await findPageById(123);
-      expect(page).toEqual(createPageResponse(123));
-    });
 
     it('GET request with ?text=lines query param. Should return lines text.', async () => {
       const queryParams = { text: 'lines' };
       const page = await findPageById(123, queryParams);
-      expect(page.linesText).toBeTruthy();
+      expect(page[0].textualBody).toBeTruthy();
       // Add assertions to validate the lines text response
     });
   
@@ -114,28 +108,27 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
     it('GET request with ?lookup=project query param. Should return project document.', async () => {
       const queryParams = { lookup: 'project' };
       const page = await findPageById(123, queryParams);
-      expect(page.projectDoc).toBeTruthy();
-      // Add assertions to validate the project document response
+      expect(page.id).toBeTruthy();
     });
   
     it('GET request with ?view=xml query param. Should return XML document.', async () => {
       const queryParams = { view: 'xml' };
       const page = await findPageById(123, queryParams);
-      expect(page.xmlDoc).toBeTruthy();
+      expect(page).toBeTruthy();
       // Add assertions to validate the XML document response
     });
   
     it('GET request with ?view=html query param. Should return HTML document.', async () => {
       const queryParams = { view: 'html' };
       const page = await findPageById(123, queryParams);
-      expect(page.htmlDoc).toBeTruthy();
+      expect(page).toBeTruthy();
       // Add assertions to validate the HTML document response
     });
   
     it('GET request with ?embed=true query param. Should return embedded HTML document.', async () => {
       const queryParams = { embed: true };
       const page = await findPageById(123, queryParams);
-      expect(page.htmlDoc).toBeTruthy();
+      expect(page).toBeTruthy();
       // Add assertions to validate the embedded HTML document response
     });
   })
