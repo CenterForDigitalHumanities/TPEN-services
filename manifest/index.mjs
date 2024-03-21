@@ -36,6 +36,14 @@ router.use(
   })
 )
 
+// Send a successful response from queryForManifest
+export function respondWithManifests(res, manifest){
+   const id = manifest["@id"] ?? manifest.id ?? null
+   res.set("Content-Type", "application/json; charset=utf-8")
+   res.status(200)
+   res.json(manifest)
+}
+
 // Send a successful response with the appropriate JSON
 export function respondWithManifest(res, manifest){
    const id = manifest["@id"] ?? manifest.id ?? null
@@ -45,7 +53,7 @@ export function respondWithManifest(res, manifest){
    res.json(manifest)
 }
 
-// Send a successful response with the appropriate JSON
+// Send a successful response from createManifest
 export function respondWithCreatedManifest(res, manifest){
    const id = manifest._id ?? null
    res.set("Content-Type", "application/json; charset=utf-8")
@@ -77,7 +85,7 @@ router.route('/update')
    .put(async (req, res, next) => {
       const j = req.body
       // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
-      const result = await logic.createManifest(j)
+      const result = await logic.updateManifest(j)
       if(result["@id"]){
          respondWithManifest(res, result)
       }
@@ -94,9 +102,9 @@ router.route('/query')
    .post(async (req, res, next) => {
       const j = req.body
       // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
-      const result = await logic.createManifest(j)
+      const result = await logic.queryForManifests(j)
       if(result["@id"]){
-         respondWithManifest(res, result)
+         respondWithManifests(res, result)
       }
       else{
          utils.respondWithError(res, result.status, result.message)
@@ -110,10 +118,9 @@ router.route('/query')
 router.route('/:id')
    .get(async (req, res, next) => {
       let id = req.params.id
-      if(!utils.validateID(id)){
-         utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
-      }
-      id = parseInt(id)
+      // if(!utils.validateID(id)){
+      //    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+      // }
       const manifestObj = await logic.findTheManifestByID(id)
       if(manifestObj){
          respondWithManifest(res, manifestObj)
