@@ -54,7 +54,7 @@ export function respondWithCreatedManifest(res, manifest){
    res.json(manifest)
 }
 
-// Handle a post request which creates the JSON and sends back the id
+// Handle a post request which creates the Manifest through TinyPen and gives back the created object
 router.route('/create')
    .post(async (req, res, next) => {
       const j = req.body
@@ -62,6 +62,41 @@ router.route('/create')
       const result = await logic.createManifest(j)
       if(result["@id"]){
          respondWithCreatedManifest(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+   })
+
+
+// Handle a put request which updates an existing Manifest through TinyPen and gives back the updated object
+router.route('/update')
+   .put(async (req, res, next) => {
+      const j = req.body
+      // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.createManifest(j)
+      if(result["@id"]){
+         respondWithManifest(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+   })
+
+// Handle a post request which queries for existing objects through TinyPen and gives back the matched objects
+router.route('/query')
+   .post(async (req, res, next) => {
+      const j = req.body
+      // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.createManifest(j)
+      if(result["@id"]){
+         respondWithManifest(res, result)
       }
       else{
          utils.respondWithError(res, result.status, result.message)

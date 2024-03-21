@@ -7,21 +7,16 @@
  * 
  * */
 
-import {findTheManifestByID} from '../manifest.mjs'
+import * as logic from '../manifest.mjs'
 import {validateID} from '../../utilities/shared.mjs'
 
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
+  it('Need to redo tests to account for new db controller', () => {
+    expect(true).toBe(false)
+  })
 
-  it('No TPEN3 project id provided.  Project validation must be false.', () => {
-    expect(validateID()).toBe(false)
-  })
-  it('Detect TPEN3 project does not exist.  The query for a TPEN3 project must be null.', async () => {
-    const manifest = await findTheManifestByID(-111)
-    expect(manifest).toBe(null)
-  })
-  it('TPEN3 project does exist.  Finding the manifest results in the manifest JSON', async () => {
-    let manifest = await findTheManifestByID(7085)
-    expect(manifest).not.toBe(null)
-  })
+  // await logic.createManifest(manifestJSON)
+  // await logic.updateManifest(manifestJSON)
+  // await logic.queryForManifest(manifestJSON)
 
 }) 
