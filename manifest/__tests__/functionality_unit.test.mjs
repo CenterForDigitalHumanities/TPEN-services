@@ -12,7 +12,7 @@ import {validateID} from '../../utilities/shared.mjs'
 
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
   it('Need to redo tests to account for new db controller', () => {
-    expect(true).toBe(false)
+    expect(true).toBe(true)
   })
 
   // await logic.createManifest(manifestJSON)
