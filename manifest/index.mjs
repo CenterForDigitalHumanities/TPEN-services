@@ -45,6 +45,32 @@ export function respondWithManifest(res, manifest){
    res.json(manifest)
 }
 
+// Send a successful response with the appropriate JSON
+export function respondWithCreatedManifest(res, manifest){
+   const id = manifest._id ?? null
+   res.set("Content-Type", "application/json; charset=utf-8")
+   res.location(id)
+   res.status(201)
+   res.json(manifest)
+}
+
+// Handle a post request which creates the JSON and sends back the id
+router.route('/create')
+   .post(async (req, res, next) => {
+      const j = req.body
+      // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.createManifest(j)
+      if(result["@id"]){
+         respondWithCreatedManifest(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+   })
+
 // Expect an /{id} as part of the route, like /manifest/123
 router.route('/:id')
    .get(async (req, res, next) => {
@@ -66,15 +92,6 @@ router.route('/:id')
    })
 
 // Handle lack of an /{id} as part of the route
-router.route('/')
-   .get((req, res, next) => {
-      utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')
-   })
-   .all((req, res, next) => {
-      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-   })
-
-// Handle a post request which creates the JSON and sends back the id
 router.route('/')
    .get((req, res, next) => {
       utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')

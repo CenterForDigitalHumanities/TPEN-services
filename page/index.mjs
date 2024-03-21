@@ -29,6 +29,22 @@ router.use(
   })
 )
 
+// Handle a post create which creates the JSON and sends back the id
+router.route('/create')
+   .post(async (req, res, next) => {
+      const j = req.body
+      const result = await service.createPage(j)
+      if(result["_id"]){
+         respondWithCreatedPage(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use POST.')
+   })
+
 router.route('/:id?')
   .get(async (req, res, next) => {
     let id = req.params.id
@@ -52,6 +68,16 @@ router.route('/:id?')
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   });
+
+// Send a successful response with the appropriate JSON
+export function respondWithCreatedPage(res, page){
+   const id = page._id ?? null
+   res.set("Content-Type", "application/json; charset=utf-8")
+   res.location(id)
+   res.status(201)
+   res.json(page)
+}
+
 
 function respondWithPage(res, pageObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')

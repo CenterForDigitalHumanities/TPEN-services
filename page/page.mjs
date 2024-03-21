@@ -2,7 +2,7 @@ import * as utils from "../utilities/shared.mjs"
 import Database from "../database/polyController.mjs"
 
 const database = new Database()
-database.chooseController("tiny")
+database.chooseController("mongo")
 
 export async function findPageById(id = null) {
     let page = null;
@@ -29,3 +29,8 @@ export async function findPageById(id = null) {
   
     return page;
   }
+
+export async function createPage(page){
+  const newPage = await database.create(page)
+  return newPage
+}

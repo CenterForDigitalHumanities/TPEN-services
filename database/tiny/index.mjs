@@ -9,26 +9,30 @@ class DatabaseController{
     constructor() {
         // Establish constants
         this.URLS = {}
-        this.URLS.CREATE = "https://dev.tiny.t-pen.org/create"
-        this.URLS.UPDATE = "https://dev.tiny.t-pen.org/update"
-        this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwrite"
-        this.URLS.QUERY = "https://dev.tiny.t-pen.org/query"
-        this.URLS.DELETE = "https://dev.tiny.t-pen.org/delete"
+        this.URLS.CREATE = "https://dev.tiny.t-pen.org/createx"
+        this.URLS.UPDATE = "https://dev.tiny.t-pen.org/updatex"
+        this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwritex"
+        this.URLS.QUERY = "https://dev.tiny.t-pen.org/queryx"
+        this.URLS.DELETE = "https://dev.tiny.t-pen.org/deletex"
         console.log("TINY API established")
     }
     
     /** Other modules do not connect or close */
     async connect() {
-        // No need for this, but maybe we can stub it to be like "no no no not here good try tho"
+        console.log("No need to connect().  The API awaits you!")
     }
 
     /** Other modules do not connect or close */
     async close() {
-        // No need for this, but maybe we can stub it to be like "no no no not here good try tho"
+        console.log("No need to close().  The API awaits you!")
     }
 
     async connected() {
         // Send a /query to ping TinyPen
+        const theone = await query({"_id": "11111"})
+        console.log("the one")
+        console.log(theone)
+        return theone.length === 1
     }
 
     /**
@@ -43,9 +47,13 @@ class DatabaseController{
                 'Content-Type': 'application/json; charset=utf-8'
             }
         })
-        .then(resp => resp.json())
+        .then(resp => {
+            if(resp.ok) resp.json()
+            else{
+                return { "endpoint_error":this.URLS.CREATE, "status":resp.status, "message": resp.statusText }
+            }
+        })
         .catch(err => {
-            console.error(err)
             throw err
         })
     }
@@ -63,10 +71,14 @@ class DatabaseController{
                 'Content-Type': 'application/json; charset=utf-8'
             }
         })
-        .then(resp => resp.json())
+        .then(resp => {
+            if(resp.ok) resp.json()
+            else{
+                return { "endpoint_error":this.URLS.CREATE, "status":resp.status, "message": resp.statusText }
+            }
+        })
         .catch(err => {
-            console.error(err)
-            throw err
+            return err
         })
     }
 
@@ -83,9 +95,13 @@ class DatabaseController{
                 'Content-Type': 'application/json; charset=utf-8'
             }
         })
-        .then(resp => resp.json())
+        .then(resp => {
+            if(resp.ok) resp.json()
+            else{
+                return { "endpoint_error":this.URLS.UPDATE, "status":resp.status, "message": resp.statusText }
+            }
+        })
         .catch(err => {
-            console.error(err)
             throw err
         })
     }
@@ -103,7 +119,12 @@ class DatabaseController{
                 'Content-Type': 'application/json; charset=utf-8'
             }
         })
-        .then(resp => resp.json())
+        .then(resp => {
+            if(resp.ok) resp.json()
+            else{
+                return { "endpoint_error":this.URLS.OVERWRITE, "status":resp.status, "message": resp.statusText }
+            }
+        })
         .catch(err => {
             console.error(err)
             throw err
@@ -124,7 +145,7 @@ class DatabaseController{
             }
         })
         .then(resp => {
-            if(!resp.ok) throw new Error("Could not delete data")
+            if(!resp.ok) return { "endpoint_error":this.URLS.DELETE, "status":resp.status, "message": resp.statusText }
         })
         .catch(err => {
             console.error(err)

@@ -4,14 +4,50 @@ import dotenvExpand from 'dotenv-expand'
 let storedEnv = dotenv.config()
 dotenvExpand.expand(storedEnv)
 
+
+/**
+ * This mongo controller oversees has multiple collections.
+ * Requests have to determine which collection they go to based on the user input.
+ * User input does not specifically designate a collection as part of the request.
+ * A collection is programatically chosen based on the 'type' of the input JSON.
+ * Expected types
+ *    - Project
+ *    - Page
+ *    - Group
+ *    - User
+ *    - UserPreferece
+ * All other object types result in a "Bad Request"
+ */ 
+function discernCollectionFromType(data){
+    const data_type = data["@type"] ?? data.type ?? null
+    let collection = null
+    if(!data_type) return collection
+    switch(data_type){
+        case "Project":
+        case "Page":
+            collection = process.env.TPENPROJECTS
+        break
+        case "Group":
+        case "User":
+            collection = process.env.TPENGROUPS
+        break
+        case "UserPreference":
+            collection = process.env.TPENUSERPREFERENCES
+        break
+        default:
+    }
+    return collection
+}
+
 class DatabaseController{
 
     constructor(connect=false) {
-        // try to establish the client and connect
         if(connect) this.connect()
     }
     
-    /** Other modules do not connect or close */
+    /** 
+     * Set the client for the controller and open a connection
+     * */
     async connect() {
         try {
             this.client = new MongoClient(process.env.MONGODB)
@@ -30,52 +66,164 @@ class DatabaseController{
     /** Other modules do not connect or close */
     async close() {
         await this.client.close()
+        console.log("Mongo controller client closed")
     }
 
-
+    /** 
+     * Generate an new mongo _id as a hex string (as opposed _id object, for example) 
+     * @return A hex string or error
+     * */
     newID() {
-        return new ObjectId().toHexString()
+        try{
+            return new ObjectId().toHexString()    
+        }
+        catch(err){
+            return err
+        }
     }
 
+    /** 
+     * Generally check that the controller has an active connection 
+     * @return boolean
+     * */
     async connected() {
         // Send a ping to confirm a successful connection
-        await this.db.collection(process.env.TPENPROJECTS).command({ ping: 1 }).catch(err => {return false})
-        return true
+        try{
+            console.log("connected ping")
+            let result = await this.db.collection(process.env.TPENPROJECTS).command({ ping: 1 }).catch(err => {return false})
+            result = result ? true : false
+            return result    
+        }
+        catch(err){
+            return false
+        }
+        
     }
 
-    async create(collection, data) {
-        console.log("MONGODB CREATING...")
-        const result = await this.db.collection(collection).insertOne(data)
-        console.log(result)
-        data["@id"] = process.env.SERVERURL+"created/"+result.insertedId
-        return data
+    /**
+     * Get by property matches and return all objects that match
+     * @return JSON Array of matched documents or standard error object
+     */ 
+    async query(props){
+        try{
+            //need to determine what collection (projects, groups, userPerferences) this goes into.
+            const data_type = data["@type"] ?? data.type ?? null
+            if(!data_type) 
+                return {"endpoint_error": "find", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
+            const collection = discernCollectionFromType(data_type)
+            if(!collection) 
+                return {"endpoint_error": "find", "status":400, "message":`Cannot figure which collection for object of type '${data_type}'`}
+            if (Object.keys(props).length === 0) 
+                return {"endpoint_error": "find", "status":400, "message":`Empty or null object detected.  You must provide a query object.`}
+            let result = await this.db.collection(collection).find(data).toArray()
+            return result
+        }
+        catch(err){
+            return {"endpoint_error": "find", "status":500, "message":"There was an error querying the database."}
+        }
+    }    
+
+    /**
+     * Insert a document into the database (mongo)
+     * @param data JSON from an HTTP POST request
+     * @return The inserted document JSON or error JSON
+     */ 
+    async create(data) {
+        try{
+            //need to determine what collection (projects, groups, userPerferences) this goes into.
+            const data_type = data["@type"] ?? data.type ?? null
+            if(!data_type) 
+                return {"endpoint_error": "insertOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
+            const collection = discernCollectionFromType(data_type)
+            if(!collection) 
+                return {"endpoint_error": "insertOne", "status":400, "message":`Cannot figure which collection for object of type '${data_type}'`}
+            const result = await this.db.collection(collection).insertOne(data)
+            console.log(result)
+            if(result.insertedId){
+                data["@id"] = process.env.SERVERURL+"created/"+result.insertedId
+                return data    
+            }
+            else{
+                return {"endpoint_error": "insertOne", "status":500, "message":"Document was not inserted into the database."}
+            }
+        }
+        catch(err){
+            return {"endpoint_error": "insertOne", "status":500, "message":"There was an error inserting the document into the database."}
+        }
     }
 
-    async update(collection, query, update) {
-        const result = await this.db.collection(collection).updateOne(query, { $set: update })
-        return result
+    /**
+     * Update an existing object in the database (mongo)
+     * @param data JSON from an HTTP POST request.  It must contain an id.
+     * @return The inserted document JSON or error JSON
+     */ 
+    async update(data) {
+        try{
+            //need to determine what collection (projects, groups, userPerferences) this goes into.
+            const data_type = data["@type"] ?? data.type ?? null
+            let data_id = data["@id"] ?? data._id ?? null
+            let collection = null
+            if(!data_id) 
+                return {"endpoint_error": "updateOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
+            if(!data_type) 
+                return {"endpoint_error": "updateOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
+            collection = discernCollectionFromType(data_type)
+            if(!collection) 
+                return {"endpoint_error": "updateOne", "status":500, "message":`Cannot figure which collection for object of type '${data_type}'`}
+            const obj_id = data_id.split("/").pop()
+            const filter = { "_id:": obj_id }
+            const options = {}
+            const updateDoc = { $set: update }
+            const result = await this.db.collection(collection).updateOne(filter, updateDoc, options)
+            console.log(result)
+            if(result?.matchedCount === 0){
+                return {"endpoint_error": "updateOne", "status":404, "message":`id '${obj_id}' Not Found`}  
+            }
+            if(result?.modifiedCount >= 0){
+                return updateDoc
+            }
+            else{
+                return {"endpoint_error": "updateOne", "status":500, "message":"Document was not updated in the database."}
+            }
+        }
+        catch(err){
+            return {"endpoint_error": "updateOne", "status":500, "message":"There was an error updating the document in the database."}
+        }
     }
 
-    async remove(collection, id) {
+    /**
+     * Update an existing object in the database (mongo)
+     * @param data JSON from an HTTP DELETE request.  It must contain an id.
+     * @return The delete result JSON or error JSON
+     */ 
+    async remove(data) {
+        const data_type = data["@type"] ?? data.type ?? null
+        let data_id = data["@id"] ?? data._id ?? null
+        let collection = null
+        if(!data_id) 
+            return {"endpoint_error": "deleteOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
+        if(!data_type) 
+            return {"endpoint_error": "deleteOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
+        collection = discernCollectionFromType(data_type)
+        if(!collection) 
+            return {"endpoint_error": "deleteOne", "status":500, "message":`Cannot figure which collection for object of type '${data_type}'`}
+            
         const result = await this.db.collection(collection).deleteOne(query, { $set: update })
-        return result
+        if(result?.ok){
+            return result
+        }
+        else{
+            return {"endpoint_error": "updateOne", "status":500, "message":result.message}
+        }
     }
 
     /**
      * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s 
      */ 
-    async getByID(collection, id) {
-        const result = await this.db.collection(collection).findOne({"_id":id})
+    async getByID(id) {
+        const result = await this.query({"_id":id})
         return result
     }
-
-    /**
-     * Get by property matches and return all objects that match
-     */ 
-    async query(collection, params={"bryan_says_you_will_find":"nothing"}){
-        const results = await this.db.collection(collection).find(params)
-        return results
-    }    
 
 }
 

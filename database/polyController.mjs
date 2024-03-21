@@ -9,13 +9,18 @@ import MongoController from "./mongo/index.mjs"
 
 class PolyController {
     constructor(dbControllerName=null) {
+        // May construct with a chosen controller which will automatically set the active controller
         if(dbControllerName) this.chooseController(dbControllerName)
     }
 
+    // Set or Change the active controller.
     async chooseController(dbControllerName=null){
-        if(dbControllerName === null){
-            throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
-        }
+        // Must provide a controller name
+        if(dbControllerName === null) throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
+        // Nothing to do if the controller is already active
+        if(this?.dbControllerName === dbControllerName) throw new Error(`'${dbControllerName}' is already the active controller.`)
+        // If there is an active controller, close the connection before switching
+        if(this?.controller) this.controller.close()
         switch(dbControllerName){
             case "mongo":
                 this.controller = new MongoController()
@@ -30,13 +35,11 @@ class PolyController {
                 this.controller = null
                 throw new Error(`No registered db for '${dbControllerName}'`)     
         }
-        if(this.controller !== null) await this.controller.connect()    
-    }
-    
-    // end the connection to the active controller and start an active connection with the provided controller
-    async connectToNewController(dbControllerName){
-        this.controller.close()
-        this.chooseController(dbControllerName)
+        // If we were able to discern a controller, connect to that controller
+        if(this.controller !== null) {
+            this.dbControllerName = dbControllerName
+            this.controller.connect()    
+        }
     }
 
     // Check that the chosen controller has an active connection
@@ -46,13 +49,13 @@ class PolyController {
 
     // Close the connection of the active controller
     async close() {
-        await this.controller.close()
+        return await this.controller.close()
     }
 
     // Create through the correct db controller
-    async create(document) {
-        const result = await this.controller.create(document)
-        console.log(result)
+    async create(data) {
+        const result = await this.controller.create(data)
+        //if(result.endpoint_error) console.error(result)
         return result
     }
 

@@ -36,6 +36,8 @@ export async function findTheProjectByID(id = null) {
 }
 
 export async function createProject(proj){
-  let newProj = await MongoDBController.create(process.env.TPENPROJECTS, proj)
+  console.log("Maria created project ")
+  const newProj = await database.create(process.env.TPENPROJECTS, proj)
+  console.log(newProj)
   return newProj
 }
