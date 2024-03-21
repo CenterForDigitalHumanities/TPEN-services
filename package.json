@@ -15,7 +15,7 @@
       "mongodb"
    ],
    "homepage": "https://t-pen.org/TPEN3",
-   "license": "UNLICENSED",
+   "license": "CC-BY",
    "author": "Research Computing Group <research.computing@slu.edu> (https://slu.edu)",
    "repository": "github:CenterForDigitalHumanities/rerum_server_nodejs",
    "scripts": {
