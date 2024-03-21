@@ -6,7 +6,7 @@ dotenvExpand.expand(storedEnv)
 
 
 /**
- * This mongo controller oversees has multiple collections.
+ * This mongo controller oversees multiple collections.
  * Requests have to determine which collection they go to based on the user input.
  * User input does not specifically designate a collection as part of the request.
  * A collection is programatically chosen based on the 'type' of the input JSON.
@@ -41,6 +41,10 @@ function discernCollectionFromType(data){
 
 class DatabaseController{
 
+    /**
+     * Basic constructor.
+     * @param connect A boolean for whether or not to attempt to open a connection to the mongo client immediately.
+     */ 
     constructor(connect=false) {
         if(connect) this.connect()
     }
@@ -63,10 +67,10 @@ class DatabaseController{
           } 
     }
 
-    /** Other modules do not connect or close */
+    /** Close the connection with the mongo client */
     async close() {
         await this.client.close()
-        console.log("Mongo controller client closed")
+        console.log("Mongo controller client has been closed")
     }
 
     /** 

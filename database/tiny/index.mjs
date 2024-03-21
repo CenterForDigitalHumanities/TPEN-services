@@ -6,8 +6,11 @@ dotenvExpand.expand(storedEnv)
 
 class DatabaseController{
 
+    /**
+     * Basic constructor to establish constant class properties
+     * @param connect A boolean for whether or not to attempt to open a connection to the mongo client immediately.
+     */ 
     constructor() {
-        // Establish constants
         this.URLS = {}
         this.URLS.CREATE = "https://dev.tiny.t-pen.org/createx"
         this.URLS.UPDATE = "https://dev.tiny.t-pen.org/updatex"
@@ -27,6 +30,11 @@ class DatabaseController{
         console.log("No need to close().  The API awaits you!")
     }
 
+    /** 
+     * Generally check that the TinyPEN API is running.
+     * Perform a query for an object we know is there.
+     * @return boolean
+     * */
     async connected() {
         // Send a /query to ping TinyPen
         const theone = await query({"_id": "11111"})
@@ -50,11 +58,11 @@ class DatabaseController{
         .then(resp => {
             if(resp.ok) resp.json()
             else{
-                return { "endpoint_error":this.URLS.CREATE, "status":resp.status, "message": resp.statusText }
+                return { "endpoint_error":this.URLS.QUERY, "status":resp.status, "message": resp.statusText }
             }
         })
         .catch(err => {
-            throw err
+            return { "endpoint_error":this.URLS.QUERY, "status":500, "message": "There was an error querying through TinyPen" }
         })
     }
 
@@ -78,7 +86,7 @@ class DatabaseController{
             }
         })
         .catch(err => {
-            return err
+            return return { "endpoint_error":this.URLS.CREATE, "status":500, "message": "There was an error creating through TinyPen" }
         })
     }
 
@@ -102,7 +110,7 @@ class DatabaseController{
             }
         })
         .catch(err => {
-            throw err
+            throw return return { "endpoint_error":this.URLS.UPDATE, "status":500, "message": "There was an error updating through TinyPen" }
         })
     }
 
@@ -126,13 +134,12 @@ class DatabaseController{
             }
         })
         .catch(err => {
-            console.error(err)
-            throw err
+            return { "endpoint_error":this.URLS.OVERWRITE, "status":500, "message": "There was an error overwriting through TinyPen" }
         })
     }
 
     /**
-     * Use the TinyPEN delete endpoint to create the supplied JSON object.
+     * Use the TinyPEN delete endpoint to delete the supplied JSON object.
      * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
      * @return the created JSON or Error
      */ 
@@ -148,11 +155,9 @@ class DatabaseController{
             if(!resp.ok) return { "endpoint_error":this.URLS.DELETE, "status":resp.status, "message": resp.statusText }
         })
         .catch(err => {
-            console.error(err)
-            throw err
+            return { "endpoint_error":this.URLS.DELETE, "status":500, "message": "There was an error deleting through TinyPen" }
         })
     }
-
 }
 
 export default DatabaseController
