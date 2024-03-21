@@ -21,7 +21,7 @@ export async function updateManifest(manifestJSON){
    return await database.update(manifestJSON)
 }
 
-export async function queryForManifest(manifestJSON){
+export async function queryForManifests(manifestJSON){
    return await database.read(manifestJSON)
 }
 
@@ -30,5 +30,5 @@ export async function findTheManifestByID(hash_id){
    const uri = process.env.RERUMIDPREFIX+hash_id
    return {"@id":uri, "type":"Manifest"}
    // TODO just fetch the RERUM URI
-   //return await database.getById(has_id)
+   //return await fetch()
 }
