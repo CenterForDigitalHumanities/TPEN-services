@@ -36,6 +36,6 @@ export async function findTheProjectByID(id = null) {
 }
 
 export async function createProject(proj){
-  const newProj = await database.create(process.env.TPENPROJECTS, proj)
+  const newProj = await database.create(proj)
   return newProj
 }
