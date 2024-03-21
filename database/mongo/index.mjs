@@ -217,7 +217,7 @@ class DatabaseController{
             return result
         }
         else{
-            return {"endpoint_error": "updateOne", "status":500, "message":result.message}
+            return {"endpoint_error": "deleteOne", "status":500, "message":result.message}
         }
     }
 

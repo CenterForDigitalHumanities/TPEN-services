@@ -6,9 +6,7 @@ dotenvExpand.expand(storedEnv)
 
 class DatabaseController{
 
-    /**
-     * Basic constructor to establish constant class properties
-     */ 
+    /** Basic constructor to establish constant class properties */ 
     constructor() {
         this.URLS = {}
         this.URLS.CREATE = "https://dev.tiny.t-pen.org/createx"
