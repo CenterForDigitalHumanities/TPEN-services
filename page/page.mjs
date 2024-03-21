@@ -31,6 +31,7 @@ export async function findPageById(id = null) {
   }
 
 export async function createPage(page){
+  console.log("create logic")
   const newPage = await database.create(page)
   return newPage
 }

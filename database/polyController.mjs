@@ -74,6 +74,7 @@ class PolyController {
      */ 
     async create(data) {
         const result = await this.controller.create(data)
+        if(result.endpoint_error) console.error(result)
         return result
     }
 
@@ -84,6 +85,7 @@ class PolyController {
      */ 
     async update(data) {
         const result = await this.controller.update(data)
+        if(result.endpoint_error) console.error(result)
         return result
     }
 
@@ -94,6 +96,7 @@ class PolyController {
      */ 
     async remove(data) {
         const result = await this.controller.remove(data)
+        if(result.endpoint_error) console.error(result)
         return result
     }
 
@@ -104,6 +107,7 @@ class PolyController {
      */ 
     async read(query) {
         const result = await this.controller.read(query)
+        if(result.endpoint_error) console.error(result)
         return result
     }
 }

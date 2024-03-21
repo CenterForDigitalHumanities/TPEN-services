@@ -32,6 +32,7 @@ router.use(
 // Handle a post create which creates the JSON and sends back the id
 router.route('/create')
    .post(async (req, res, next) => {
+    console.log("create route")
       const j = req.body
       const result = await service.createPage(j)
       if(result["_id"]){

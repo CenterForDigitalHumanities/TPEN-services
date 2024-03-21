@@ -18,11 +18,10 @@ dotenvExpand.expand(storedEnv)
  *    - UserPreferece
  * All other object types result in a "Bad Request"
  */ 
-function discernCollectionFromType(data){
-    const data_type = data["@type"] ?? data.type ?? null
+function discernCollectionFromType(type){
     let collection = null
-    if(!data_type) return collection
-    switch(data_type){
+    if(!type) return collection
+    switch(type){
         case "Project":
         case "Page":
             collection = process.env.TPENPROJECTS
@@ -135,6 +134,7 @@ class DatabaseController{
     async create(data) {
         try{
             //need to determine what collection (projects, groups, userPerferences) this goes into.
+            console.log("create logic - mongo")
             const data_type = data["@type"] ?? data.type ?? null
             if(!data_type) 
                 return {"endpoint_error": "insertOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}

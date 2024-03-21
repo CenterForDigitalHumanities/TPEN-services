@@ -84,7 +84,7 @@ class DatabaseController{
             }
         })
         .catch(err => {
-            return return { "endpoint_error":this.URLS.CREATE, "status":500, "message": "There was an error creating through TinyPen" }
+            return { "endpoint_error":this.URLS.CREATE, "status":500, "message": "There was an error creating through TinyPen" }
         })
     }
 
@@ -108,7 +108,7 @@ class DatabaseController{
             }
         })
         .catch(err => {
-            throw return return { "endpoint_error":this.URLS.UPDATE, "status":500, "message": "There was an error updating through TinyPen" }
+            return { "endpoint_error":this.URLS.UPDATE, "status":500, "message": "There was an error updating through TinyPen" }
         })
     }
 
