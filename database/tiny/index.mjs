@@ -9,12 +9,13 @@ class DatabaseController{
     /** Basic constructor to establish constant class properties */ 
     constructor() {
         this.URLS = {}
-        this.URLS.CREATE = "https://dev.tiny.t-pen.org/createx"
-        this.URLS.UPDATE = "https://dev.tiny.t-pen.org/updatex"
-        this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwritex"
-        this.URLS.QUERY = "https://dev.tiny.t-pen.org/queryx"
-        this.URLS.DELETE = "https://dev.tiny.t-pen.org/deletex"
+        this.URLS.CREATE = "https://dev.tiny.t-pen.org/create"
+        this.URLS.UPDATE = "https://dev.tiny.t-pen.org/update"
+        this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwrite"
+        this.URLS.QUERY = "https://dev.tiny.t-pen.org/query"
+        this.URLS.DELETE = "https://dev.tiny.t-pen.org/delete"
         console.log("TINY API established")
+        console.log(this.URLS)
     }
     
     /** Other modules do not connect or close */
