@@ -1,10 +1,5 @@
 /** Logic for the /project endpoint */
-import Database from "../database/polyController.mjs"
-import * as utils from "../utilities/shared.mjs"
-
-const database = new Database()
-database.chooseController("maria")
-
+import * as utils from '../utilities/shared.mjs'
 import * as fs from 'fs'
 
 export async function findTheProjectByID(id = null) {
@@ -33,9 +28,4 @@ export async function findTheProjectByID(id = null) {
     project = await mockPause
   }
   return project
-}
-
-export async function createProject(proj){
-  const newProj = await database.create(proj)
-  return newProj
 }
