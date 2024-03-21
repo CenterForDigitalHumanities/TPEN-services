@@ -1,29 +1,69 @@
-import MongoController from '../index.mjs'
+import DatabaseController from '../index.mjs'
+const database = new DatabaseController()
+
+let test_proj = { "@type": "Project", "name": "Test Project"}
+let test_group = { "@type": "Group", "name": "Test Group"}
+let test_userPreferences = { "@type": "UserPreferences", "name": 'Test UserReferences'}
 
 beforeAll(async () => {
-    // None if this will run without a controller that is connected.
-   return await MongoController.connected()
+   return await database.connect()
 })
 
 afterAll(async () => {
-   return await MongoController.close()
+   return await database.close()
 })
 
-describe('Mongo Database Unit Functions. #db',()=>{
-    it('creates a new object', async () => {
-        const t = { name: 'Test Object', description: 'This is a test.' }
-        const result = await MongoController.create(process.env.TPENPROJECTS, t)
+describe('Mongo Database Unit Functions. #mongo_unit #db',()=>{
+    it('connects for an active connection', async () => {
+        const result = await database.connected()
+        expect(result).toBe(true)
+    })
+    it('creates a new project', async () => {
+        const result = await database.create(test_proj)
+        test_proj["_id"] = result["_id"]
         expect(result["_id"]).toBeTruthy()
     })
-    it('updates an existing object', async () => {
-        expect(true).toBeTruthy()
+    it('creates a new group', async () => {
+        const result = await database.create(test_group)
+        test_group["_id"] = result["_id"]
+        expect(result["_id"]).toBeTruthy()
     })
-    it('Finds a single object by the provided id', async () => {
-        expect(true).toBeTruthy()
+    it('creates a new userPreferences', async () => {
+        const result = await database.create(test_userPreferences)
+        test_userPreferences["_id"] = result["_id"]
+        expect(result["_id"]).toBeTruthy()
     })
-    it('Finds multiple objects by matching on provided properties', async () => {
-        expect(true).toBeTruthy()
+
+    it('updates an existing project', async () => {
+        test_proj.name = "Test Project -- Updated"
+        const result = await database.update(test_proj)
+        expect(result["_id"]).toBeTruthy()
     })
+    it('updates an existing group', async () => {
+        test_group.name = "Test Group -- Updated"
+        const result = await database.update(test_group)
+        expect(result["_id"]).toBeTruthy()
+    })
+    it('updates an existing userPreferences', async () => {
+        test_userPreferences.name = "Test UserPreferences -- Updated"
+        const result = await database.update(test_userPreferences)
+        expect(result["_id"]).toBeTruthy()
+    })
+
+    it('Finds matching projects by query', async () => {
+        const result = await database.read(test_proj)
+        expect(result[0]["_id"]).toBe(test_proj["_id"])
+    })
+    it('Finds matching groups by query', async () => {
+        const result = await database.read(test_group)
+        expect(result[0]["_id"]).toBe(test_group["_id"])
+    })
+    it('Finds matching userPreferences by query', async () => {
+        const result = await database.read(test_userPreferences)
+        expect(result[0]["_id"]).toBe(test_userPreferences["_id"])
+    })
+
+    //TODO
     it('Deletes an object with the provided id', async () => {
         expect(true).toBeTruthy()
     })

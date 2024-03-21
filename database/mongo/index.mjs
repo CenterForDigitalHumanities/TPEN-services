@@ -15,7 +15,7 @@ dotenvExpand.expand(storedEnv)
  *    - Page
  *    - Group
  *    - User
- *    - UserPreferece
+ *    - UserPreferences
  * All other object types result in a "Bad Request"
  */ 
 function discernCollectionFromType(type){
@@ -30,11 +30,13 @@ function discernCollectionFromType(type){
         case "User":
             collection = process.env.TPENGROUPS
         break
-        case "UserPreference":
+        case "UserPreferences":
             collection = process.env.TPENUSERPREFERENCES
         break
         default:
     }
+    console.log("collection is")
+    console.log(collection)
     return collection
 }
 
@@ -55,6 +57,7 @@ class DatabaseController{
             this.client = new MongoClient(process.env.MONGODB)
             this.db = this.client.db(process.env.MONGODBNAME)
             await this.client.connect()
+            console.log(this.connected())
             console.log("MongoDB Connection Successful")
             console.log(process.env.MONGODB)
           } 
@@ -91,8 +94,8 @@ class DatabaseController{
     async connected() {
         // Send a ping to confirm a successful connection
         try{
-            let result = await this.db.collection(process.env.TPENPROJECTS).command({ ping: 1 }).catch(err => {return false})
-            result = result ? true : false
+            let result = await this.db.command({ ping: 1 }).catch(err => {return false})
+            result = result.ok ? true : false
             return result    
         }
         catch(err){
@@ -139,9 +142,10 @@ class DatabaseController{
             const collection = discernCollectionFromType(data_type)
             if(!collection) 
                 return {"endpoint_error": "insertOne", "status":400, "message":`Cannot figure which collection for object of type '${data_type}'`}
+            const id = this.newID()
+            data["_id"] = id
             const result = await this.db.collection(collection).insertOne(data)
             if(result.insertedId){
-                data["_id"] = result.insertedId
                 return data    
             }
             else{
@@ -172,21 +176,20 @@ class DatabaseController{
             if(!collection) 
                 return {"endpoint_error": "updateOne", "status":500, "message":`Cannot figure which collection for object of type '${data_type}'`}
             const obj_id = data_id.split("/").pop()
-            const filter = { "_id:": obj_id }
-            const options = {}
-            const updateDoc = { $set: update }
-            const result = await this.db.collection(collection).updateOne(filter, updateDoc, options)
+            const filter = { "_id": data_id }
+            const result = await this.db.collection(collection).replaceOne(filter, data)
             if(result?.matchedCount === 0){
                 return {"endpoint_error": "updateOne", "status":404, "message":`id '${obj_id}' Not Found`}  
             }
             if(result?.modifiedCount >= 0){
-                return updateDoc
+                return data
             }
             else{
                 return {"endpoint_error": "updateOne", "status":500, "message":"Document was not updated in the database."}
             }
         }
         catch(err){
+            console.error(err)
             return {"endpoint_error": "updateOne", "status":500, "message":"There was an error updating the document in the database."}
         }
     }
@@ -196,11 +199,13 @@ class DatabaseController{
      * @param data JSON from an HTTP DELETE request.  It must contain an id.
      * @return The delete result JSON or error JSON
      */ 
-    async remove(data) {
-        const data_type = data["@type"] ?? data.type ?? null
-        let data_id = data["@id"] ?? data._id ?? null
+    async remove(id) {
+        return{"endpoint_error": "deleteOne", "status":501, "message":`Not yet implemented.  Stay tuned.`}
+
+        // We have to query for the object to get the type to know the collection to remove from
+        const data_type = ""
         let collection = null
-        if(!data_id) 
+        if(!id) 
             return {"endpoint_error": "deleteOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
         if(!data_type) 
             return {"endpoint_error": "deleteOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}

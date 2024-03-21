@@ -35,7 +35,7 @@ class DatabaseController{
      * */
     async connected() {
         // Send a /query to ping TinyPen
-        const theone = await query({"_id": "11111"})
+        const theone = await this.read({"_id": "11111"})
         return theone.length === 1
     }
 
@@ -53,7 +53,7 @@ class DatabaseController{
             }
         })
         .then(resp => {
-            if(resp.ok) resp.json()
+            if(resp.ok) return resp.json()
             else{
                 return { "endpoint_error":this.URLS.QUERY, "status":resp.status, "message": resp.statusText }
             }
@@ -77,7 +77,7 @@ class DatabaseController{
             }
         })
         .then(resp => {
-            if(resp.ok) resp.json()
+            if(resp.ok) return resp.json()
             else{
                 return { "endpoint_error":this.URLS.CREATE, "status":resp.status, "message": resp.statusText }
             }
@@ -101,7 +101,7 @@ class DatabaseController{
             }
         })
         .then(resp => {
-            if(resp.ok) resp.json()
+            if(resp.ok) return resp.json()
             else{
                 return { "endpoint_error":this.URLS.UPDATE, "status":resp.status, "message": resp.statusText }
             }
@@ -125,7 +125,7 @@ class DatabaseController{
             }
         })
         .then(resp => {
-            if(resp.ok) resp.json()
+            if(resp.ok) return resp.json()
             else{
                 return { "endpoint_error":this.URLS.OVERWRITE, "status":resp.status, "message": resp.statusText }
             }

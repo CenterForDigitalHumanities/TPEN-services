@@ -30,16 +30,14 @@ router.use(
 )
 
 // Handle a post create which creates the JSON and sends back the id
-router.route('/create')
+router.route('/read')
    .post(async (req, res, next) => {
       const j = req.body
-      const result = await service.createPage(j)
-      if(result["_id"]){
-         respondWithCreatedPage(res, result)
-      }
-      else{
-         utils.respondWithError(res, result.status, result.message)
-      }
+      const result = await service.readPage(j)
+      console.log(result)
+      res.set('Content-Type', 'application/json; charset=utf-8')
+      res.status(200)
+      res.json(result)
    })
    .all((req, res, next) => {
       utils.respondWithError(res, 405, 'Improper request method, please use POST.')

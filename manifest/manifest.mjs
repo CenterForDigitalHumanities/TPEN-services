@@ -34,3 +34,11 @@ export async function findTheManifestByID(id=null){
 export async function createManifest(manifestJSON){
    return await database.create(manifestJSON)
 }
+
+export async function updateManifest(manifestJSON){
+   return await database.update(manifestJSON)
+}
+
+export async function readManifest(manifestJSON){
+   return await database.read(manifestJSON)
+}
