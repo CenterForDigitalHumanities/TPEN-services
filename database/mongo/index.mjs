@@ -141,7 +141,7 @@ class DatabaseController{
                 return {"endpoint_error": "insertOne", "status":400, "message":`Cannot figure which collection for object of type '${data_type}'`}
             const result = await this.db.collection(collection).insertOne(data)
             if(result.insertedId){
-                data["@id"] = process.env.SERVERURL+"created/"+result.insertedId
+                data["_id"] = result.insertedId
                 return data    
             }
             else{

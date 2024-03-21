@@ -22,39 +22,12 @@ database.chooseController("tiny")
  */ 
 export async function findTheManifestByID(id=null){
    let manifest = null
-
    // A bad ID will not find a Project, therefore not a Manifest either.
    if(!utils.validateID(id)) return manifest
-
-   // Mock a pause for endpoints that fail, to mock the time it takes for some async stuff to decide it failed.
-   const mockPause = new Promise((resolve, reject) => {
-     setTimeout(() => {
-       resolve(null)
-     }, 1500)
-   })
-
    // A good ID will return JSON if there is a matching project.  Send back JSON for IDs greater than 100.
-   if(id && id > 100) {
-      // Go get the data from the database.  
-      // This fetch actually gets this particular manifest from the existing TPEN which mocks the asyncronous behavior of this action.
-      manifest = await fetch("https://t-pen.org/TPEN/manifest/7085")
-      .then(resp => resp.json())
-      .then(man => {
-         // A quick cheat which lets you know we got the id right.
-         man["@id"] = `https://t-pen.org/TPEN/manifest/${id}`
-         return man
-      })
-      .catch(err => {
-         console.error(err)
-         return null
-      })
+   if(id) {
+      manifest = await database.getById(id)
    }
-   
-   // Mock the asyncronous action of taking some seconds to look for but not find the Manifest.
-   if(manifest === null){
-      manifest = mockPause.then(val => {return null})
-   }
-
    return manifest
 }
 
