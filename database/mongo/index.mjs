@@ -91,7 +91,6 @@ class DatabaseController{
     async connected() {
         // Send a ping to confirm a successful connection
         try{
-            console.log("connected ping")
             let result = await this.db.collection(process.env.TPENPROJECTS).command({ ping: 1 }).catch(err => {return false})
             result = result ? true : false
             return result    
@@ -134,7 +133,6 @@ class DatabaseController{
     async create(data) {
         try{
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            console.log("create logic - mongo")
             const data_type = data["@type"] ?? data.type ?? null
             if(!data_type) 
                 return {"endpoint_error": "insertOne", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
@@ -142,7 +140,6 @@ class DatabaseController{
             if(!collection) 
                 return {"endpoint_error": "insertOne", "status":400, "message":`Cannot figure which collection for object of type '${data_type}'`}
             const result = await this.db.collection(collection).insertOne(data)
-            console.log(result)
             if(result.insertedId){
                 data["@id"] = process.env.SERVERURL+"created/"+result.insertedId
                 return data    
@@ -179,7 +176,6 @@ class DatabaseController{
             const options = {}
             const updateDoc = { $set: update }
             const result = await this.db.collection(collection).updateOne(filter, updateDoc, options)
-            console.log(result)
             if(result?.matchedCount === 0){
                 return {"endpoint_error": "updateOne", "status":404, "message":`id '${obj_id}' Not Found`}  
             }

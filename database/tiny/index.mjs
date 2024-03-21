@@ -36,8 +36,6 @@ class DatabaseController{
     async connected() {
         // Send a /query to ping TinyPen
         const theone = await query({"_id": "11111"})
-        console.log("the one")
-        console.log(theone)
         return theone.length === 1
     }
 

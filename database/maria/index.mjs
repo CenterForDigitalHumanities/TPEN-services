@@ -54,7 +54,6 @@ class DatabaseController {
         // TODOD select statement
         //const result = await this.conn.query(`SELECT * FROM ${table} WHERE ${params}`);
         const result = {"hello" : "Bryan"}
-        console.log(result)
         return result
     }
 
@@ -62,7 +61,6 @@ class DatabaseController {
         // TODO update statement
         //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`);
         const result = {"hello" : "Bryan"}
-        console.log(result)
         return result
     }
 
