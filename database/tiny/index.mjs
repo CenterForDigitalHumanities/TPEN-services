@@ -44,6 +44,7 @@ class DatabaseController{
 
     /**
      * Use the TinyPEN query endpoint to find JSON objects matching the supplied property values.
+     * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return the found JSON as an Array or Error
      */ 
     async read(query) {

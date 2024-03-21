@@ -105,6 +105,7 @@ class DatabaseController{
 
     /**
      * Get by property matches and return all objects that match
+     * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return JSON Array of matched documents or standard error object
      */ 
     async read(query){

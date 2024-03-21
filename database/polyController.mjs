@@ -74,7 +74,6 @@ class PolyController {
      */ 
     async create(data) {
         const result = await this.controller.create(data)
-        //if(result.endpoint_error) console.error(result)
         return result
     }
 
@@ -89,20 +88,22 @@ class PolyController {
     }
 
     /**
-     * Update an existing object in the database (mongo)
+     * Remove an existing object from the database
      * @param data JSON from an HTTP DELETE request.  It must contain an id.
      * @return The delete result JSON or error JSON
      */ 
     async remove(data) {
         const result = await this.controller.remove(data)
-        console.log(result)
         return result
     }
 
-    // Query through the correct db controller
+    /**
+     * Get data from the database that have matching property values.
+     * @param query JSON from an HTTP POST request.  It must contain at least one property.
+     * @return JSON Array of matched documents or standard error object
+     */ 
     async read(query) {
         const result = await this.controller.read(query)
-        console.log(result)
         return result
     }
 }
