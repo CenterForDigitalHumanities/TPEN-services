@@ -40,7 +40,6 @@ function discernCollectionFromType(data){
 }
 
 class DatabaseController{
-
     /**
      * Basic constructor.
      * @param connect A boolean for whether or not to attempt to open a connection to the mongo client immediately.
@@ -108,18 +107,18 @@ class DatabaseController{
      * Get by property matches and return all objects that match
      * @return JSON Array of matched documents or standard error object
      */ 
-    async query(props){
+    async read(query){
         try{
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = data["@type"] ?? data.type ?? null
+            const data_type = query["@type"] ?? query.type ?? null
             if(!data_type) 
                 return {"endpoint_error": "find", "status":400, "message":`Cannot find 'type' on this data, and so cannot figure out a collection for it.`}
             const collection = discernCollectionFromType(data_type)
             if(!collection) 
                 return {"endpoint_error": "find", "status":400, "message":`Cannot figure which collection for object of type '${data_type}'`}
-            if (Object.keys(props).length === 0) 
+            if (Object.keys(query).length === 0) 
                 return {"endpoint_error": "find", "status":400, "message":`Empty or null object detected.  You must provide a query object.`}
-            let result = await this.db.collection(collection).find(data).toArray()
+            let result = await this.db.collection(collection).find(query).toArray()
             return result
         }
         catch(err){

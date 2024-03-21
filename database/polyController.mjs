@@ -8,12 +8,24 @@ import MariaController from "./maria/index.mjs"
 import MongoController from "./mongo/index.mjs"
 
 class PolyController {
+
+    /**
+     * Basic constructor to establish constant class properties
+     * @param connect A boolean for whether or not to attempt to open a connection to the mongo client immediately.
+     */ 
     constructor(dbControllerName=null) {
         // May construct with a chosen controller which will automatically set the active controller
         if(dbControllerName) this.chooseController(dbControllerName)
     }
 
-    // Set or Change the active controller.
+    /**
+     * Set or change the active controller
+     * @param dbControllerName The name of the controller to connect to.
+     * Expected names are
+     *    - mongo
+     *    - maria
+     *    - tiny
+     */ 
     async chooseController(dbControllerName=null){
         // Must provide a controller name
         if(dbControllerName === null) throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
@@ -42,40 +54,54 @@ class PolyController {
         }
     }
 
-    // Check that the chosen controller has an active connection
+     /** 
+     * Generally check that the controller has an active connection.
+     * @return boolean
+     * */
     async connected() {
         return await this.controller.connected()
     }
 
-    // Close the connection of the active controller
+    /** Close the connection with the active controller */
     async close() {
         return await this.controller.close()
     }
 
-    // Create through the correct db controller
+    /**
+     * Create a new object in the database
+     * @param data JSON from an HTTP POST request
+     * @return The inserted document JSON or error JSON
+     */ 
     async create(data) {
         const result = await this.controller.create(data)
         //if(result.endpoint_error) console.error(result)
         return result
     }
 
-    // Update through the correct db controller
-    async update(document, matchParams) {
-        const result = await this.controller.update(document)
-        console.log(result)
+    /**
+     * Update an existing object in the database
+     * @param data JSON from an HTTP POST request.  It must contain an id.
+     * @return The updated document JSON or error JSON
+     */ 
+    async update(data) {
+        const result = await this.controller.update(data)
         return result
     }
 
-    // Delete through the correct db controller
-    async remove(document) {
-        const result = await this.controller.remove(document)
+    /**
+     * Update an existing object in the database (mongo)
+     * @param data JSON from an HTTP DELETE request.  It must contain an id.
+     * @return The delete result JSON or error JSON
+     */ 
+    async remove(data) {
+        const result = await this.controller.remove(data)
         console.log(result)
         return result
     }
 
     // Query through the correct db controller
-    async read(params) {
-        const result = await this.controller.read(document)
+    async read(query) {
+        const result = await this.controller.read(query)
         console.log(result)
         return result
     }

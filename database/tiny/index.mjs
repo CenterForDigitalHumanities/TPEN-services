@@ -8,7 +8,6 @@ class DatabaseController{
 
     /**
      * Basic constructor to establish constant class properties
-     * @param connect A boolean for whether or not to attempt to open a connection to the mongo client immediately.
      */ 
     constructor() {
         this.URLS = {}
@@ -47,10 +46,10 @@ class DatabaseController{
      * Use the TinyPEN query endpoint to find JSON objects matching the supplied property values.
      * @return the found JSON as an Array or Error
      */ 
-    async query(data) {
+    async read(query) {
         return await fetch(this.URLS.QUERY,{
             method: 'post',
-            body: JSON.stringify(data),
+            body: JSON.stringify(query),
             headers: {
                 'Content-Type': 'application/json; charset=utf-8'
             }
