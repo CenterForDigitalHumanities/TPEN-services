@@ -24,7 +24,7 @@ import manifestRouter from "./manifest/index.mjs"
 import projectRouter from "./project/index.mjs"
 import pageRouter from "./page/index.mjs"
 import lineRouter from "./line/index.mjs"
-import { jwtMiddleware, verifyWithAuth0 } from "./middlewares/verifyToken.mjs"
+import { authenticateUser,  verifyWithAuth0 } from "./middlewares/verifyToken.mjs"
 
 let app = express()
 
@@ -52,14 +52,12 @@ app.all("*", (req, res, next) => {
 })
 
 //Check all request headers for authorization before calling any routes
-// app.use(jwtMiddleware()) // apply checks to all routes
-// app.use("/authenticated-route", jwtMiddleware()) // apply checks to specific routes
+app.use(authenticateUser()) // apply checks to all routes
 
-const verifyToken = verifyWithAuth0()
+app.use("/verify-token", authenticateUser()) // apply checks to specific routes
 
-
-// app.use(verifyToken) //check all routes
-app.use("/page/*", verifyToken) //check specific routes
+// app.use(verifyToken) //check all sub routes (in this case, all routes from page)
+app.use("/page/*", authenticateUser())
 
 app.use("/", indexRouter)
 app.use("/manifest", manifestRouter)
