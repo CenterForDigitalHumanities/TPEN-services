@@ -24,7 +24,7 @@ import manifestRouter from "./manifest/index.mjs"
 import projectRouter from "./project/index.mjs"
 import pageRouter from "./page/index.mjs"
 import lineRouter from "./line/index.mjs"
-import { authenticateUser,  verifyWithAuth0 } from "./middlewares/verifyToken.mjs"
+import { authenticateUser } from "./middlewares/verifyToken.mjs"
 
 let app = express()
 
@@ -58,6 +58,7 @@ app.use("/verify-token", authenticateUser()) // apply checks to specific routes
 
 // app.use(verifyToken) //check all sub routes (in this case, all routes from page)
 app.use("/page/*", authenticateUser())
+
 
 app.use("/", indexRouter)
 app.use("/manifest", manifestRouter)

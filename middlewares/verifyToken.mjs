@@ -13,7 +13,7 @@ export function authenticateUser() {
     if (token) {
       if (!isTokenExpired(token, res)) {
         let decodedUser = extractUser(token)
-        if (decodedUser) {
+        if (decodedUser && verifyWithAuth0()) {
           //this block can be modified to check for specific elements (e.g roles, app, permissions...) in the decoded user before passing on.
           req.user = decodedUser
           next()
@@ -29,10 +29,11 @@ export function authenticateUser() {
   }
 }
 
-export function verifyWithAuth0() {
+function verifyWithAuth0() {
+  // This function does the same thing as the above, only difference is, all logic of token extraction, passing down, checking expiration, and others is handled by Auth0
   return auth({
-    audience: process.env.AUTH0_AUDIENCE,
-    issuerBaseURL: process.env.AUTH0_DOMAIN,
-    tokenSigningAlg: process.env.AUTH0_SIGN_ALGO
+    audience: process.env.AUDIENCE,
+    issuerBaseURL: process.env.DOMAIN,
+    tokenSigningAlg: ["RS256"]
   })
 }
