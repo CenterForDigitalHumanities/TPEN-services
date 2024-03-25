@@ -1,4 +1,3 @@
-/** Route handler for the /project endpoint */
 import express from 'express'
 import * as logic from './project.mjs'
 import * as utils from '../utilities/shared.mjs'
@@ -37,6 +36,38 @@ export function respondWithProject(res, project) {
   res.status(200)
   res.json(project)
 }
+
+export function respondWithUser(res, user) {
+  const id = user['@id'] ?? user.id ?? null
+  res.set('Content-Type', 'application/json; charset=utf-8')
+  res.location(id)
+  res.status(200)
+  res.json(user)
+}
+
+// Define the /user endpoint
+router
+  .route('/user/:ID')
+  .get(async (req, res, next) => {
+    let ID = req.params.ID
+    // Assuming validateID function exists in the utils module
+    if (!utils.validateID(ID)) {
+      utils.respondWithError(res, 400, 'The TPEN3 user ID must be a number')
+    }
+    ID = parseInt(ID)
+    // Assuming getUserProfile function exists in the logic module
+    const userProfile = await logic.getUserProfile(ID)
+    if (userProfile) {
+      // Assuming respondWithUser function exists in the router module
+      respondWithUser(res, userProfile)
+    } else {
+      // Assuming respondWithError function exists in the utils module
+      utils.respondWithError(res, 404, `TPEN 3 user "${req.params.ID}" does not exist.`)
+    }
+  })
+  .all((req, res, next) => {
+    utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  })
 
 // Expect an /{id} as part of the route, like /project/123
 router
