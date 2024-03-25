@@ -1,19 +1,18 @@
 import DatabaseController from '../index.mjs'
 const database = new DatabaseController()
 
-let test_proj = { "@type": "Project", "name": "Test Project"}
-let test_group = { "@type": "Group", "name": "Test Group"}
-let test_userPreferences = { "@type": "UserPreferences", "name": 'Test UserReferences'}
+let test_proj = { "@type": "Project", "name": "Test Project" }
+let test_group = { "@type": "Group", "name": "Test Group" }
+let test_userPreferences = { "@type": "UserPreferences", "name": 'Test UserReferences' }
 
 beforeAll(async () => {
-   return await database.connect()
+    return await database.connect()
 })
 
 afterAll(async () => {
-   return await database.close()
+    return await database.close()
 })
-
-describe('Mongo Database Unit Functions. #mongo_unit #db',()=>{
+describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
     it('connects for an active connection', async () => {
         const result = await database.connected()
         expect(result).toBe(true)

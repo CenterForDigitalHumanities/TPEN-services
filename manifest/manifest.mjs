@@ -14,7 +14,7 @@ database.chooseController("tiny")
 
 /**
  * A full Manifest object without an ID to be created in RERUM
- * * @see https://store.rerum.io/v1/API.html#create
+ * @see https://store.rerum.io/v1/API.html#create
  */
 export async function createManifest(manifestJSON){
    return await database.create(manifestJSON)
@@ -33,14 +33,14 @@ export async function updateManifest(manifestJSON){
  * The IRI of a Manifest in RERUM to RERUM delete.
  * @see https://store.rerum.io/v1/API.html#delete
  */ 
-export async function deleteManifest(manifestID){
-   return await database.remove(manifestID)
+export async function deleteManifest(manifestIRI){
+   return await database.remove(manifestIRI)
 }
 
 /**
  * JSON properties to query for matches against.
  * All objects matching these properties will be returned.
- * * @see https://store.rerum.io/v1/API.html#query
+ * @see https://store.rerum.io/v1/API.html#query
  */ 
 export async function queryForManifests(manifestJSON){
    return await database.read(manifestJSON)

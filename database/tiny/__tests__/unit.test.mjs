@@ -1,17 +1,17 @@
 import DatabaseController from '../index.mjs'
 const database = new DatabaseController()
 
-let test_manifest = { "type": "Manifest", "name": "Test Manifest"}
+let test_manifest = { "type": "Manifest", "name": "Test Manifest" }
 
 beforeAll(async () => {
-   return await database.connect()
+    return await database.connect()
 })
 
 afterAll(async () => {
-   return await database.close()
+    return await database.close()
 })
 
-describe('TinyPen Unit Functions. #tiny_unit #db',()=>{
+describe('TinyPen Unit Functions. #tiny_unit #db', () => {
     it('connects for an active connection', async () => {
         const result = await database.connected()
         expect(result).toBe(true)
@@ -27,9 +27,9 @@ describe('TinyPen Unit Functions. #tiny_unit #db',()=>{
         const result = await database.update(test_manifest)
         expect(result["@id"]).toBeTruthy()
     })
-    
+
     it('Finds matching objects by query', async () => {
-        const result = await database.read({"@id":test_manifest["@id"]})
+        const result = await database.read({ "@id": test_manifest["@id"] })
         expect(result[0]["@id"]).toBe(test_manifest["@id"])
     })
 
