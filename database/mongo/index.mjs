@@ -108,7 +108,7 @@ class DatabaseController {
     async read(query) {
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = query["@type"] ? ? query.type ? ? null
+            const data_type = query["@type"] ?? query.type ?? null
             if (!data_type)
                 return { "endpoint_error": "find", "status": 400, "message": `Cannot find 'type' on this data, and so cannot figure out a collection for it.` }
             const collection = discernCollectionFromType(data_type)
@@ -131,7 +131,7 @@ class DatabaseController {
     async create(data) {
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = data["@type"] ? ? data.type ? ? null
+            const data_type = data["@type"] ?? data.type ?? null
             if (!data_type)
                 return { "endpoint_error": "insertOne", "status": 400, "message": `Cannot find 'type' on this data, and so cannot figure out a collection for it.` }
             const collection = discernCollectionFromType(data_type)
@@ -158,8 +158,8 @@ class DatabaseController {
     async update(data) {
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = data["@type"] ? ? data.type ? ? null
-            let data_id = data["@id"] ? ? data._id ? ? null
+            const data_type = data["@type"] ?? data.type ?? null
+            let data_id = data["@id"] ?? data._id ?? null
             let collection = null
             if (!data_id)
                 return { "endpoint_error": "updateOne", "status": 400, "message": `Cannot find 'type' on this data, and so cannot figure out a collection for it.` }
@@ -171,10 +171,10 @@ class DatabaseController {
             const obj_id = data_id.split("/").pop()
             const filter = { "_id": data_id }
             const result = await this.db.collection(collection).replaceOne(filter, data)
-            if (result ? .matchedCount === 0) {
+            if (result ?.matchedCount === 0) {
                 return { "endpoint_error": "updateOne", "status": 404, "message": `id '${obj_id}' Not Found` }
             }
-            if (result ? .modifiedCount >= 0) {
+            if (result ?.modifiedCount >= 0) {
                 return data
             } else {
                 return { "endpoint_error": "updateOne", "status": 500, "message": "Document was not updated in the database." }
@@ -204,7 +204,7 @@ class DatabaseController {
             return { "endpoint_error": "deleteOne", "status": 500, "message": `Cannot figure which collection for object of type '${data_type}'` }
 
         const result = await this.db.collection(collection).deleteOne(query, { $set: update })
-        if (result ? .ok) {
+        if (result ?.ok) {
             return result
         } else {
             return { "endpoint_error": "deleteOne", "status": 500, "message": result.message }

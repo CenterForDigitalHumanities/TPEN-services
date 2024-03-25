@@ -30,9 +30,9 @@ class PolyController {
         // Must provide a controller name
         if (dbControllerName === null) throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
         // Nothing to do if the controller is already active
-        if (this ? .dbControllerName === dbControllerName) throw new Error(`'${dbControllerName}' is already the active controller.`)
+        if (this ?.dbControllerName === dbControllerName) throw new Error(`'${dbControllerName}' is already the active controller.`)
         // If there is an active controller, close the connection before switching
-        if (this ? .controller) this.controller.close()
+        if (this ?.controller) this.controller.close()
         switch (dbControllerName) {
             case "mongo":
                 this.controller = new MongoController()
