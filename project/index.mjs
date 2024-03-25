@@ -33,11 +33,11 @@ router.use(
 export function respondWithProject(req, res, project) {
   const id = project['@id'] ?? project.id ?? null
 
+  // Select only one passed query as `responseType`
   let textType = req.query.text
   let image = req.query.image
   let lookup = req.query.lookup
   let view = req.query.view
-
   let passedQueries = [textType, image, lookup, view]
     .filter(elem => elem !== undefined)
   let responseType = null
