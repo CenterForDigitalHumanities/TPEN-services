@@ -16,10 +16,6 @@ routeTester.use("/manifest", manifestRouter)
 
 describe('Manifest endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
-  it('Needs to wait for reconfigure against db controller.', async () => {
-      expect(true).toBe(true)
-  })
-
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
       .post('/manifest/')
