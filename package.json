@@ -37,7 +37,6 @@
     "express-oauth2-jwt-bearer": "^1.6.0",
     "express-urlrewrite": "~2.0.0",
     "http-errors": "~2.0.0",
-    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "nock": "~13.4.0"
   },

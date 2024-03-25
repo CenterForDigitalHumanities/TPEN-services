@@ -30,7 +30,7 @@ router.use(
 )
 
 router.route('/:id')
-  .get(async (req, res, next) => {
+  .get(async (req, res, next) => { 
     try {
       let id = req.params.id
 

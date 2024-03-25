@@ -1,5 +1,4 @@
-import jwt from "jsonwebtoken"
-import * as utils from "../utilities/shared.mjs"
+ import * as utils from "../utilities/shared.mjs"
 import { auth } from "express-oauth2-jwt-bearer"
 import {
   extractToken,
@@ -13,7 +12,7 @@ export function authenticateUser() {
     if (token) {
       if (!isTokenExpired(token, res)) {
         let decodedUser = extractUser(token)
-        if (decodedUser && verifyWithAuth0()) {
+        if (decodedUser) {
           //this block can be modified to check for specific elements (e.g roles, app, permissions...) in the decoded user before passing on.
           req.user = decodedUser
           next()
@@ -29,11 +28,22 @@ export function authenticateUser() {
   }
 }
 
-function verifyWithAuth0() {
-  // This function does the same thing as the above, only difference is, all logic of token extraction, passing down, checking expiration, and others is handled by Auth0
-  return auth({
+
+
+function auth0Middleware() {
+  const verifier = auth({
     audience: process.env.AUDIENCE,
-    issuerBaseURL: process.env.DOMAIN,
-    tokenSigningAlg: ["RS256"]
+    issuerBaseURL: `https://${process.env.DOMAIN}/`
   })
+
+  // Extract user from the token and set req.user
+  function setUser(req, res, next) {
+    const { payload } = req.auth
+    req.user = payload
+    next()
+  }
+
+  return [verifier, setUser]
 }
+
+export default auth0Middleware

@@ -32,7 +32,7 @@ router.use(
 router
   .route("/:id?")
   .get(async (req, res, next) => {
-    let id = req.params.id  
+    let id = req.params.id
     if (id) {
       if (!utils.validateID(id)) {
         utils.respondWithError(res, 400, "The TPEN3 page ID must be a number")

@@ -24,7 +24,9 @@ import manifestRouter from "./manifest/index.mjs"
 import projectRouter from "./project/index.mjs"
 import pageRouter from "./page/index.mjs"
 import lineRouter from "./line/index.mjs"
-import { authenticateUser } from "./middlewares/verifyToken.mjs"
+import auth0Middleware, {
+  authenticateUser 
+} from "./middlewares/verifyToken.mjs"
 
 let app = express()
 
@@ -44,21 +46,17 @@ app.all("*", (req, res, next) => {
   if (process.env.DOWN === "true") {
     res.status(503).json({
       message:
-        "TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later.",
+        "TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later."
     })
   } else {
     next() //pass on to the next app.use
   }
 })
 
-//Check all request headers for authorization before calling any routes
-app.use(authenticateUser()) // apply checks to all routes
 
-app.use("/verify-token", authenticateUser()) // apply checks to specific routes
+app.use("/verify-token", authenticateUser()) // apply checks from custom functions to specific routes
 
-// app.use(verifyToken) //check all sub routes (in this case, all routes from page)
-app.use("/page/*", authenticateUser())
-
+app.use("/page/*", auth0Middleware()) // using Auth0 lib
 
 app.use("/", indexRouter)
 app.use("/manifest", manifestRouter)
