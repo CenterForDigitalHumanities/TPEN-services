@@ -35,8 +35,6 @@ function discernCollectionFromType(type){
         break
         default:
     }
-    console.log("collection is")
-    console.log(collection)
     return collection
 }
 

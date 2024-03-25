@@ -141,6 +141,7 @@ class DatabaseController{
      * @return the created JSON or Error
      */ 
     async remove(data) {
+        return{"endpoint_error": "deleteOne", "status":501, "message":`Not yet implemented.  Stay tuned.`}
         return await fetch(this.URLS.DELETE,{
             method: 'delete',
             body: JSON.stringify(data),

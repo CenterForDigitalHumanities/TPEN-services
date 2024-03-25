@@ -76,7 +76,7 @@ router.route('/create')
       }
    })
    .all((req, res, next) => {
-      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+      utils.respondWithError(res, 405, 'Improper request method, please use POST.')
    })
 
 
@@ -94,7 +94,7 @@ router.route('/update')
       }
    })
    .all((req, res, next) => {
-      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+      utils.respondWithError(res, 405, 'Improper request method, please use PUT.')
    })
 
 // Handle a post request which queries for existing objects through TinyPen and gives back the matched objects
@@ -111,7 +111,25 @@ router.route('/query')
       }
    })
    .all((req, res, next) => {
-      utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+      utils.respondWithError(res, 405, 'Improper request method, please use POST.')
+   })
+
+// Handle a delete request which contains the ID of a Manifest to delete.
+router.route('/delete/:id')
+   .delete(async (req, res, next) => {
+      let id = req.params.id
+      // Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.deleteManifest(id)
+      if(result.endpoint_error){
+         utils.respondWithError(res, result.status, result.message)
+      }
+      else{
+         res.status(204)
+         res.send(`${id} is marked as deleted`)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use DELETE.')
    })
 
 // Expect an /{id} as part of the route, like /manifest/123

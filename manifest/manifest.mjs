@@ -21,6 +21,10 @@ export async function updateManifest(manifestJSON){
    return await database.update(manifestJSON)
 }
 
+export async function deleteManifest(manifestID){
+   return await database.remove(manifestID)
+}
+
 export async function queryForManifests(manifestJSON){
    return await database.read(manifestJSON)
 }
