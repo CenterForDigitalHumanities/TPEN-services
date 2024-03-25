@@ -6,7 +6,7 @@
 
 import PolyController from "../polyController.mjs"
 
-describe('POLY CRUD and query is registered.  #poly_unit',()=>{
+describe('POLY CRUD and query is registered.  #poly_unit #db',()=>{
     const p = new PolyController()
     it('create', async () => {
         expect(typeof p.create).toBe("function")
@@ -31,7 +31,7 @@ describe('POLY CRUD and query is registered.  #poly_unit',()=>{
     })
 })
 
-describe('Can connect to all registered controllers.  #poly_unit',()=>{
+describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
     it('Tiny Connection', async () => {
         const p = new PolyController()
         await p.chooseController("tiny")
@@ -47,7 +47,7 @@ describe('Can connect to all registered controllers.  #poly_unit',()=>{
     })
 })
 
-describe('Can connect to all registered controllers with applied parameter.  #poly_unit',()=>{
+describe('Can connect to all registered controllers with applied parameter.  #poly_unit #db',()=>{
     it('Tiny Connection Parameter', async () => {
         const p = new PolyController("tiny")
         expect(await p.connected()).toBe(true)

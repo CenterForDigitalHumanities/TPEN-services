@@ -58,6 +58,7 @@ class DatabaseController{
             console.log(this.connected())
             console.log("MongoDB Connection Successful")
             console.log(process.env.MONGODB)
+            return
           } 
           catch (err) {
             console.log("MongoDB Connection Failed")
@@ -70,6 +71,7 @@ class DatabaseController{
     async close() {
         await this.client.close()
         console.log("Mongo controller client has been closed")
+        return
     }
 
     /** 
@@ -99,7 +101,6 @@ class DatabaseController{
         catch(err){
             return false
         }
-        
     }
 
     /**

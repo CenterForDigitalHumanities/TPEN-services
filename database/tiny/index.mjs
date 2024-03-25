@@ -21,11 +21,13 @@ class DatabaseController{
     /** Other modules do not connect or close */
     async connect() {
         console.log("No need to connect().  The API awaits you!")
+        return
     }
 
     /** Other modules do not connect or close */
     async close() {
         console.log("No need to close().  The API awaits you!")
+        return
     }
 
     /** 

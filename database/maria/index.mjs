@@ -28,6 +28,7 @@ class DatabaseController {
             this.conn = await this.client.getConnection()
             console.log("MariaDB Connection Established")
             console.log(process.env.MARIADB)
+            return
         } 
         catch (err) {
             this.conn = null
@@ -40,6 +41,7 @@ class DatabaseController {
 
     async close() {
         await this.conn.end()
+        return
     }
 
     async create(table, document) {
