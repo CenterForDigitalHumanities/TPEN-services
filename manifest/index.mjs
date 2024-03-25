@@ -36,7 +36,7 @@ router.use(
   })
 )
 
-// Send a successful response from queryForManifest
+// Send a successful response from queryForManifest.  Code is 200, no location header
 export function respondWithManifests(res, manifest){
    const id = manifest["@id"] ?? manifest.id ?? null
    res.set("Content-Type", "application/json; charset=utf-8")
@@ -44,7 +44,7 @@ export function respondWithManifests(res, manifest){
    res.json(manifest)
 }
 
-// Send a successful response with the appropriate JSON
+// Send a successful response with the appropriate JSON.  Code is 200 and has location header
 export function respondWithManifest(res, manifest){
    const id = manifest["@id"] ?? manifest.id ?? null
    res.set("Content-Type", "application/json; charset=utf-8")
@@ -53,7 +53,7 @@ export function respondWithManifest(res, manifest){
    res.json(manifest)
 }
 
-// Send a successful response from createManifest
+// Send a successful response from createManifest.  Code is 201 and has location header
 export function respondWithCreatedManifest(res, manifest){
    const id = manifest._id ?? null
    res.set("Content-Type", "application/json; charset=utf-8")
@@ -151,7 +151,7 @@ router.route('/:id')
       utils.respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
-// Handle lack of an /{id} as part of the route
+// Handle lack of an /{id} or action as part of the route
 router.route('/')
    .get((req, res, next) => {
       utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')
