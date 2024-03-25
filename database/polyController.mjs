@@ -50,8 +50,9 @@ class PolyController {
         // If we were able to discern a controller, connect to that controller
         if(this.controller !== null) {
             this.dbControllerName = dbControllerName
-            this.controller.connect()    
+            await this.controller.connect()    
         }
+        return
     }
 
      /** 
