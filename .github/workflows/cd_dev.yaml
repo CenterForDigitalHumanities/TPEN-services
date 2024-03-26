@@ -3,10 +3,40 @@ on:
   push:
     branches: 59-db-controller
 jobs:
+  # merge-branch:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@master
+  #     - name: Merge with development
+  #       uses: devmasx/merge-branch@master
+  #       with:
+  #         type: now
+  #         from_branch: development
+  #         target_branch: ${{ github.head_ref }}
+  #         github_token: ${{ secrets.BRY_PAT }}
+  #         message: Merge development into this branch to deploy to dev for testing.
   test:
+  #  needs: merge-branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: Create .env from secrets
+        uses: SpicyPizza/create-envfile@v2
+        with:
+          envkey_DOWN: ${{ secrets.DOWN }}
+          envkey_READONLYL: ${{ secrets.READONLY }}
+          envkey_SERVERURL: ${{ secrets.SERVERURL }}
+          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
+          envkey_MONGODB: ${{ secrets.MONGODB }}
+          envkey_PROJECTS: ${{ secrets.PROJECTS }}
+          envkey_GROUPS: ${{ secrets.GROUPS }}
+          envkey_USERPREFERENCES: ${{ secrets.USERPREFERENCES }}
+          envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
+          envkey_MARIADB: ${{ secrets.MARIADB }}
+          envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
+          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
+          envkey_RERUMURL: ${{ secrets.RERUMURL }}
+          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
@@ -26,7 +56,7 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run allTests
+          npm run runtest
   deploy:
     needs:
       - test
