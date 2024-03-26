@@ -28,9 +28,9 @@ jobs:
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
           envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
           envkey_MONGODB: ${{ secrets.MONGODB }}
-          envkey_PROJECTS: ${{ secrets.PROJECTS }}
-          envkey_GROUPS: ${{ secrets.GROUPS }}
-          envkey_USERPREFERENCES: ${{ secrets.USERPREFERENCES }}
+          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
+          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
+          envkey_TPENUSERPREFERENCES: ${{ secrets.TPENUSERPREFERENCES }}
           envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
           envkey_MARIADB: ${{ secrets.MARIADB }}
           envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
