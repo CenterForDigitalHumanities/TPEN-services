@@ -1,13 +1,14 @@
 /**
  * Abstract unit actions that may use any of the registered database controllers.
- * A call comes in stating which database/controller it wants to use and which action it is trying to do.
+ * A call comes in stating which controller it wants to use and which action it is trying to do.
+ * This gives instructions to the specific controllers.
  */
 
-import TinyController from "./tiny/index.mjs"
-import MariaController from "./maria/index.mjs"
-import MongoController from "./mongo/index.mjs"
+import TinyController from "./tiny/controller.mjs"
+import MariaController from "./maria/controller.mjs"
+import MongoController from "./mongo/controller.mjs"
 
-class PolyController {
+class dbDriver {
 
     /**
      * Basic constructor to establish constant class properties
@@ -117,4 +118,4 @@ class PolyController {
     }
 }
 
-export default PolyController
+export default dbDriver

@@ -1,3 +1,8 @@
+/**
+ * A MariaDB Controller.  Actions here specifically interact with the set MariaDB Database.
+ * @see env.MARIADB
+ */ 
+
 import mariadb from 'mariadb'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'

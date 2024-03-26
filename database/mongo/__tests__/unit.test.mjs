@@ -1,4 +1,11 @@
-import DatabaseController from '../index.mjs'
+/**
+    * This should test unit actions against the MongoDB Controller.
+    * 
+    * @author Bryan Haberberger
+    * https://github.com/thehabes 
+*/
+
+import DatabaseController from '../controller.mjs'
 const database = new DatabaseController()
 
 let test_proj = { "@type": "Project", "name": "Test Project" }

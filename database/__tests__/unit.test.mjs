@@ -1,46 +1,48 @@
 /**
-    * The DB unit actions themselves are tested elsewhere.
-    * This should test that the Poly is put together and its pices
-    * map to the correct controller functionality.
+    * This should test that the Driver is put together and that its pices
+    * map to the correct controllers.
+    * 
+    * @author Bryan Haberberger
+    * https://github.com/thehabes 
 */
 
-import PolyController from "../polyController.mjs"
+import dbDriver from "../dbDriver.mjs"
 
 describe('POLY CRUD and query is registered.  #poly_unit #db',()=>{
-    const p = new PolyController()
+    const d = new dbDriver()
     it('create', async () => {
-        expect(typeof p.create).toBe("function")
+        expect(typeof d.create).toBe("function")
     })
     it('update', async () => {
-        expect(typeof p.update).toBe("function")
+        expect(typeof d.update).toBe("function")
     })
     it('remove', async () => {
-        expect(typeof p.remove).toBe("function")
+        expect(typeof d.remove).toBe("function")
     })
     it('read', async () => {
-        expect(typeof p.read).toBe("function")
+        expect(typeof d.read).toBe("function")
     })
     it('choose controller', async () => {
-        expect(typeof p.chooseController).toBe("function")
+        expect(typeof d.chooseController).toBe("function")
     })
     it('connected', async () => {
-        expect(typeof p.connected).toBe("function")
+        expect(typeof d.connected).toBe("function")
     })
     it('close', async () => {
-        expect(typeof p.close).toBe("function")
+        expect(typeof d.close).toBe("function")
     })
 })
 
 describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
     it('Tiny Connection', async () => {
-        const p = new PolyController()
-        await p.chooseController("tiny")
-        expect(await p.connected()).toBe(true)
+        const d = new dbDriver()
+        await d.chooseController("tiny")
+        expect(await d.connected()).toBe(true)
     })
     it('Mongo Connection', async () => {
-        const p = new PolyController()
-        await p.chooseController("mongo")
-        expect(await p.connected()).toBe(true)
+        const d = new dbDriver()
+        await d.chooseController("mongo")
+        expect(await d.connected()).toBe(true)
     })
     it('Maria Connection Stub', async () => {
         expect(true).toBeTruthy()
@@ -49,14 +51,16 @@ describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
 
 describe('Can connect to all registered controllers with applied parameter.  #poly_unit #db',()=>{
     it('Tiny Connection Parameter', async () => {
-        const p = new PolyController("tiny")
+        const p = new dbDriver("tiny")
         expect(await p.connected()).toBe(true)
     })
     it('Mongo Connection Parameter', async () => {
-        const p = new PolyController("mongo")
+        const p = new dbDriver("mongo")
         expect(await p.connected()).toBe(true)
     })
     it('Maria Connection Parameter Stub', async () => {
         expect(true).toBeTruthy()
     })
 })
+
+// TODO should we test that each CRUD and query action functions, or is that test downstream good enough

@@ -1,3 +1,8 @@
+/**
+ * A MongoDB Controller.  Actions here specifically interact with the set MongoDB Database.
+ * @see env.MONGODB
+ */ 
+
 import { MongoClient, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'

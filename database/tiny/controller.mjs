@@ -1,3 +1,8 @@
+/**
+ * A TinyPEN Controller.  Actions here specifically fetch to the set TinyPEN API URLS.
+ * @see this.URLS
+ */ 
+
 import fetch from 'node-fetch'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
