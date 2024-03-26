@@ -42,8 +42,13 @@ class DatabaseController {
      * */
     async connected() {
         // Send a /query to ping TinyPen
-        const theone = await this.read({ "_id": "11111" })
-        return theone.length === 1
+        try{
+            const theone = await this.read({ "_id": "11111" })
+            return theone.length === 1    
+        } catch(err){
+            console.error(err)
+            return false
+        }
     }
 
     /**
@@ -62,6 +67,7 @@ class DatabaseController {
             .then(resp => {
                 if (resp.ok) return resp.json()
                 else {
+                    console.error(`${resp.status} - ${resp.statusText}`)
                     return { "endpoint_error": this.URLS.QUERY, "status": resp.status, "message": resp.statusText }
                 }
             })
@@ -87,6 +93,7 @@ class DatabaseController {
             .then(resp => {
                 if (resp.ok) return resp.json()
                 else {
+                    console.error(`${resp.status} - ${resp.statusText}`)
                     return { "endpoint_error": this.URLS.CREATE, "status": resp.status, "message": resp.statusText }
                 }
             })
@@ -112,6 +119,7 @@ class DatabaseController {
             .then(resp => {
                 if (resp.ok) return resp.json()
                 else {
+                    console.error(`${resp.status} - ${resp.statusText}`)
                     return { "endpoint_error": this.URLS.UPDATE, "status": resp.status, "message": resp.statusText }
                 }
             })
@@ -137,6 +145,7 @@ class DatabaseController {
             .then(resp => {
                 if (resp.ok) return resp.json()
                 else {
+                    console.error(`${resp.status} - ${resp.statusText}`)
                     return { "endpoint_error": this.URLS.OVERWRITE, "status": resp.status, "message": resp.statusText }
                 }
             })
@@ -161,7 +170,10 @@ class DatabaseController {
                 }
             })
             .then(resp => {
-                if (!resp.ok) return { "endpoint_error": this.URLS.DELETE, "status": resp.status, "message": resp.statusText }
+                if (!resp.ok) {
+                    console.error(`${resp.status} - ${resp.statusText}`)
+                    return { "endpoint_error": this.URLS.DELETE, "status": resp.status, "message": resp.statusText }
+                }
             })
             .catch(err => {
                 console.error(err)
