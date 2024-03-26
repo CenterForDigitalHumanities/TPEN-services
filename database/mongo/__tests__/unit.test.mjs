@@ -13,6 +13,7 @@ beforeAll(async () => {
 afterAll(async () => {
     return await database.close()
 })
+
 describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
     it('connects for an active connection', async () => {
         const result = await database.connected()
