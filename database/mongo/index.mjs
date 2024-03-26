@@ -55,7 +55,6 @@ class DatabaseController {
             this.client = new MongoClient(process.env.MONGODB)
             this.db = this.client.db(process.env.MONGODBNAME)
             await this.client.connect()
-            console.log(this.connected())
             console.log("MongoDB Connection Successful")
             console.log(process.env.MONGODB)
             return
