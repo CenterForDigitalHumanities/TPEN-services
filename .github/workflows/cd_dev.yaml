@@ -56,7 +56,7 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run runtest
+          npm run allTests
   deploy:
     needs:
       - test
