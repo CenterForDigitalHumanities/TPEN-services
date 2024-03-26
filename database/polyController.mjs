@@ -19,7 +19,7 @@ class PolyController {
     }
 
     /**
-     * Set or change the active controller
+     * Set or change the active controller.  Alias for "connect to controller"
      * @param dbControllerName The name of the controller to connect to.
      * Expected names are
      *    - mongo
@@ -30,9 +30,9 @@ class PolyController {
         // Must provide a controller name
         if (dbControllerName === null) throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
         // Nothing to do if the controller is already active
-        if (this ?.dbControllerName === dbControllerName) throw new Error(`'${dbControllerName}' is already the active controller.`)
+        if (this?.dbControllerName === dbControllerName) throw new Error(`'${dbControllerName}' is already the active controller.`)
         // If there is an active controller, close the connection before switching
-        if (this ?.controller) this.controller.close()
+        if (this?.controller) this.controller.close()
         switch (dbControllerName) {
             case "mongo":
                 this.controller = new MongoController()
@@ -50,7 +50,11 @@ class PolyController {
         // If we were able to discern a controller, connect to that controller
         if (this.controller !== null) {
             this.dbControllerName = dbControllerName
-            await this.controller.connect()
+            try {
+                await this.controller.connect()
+            } catch(err){
+                console.error(`Controller '${dbControllerName}' had trouble connecting.`)
+            }
         }
         return
     }
@@ -75,7 +79,7 @@ class PolyController {
      */
     async create(data) {
         const result = await this.controller.create(data)
-        if (result.endpoint_error) console.error(result)
+        //if (result.endpoint_error) console.error(result)
         return result
     }
 
@@ -86,7 +90,7 @@ class PolyController {
      */
     async update(data) {
         const result = await this.controller.update(data)
-        if (result.endpoint_error) console.error(result)
+        //if (result.endpoint_error) console.error(result)
         return result
     }
 
@@ -97,7 +101,7 @@ class PolyController {
      */
     async remove(data) {
         const result = await this.controller.remove(data)
-        if (result.endpoint_error) console.error(result)
+        //if (result.endpoint_error) console.error(result)
         return result
     }
 
@@ -108,7 +112,7 @@ class PolyController {
      */
     async read(query) {
         const result = await this.controller.read(query)
-        if (result.endpoint_error) console.error(result)
+        //if (result.endpoint_error) console.error(result)
         return result
     }
 }

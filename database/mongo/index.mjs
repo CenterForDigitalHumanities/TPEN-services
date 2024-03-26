@@ -176,10 +176,10 @@ class DatabaseController {
             const obj_id = data_id.split("/").pop()
             const filter = { "_id": data_id }
             const result = await this.db.collection(collection).replaceOne(filter, data)
-            if (result ?.matchedCount === 0) {
+            if (result?.matchedCount === 0) {
                 return { "endpoint_error": "updateOne", "status": 404, "message": `id '${obj_id}' Not Found` }
             }
-            if (result ?.modifiedCount >= 0) {
+            if (result?.modifiedCount >= 0) {
                 return data
             } else {
                 return { "endpoint_error": "updateOne", "status": 500, "message": "Document was not updated in the database." }
@@ -210,7 +210,7 @@ class DatabaseController {
             return { "endpoint_error": "deleteOne", "status": 500, "message": `Cannot figure which collection for object of type '${data_type}'` }
 
         const result = await this.db.collection(collection).deleteOne(query, { $set: update })
-        if (result ?.ok) {
+        if (result?.ok) {
             return result
         } else {
             return { "endpoint_error": "deleteOne", "status": 500, "message": result.message }
