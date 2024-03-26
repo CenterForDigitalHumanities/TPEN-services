@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename)
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
+
 let storedEnv = dotenv.config()
 dotenvExpand.expand(storedEnv)
 
