@@ -6,10 +6,10 @@
  * 
  * */
 import fetch from 'node-fetch'
-import Database from "../database/driver.mjs"
+import DatabaseDriver from "../database/driver.mjs"
 import * as utils from "../utilities/shared.mjs"
 
-const database = new Database()
+const database = new DatabaseDriver()
 await database.chooseController("tiny")
 
 /**

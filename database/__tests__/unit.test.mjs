@@ -6,10 +6,10 @@
     * https://github.com/thehabes 
 */
 
-import dbDriver from "../driver.mjs"
+import DatabaseDriver from "../driver.mjs"
 
 describe('POLY CRUD and query is registered.  #poly_unit #db',()=>{
-    const d = new dbDriver()
+    const d = new DatabaseDriver()
     it('create', async () => {
         expect(typeof d.create).toBe("function")
     })
@@ -35,12 +35,12 @@ describe('POLY CRUD and query is registered.  #poly_unit #db',()=>{
 
 describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
     it('Tiny Connection', async () => {
-        const d = new dbDriver()
+        const d = new DatabaseDriver()
         await d.chooseController("tiny")
         expect(await d.connected()).toBe(true)
     })
     it('Mongo Connection', async () => {
-        const d = new dbDriver()
+        const d = new DatabaseDriver()
         await d.chooseController("mongo")
         expect(await d.connected()).toBe(true)
     })
