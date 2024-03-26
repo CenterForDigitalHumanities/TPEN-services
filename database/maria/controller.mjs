@@ -74,7 +74,7 @@ class DatabaseController {
         return result
     }
 
-    async delete(table, document, matchParams) {
+    async remove(table, matchParams) {
         // TODO update statement
         //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`);
         const result = {"ok" : "deleted"}
