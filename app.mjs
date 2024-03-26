@@ -17,13 +17,13 @@ import dotenvExpand from "dotenv-expand"
 let storedEnv = dotenv.config()
 dotenvExpand.expand(storedEnv)
 
-import logger from "morgan"
-import cors from "cors"
-import indexRouter from "./index.mjs"
-import manifestRouter from "./manifest/index.mjs"
-import projectRouter from "./project/index.mjs"
-import pageRouter from "./page/index.mjs"
-import lineRouter from "./line/index.mjs"
+import logger from 'morgan'
+import cors from 'cors'
+import indexRouter from './index.mjs'
+import manifestRouter from './manifest/index.mjs'
+import projectRouter from './project/index.mjs'
+import pageRouter from './page/index.mjs'
+import lineRouter from './line/index.mjs'
 
 let app = express()
 
@@ -33,28 +33,30 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 //Publicly available scripts, CSS, and HTML pages.
-app.use(express.static(path.join(__dirname, "public")))
+app.use(express.static(path.join(__dirname, 'public')))
 
 /**
  * For any request that comes through to the app, check whether or not we are in maintenance mode.
  * If we are, then respond with a 503 and a message.  Otherwise, continue on.
  */
-app.all("*", (req, res, next) => {
-  if (process.env.DOWN === "true") {
-    res.status(503).json({
-      message:
-        "TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later."
-    })
+app.all('*', (req, res, next) => {
+  if (process.env.DOWN === 'true') {
+    res
+      .status(503)
+      .json({
+        message:
+          'TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later.',
+      })
   } else {
     next() //pass on to the next app.use
   }
 })
 
-app.use("/", indexRouter)
-app.use("/manifest", manifestRouter)
-app.use("/project", projectRouter)
-app.use("/line", lineRouter)
-app.use("/page", pageRouter)
+app.use('/', indexRouter)
+app.use('/manifest', manifestRouter)
+app.use('/project', projectRouter)
+app.use('/line', lineRouter)
+app.use('/page', pageRouter)
 
 //catch 404 because of an invalid site path
 app.use(function (req, res, next) {
