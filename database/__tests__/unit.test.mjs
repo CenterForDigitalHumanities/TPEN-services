@@ -51,12 +51,12 @@ describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
 
 describe('Can connect to all registered controllers with applied parameter.  #poly_unit #db',()=>{
     it('Tiny Connection Parameter', async () => {
-        const p = new dbDriver("tiny")
-        expect(await p.connected()).toBe(true)
+        const d = new DatabaseDriver("tiny")
+        expect(await d.connected()).toBe(true)
     })
     it('Mongo Connection Parameter', async () => {
-        const p = new dbDriver("mongo")
-        expect(await p.connected()).toBe(true)
+        const d = new DatabaseDriver("mongo")
+        expect(await d.connected()).toBe(true)
     })
     it('Maria Connection Parameter Stub', async () => {
         expect(true).toBeTruthy()

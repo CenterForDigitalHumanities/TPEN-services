@@ -7,7 +7,7 @@
  * 
  * */
 
-
+import * as logic from "../manifest.mjs"
 let test_manifest = { "type": "Manifest", "label": {"en":["Test Manifest"]} }
 let updated_manifest = {}
 
