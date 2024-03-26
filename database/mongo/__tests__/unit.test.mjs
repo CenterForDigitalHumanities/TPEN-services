@@ -6,7 +6,8 @@ let test_group = { "@type": "Group", "name": "Test Group" }
 let test_userPreferences = { "@type": "UserPreferences", "name": 'Test UserReferences' }
 
 beforeAll(async () => {
-    return await database.connect()
+    await database.connect()
+    return 
 })
 
 afterAll(async () => {

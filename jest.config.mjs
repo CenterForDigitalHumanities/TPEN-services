@@ -20,6 +20,9 @@ let config = {
   //That is OK in the testing scenario.  In production, only one connection is made and it is closed when the app exits. 
   detectOpenHandles : false,
 
+  // Timeout for tests.  Give them 30 seconds so that it has a chance to connect to a db
+  testTimeout: 30000,
+
   displayName: {
     name: 'TPEN3 Services',
     color: 'cyan',

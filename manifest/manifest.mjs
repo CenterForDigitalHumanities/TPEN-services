@@ -10,7 +10,7 @@ import Database from "../database/polyController.mjs"
 import * as utils from "../utilities/shared.mjs"
 
 const database = new Database()
-database.chooseController("tiny")
+await database.chooseController("tiny")
 
 /**
  * A full Manifest object without an ID to be created in RERUM
