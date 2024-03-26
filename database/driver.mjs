@@ -57,8 +57,8 @@ class dbDriver {
             try {
                 await this.controller.connect()
             } catch(err){
-                throw err
                 console.error(`Controller '${dbControllerName}' had trouble connecting.`)
+                throw err
             }
         }
         return
