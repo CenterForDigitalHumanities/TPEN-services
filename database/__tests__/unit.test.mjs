@@ -8,7 +8,7 @@
 
 import DatabaseDriver from "../driver.mjs"
 
-describe('POLY CRUD and query is registered.  #poly_unit #db',()=>{
+describe('Driver CRUD and query is registered.  #poly_unit #db',()=>{
     const d = new DatabaseDriver()
     it('create', async () => {
         expect(typeof d.create).toBe("function")
