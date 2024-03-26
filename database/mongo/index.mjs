@@ -62,6 +62,7 @@ class DatabaseController {
         } catch (err) {
             console.error("MongoDB Connection Failed")
             console.error(process.env.MONGODB)
+            console.error(err)
             throw err
         }
     }
@@ -81,6 +82,7 @@ class DatabaseController {
         try {
             return new ObjectId().toHexString()
         } catch (err) {
+            console.error(err)
             return err
         }
     }
@@ -96,6 +98,7 @@ class DatabaseController {
             result = result.ok ? true : false
             return result
         } catch (err) {
+            console.error(err)
             return false
         }
     }
@@ -119,6 +122,7 @@ class DatabaseController {
             let result = await this.db.collection(collection).find(query).toArray()
             return result
         } catch (err) {
+            console.error(err)
             return { "endpoint_error": "find", "status": 500, "message": "There was an error querying the database." }
         }
     }
@@ -146,6 +150,7 @@ class DatabaseController {
                 return { "endpoint_error": "insertOne", "status": 500, "message": "Document was not inserted into the database." }
             }
         } catch (err) {
+            console.error(err)
             return { "endpoint_error": "insertOne", "status": 500, "message": "There was an error inserting the document into the database." }
         }
     }
@@ -180,6 +185,7 @@ class DatabaseController {
                 return { "endpoint_error": "updateOne", "status": 500, "message": "Document was not updated in the database." }
             }
         } catch (err) {
+            console.error(err)
             return { "endpoint_error": "updateOne", "status": 500, "message": "There was an error updating the document in the database." }
         }
     }

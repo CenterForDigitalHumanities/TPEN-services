@@ -61,6 +61,7 @@ class DatabaseController {
                 }
             })
             .catch(err => {
+                console.error(err)
                 return { "endpoint_error": this.URLS.QUERY, "status": 500, "message": "There was an error querying through TinyPen" }
             })
     }
@@ -85,6 +86,7 @@ class DatabaseController {
                 }
             })
             .catch(err => {
+                console.error(err)
                 return { "endpoint_error": this.URLS.CREATE, "status": 500, "message": "There was an error creating through TinyPen" }
             })
     }
@@ -109,6 +111,7 @@ class DatabaseController {
                 }
             })
             .catch(err => {
+                console.error(err)
                 return { "endpoint_error": this.URLS.UPDATE, "status": 500, "message": "There was an error updating through TinyPen" }
             })
     }
@@ -133,6 +136,7 @@ class DatabaseController {
                 }
             })
             .catch(err => {
+                console.error(err)
                 return { "endpoint_error": this.URLS.OVERWRITE, "status": 500, "message": "There was an error overwriting through TinyPen" }
             })
     }
@@ -155,6 +159,7 @@ class DatabaseController {
                 if (!resp.ok) return { "endpoint_error": this.URLS.DELETE, "status": resp.status, "message": resp.statusText }
             })
             .catch(err => {
+                console.error(err)
                 return { "endpoint_error": this.URLS.DELETE, "status": 500, "message": "There was an error deleting through TinyPen" }
             })
     }
