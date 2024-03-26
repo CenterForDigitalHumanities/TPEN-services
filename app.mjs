@@ -24,9 +24,6 @@ import manifestRouter from "./manifest/index.mjs"
 import projectRouter from "./project/index.mjs"
 import pageRouter from "./page/index.mjs"
 import lineRouter from "./line/index.mjs"
-import auth0Middleware, {
-  authenticateUser 
-} from "./middlewares/verifyToken.mjs"
 
 let app = express()
 
@@ -52,11 +49,6 @@ app.all("*", (req, res, next) => {
     next() //pass on to the next app.use
   }
 })
-
-
-app.use("/verify-token", authenticateUser()) // apply checks from custom functions to specific routes
-
-app.use("/page/*", auth0Middleware()) // using Auth0 lib
 
 app.use("/", indexRouter)
 app.use("/manifest", manifestRouter)
