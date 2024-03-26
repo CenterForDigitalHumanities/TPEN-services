@@ -2,6 +2,9 @@
  * Abstract unit actions that may use any of the registered database controllers.
  * A call comes in stating which controller it wants to use and which action it is trying to do.
  * This gives instructions to the specific controllers.
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
  */
 
 import TinyController from "./tiny/controller.mjs"

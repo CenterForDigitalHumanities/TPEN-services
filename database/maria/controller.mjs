@@ -1,6 +1,9 @@
 /**
  * A MariaDB Controller.  Actions here specifically interact with the set MariaDB Database.
  * @see env.MARIADB
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
  */ 
 
 import mariadb from 'mariadb'

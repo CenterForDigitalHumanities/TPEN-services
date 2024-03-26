@@ -1,6 +1,9 @@
 /**
  * A TinyPEN Controller.  Actions here specifically fetch to the set TinyPEN API URLS.
  * @see this.URLS
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
  */ 
 
 import fetch from 'node-fetch'

@@ -1,6 +1,9 @@
 /**
  * A MongoDB Controller.  Actions here specifically interact with the set MongoDB Database.
  * @see env.MONGODB
+ * 
+ * @author Bryan Haberberger
+ * https://github.com/thehabes 
  */ 
 
 import { MongoClient, ObjectId } from 'mongodb'
