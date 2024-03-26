@@ -43,8 +43,8 @@ class DatabaseController {
      * Basic constructor.
      * @param connect A boolean for whether or not to attempt to open a connection to the mongo client immediately.
      */
-    async constructor(connect = false) {
-        if (connect) await this.connect()
+    constructor(connect = false) {
+        if (connect) this.connect()
     }
 
     /** 
