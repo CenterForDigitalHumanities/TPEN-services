@@ -1,7 +1,7 @@
 name: dev.api.t-pen.org deploy on push to development
 on:
   push:
-    branches: 59-db-controller
+    branches: development
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -45,7 +45,6 @@ jobs:
           npm install
           npm run allTests
   deploy:
-    if: github.event.pull_request.draft == false
     needs:
       - test
     strategy:
@@ -64,7 +63,7 @@ jobs:
           cd /srv/node/tpen-services/
           pm2 stop tpen3_services
           git stash
-          git checkout 59-db-controller
+          git checkout development
           git pull
           npm install
           pm2 -s start -i max bin/tpen3_services.mjs
