@@ -3,20 +3,7 @@ on:
   push:
     branches: 59-db-controller
 jobs:
-  # merge-branch:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@master
-  #     - name: Merge with development
-  #       uses: devmasx/merge-branch@master
-  #       with:
-  #         type: now
-  #         from_branch: development
-  #         target_branch: ${{ github.head_ref }}
-  #         github_token: ${{ secrets.BRY_PAT }}
-  #         message: Merge development into this branch to deploy to dev for testing.
   test:
-  #  needs: merge-branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -58,6 +45,7 @@ jobs:
           npm install
           npm run allTests
   deploy:
+    if: github.event.pull_request.draft == false
     needs:
       - test
     strategy:
