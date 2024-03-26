@@ -7,15 +7,14 @@
  * 
  * */
 
-import * as logic from '../manifest.mjs'
 
 let test_manifest = { "type": "Manifest", "label": {"en":["Test Manifest"]} }
 let updated_manifest = {}
 
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
-  it('Creates a Manifest', async () => {
-    test_manifest = await logic.createManifest(test_manifest)
-    expect(test_manifest["@id"]).toBeTruthy()
+
+  it('No TPEN3 project id provided.  Project validation must be false.', () => {
+    expect(validateID()).toBe(false)
   })
   it('Finds the manifest by _id', async () => {
     const found = await logic.findTheManifestByID(test_manifest["@id"].split("/").pop())
@@ -34,4 +33,5 @@ describe('Manifest endpoint functionality unit test (just testing helper functio
   it('Deletes the Manifest Stub', async () => {
     expect(true).toBe(true)
   })
+
 }) 

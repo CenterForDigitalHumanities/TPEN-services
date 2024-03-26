@@ -38,15 +38,6 @@ export async function deleteManifest(manifestIRI){
 }
 
 /**
- * JSON properties to query for matches against.
- * All objects matching these properties will be returned.
- * @see https://store.rerum.io/v1/API.html#query
- */ 
-export async function queryForManifests(manifestJSON){
-   return await database.read(manifestJSON)
-}
-
-/**
  * A hash id for a Manifest in RERUM.  Get the Manifest that matches this hash _id. 
  * @see https://store.rerum.io/v1/API.html#single-record-by-id
  */ 
@@ -55,4 +46,13 @@ export async function findTheManifestByID(hash_id){
    // No need to query through TinyPEN (database) for this, but we could like {"_id": hash_id}
    const manifestIRI = process.env.RERUMIDPREFIX+hash_id
    return await fetch(manifestIRI).then(res => res.json()).catch(err => {return err})
+}
+
+/**
+ * JSON properties to query for matches against.
+ * All objects matching these properties will be returned.
+ * @see https://store.rerum.io/v1/API.html#query
+ */ 
+export async function queryForManifests(manifestJSON){
+   return await database.read(manifestJSON)
 }

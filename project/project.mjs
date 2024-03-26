@@ -15,10 +15,7 @@ export async function findTheProjectByID(id = null) {
 
   if (id && id === 7085) {
     let projectFileBuffer = fs.readFileSync('./public/project.json', (err, data) => {
-      if (err) {
-        console.error(err)
-        return null
-      }
+      if (err) throw err
     })
     project = projectFileBuffer !== null && JSON.parse(projectFileBuffer.toString())
   }
