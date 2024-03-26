@@ -17,11 +17,11 @@ class DatabaseController {
     /** Basic constructor to establish constant class properties */
     constructor() {
         this.URLS = {}
-        this.URLS.CREATE = "https://dev.tiny.t-pen.org/create"
-        this.URLS.UPDATE = "https://dev.tiny.t-pen.org/update"
-        this.URLS.OVERWRITE = "https://dev.tiny.t-pen.org/overwrite"
-        this.URLS.QUERY = "https://dev.tiny.t-pen.org/query"
-        this.URLS.DELETE = "https://dev.tiny.t-pen.org/delete"
+        this.URLS.CREATE = process.env.TINYPEN+"create"
+        this.URLS.UPDATE = process.env.TINYPEN+"update"
+        this.URLS.OVERWRITE = process.env.TINYPEN+"overwrite"
+        this.URLS.QUERY = process.env.TINYPEN+"query"
+        this.URLS.DELETE = process.env.TINYPEN+"delete"
         console.log("TINY API established")
         console.log(this.URLS)
     }
