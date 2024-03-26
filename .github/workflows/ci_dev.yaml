@@ -1,7 +1,7 @@
 name: TPEN3 Services end to end tests on PR to development
 on:
   pull_request:
-    branches: development
+    branches: 59-db-controller
 jobs:
   test:
     runs-on: ubuntu-latest
