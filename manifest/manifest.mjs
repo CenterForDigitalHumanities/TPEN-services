@@ -6,7 +6,7 @@
  * 
  * */
 import fetch from 'node-fetch'
-import Database from "../database/dbDriver.mjs"
+import Database from "../database/driver.mjs"
 import * as utils from "../utilities/shared.mjs"
 
 const database = new Database()

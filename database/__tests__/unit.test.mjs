@@ -6,7 +6,7 @@
     * https://github.com/thehabes 
 */
 
-import dbDriver from "../dbDriver.mjs"
+import dbDriver from "../driver.mjs"
 
 describe('POLY CRUD and query is registered.  #poly_unit #db',()=>{
     const d = new dbDriver()
