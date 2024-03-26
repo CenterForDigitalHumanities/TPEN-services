@@ -1,7 +1,7 @@
 name: TPEN3 Services end to end tests on PR to main
 on:
   pull_request:
-    branches: main
+    branches: mainx
 jobs:
   test:
     runs-on: ubuntu-latest
