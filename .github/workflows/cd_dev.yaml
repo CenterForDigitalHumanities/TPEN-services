@@ -14,16 +14,16 @@ jobs:
           envkey_READONLYL: ${{ secrets.READONLY }}
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
           envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
-          envkey_MONGODB: ${{ secrets.MONGODB }}
+          envkey_MONGODB: ${{ secrets.MONGODBDEV }}
           envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
           envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
           envkey_TPENUSERPREFERENCES: ${{ secrets.TPENUSERPREFERENCES }}
-          envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
+          envkey_MARIADBNAME: ${{ secrets.MARIADBNAMEDEV }}
           envkey_MARIADB: ${{ secrets.MARIADB }}
-          envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
-          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
+          envkey_MARIADBUSER: ${{ secrets.MARIADBUSERDEV}}
+          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORDDEV }}
           envkey_RERUMURL: ${{ secrets.RERUMURL }}
-          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
+          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIXDEV }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
