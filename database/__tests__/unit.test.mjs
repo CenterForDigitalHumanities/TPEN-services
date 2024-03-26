@@ -8,7 +8,7 @@
 
 import DatabaseDriver from "../driver.mjs"
 
-describe('Driver CRUD and query is registered.  #poly_unit #db',()=>{
+describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     const d = new DatabaseDriver()
     it('create', async () => {
         expect(typeof d.create).toBe("function")
@@ -33,7 +33,7 @@ describe('Driver CRUD and query is registered.  #poly_unit #db',()=>{
     })
 })
 
-describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
+describe('Can connect to all registered controllers.  #driver_unit #db',()=>{
     it('Tiny Connection', async () => {
         const d = new DatabaseDriver()
         await d.chooseController("tiny")
@@ -49,7 +49,7 @@ describe('Can connect to all registered controllers.  #poly_unit #db',()=>{
     })
 })
 
-describe('Can connect to all registered controllers with applied parameter.  #poly_unit #db',()=>{
+describe('Can connect to all registered controllers with applied parameter.  #driver_unit #db',()=>{
     it('Tiny Connection Parameter', async () => {
         const d = new DatabaseDriver("tiny")
         expect(await d.connected()).toBe(true)
