@@ -40,8 +40,8 @@ class DatabaseController {
         } 
         catch (err) {
             this.conn = null
-            console.log("MariaDB Connection Failed")
-            console.log(process.env.MARIADB)
+            console.error("MariaDB Connection Failed")
+            console.error(process.env.MARIADB)
             console.error(err)
             throw err
         } 
