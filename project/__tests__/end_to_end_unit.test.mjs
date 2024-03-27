@@ -112,7 +112,7 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     expect(res.body).toBeTruthy()
     expect(URL.canParse(res.body)).toBeTruthy()
   })
-
+  
   it('Call to /project with valid ID and parameter ?lookup=manifest. The status should be 200 with body containing the related document or Array of documents, the version allowed without authentication.', async () => {
     const res = await request(routeTester)
       .get('/project/7085?lookup=manifest')
@@ -126,7 +126,7 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     }
     expect(json).not.toBe(null)
   })
-
+  
   it('Call to /project with valid ID and parameter ?view=json. The status should be 200 with a JSON Project in the body.', async () => {
     const res = await request(routeTester)
       .get('/project/7085')
@@ -162,5 +162,5 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       .get('/project/7085?text=lines&view=html')
     expect(res.statusCode).toBe(400)
   })
-
+  
 })
