@@ -42,7 +42,7 @@ export function respondWithProject(req, res, project) {
     .filter(elem => elem !== undefined)
   let responseType = null
   if (passedQueries.length > 1) {
-    utils.respondWithError(res, 400, 
+    utils.respondWithError(res, 400,
       'Improper request. Only one response type may be queried.'
     )
     return
@@ -70,25 +70,25 @@ export function respondWithProject(req, res, project) {
         case "layers":
           res.set('Content-Type', 'application/json; charset=utf-8')
           /* retVal = project.layers.map(layer => db.getByID(layer)) */
-          retVal = [  
-            { "name": "Layer.name", "id": "#AnnotationCollectionId", "textContent": "concatenated blob" }  
+          retVal = [
+            { "name": "Layer.name", "id": "#AnnotationCollectionId", "textContent": "concatenated blob" }
           ]
           break
         case "pages":
           res.set('Content-Type', 'application/json; charset=utf-8')
           /* retVal = project.layers.flatMap(layer => db.getByID(layer).getPages()) */
-          retVal = [  
-            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": "concatenated blob" }  
+          retVal = [
+            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": "concatenated blob" }
           ]
           break
         case "lines":
           res.set('Content-Type', 'application/json; charset=utf-8')
-          retVal = [  
-            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": [{ "id" : "#AnnotationId", "textualBody" : "single annotation content" }]}  
+          retVal = [
+            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": [{ "id" : "#AnnotationId", "textualBody" : "single annotation content" }]}
           ]
           break
         default:
-          utils.respondWithError(res, 400, 
+          utils.respondWithError(res, 400,
             'Improper request.  Parameter "text" must be "blob," "layers," "pages," or "lines."')
           break
       }
@@ -103,7 +103,7 @@ export function respondWithProject(req, res, project) {
           // make sure to handle this differently if req.query.embed is true
           break
         default:
-          utils.respondWithError(res, 400, 
+          utils.respondWithError(res, 400,
             'Improper request.  Parameter "image" must be "thumbnail."')
           break
       }
@@ -121,7 +121,7 @@ export function respondWithProject(req, res, project) {
           }
           break
         default:
-          utils.respondWithError(res, 400, 
+          utils.respondWithError(res, 400,
             'Improper request.  Parameter "lookup" must be "manifest."')
           break
       }
@@ -144,11 +144,11 @@ export function respondWithProject(req, res, project) {
         case "json":
           break // Let the default case of the switch(responseType) handle this
         default:
-          utils.respondWithError(res, 400, 
+          utils.respondWithError(res, 400,
             'Improper request.  Parameter "view" must be "json," "xml," or "html."')
           break
       }
-    
+
     default:
       res.set('Content-Type', 'application/json; charset=utf-8')
       res.location(id)
