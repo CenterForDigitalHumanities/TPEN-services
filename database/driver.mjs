@@ -7,6 +7,7 @@
  * 
  * @author Bryan Haberberger
  * https://github.com/thehabes 
+ * 
  */
 
 import TinyController from "./tiny/controller.mjs"
