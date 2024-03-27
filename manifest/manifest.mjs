@@ -5,51 +5,54 @@
  * https://github.com/thehabes 
  * 
  * */
-
+import fetch from 'node-fetch'
+import DatabaseDriver from "../database/driver.mjs"
 import * as utils from "../utilities/shared.mjs"
 
+const database = new DatabaseDriver()
+await database.chooseController("tiny")
+
 /**
- * Go into the database to get the Project information for the id input.
- * The Project will have a Manifest associated with it.  
- * Get that Manifest and return it.  Return null if no manifest can be produced.
- * 
- * @param id A string or number meant to be a number.
- * @return manifest A JSON object that is a Manifest or null.
+ * A full Manifest object without an ID to be created in RERUM
+ * @see https://store.rerum.io/v1/API.html#create
+ */
+export async function createManifest(manifestJSON){
+   return await database.create(manifestJSON)
+}
+
+/**
+ * A full Manifest object with an ID.  This assumes
+ * the object has changed and needs to be RERUM PUT updated.
+ * @see https://store.rerum.io/v1/API.html#update
  */ 
-export async function findTheManifestByID(id=null){
-   let manifest = null
+export async function updateManifest(manifestJSON){
+   return await database.update(manifestJSON)
+}
 
-   // A bad ID will not find a Project, therefore not a Manifest either.
-   if(!utils.validateID(id)) return manifest
+/**
+ * The IRI of a Manifest in RERUM to RERUM delete.
+ * @see https://store.rerum.io/v1/API.html#delete
+ */ 
+export async function deleteManifest(manifestIRI){
+   return await database.remove(manifestIRI)
+}
 
-   // Mock a pause for endpoints that fail, to mock the time it takes for some async stuff to decide it failed.
-   const mockPause = new Promise((resolve, reject) => {
-     setTimeout(() => {
-       resolve(null)
-     }, 1500)
-   })
+/**
+ * A hash id for a Manifest in RERUM.  Get the Manifest that matches this hash _id. 
+ * @see https://store.rerum.io/v1/API.html#single-record-by-id
+ */ 
+export async function findTheManifestByID(hash_id){
+   // Since this relates to a RERUM resource, we just need the IRI (const prefix + hash) and we can fetch it.
+   // No need to query through TinyPEN (database) for this, but we could like {"_id": hash_id}
+   const manifestIRI = process.env.RERUMIDPREFIX+hash_id
+   return await fetch(manifestIRI).then(res => res.json()).catch(err => {return err})
+}
 
-   // A good ID will return JSON if there is a matching project.  Send back JSON for IDs greater than 100.
-   if(id && id > 100) {
-      // Go get the data from the database.  
-      // This fetch actually gets this particular manifest from the existing TPEN which mocks the asyncronous behavior of this action.
-      manifest = await fetch("https://t-pen.org/TPEN/manifest/7085")
-      .then(resp => resp.json())
-      .then(man => {
-         // A quick cheat which lets you know we got the id right.
-         man["@id"] = `https://t-pen.org/TPEN/manifest/${id}`
-         return man
-      })
-      .catch(err => {
-         console.error(err)
-         return null
-      })
-   }
-   
-   // Mock the asyncronous action of taking some seconds to look for but not find the Manifest.
-   if(manifest === null){
-      manifest = mockPause.then(val => {return null})
-   }
-
-   return manifest
+/**
+ * JSON properties to query for matches against.
+ * All objects matching these properties will be returned.
+ * @see https://store.rerum.io/v1/API.html#query
+ */ 
+export async function queryForManifests(manifestJSON){
+   return await database.read(manifestJSON)
 }

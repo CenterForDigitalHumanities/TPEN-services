@@ -36,7 +36,15 @@ router.use(
   })
 )
 
-// Send a successful response with the appropriate JSON
+// Send a successful response from queryForManifest.  Code is 200, no location header
+export function respondWithManifests(res, manifest){
+   const id = manifest["@id"] ?? manifest.id ?? null
+   res.set("Content-Type", "application/json; charset=utf-8")
+   res.status(200)
+   res.json(manifest)
+}
+
+// Send a successful response with the appropriate JSON.  Code is 200 and has location header
 export function respondWithManifest(res, manifest){
    const id = manifest["@id"] ?? manifest.id ?? null
    res.set("Content-Type", "application/json; charset=utf-8")
@@ -45,14 +53,92 @@ export function respondWithManifest(res, manifest){
    res.json(manifest)
 }
 
+// Send a successful response from createManifest.  Code is 201 and has location header
+export function respondWithCreatedManifest(res, manifest){
+   const id = manifest._id ?? null
+   res.set("Content-Type", "application/json; charset=utf-8")
+   res.location(id)
+   res.status(201)
+   res.json(manifest)
+}
+
+// Handle a post request which creates the Manifest through TinyPen and gives back the created object
+router.route('/create')
+   .post(async (req, res, next) => {
+      const j = req.body
+      // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.createManifest(j)
+      if(result["@id"]){
+         respondWithCreatedManifest(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use POST.')
+   })
+
+
+// Handle a put request which updates an existing Manifest through TinyPen and gives back the updated object
+router.route('/update')
+   .put(async (req, res, next) => {
+      const j = req.body
+      // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.updateManifest(j)
+      if(result["@id"]){
+         respondWithManifest(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use PUT.')
+   })
+
+// Handle a post request which queries for existing objects through TinyPen and gives back the matched objects
+router.route('/query')
+   .post(async (req, res, next) => {
+      const j = req.body
+      // This results in JSON no matter what.  Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.queryForManifests(j)
+      if(result["@id"]){
+         respondWithManifests(res, result)
+      }
+      else{
+         utils.respondWithError(res, result.status, result.message)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use POST.')
+   })
+
+// Handle a delete request which contains the ID of a Manifest to delete.
+router.route('/delete/:id')
+   .delete(async (req, res, next) => {
+      let id = req.params.id
+      // Errors look like {status:CODE, message:"ERR_MSG"}
+      const result = await logic.deleteManifest(id)
+      if(result.endpoint_error){
+         utils.respondWithError(res, result.status, result.message)
+      }
+      else{
+         res.status(204)
+         res.send(`${id} is marked as deleted`)
+      }
+   })
+   .all((req, res, next) => {
+      utils.respondWithError(res, 405, 'Improper request method, please use DELETE.')
+   })
+
 // Expect an /{id} as part of the route, like /manifest/123
 router.route('/:id')
    .get(async (req, res, next) => {
       let id = req.params.id
-      if(!utils.validateID(id)){
-         utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
-      }
-      id = parseInt(id)
+      // if(!utils.validateID(id)){
+      //    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+      // }
       const manifestObj = await logic.findTheManifestByID(id)
       if(manifestObj){
          respondWithManifest(res, manifestObj)
@@ -65,7 +151,7 @@ router.route('/:id')
       utils.respondWithError(res, 405, 'Improper request method, please use GET.')
    })
 
-// Handle lack of an /{id} as part of the route
+// Handle lack of an /{id} or action as part of the route
 router.route('/')
    .get((req, res, next) => {
       utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')
