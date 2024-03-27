@@ -1,9 +1,9 @@
 /**
  * Abstract unit actions that may use any of the registered database controllers. 
- * This gives instructions to the specific controllers.
- * Downstream logic instantiates a driver and chooses a controller.
+ * This driver gives instructions to the specific controllers.
+ * Downstream logic initializes a driver and chooses a controller.
  * No matter which controller they choose, they have access to regularized unit functionality.
- * Additionally controllers can be included in the /database directory as necessary.
+ * Additiona controllers can be included in the /database directory as necessary.
  * 
  * @author Bryan Haberberger
  * https://github.com/thehabes 
