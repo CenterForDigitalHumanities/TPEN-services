@@ -22,10 +22,10 @@
       "start": "node ./bin/tpen3_services.mjs",
       "allTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
       "unitTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",
-      "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
+      "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t db ",
       "existsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",
       "functionsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t functions_unit ",
-      "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t #db "
+      "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t db "
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",
