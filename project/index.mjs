@@ -50,7 +50,7 @@ export function respondWithProject(req, res, project) {
     responseType = passedQueries[0]
   }
 
-
+  let embed = req.query.embed
 
   let retVal;
   switch (responseType) {
