@@ -1,9 +1,9 @@
 import express from "express"
-import request from "supertest"
-import auth0Middleware from "../../utilities/auth.mjs"
+import request from "supertest" 
+import auth0Middleware from "../index.mjs"
 
 process.env.AUDIENCE = "provide audience to test"
-// this test has a had time reading env directly. add 
+// this test has a had time reading env directly. add
 
 const app = express()
 

@@ -1,6 +1,6 @@
-import * as utils from "./shared.mjs"
-import { auth } from "express-oauth2-jwt-bearer"
-import { extractToken, extractUser, isTokenExpired } from "./token.mjs"
+import * as utils from "../utilities/shared.mjs"
+import {auth} from "express-oauth2-jwt-bearer"
+import {extractToken, extractUser, isTokenExpired} from "../utilities/token.mjs"
 
 export function authenticateUser() {
   return (req, res, next) => {
@@ -40,7 +40,7 @@ function auth0Middleware() {
 
   // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sib, roles, etc.
   function setUser(req, res, next) {
-    const { payload } = req.auth
+    const {payload} = req.auth
     req.user = payload
     next()
   }
