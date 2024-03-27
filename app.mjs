@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
-/** Server initializer for the app.  Registers all the route paths. */
+/** Server initializer for the app.  Registers all the route paths. */ 
 
-import createError from "http-errors"
-import express from "express"
-import path from "path"
-import { fileURLToPath } from "url"
+import createError from 'http-errors'
+import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-import cookieParser from "cookie-parser"
-import dotenv from "dotenv"
-import dotenvExpand from "dotenv-expand"
+import cookieParser from 'cookie-parser'
+import dotenv from 'dotenv'
+import dotenvExpand from 'dotenv-expand'
 
 let storedEnv = dotenv.config()
 dotenvExpand.expand(storedEnv)
@@ -28,10 +28,11 @@ import lineRouter from './line/index.mjs'
 let app = express()
 
 //Middleware to use
-app.use(logger("dev"))
+app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
 //Publicly available scripts, CSS, and HTML pages.
 app.use(express.static(path.join(__dirname, 'public')))
 
@@ -55,13 +56,13 @@ app.all('*', (req, res, next) => {
 app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project', projectRouter)
-app.use('/line', lineRouter)
+app.use('/line', lineRouter) 
 app.use('/page', pageRouter)
 
 //catch 404 because of an invalid site path
-app.use(function (req, res, next) {
-  let msg = res.statusMessage ?? "This page does not exist"
-  res.status(404).send(msg)
+app.use(function(req, res, next) {
+    let msg = res.statusMessage ?? "This page does not exist"
+    res.status(404).send(msg)  
 })
 
-export { app as default }
+export {app as default}
