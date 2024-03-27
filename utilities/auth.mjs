@@ -1,10 +1,6 @@
 import * as utils from "./shared.mjs"
 import { auth } from "express-oauth2-jwt-bearer"
-import {
-  extractToken,
-  extractUser,
-  isTokenExpired
-} from "./token.mjs"
+import { extractToken, extractUser, isTokenExpired } from "./token.mjs"
 
 export function authenticateUser() {
   return (req, res, next) => {
@@ -36,9 +32,9 @@ function auth0Middleware() {
   //          apply the function on the base route in app.mjs in the following way; app.use("/project/*", auth0Middleware())
   //      b. to protect an individual route; route.get("/project", auth0Middleware(), controller)
   //      c. to protect all routes in the app; app.use(auth0Middleware())
-
   const verifier = auth({
-    audience: process.env.AUDIENCE,
+    // audience: process.env.AUDIENCE,
+    audience: "https://cubap.auth0.com/api/v2/",
     issuerBaseURL: `https://${process.env.DOMAIN}/`
   })
 
