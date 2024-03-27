@@ -34,7 +34,7 @@ function auth0Middleware() {
   //      c. to protect all routes in the app; app.use(auth0Middleware())
   const verifier = auth({
     // audience: process.env.AUDIENCE,
-    audience: "https://cubap.auth0.com/api/v2/",
+    audience: process.env.AUDIENCE,
     issuerBaseURL: `https://${process.env.DOMAIN}/`
   })
 

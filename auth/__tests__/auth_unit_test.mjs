@@ -2,17 +2,23 @@ import express from "express"
 import request from "supertest"
 import auth0Middleware from "../../utilities/auth.mjs"
 
+process.env.AUDIENCE = "provide audience to test"
+// this test has a had time reading env directly. add 
+
 const app = express()
 
-// Use the auth0Middleware in the routeTester app
 app.use(auth0Middleware())
 
-//Test for the auth0Middleware function
 describe("auth0Middleware #auth_test", () => {
   it("should return 401 Unauthorized without valid token", async () => {
     const res = await request(app).get("/protected-route")
 
     expect(res.status).toBe(401)
+  })
+
+  it("No user should be found on req if token is invalid", async () => {
+    const res = await request(app).get("/protected-route")
+    expect(res.req.user).toBeUndefined()
   })
 
   it("should set req.user with payload from auth and call next", async () => {
@@ -31,9 +37,13 @@ describe("auth0Middleware #auth_test", () => {
       }
     }
     const mockResponse = {}
-    const mockNext = jest.fn()
+    let mockNextCalled = false
+    const mockNext = function () {
+      mockNextCalled = true
+    }
 
     const [verifier, setUser] = auth0Middleware()
+
     await verifier(mockRequest, mockResponse, mockNext)
     setUser(mockRequest, mockResponse, mockNext)
 
@@ -42,6 +52,7 @@ describe("auth0Middleware #auth_test", () => {
       roles: ["admin", "user"]
     })
 
-    expect(mockNext).toHaveBeenCalled()
+    // expect(mockNext).toHaveBeenCalled()
+    expect(mockNextCalled).toBe(true)
   })
 })
