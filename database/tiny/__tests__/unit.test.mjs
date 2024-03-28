@@ -24,7 +24,7 @@ describe('TinyPen Unit Functions. #tiny_unit #db', () => {
         expect(result).toBe(true)
     })
     it('creates a new object', async () => {
-        const result = await database.create(test_manifest)
+        const result = await database.save(test_manifest)
         test_manifest["@id"] = result["@id"]
         expect(result["@id"]).toBeTruthy()
     })

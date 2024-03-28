@@ -11,7 +11,7 @@ import DatabaseDriver from "../driver.mjs"
 describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     const d = new DatabaseDriver()
     it('create', async () => {
-        expect(typeof d.create).toBe("function")
+        expect(typeof d.save).toBe("function")
     })
     it('update', async () => {
         expect(typeof d.update).toBe("function")

@@ -86,7 +86,7 @@ class dbDriver {
      * @return The inserted document JSON or error JSON
      */
     async save(data) {
-        return await this.controller.create(data).catch(err => {return err})
+        return await this.controller.save(data).catch(err => {return err})
     }
 
     /**

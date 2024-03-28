@@ -90,7 +90,7 @@ class DatabaseController {
      * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
      * @return the created JSON or Error
      */
-    async create(data) {
+    async save(data) {
         err_out._dbaction = this.URLS.CREATE
         return await fetch(this.URLS.CREATE, {
                 method: 'post',
@@ -202,7 +202,7 @@ class DatabaseController {
                     err_out.status = resp.status ?? 500
                     throw err_out
                 }
-                return resp
+                return resp.text()
             })
             .catch(err => {
                 // Specifically account for unexpected fetch()y things. 

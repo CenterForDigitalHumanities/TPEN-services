@@ -114,7 +114,7 @@ class DatabaseController {
      * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return JSON Array of matched documents or standard error object
      */
-    async read(query) {
+    async find(query) {
         err_out._dbaction = "find"
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
@@ -138,6 +138,10 @@ class DatabaseController {
             let result = await this.db.collection(collection).find(query).toArray()
             return result
         } catch (err) {
+            // Specifically account for unexpected mongo things.  
+            if(!err?.message) err.message =  err.toString()
+            if(!err?.status) err.status = 500
+            if(!err?._dbaction) err._dbaction = "find"
             throw err
         }
     }
@@ -147,7 +151,7 @@ class DatabaseController {
      * @param data JSON from an HTTP POST request
      * @return The inserted document JSON or error JSON
      */
-    async create(data) {
+    async save(data) {
         err_out._dbaction = "insertOne"
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
@@ -174,6 +178,10 @@ class DatabaseController {
                 throw err_out
             }
         } catch (err) {
+            // Specifically account for unexpected mongo things.  
+            if(!err?.message) err.message =  err.toString()
+            if(!err?.status) err.status = 500
+            if(!err?._dbaction) err._dbaction = "insertOne"
             throw err
         }
     }
@@ -184,6 +192,7 @@ class DatabaseController {
      * @return The inserted document JSON or error JSON
      */
     async update(data) {
+        // Note this may be an alias for save()
         err_out._dbaction = "replaceOne"
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
@@ -221,12 +230,16 @@ class DatabaseController {
                 throw err_out
             }
         } catch (err) {
+            // Specifically account for unexpected mongo things.  
+            if(!err?.message) err.message =  err.toString()
+            if(!err?.status) err.status = 500
+            if(!err?._dbaction) err._dbaction = "replaceOne"
             throw err
         }
     }
 
     /**
-     * Update an existing object in the database (mongo)
+     * Make an existing object in the database be gone from the normal flow of things (mongo)
      * @param data JSON from an HTTP DELETE request.  It must contain an id.
      * @return The delete result JSON or error JSON
      */
@@ -241,7 +254,7 @@ class DatabaseController {
      * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s 
      */
     async getByID(id) {
-        return await this.query({ "_id": id })
+        return await this.find({ "_id": id })
     }
 
 }
