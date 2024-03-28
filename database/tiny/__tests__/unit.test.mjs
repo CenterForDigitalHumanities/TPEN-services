@@ -36,7 +36,7 @@ describe('TinyPen Unit Functions. #tiny_unit #db', () => {
     })
 
     it('Finds matching objects by query', async () => {
-        const result = await database.read({ "@id": test_manifest["@id"] })
+        const result = await database.find({ "@id": test_manifest["@id"] })
         expect(result[0]["@id"]).toBe(test_manifest["@id"])
     })
 

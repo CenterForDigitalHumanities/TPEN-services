@@ -85,10 +85,8 @@ class dbDriver {
      * @param data JSON from an HTTP POST request
      * @return The inserted document JSON or error JSON
      */
-    async create(data) {
-        const result = await this.controller.create(data)
-        //if (result.endpoint_error) console.error(result)
-        return result
+    async save(data) {
+        return await this.controller.create(data).catch(err => {return err})
     }
 
     /**
@@ -97,9 +95,8 @@ class dbDriver {
      * @return The updated document JSON or error JSON
      */
     async update(data) {
-        const result = await this.controller.update(data)
-        //if (result.endpoint_error) console.error(result)
-        return result
+        // Note this may just be an alias for save()
+        return await this.controller.update(data).catch(err => {return err})
     }
 
     /**
@@ -107,10 +104,8 @@ class dbDriver {
      * @param data JSON from an HTTP DELETE request.  It must contain an id.
      * @return The delete result JSON or error JSON
      */
-    async remove(data) {
-        const result = await this.controller.remove(data)
-        //if (result.endpoint_error) console.error(result)
-        return result
+    async delete(data) {
+        return await this.controller.remove(data).catch(err => {return err})
     }
 
     /**
@@ -118,10 +113,8 @@ class dbDriver {
      * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return JSON Array of matched documents or standard error object
      */
-    async read(query) {
-        const result = await this.controller.read(query)
-        //if (result.endpoint_error) console.error(result)
-        return result
+    async find(query) {
+        return await this.controller.find(query).catch(err => {return err})
     }
 }
 

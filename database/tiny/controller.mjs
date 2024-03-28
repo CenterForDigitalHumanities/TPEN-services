@@ -6,11 +6,10 @@
  * https://github.com/thehabes 
  */ 
 
-import fetch from 'node-fetch'
 import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
 let storedEnv = dotenv.config()
-dotenvExpand.expand(storedEnv)
+
+let err_out = Object.assign(new Error(),  {"status":123, "message":"N/A", "_dbaction":"N/A"})
 
 class DatabaseController {
 
@@ -28,13 +27,13 @@ class DatabaseController {
 
     /** Other modules do not connect or close */
     async connect() {
-        console.log("No need to connect().  The API awaits you!")
+        // No need to connect().  The API awaits you!
         return
     }
 
     /** Other modules do not connect or close */
     async close() {
-        console.log("No need to close().  The API awaits you!")
+        // No need to close().  The API awaits you!
         return
     }
 
@@ -46,7 +45,8 @@ class DatabaseController {
     async connected() {
         // Send a /query to ping TinyPen
         try{
-            const theone = await this.read({ "_id": "11111" })
+            // A HEAD request to the URL
+            const theone = await this.find({ "_id": "11111" })
             return theone.length === 1    
         } catch(err){
             console.error(err)
@@ -59,7 +59,8 @@ class DatabaseController {
      * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return the found JSON as an Array or Error
      */
-    async read(query) {
+    async find(query) {
+        err_out._dbaction = this.URLS.QUERY
         return await fetch(this.URLS.QUERY, {
                 method: 'post',
                 body: JSON.stringify(query),
@@ -68,15 +69,19 @@ class DatabaseController {
                 }
             })
             .then(resp => {
-                if (resp.ok) return resp.json()
-                else {
-                    console.error(`${resp.status} - ${resp.statusText}`)
-                    return { "endpoint_error": this.URLS.QUERY, "status": resp.status, "message": resp.statusText }
+                if (!resp.ok) {
+                    err_out.message = resp.statusText ?? `TinyPEN Query sent a bad response`
+                    err_out.status = resp.status ?? 500
+                    throw err_out
                 }
+                return resp.json()
             })
             .catch(err => {
-                console.error(err)
-                return { "endpoint_error": this.URLS.QUERY, "status": 500, "message": "There was an error querying through TinyPen" }
+                // Specifically account for unexpected fetch()y things.  
+                if(!err?.message) err.message = err.statusText ?? `TinyPEN Query did not complete successfully`
+                if(!err?.status) err.status = err.status ?? 500
+                if(!err?._dbaction) err._dbaction = this.URLS.QUERY
+                throw err
             })
     }
 
@@ -86,6 +91,7 @@ class DatabaseController {
      * @return the created JSON or Error
      */
     async create(data) {
+        err_out._dbaction = this.URLS.CREATE
         return await fetch(this.URLS.CREATE, {
                 method: 'post',
                 body: JSON.stringify(data),
@@ -94,24 +100,29 @@ class DatabaseController {
                 }
             })
             .then(resp => {
-                if (resp.ok) return resp.json()
-                else {
-                    console.error(`${resp.status} - ${resp.statusText}`)
-                    return { "endpoint_error": this.URLS.CREATE, "status": resp.status, "message": resp.statusText }
+                if (!resp.ok) {
+                    err_out.message = resp.statusText ?? `TinyPEN Create sent a bad response`
+                    err_out.status = resp.status ?? 500
+                    throw err_out
                 }
+                return resp.json()
             })
             .catch(err => {
-                console.error(err)
-                return { "endpoint_error": this.URLS.CREATE, "status": 500, "message": "There was an error creating through TinyPen" }
+                // Specifically account for unexpected fetch()y things. 
+                if(!err?.message) err.message = err.statusText ?? `TinyPEN Create did not complete successfully`
+                if(!err?.status) err.status = err.status ?? 500
+                if(!err?._dbaction) err._dbaction = this.URLS.CREATE
+                throw err
             })
     }
 
     /**
-     * Use the TinyPEN update endpoint to create the supplied JSON object.
+     * Use the TinyPEN update endpoint to update the supplied JSON object.
      * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
      * @return the updated JSON or Error
      */
     async update(data) {
+        err_out._dbaction = this.URLS.UPDATE
         return await fetch(this.URLS.UPDATE, {
                 method: 'put',
                 body: JSON.stringify(data),
@@ -120,24 +131,29 @@ class DatabaseController {
                 }
             })
             .then(resp => {
-                if (resp.ok) return resp.json()
-                else {
-                    console.error(`${resp.status} - ${resp.statusText}`)
-                    return { "endpoint_error": this.URLS.UPDATE, "status": resp.status, "message": resp.statusText }
+                if (!resp.ok) {
+                    err_out.message = resp.statusText ?? `TinyPEN Update sent a bad response`
+                    err_out.status = resp.status ?? 500
+                    throw err_out
                 }
+                return resp.json()
             })
             .catch(err => {
-                console.error(err)
-                return { "endpoint_error": this.URLS.UPDATE, "status": 500, "message": "There was an error updating through TinyPen" }
+                // Specifically account for unexpected fetch()y things. 
+                if(!err?.message) err.message = err.statusText ?? `TinyPEN Update did not complete successfully`
+                if(!err?.status) err.status = err.status ?? 500
+                if(!err?._dbaction) err._dbaction = this.URLS.UPDATE
+                throw err
             })
     }
 
     /**
-     * Use the TinyPEN overwrite endpoint to create the supplied JSON object.
+     * Use the TinyPEN overwrite endpoint to overwrite the supplied JSON object.
      * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
      * @return the updated JSON or Error
      */
     async overwrite(data) {
+        err_out._dbaction = this.URLS.OVERWRITE
         return await fetch(this.URLS.OVERWRITE, {
                 method: 'put',
                 body: JSON.stringify(data),
@@ -146,15 +162,19 @@ class DatabaseController {
                 }
             })
             .then(resp => {
-                if (resp.ok) return resp.json()
-                else {
-                    console.error(`${resp.status} - ${resp.statusText}`)
-                    return { "endpoint_error": this.URLS.OVERWRITE, "status": resp.status, "message": resp.statusText }
+                if (!resp.ok) {
+                    err_out.message = resp.statusText ?? `TinyPEN Overwrite sent a bad response`
+                    err_out.status = resp.status ?? 500
+                    throw err_out
                 }
+                return resp.json()
             })
             .catch(err => {
-                console.error(err)
-                return { "endpoint_error": this.URLS.OVERWRITE, "status": 500, "message": "There was an error overwriting through TinyPen" }
+                // Specifically account for unexpected fetch()y things. 
+                if(!err?.message) err.message = err.statusText ?? `TinyPEN Overwrite did not complete successfully`
+                if(!err?.status) err.status = err.status ?? 500
+                if(!err?._dbaction) err._dbaction = this.URLS.OVERWRITE
+                throw err
             })
     }
 
@@ -164,7 +184,11 @@ class DatabaseController {
      * @return the created JSON or Error
      */
     async remove(data) {
-        return { "endpoint_error": "deleteOne", "status": 501, "message": `Not yet implemented.  Stay tuned.` }
+        err_out._dbaction = this.URLS.DELETE
+        err_out.message = `Not yet implemented.  Stay tuned.`
+        err_out.status = 501
+        throw err_out
+        // TODO
         return await fetch(this.URLS.DELETE, {
                 method: 'delete',
                 body: JSON.stringify(data),
@@ -174,13 +198,18 @@ class DatabaseController {
             })
             .then(resp => {
                 if (!resp.ok) {
-                    console.error(`${resp.status} - ${resp.statusText}`)
-                    return { "endpoint_error": this.URLS.DELETE, "status": resp.status, "message": resp.statusText }
+                    err_out.message = resp.statusText ?? `TinyPEN DELETE sent a bad response`
+                    err_out.status = resp.status ?? 500
+                    throw err_out
                 }
+                return resp
             })
             .catch(err => {
-                console.error(err)
-                return { "endpoint_error": this.URLS.DELETE, "status": 500, "message": "There was an error deleting through TinyPen" }
+                // Specifically account for unexpected fetch()y things. 
+                if(!err?.message) err.message = err.statusText ?? `TinyPEN DELETE did not complete successfully`
+                if(!err?.status) err.status = err.status ?? 500
+                if(!err?._dbaction) err._dbaction = this.URLS.DELETE
+                throw err
             })
     }
 }

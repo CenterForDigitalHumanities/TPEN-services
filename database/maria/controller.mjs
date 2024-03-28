@@ -8,9 +8,7 @@
 
 import mariadb from 'mariadb'
 import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
 let storedEnv = dotenv.config()
-dotenvExpand.expand(storedEnv)
 
 class DatabaseController {
     constructor(connect=false) {

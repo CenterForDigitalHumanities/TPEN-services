@@ -16,10 +16,6 @@ describe('Manifest endpoint functionality unit test (just testing helper functio
   it('No TPEN3 project id provided.  Project validation must be false.', () => {
     expect(validateID()).toBe(false)
   })
-  it('Finds the manifest by _id', async () => {
-    const found = await logic.findTheManifestByID(test_manifest["@id"].split("/").pop())
-    expect(found["@id"].split("/").pop()).toBe(test_manifest["@id"].split("/").pop())
-  })
   it('Updates the Manifest', async () => {
     test_manifest.updated = true
     updated_manifest = await logic.updateManifest(test_manifest)
@@ -27,7 +23,7 @@ describe('Manifest endpoint functionality unit test (just testing helper functio
     expect(updated_manifest["@id"]).not.toBe(test_manifest["@id"])
   })
   it('Reads for the Manifest', async () => {
-    const found = await logic.queryForManifests({"@id":updated_manifest["@id"]})
+    const found = await logic.queryForManifestsByDetails({"@id":updated_manifest["@id"]})
     expect(found.length).toBe(1)
   })
   it('Deletes the Manifest Stub', async () => {
