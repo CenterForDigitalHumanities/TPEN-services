@@ -62,7 +62,7 @@ function successfulResponse(res, code, data=null, message=null){
 
 
 // Handle a post request which creates the Manifest through TinyPen and gives back the created object
-router.route('/save')
+router.route('/create')
    .post(async (req, res, next) => {
       const j = req.body
       const logicResult = await logic.saveManifest(j)
