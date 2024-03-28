@@ -3,7 +3,7 @@
  * This driver gives instructions to the specific controllers.
  * Downstream logic initializes a driver and chooses a controller.
  * No matter which controller they choose, they have access to regularized unit functionality.
- * Additiona controllers can be included in the /database directory as necessary.
+ * Additional controllers can be included in the /database directory as necessary.
  * 
  * @author Bryan Haberberger
  * https://github.com/thehabes 
