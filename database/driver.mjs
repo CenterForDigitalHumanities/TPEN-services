@@ -86,7 +86,7 @@ class dbDriver {
      * @return The inserted document JSON or error JSON
      */
     async save(data) {
-        return await this.controller.save(data).catch(err => {return err})
+        return this.controller.save(data).catch(err => {return err})
     }
 
     /**
@@ -96,7 +96,7 @@ class dbDriver {
      */
     async update(data) {
         // Note this may just be an alias for save()
-        return await this.controller.update(data).catch(err => {return err})
+        return this.controller.update(data).catch(err => {return err})
     }
 
     /**
@@ -105,7 +105,7 @@ class dbDriver {
      * @return The delete result JSON or error JSON
      */
     async delete(data) {
-        return await this.controller.remove(data).catch(err => {return err})
+        return this.controller.remove(data).catch(err => {return err})
     }
 
     /**
@@ -114,7 +114,7 @@ class dbDriver {
      * @return JSON Array of matched documents or standard error object
      */
     async find(query) {
-        return await this.controller.find(query).catch(err => {return err})
+        return this.controller.find(query).catch(err => {return err})
     }
 }
 
