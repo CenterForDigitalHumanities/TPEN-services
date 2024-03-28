@@ -25,7 +25,7 @@
       "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
       "existsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",
       "functionsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t functions_unit ",
-      "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t mongo_unit "
+      "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t db "
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",

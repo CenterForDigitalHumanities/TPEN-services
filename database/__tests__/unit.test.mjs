@@ -16,11 +16,11 @@ describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     it('update', async () => {
         expect(typeof d.update).toBe("function")
     })
-    it('remove', async () => {
-        expect(typeof d.remove).toBe("function")
+    it('delete', async () => {
+        expect(typeof d.delete).toBe("function")
     })
-    it('read', async () => {
-        expect(typeof d.read).toBe("function")
+    it('find', async () => {
+        expect(typeof d.find).toBe("function")
     })
     it('choose controller', async () => {
         expect(typeof d.chooseController).toBe("function")
