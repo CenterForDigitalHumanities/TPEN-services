@@ -54,7 +54,6 @@ class DatabaseController {
         // TODO insert statement
         //const result = await this.conn.query(`INSERT INTO ${table} value (${document})`);
         const result = {"hello" : "Bryan"}
-        console.log(result)
         return result
     }
 
