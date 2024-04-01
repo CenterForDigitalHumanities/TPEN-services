@@ -9,7 +9,7 @@
 import dotenv from 'dotenv'
 let storedEnv = dotenv.config()
 
-let err_out = Object.assign(new Error(),  {"status":123, "message":"N/A", "_dbaction":"N/A"})
+let err_out = {"status":123, "message":"N/A", "_dbaction":"N/A"}
 
 class DatabaseController {
 
@@ -28,7 +28,7 @@ class DatabaseController {
     /** Other modules do not connect or close */
     async connect() {
         // No need to connect().  The API awaits you!
-        return
+        return 
     }
 
     /** Other modules do not connect or close */
@@ -45,7 +45,7 @@ class DatabaseController {
     async connected() {
         // Send a /query to ping TinyPen
         try{
-            // A HEAD request to the URL
+            // FIXME something less expensive
             const theone = await this.find({ "_id": "11111" })
             return theone.length === 1    
         } catch(err){
@@ -69,6 +69,7 @@ class DatabaseController {
                 }
             })
             .then(resp => {
+                console.log(resp)
                 if (!resp.ok) {
                     err_out.message = resp.statusText ?? `TinyPEN Query sent a bad response`
                     err_out.status = resp.status ?? 500
@@ -77,6 +78,8 @@ class DatabaseController {
                 return resp.json()
             })
             .catch(err => {
+                // console.log("QE")
+                // console.log(err)
                 // Specifically account for unexpected fetch()y things.  
                 if(!err?.message) err.message = err.statusText ?? `TinyPEN Query did not complete successfully`
                 if(!err?.status) err.status = err.status ?? 500

@@ -11,7 +11,6 @@ import dotenv from 'dotenv'
 let storedEnv = dotenv.config()
 let err_out = {"status":123, "message":"N/A", "_dbaction":"N/A"}
 
-
 /**
  * This mongo controller oversees multiple collections.
  * Requests have to determine which collection they go to based on the user input.

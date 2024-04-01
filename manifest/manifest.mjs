@@ -9,7 +9,7 @@ import DatabaseDriver from "../database/driver.mjs"
 import * as utils from "../utilities/shared.mjs"
 
 // This module will use the TinyPEN API (RERUM Mongo DB)
-const database = new DatabaseDriver("mongo")
+const database = new DatabaseDriver("tiny")
 
 /**
  * A full Manifest object without an ID to be created in RERUM

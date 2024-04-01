@@ -35,7 +35,7 @@ class dbDriver {
      */
     async chooseController(dbControllerName = null) {
         // Must provide a controller name
-        if (dbControllerName === null) throw new Error("You must provide one of theser controller names: 'mongo' 'maria' 'tiny'")
+        if (dbControllerName === null) throw new Error("No controller name provided")
         // Nothing to do if the controller is already active
         if (this?.dbControllerName === dbControllerName) throw new Error(`'${dbControllerName}' is already the active controller.`)
         // If there is an active controller, close the connection before switching
