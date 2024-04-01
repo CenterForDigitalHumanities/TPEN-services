@@ -18,7 +18,7 @@ class DatabaseController {
         this.URLS.CREATE = process.env.TINYPEN+"create"
         this.URLS.UPDATE = process.env.TINYPEN+"update"
         this.URLS.OVERWRITE = process.env.TINYPEN+"overwrite"
-        this.URLS.QUERY = process.env.TINYPEN+"queryz"
+        this.URLS.QUERY = process.env.TINYPEN+"query"
         this.URLS.DELETE = process.env.TINYPEN+"delete"
         console.log("TINY API established")
         console.log(this.URLS)
