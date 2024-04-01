@@ -44,24 +44,28 @@ describe('Manifest endpoint end to end unit test (spinning up the endpoint and u
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /manifest with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/manifest/0001')
-      expect(res.statusCode).toBe(404)
-      expect(res.body).toBeTruthy()
-  })
+  // These tests will work a bit differently if we are asking for Manifests in RERUM
 
-  it('Call to /manifest with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Manifest in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/manifest/7085')
-      let json = res.body
-      try{
-        json = JSON.parse(JSON.stringify(json))
-      }
-      catch(err){
-        json = null
-      }
-      expect(json).not.toBe(null)
-  })
-  
+  // it('Call to /manifest with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
+  //   const res = await request(routeTester)
+  //     .get('/manifest/0001')
+  //     expect(res.statusCode).toBe(404)
+  //     expect(res.body).toBeTruthy()
+  // })
+
+  // it('Call to /manifest with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Manifest in the body.', async () => {
+  //   const res = await request(routeTester)
+  //     .get('/manifest/7085')
+  //     let json = res.body
+  //     try{
+  //       json = JSON.parse(JSON.stringify(json))
+  //     }
+  //     catch(err){
+  //       json = null
+  //     }
+  //     expect(json).not.toBe(null)
+  // })
+
+  // TODO routes which use the CRUD capabilities of the /manifest endpoint, such as /manifest/create
+
 })

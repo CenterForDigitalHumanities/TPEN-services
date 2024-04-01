@@ -7,21 +7,27 @@
  * 
  * */
 
-import {findTheManifestByID} from '../manifest.mjs'
-import {validateID} from '../../utilities/shared.mjs'
+import * as logic from "../manifest.mjs"
+let test_manifest = { "type": "Manifest", "label": {"en":["Test Manifest"]} }
+let updated_manifest = {}
 
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
 
   it('No TPEN3 project id provided.  Project validation must be false.', () => {
     expect(validateID()).toBe(false)
   })
-  it('Detect TPEN3 project does not exist.  The query for a TPEN3 project must be null.', async () => {
-    const manifest = await findTheManifestByID(-111)
-    expect(manifest).toBe(null)
+  it('Updates the Manifest', async () => {
+    test_manifest.updated = true
+    updated_manifest = await logic.updateManifest(test_manifest)
+    expect(updated_manifest["@id"]).toBeTruthy()
+    expect(updated_manifest["@id"]).not.toBe(test_manifest["@id"])
   })
-  it('TPEN3 project does exist.  Finding the manifest results in the manifest JSON', async () => {
-    let manifest = await findTheManifestByID(7085)
-    expect(manifest).not.toBe(null)
+  it('Reads for the Manifest', async () => {
+    const found = await logic.queryForManifestsByDetails({"@id":updated_manifest["@id"]})
+    expect(found.length).toBe(1)
+  })
+  it('Deletes the Manifest Stub', async () => {
+    expect(true).toBe(true)
   })
 
 }) 
