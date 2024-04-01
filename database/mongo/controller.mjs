@@ -118,7 +118,7 @@ class DatabaseController {
         err_out._dbaction = "find"
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = query["@type"] ?? query.type ?? null
+            const data_type = query["@type"] ?? query.type
             if (!data_type){
                 err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
                 err_out.status = 400
@@ -155,7 +155,7 @@ class DatabaseController {
         err_out._dbaction = "insertOne"
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = data["@type"] ?? data.type ?? null
+            const data_type = data["@type"] ?? data.type
             if (!data_type){
                 err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
                 err_out.status = 400
@@ -196,8 +196,8 @@ class DatabaseController {
         err_out._dbaction = "replaceOne"
         try {
             //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = data["@type"] ?? data.type ?? null
-            let data_id = data["@id"] ?? data._id ?? null
+            const data_type = data["@type"] ?? data.type
+            let data_id = data["@id"] ?? data._id
             if (!data_id){
                 err_out.message = `An 'id' must be present to update.`
                 err_out.status = 400
