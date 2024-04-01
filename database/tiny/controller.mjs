@@ -72,7 +72,6 @@ class DatabaseController {
                 }
             })
             .then(resp => {
-                console.log(resp)
                 if (!resp.ok) {
                     err_out.message = resp.statusText ?? `TinyPEN Query sent a bad response`
                     err_out.status = resp.status ?? 500
@@ -81,8 +80,6 @@ class DatabaseController {
                 return resp.json()
             })
             .catch(err => {
-                // console.log("QE")
-                // console.log(err)
                 // Specifically account for unexpected fetch()y things.  
                 if(!err?.message) err.message = err.statusText ?? `TinyPEN Query did not complete successfully`
                 if(!err?.status) err.status = err.status ?? 500
