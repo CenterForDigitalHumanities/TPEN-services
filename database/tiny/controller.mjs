@@ -8,7 +8,6 @@
 
 import dotenv from 'dotenv'
 let storedEnv = dotenv.config()
-
 let err_out = Object.assign(new Error(), {"status":123, "message":"N/A", "_dbaction":"N/A"})
 
 class DatabaseController {
