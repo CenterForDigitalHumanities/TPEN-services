@@ -25,15 +25,19 @@ class DatabaseController {
         console.log(this.URLS)
     }
 
-    /** Other modules do not connect or close */
+    /** 
+     * Set the client for the controller and open a connection.
+     * Note TinyPEN is an open API on the internet.  This controller has no connect().
+     * */
     async connect() {
-        // No need to connect().  The API awaits you!
         return 
     }
 
-    /** Other modules do not connect or close */
+    /** 
+     * Close the connection to the client.
+     * Note TinyPEN is an open API on the internet.  This controller has no close().
+     * */
     async close() {
-        // No need to close().  The API awaits you!
         return
     }
 
