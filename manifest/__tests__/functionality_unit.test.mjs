@@ -12,9 +12,9 @@ let test_manifest = { "type": "Manifest", "label": {"en":["Test Manifest"]} }
 let updated_manifest = {}
 
 describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
-
-  it('No TPEN3 project id provided.  Project validation must be false.', () => {
-    expect(validateID()).toBe(false)
+  it('Creates the Manifest', async () => {
+    test_manifest = await logic.saveManifest(test_manifest)
+    expect(test_manifest["@id"]).toBeTruthy()
   })
   it('Updates the Manifest', async () => {
     test_manifest.updated = true
@@ -29,5 +29,4 @@ describe('Manifest endpoint functionality unit test (just testing helper functio
   it('Deletes the Manifest Stub', async () => {
     expect(true).toBe(true)
   })
-
 }) 
