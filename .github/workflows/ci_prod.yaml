@@ -24,6 +24,9 @@ jobs:
           envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
           envkey_RERUMURL: ${{ secrets.RERUMURL }}
           envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
+          envkey_TINYPEN: ${{ secrets.TINYPEN }}
+          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
+          envkey_DOMAIN: ${{ secrets.DOMAIN }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
