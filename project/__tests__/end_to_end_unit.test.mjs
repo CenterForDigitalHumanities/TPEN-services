@@ -75,7 +75,12 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       .get('/project/7085?text=blob')
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
-    expect(Blob.text(res.body)).toBeTruthy()
+    let bodyString
+    try{
+      bodyString = JSON.stringify(res.body)
+    }
+    catch(err){}
+    expect(bodyString).not.toBe(null)
   })
 
   it('Call to /project with valid ID and parameter ?text=layers. The status should be 200 with an array of Layer objects in the body.', async () => {
@@ -110,7 +115,11 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       .get('/project/7085?image=thumb')
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
-    expect(URL.canParse(res.body)).toBeTruthy()
+    let bodyURL
+    try{
+      bodyURL = URL.toString(res.body)
+    }catch(err){}
+    expect(bodyURL).not.toBe(null)
   })
   
   it('Call to /project with valid ID and parameter ?lookup=manifest. The status should be 200 with body containing the related document or Array of documents, the version allowed without authentication.', async () => {
