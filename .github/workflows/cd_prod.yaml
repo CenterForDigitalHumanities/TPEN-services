@@ -17,7 +17,7 @@ jobs:
           envkey_MONGODB: ${{ secrets.MONGODB }}
           envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
           envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
-          envkey_TPENUSERPREFERENCES: ${{ secrets.TPENUSERPREFERENCES }}
+          envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
           envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
           envkey_MARIADB: ${{ secrets.MARIADB }}
           envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}

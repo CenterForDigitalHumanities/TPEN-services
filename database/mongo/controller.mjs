@@ -33,11 +33,11 @@ function discernCollectionFromType(type) {
             collection = process.env.TPENPROJECTS
             break
         case "Group":
-        case "User":
             collection = process.env.TPENGROUPS
             break
+        case "User":
         case "UserPreferences":
-            collection = process.env.TPENUSERPREFERENCES
+            collection = process.env.TPENUSERS
             break
         default:
     }
