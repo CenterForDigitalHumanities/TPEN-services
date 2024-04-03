@@ -7,6 +7,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: Create .env from secrets
+        uses: SpicyPizza/create-envfile@v2
+        with:
+          envkey_DOWN: ${{ secrets.DOWN }}
+          envkey_READONLYL: ${{ secrets.READONLY }}
+          envkey_SERVERURL: ${{ secrets.SERVERURL }}
+          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
+          envkey_MONGODB: ${{ secrets.MONGODBDEV }}
+          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
+          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
+          envkey_TPENUSERPREFERENCES: ${{ secrets.TPENUSERPREFERENCES }}
+          envkey_MARIADBNAME: ${{ secrets.MARIADBNAMEDEV }}
+          envkey_MARIADB: ${{ secrets.MARIADB }}
+          envkey_MARIADBUSER: ${{ secrets.MARIADBUSERDEV }}
+          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORDDEV }}
+          envkey_RERUMURL: ${{ secrets.RERUMURL }}
+          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIXDEV }}
+          envkey_TINYPEN: ${{ secrets.TINYPENDEV }}
+          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
+          envkey_DOMAIN: ${{ secrets.DOMAIN }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
