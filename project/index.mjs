@@ -29,13 +29,134 @@ router.use(
   })
 )
 
-// Send a successful response with the appropriate JSON
-export function respondWithProject(res, project) {
+// Send a successful response with the appropriate JSON or alternate response based on params
+export function respondWithProject(req, res, project) {
   const id = project['@id'] ?? project.id ?? null
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.location(id)
-  res.status(200)
-  res.json(project)
+
+  let textType = req.query.text
+  let image = req.query.image
+  let lookup = req.query.lookup
+  let view = req.query.view
+
+  let passedQueries = [textType, image, lookup, view]
+    .filter(elem => elem !== undefined)
+  let responseType = null
+  if (passedQueries.length > 1) {
+    utils.respondWithError(res, 400, 
+      'Improper request. Only one response type may be queried.'
+    )
+    return
+  } else if (passedQueries.length === 1) {
+    responseType = passedQueries[0]
+  }
+
+  let embed = req.query.embed
+
+  let retVal;
+  switch (responseType) {
+
+    case textType:
+      switch (textType) {
+        case "blob":
+          res.set('Content-Type', 'text/plain; charset=utf-8')
+          // return: a complete blob of text of all lines concatenated
+          /* retVal =
+            project.layers.map(layer =>
+              db.getByID(layer).getLines().map(line => line.textualBody).join(" ")
+              .join(" ")
+          ) */
+          retVal = 'mock text'
+          break
+        case "layers":
+          res.set('Content-Type', 'application/json; charset=utf-8')
+          /* retVal = project.layers.map(layer => db.getByID(layer)) */
+          retVal = [  
+            { "name": "Layer.name", "id": "#AnnotationCollectionId", "textContent": "concatenated blob" }  
+          ]
+          break
+        case "pages":
+          res.set('Content-Type', 'application/json; charset=utf-8')
+          /* retVal = project.layers.flatMap(layer => db.getByID(layer).getPages()) */
+          retVal = [  
+            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": "concatenated blob" }  
+          ]
+          break
+        case "lines":
+          res.set('Content-Type', 'application/json; charset=utf-8')
+          retVal = [  
+            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": [{ "id" : "#AnnotationId", "textualBody" : "single annotation content" }]}  
+          ]
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "text" must be "blob," "layers," "pages," or "lines."')
+          break
+      }
+      break
+
+    case image:
+      switch (image) {
+        case "thumb":
+          res.set('Content-Type', 'text/uri-list; charset=utf-8')
+          // return: the URL of the default resolution of a thumbnail from the Manifest
+          retVal = 'https://example.com'
+          // make sure to handle this differently if req.query.embed is true
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "image" must be "thumbnail."')
+          break
+      }
+      break
+
+    case lookup:
+      switch (lookup) {
+        case "manifest":
+          // return: (layers[], annotations[], metadata[], group) find the related document or Array of documents and return that instead, the version allowed without authentication
+          retVal = {
+            "@context":"http://iiif.io/api/presentation/2/context.json",
+            "@id":"https://t-pen.org/TPEN/manifest/7085/manifest.json",
+            "@type":"sc:Manifest",
+            "label":"Ct Interlinear Glosses Mt 5",
+          }
+          break
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "lookup" must be "manifest."')
+          break
+      }
+      break
+
+    case view:
+      switch (view) {
+        case "xml":
+          res.set('Content-Type', 'text/xml; charset=utf-8')
+          // is a chance to get the document as an XML file
+          retVal = '<xml><id>7085</id></xml>'
+          break
+        case "html":
+          res.set('Content-Type', 'text/html; charset=utf-8')
+          //  is a readonly viewer HTML Document presenting the project data
+          retVal = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
+          break
+        case "json":
+          break // Let the default case of the switch(responseType) handle this
+        default:
+          utils.respondWithError(res, 400, 
+            'Improper request.  Parameter "view" must be "json," "xml," or "html."')
+          break
+      }
+      break
+    
+    default:
+      res.set('Content-Type', 'application/json; charset=utf-8')
+      res.location(id)
+      res.status(200)
+      res.json(project)
+      return
+  }
+
+  res.location(id).status(200).send(retVal)
 }
 
 // Expect an /{id} as part of the route, like /project/123
@@ -45,13 +166,19 @@ router
     let id = req.params.id
     if (!utils.validateID(id)) {
       utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+      return
     }
     id = parseInt(id)
-    const projectObj = await logic.findTheProjectByID(id)
-    if (projectObj) {
-      respondWithProject(res, projectObj)
-    } else {
-      utils.respondWithError(res, 404, `TPEN 3 project "${req.params.id}" does not exist.`)
+
+    try {
+      const projectObj = await logic.findTheProjectByID(id)
+      if (projectObj) {
+        respondWithProject(req, res, projectObj)
+      } else {
+        utils.respondWithError(res, 404, `TPEN3 project "${req.params.id}" does not exist.`)
+      }
+    } catch (err) {
+      utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
     }
   })
   .all((req, res, next) => {
