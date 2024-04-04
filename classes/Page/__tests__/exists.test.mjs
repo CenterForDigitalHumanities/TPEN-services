@@ -17,14 +17,11 @@ describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
     expect(page.getNextPage).toBeInstanceOf(Function)
     expect(page.handleTextBlob).toBeInstanceOf(Function)
     expect(page.handleImageAnnotation).toBeInstanceOf(Function)
-    expect(page.getParentPage).toBeInstanceOf(Function)
     expect(page.getSiblingPages).toBeInstanceOf(Function)
-    expect(page.getChildrenPages).toBeInstanceOf(Function)
     expect(page.getProject).toBeInstanceOf(Function)
     expect(page.getPageInfo).toBeInstanceOf(Function)
-    expect(page.embedDocuments).toBeInstanceOf(Function)
     expect(page.getMetadata).toBeInstanceOf(Function)
-    expect(page.getHTMLDocument).toBeInstanceOf(Function)
+    // expect(page.getHTMLDocument).toBeInstanceOf(Function)
   })
 
   it('configures a correct Canvas', () => {

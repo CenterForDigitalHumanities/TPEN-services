@@ -60,12 +60,12 @@ export function respondWithProject(req, res, project) {
         case "blob":
           res.set('Content-Type', 'text/plain; charset=utf-8')
           // return: a complete blob of text of all lines concatenated
-          /* retVal = new Blob(
+          /* retVal =
             project.layers.map(layer =>
               db.getByID(layer).getLines().map(line => line.textualBody).join(" ")
-            ).join(" ")
+              .join(" ")
           ) */
-          retVal = new Blob('mock text')
+          retVal = 'mock text'
           break
         case "layers":
           res.set('Content-Type', 'application/json; charset=utf-8')
@@ -132,14 +132,12 @@ export function respondWithProject(req, res, project) {
         case "xml":
           res.set('Content-Type', 'text/xml; charset=utf-8')
           // is a chance to get the document as an XML file
-          retVal = new DocumentFragment()
-          retVal.innerHTML = '<xml><id>7085</id></xml>'
+          retVal = '<xml><id>7085</id></xml>'
           break
         case "html":
           res.set('Content-Type', 'text/html; charset=utf-8')
           //  is a readonly viewer HTML Document presenting the project data
-          retVal = new DocumentFragment()
-          retVal.innerHTML = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
+          retVal = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
           break
         case "json":
           break // Let the default case of the switch(responseType) handle this
@@ -148,6 +146,7 @@ export function respondWithProject(req, res, project) {
             'Improper request.  Parameter "view" must be "json," "xml," or "html."')
           break
       }
+      break
     
     default:
       res.set('Content-Type', 'application/json; charset=utf-8')

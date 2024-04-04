@@ -1,5 +1,5 @@
 {
-   "name": "TPEN3 Services",
+   "name": "tpen3-services",
    "version": "0.0.0",
    "description": "TPEN3 Services for data interaction.",
    "type": "module",
@@ -15,7 +15,7 @@
       "mongodb"
    ],
    "homepage": "https://t-pen.org/TPEN3",
-   "license": "UNLICENSED",
+   "license": "CC-BY",
    "author": "Research Computing Group <research.computing@slu.edu> (https://slu.edu)",
    "repository": "github:CenterForDigitalHumanities/rerum_server_nodejs",
    "scripts": {
@@ -24,7 +24,9 @@
       "unitTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",
       "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
       "existsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",
-      "functionsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t functions_unit "
+      "functionsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t functions_unit ",
+      "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t db ",
+      "authTest": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t auth_test "
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",
@@ -33,14 +35,18 @@
       "dotenv": "~16.3.1",
       "dotenv-expand": "~10.0.0",
       "express": "^4.18.2",
+      "express-oauth2-jwt-bearer": "^1.6.0",
       "express-urlrewrite": "~2.0.0",
       "http-errors": "~2.0.0",
-      "morgan": "^1.10.0",
-      "nock": "~13.4.0"
+      "jest-cli": "^29.7.0",
+      "mariadb": "^3.2.3",
+      "mongodb": "^6.4.0",
+      "morgan": "^1.10.0"
    },
    "devDependencies": {
       "@jest-mock/express": "^2.0.2",
       "jest": "^29.7.0",
+      "jest-esm-transformer": "^1.0.0",
       "supertest": "^6.2.2"
    }
 }
