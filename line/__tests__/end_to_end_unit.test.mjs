@@ -4,32 +4,33 @@ import request from 'supertest'
 
 const app = express()
 app.use('/line', lineRouter)
+const timeOut = process.env.TEST_TIMEOUT
 
 describe('Line endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
   it('should return 405 for POST request', async () => {
     const res = await request(app).post('/line/').send()
     expect(res.statusCode).toBe(405)
-  })
+  }, timeOut)
 
   it('should return 405 for PUT request', async () => {
     const res = await request(app).put('/line/').send()
     expect(res.statusCode).toBe(405)
-  })
+  }, timeOut)
 
   it('should return 405 for PATCH request', async () => {
     const res = await request(app).patch('/line/').send()
     expect(res.statusCode).toBe(405)
-  })
+  }, timeOut)
 
   it('should return 400 if no TPEN3 line ID provided', async () => {
     const res = await request(app).get('/line/').send()
     expect(res.statusCode).toBe(400)
-  })
+  }, timeOut)
 
   it('should return 404 for non-existing TPEN 3 line ID', async () => {
     const res = await request(app).get('/line/1257').send()
     expect(res.statusCode).toBe(404)
-  })
+  }, timeOut)
 
   it('should return 200 with a JSON line in the body for valid TPEN3 line ID', async () => {
     const simulatedResponse = {

@@ -7,6 +7,7 @@
 
 import DatabaseController from '../controller.mjs'
 const database = new DatabaseController()
+const timeOut = process.env.DB_TEST_TIMEOUT
 
 let test_manifest = { "type": "Manifest", "name": "Test Manifest" }
 
@@ -18,27 +19,27 @@ afterAll(async () => {
     return await database.close()
 })
 
-describe('TinyPen Unit Functions. #tiny_unit #db', () => {
-    it('connects for an active connection', async () => {
+describe('TinyPen Unit Functions. #tiny_unit #db', () => { 
+    it(`connects for an active connection`, async () => { 
         const result = await database.connected()
         expect(result).toBe(true)
-    })
+    }, timeOut)
     it('creates a new object', async () => {
         const result = await database.save(test_manifest)
         test_manifest["@id"] = result["@id"]
         expect(result["@id"]).toBeTruthy()
-    })
+    }, timeOut)
 
     it('updates an existing object', async () => {
         test_manifest.name = "Test Project -- Updated"
         const result = await database.update(test_manifest)
         expect(result["@id"]).toBeTruthy()
-    })
+    }, timeOut)
 
     it('Finds matching objects by query', async () => {
         const result = await database.find({ "@id": test_manifest["@id"] })
         expect(result[0]["@id"]).toBe(test_manifest["@id"])
-    })
+    }, timeOut)
 
     //TODO
     it('Deletes an object with the provided id', async () => {

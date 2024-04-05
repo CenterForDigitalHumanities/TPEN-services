@@ -7,6 +7,7 @@
 */
 
 import DatabaseDriver from "../driver.mjs"
+const timeOut = process.env.DB_TEST_TIMEOUT
 
 describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     const d = new DatabaseDriver()
@@ -38,12 +39,12 @@ describe('Can connect to all registered controllers.  #driver_unit #db',()=>{
         const d = new DatabaseDriver()
         await d.chooseController("tiny")
         expect(await d.connected()).toBe(true)
-    })
+    }, timeOut)
     it('Mongo Connection', async () => {
         const d = new DatabaseDriver()
         await d.chooseController("mongo")
         expect(await d.connected()).toBe(true)
-    })
+    }, timeOut)
     it('Maria Connection Stub', async () => {
         expect(true).toBeTruthy()
     })
@@ -53,11 +54,11 @@ describe('Can connect to all registered controllers with applied parameter.  #dr
     it('Tiny Connection Parameter', async () => {
         const d = new DatabaseDriver("tiny")
         expect(await d.connected()).toBe(true)
-    })
+    }, timeOut)
     it('Mongo Connection Parameter', async () => {
         const d = new DatabaseDriver("mongo")
         expect(await d.connected()).toBe(true)
-    })
+    }, timeOut)
     it('Maria Connection Parameter Stub', async () => {
         expect(true).toBeTruthy()
     })

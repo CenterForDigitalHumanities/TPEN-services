@@ -8,18 +8,19 @@ process.env.AUDIENCE = "provide audience to test"
 const app = express()
 
 app.use(auth0Middleware())
+const timeOut = process.env.TEST_TIMEOUT
 
 describe("auth0Middleware #auth_test", () => {
   it("should return 401 Unauthorized without valid token", async () => {
     const res = await request(app).get("/protected-route")
 
     expect(res.status).toBe(401)
-  })
+  }, timeOut)
 
   it("No user should be found on req if token is invalid", async () => {
     const res = await request(app).get("/protected-route")
     expect(res.req.user).toBeUndefined()
-  })
+  }, timeOut)
 
   it("should set req.user with payload from auth and call next", async () => {
     const mockRequest = {
