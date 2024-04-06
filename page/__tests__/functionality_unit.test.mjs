@@ -15,6 +15,7 @@ describe('Page endpoint functionality unit test (just testing helper functions).
     let page = await findPageById(123)
     expect(page).not.toBe(null)
   })
+<<<<<<< HEAD
   describe('Page endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
     it('No TPEN3 page id provided. Page validation must be false.', () => {
       expect(validateID()).toBe(false);
@@ -151,3 +152,7 @@ describe('Page endpoint functionality unit test (just testing helper functions).
   });
   
 })
+=======
+
+})
+>>>>>>> origin/development
