@@ -3,6 +3,7 @@ import express from 'express'
 import * as logic from './projects.mjs'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
+import auth0Middleware from '../auth/index.mjs'
 
 let router = express.Router()
 router.use(
@@ -36,12 +37,23 @@ router.use(
  * @return An unexpanded list of the user's projects. Returns empty list if none found.
  */
 export async function getUserProjects(options, res){
+  // Set option defaults
+  let hasRoles       = options.hasRoles       ?? 'ALL' 
+  let exceptRoles    = options.exceptRoles    ?? 'NONE'
+  let createdBefore  = options.createdBefore  ?? 'NOW'
+  let modifiedBefore = options.modifiedBefore ?? 'NOW'
+  let createdAfter   = options.createdAfter   ?? 0
+  let modifiedAfter  = options.modifiedAfter  ?? 0
+  let fields         = options.fields         ?? ['id', 'title']
+  let count          = options.count          ?? false
+  let {isPublic, hasCollaborators, tags} = options
+  
   utils.respondWithError(res, 500, 'Server error') // TEMP until function is implemented
 }
 
 router
   .route('/')
-  .get((req, res, next) => {
+  .get(auth0Middleware(), (req, res, next) => {
     getUserProjects(req.query, res)
   })
   .all((req, res, next) => {
