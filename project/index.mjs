@@ -29,15 +29,6 @@ router.use(
   })
 )
 
-<<<<<<< HEAD
-// Send a successful response with the appropriate JSON
-export function respondWithProject(res, project) {
-  const id = project['@id'] ?? project.id ?? null
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.location(id)
-  res.status(200)
-  res.json(project)
-=======
 // Send a successful response with the appropriate JSON or alternate response based on params
 export function respondWithProject(req, res, project) {
   const id = project['@id'] ?? project.id ?? null
@@ -166,7 +157,6 @@ export function respondWithProject(req, res, project) {
   }
 
   res.location(id).status(200).send(retVal)
->>>>>>> origin/development
 }
 
 // Expect an /{id} as part of the route, like /project/123
@@ -176,15 +166,6 @@ router
     let id = req.params.id
     if (!utils.validateID(id)) {
       utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
-<<<<<<< HEAD
-    }
-    id = parseInt(id)
-    const projectObj = await logic.findTheProjectByID(id)
-    if (projectObj) {
-      respondWithProject(res, projectObj)
-    } else {
-      utils.respondWithError(res, 404, `TPEN 3 project "${req.params.id}" does not exist.`)
-=======
       return
     }
     id = parseInt(id)
@@ -198,7 +179,6 @@ router
       }
     } catch (err) {
       utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
->>>>>>> origin/development
     }
   })
   .all((req, res, next) => {
