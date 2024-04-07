@@ -32,6 +32,16 @@ router.use(
 )
 
 /**
+ * Validates queries for /projects endpoint.
+ * 
+ * @param queries A JSON object of query parameters for the project list lookup.
+ * @return A boolean indicating whether validations passed or failed.
+ */
+function validateQueries(queries) {
+
+}
+
+/**
  * Authenticated endpoint to return a list of a user's projects.
  * 
  * @param options A JSON object of options for the project list lookup.
@@ -50,8 +60,17 @@ export async function respondWithProjects(user, options, res){
   let {isPublic, hasCollaborators, tags} = options
 
   let projects = await logic.getUserProjects(user)
-  // if (projects.length > 0) {
-  // }
+
+  if (hasRoles !== 'ALL') {
+    projects = projects.filter(project => (
+      project.roles.some(role => hasRoles.includes(role))
+    ))
+  }
+  if (exceptRoles !== 'NONE') {
+    projects = projects.filter(project => {
+      !project.roles.some(role => exceptRoles.includes(role))
+    })
+  }
 
   if (createdBefore === 'NOW') {
     createdBefore = Date.now()
@@ -67,9 +86,8 @@ export async function respondWithProjects(user, options, res){
     // count parameter overrides fields parameter
     projects = projects.length
   } else {
-    // get only the fields specified in fields parameter
-    // projects = projects.map(project => ({
-    // }))
+    // TODO: get only the fields specified in fields parameter
+    projects = projects.map(project => ({"id": project.id, "title": project.title})) // TEMP until other fields implemented
   }
 
   res.status(200).send(projects)

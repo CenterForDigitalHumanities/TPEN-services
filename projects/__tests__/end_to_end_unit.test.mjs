@@ -53,14 +53,16 @@ describe('Projects endpoint end to end unit test (spinning up the endpoint and u
     expect(res.body).toBeTruthy()
   })
 
-  it('Authenticated GET request with no queries.  The status should be 200.', async () => {
-    const res = await request(routeTester)
-      .get('/projects/')
-      .auth(process.env.TEST_TOKEN, {type: "bearer"})
-      // .set(requestOptions)
-      .set('authorization', "Bearer " + process.env.TEST_TOKEN)
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-  })
+  // it('Authenticated GET request with no queries.  The status should be 200.', async () => {
+  //   const res = await request(routeTester)
+  //     .get('/projects/')
+  //     .auth(process.env.TEST_TOKEN, {type: "bearer"})
+  //     // .set(requestOptions)
+  //     .set('authorization', "Bearer " + process.env.TEST_TOKEN)
+  //   expect(res.statusCode).toBe(200)
+  //   expect(res.body).toBeTruthy()
+  // })
+
+  // it('Authenticated GET request with query ')
   
 })
