@@ -22,27 +22,42 @@ const requestOptions = {
   }
 }
 
-describe('Authenticated projects endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+describe('Projects endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
-  // it('POST instead of GET.  That status should be 405 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .post('/projects/')
-  //     .auth(process.env.TEST_TOKEN, { type: 'bearer' })
-  //     expect(res.statusCode).toBe(405)
-  //     expect(res.body).toBeTruthy()
-  // })
+  it('POST instead of GET.  That status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .post('/projects/')
+      expect(res.statusCode).toBe(405)
+      expect(res.body).toBeTruthy()
+  })
 
-  // it('PUT instead of GET.  That status should be 405 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .put('/projects/')
-  //     expect(res.statusCode).toBe(405)
-  //     expect(res.body).toBeTruthy()
-  // })
+  it('PUT instead of GET.  That status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .put('/projects/')
+      expect(res.statusCode).toBe(405)
+      expect(res.body).toBeTruthy()
+  })
 
-  // it('PATCH instead of GET.  That status should be 405 with a message.', async () => {
+  it('PATCH instead of GET.  That status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .patch('/projects/')
+      expect(res.statusCode).toBe(405)
+      expect(res.body).toBeTruthy()
+  })
+
+  it('Unauthenticated GET request.  The status should be 401 with a message.', async () => {
+    const res = await request(routeTester)
+      .get('/projects/')
+      expect(res.statusCode).toBe(401)
+      expect(res.body).toBeTruthy()
+  })
+
+  // it('Authenticated GET request with no queries.  The status should be 200.', async () => {
   //   const res = await request(routeTester)
-  //     .patch('/projects/')
-  //     expect(res.statusCode).toBe(405)
+  //     .get('/projects/')
+  //     .auth(process.env.TEST_TOKEN, {type: "bearer"})
+  //     .set(requestOptions.auth.headers)
+  //     expect(res.statusCode).toBe(200)
   //     expect(res.body).toBeTruthy()
   // })
   

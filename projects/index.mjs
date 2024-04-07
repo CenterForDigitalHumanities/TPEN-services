@@ -5,6 +5,8 @@ import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
 import auth0Middleware from '../auth/index.mjs'
 
+process.env.AUDIENCE = "provide audience to test"
+
 let router = express.Router()
 router.use(
   cors({
@@ -76,7 +78,7 @@ export async function respondWithProjects(user, options, res){
 
 router
   .route('/')
-  .get((req, res, next) => {
+  .get(auth0Middleware(), (req, res, next) => {
     respondWithProjects(req.user, req.query, res)
   })
   .all((req, res, next) => {
