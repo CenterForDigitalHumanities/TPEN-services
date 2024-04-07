@@ -4,8 +4,7 @@ import * as logic from './projects.mjs'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
 import auth0Middleware from '../auth/index.mjs'
-
-process.env.AUDIENCE = "provide audience to test"
+import 'dotenv/config'
 
 let router = express.Router()
 router.use(
