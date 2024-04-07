@@ -35,8 +35,6 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       expect(res.body).toBeTruthy()
   })
 
-<<<<<<< HEAD
-=======
   it('Call to /project with a non-numeric project ID.  The status should be 400 with a message.', async () => {
     const res = await request(routeTester)
       .get('/project/abc')
@@ -51,7 +49,6 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       expect(res.body).toBeTruthy()
   })
 
->>>>>>> origin/development
   it('Call to /project with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
     const res = await request(routeTester)
       .get('/project/0001')
@@ -62,10 +59,7 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
   it('Call to /project with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Project in the body.', async () => {
     const res = await request(routeTester)
       .get('/project/7085')
-<<<<<<< HEAD
-=======
       expect(res.statusCode).toBe(200)
->>>>>>> origin/development
       let json = res.body
       try{
         json = JSON.parse(JSON.stringify(json))
@@ -75,8 +69,6 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       }
       expect(json).not.toBe(null)
   })
-<<<<<<< HEAD
-=======
 
   it('Call to /project with valid ID and parameter ?text=blob. The status should be 200 with a text blob in the body.', async () => {
     const res = await request(routeTester)
@@ -179,6 +171,5 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       .get('/project/7085?text=lines&view=html')
     expect(res.statusCode).toBe(400)
   })
->>>>>>> origin/development
   
 })
