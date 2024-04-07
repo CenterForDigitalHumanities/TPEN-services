@@ -36,7 +36,7 @@ router.use(
  * @param options A JSON object of options for the project list lookup.
  * @return An unexpanded list of the user's projects. Returns empty list if none found.
  */
-export async function getUserProjects(options, res){
+export async function respondWithProjects(user, options, res){
   // Set option defaults
   let hasRoles       = options.hasRoles       ?? 'ALL' 
   let exceptRoles    = options.exceptRoles    ?? 'NONE'
@@ -47,14 +47,37 @@ export async function getUserProjects(options, res){
   let fields         = options.fields         ?? ['id', 'title']
   let count          = options.count          ?? false
   let {isPublic, hasCollaborators, tags} = options
-  
-  utils.respondWithError(res, 500, 'Server error') // TEMP until function is implemented
+
+  let projects = await logic.getUserProjects(user)
+  // if (projects.length > 0) {
+  // }
+
+  if (createdBefore === 'NOW') {
+    createdBefore = Date.now()
+  }
+  projects = projects.filter(project => createdAfter < project.created && project.crated < createdBefore)
+
+  if (modifiedBefore === 'NOW') {
+    modifiedBefore = Date.now()
+  }
+  projects = projects.filter(project => modifiedAfter < project.lastModified && project.lastModified < modifiedAfter)
+
+  if (count) {
+    // count parameter overrides fields parameter
+    projects = projects.length
+  } else {
+    // get only the fields specified in fields parameter
+    // projects = projects.map(project => ({
+    // }))
+  }
+
+  res.status(200).send(projects)
 }
 
 router
   .route('/')
-  .get(auth0Middleware(), (req, res, next) => {
-    getUserProjects(req.query, res)
+  .get((req, res, next) => {
+    respondWithProjects(req.user, req.query, res)
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
