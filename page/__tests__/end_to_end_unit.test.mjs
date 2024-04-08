@@ -1,11 +1,8 @@
 import pageRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
-<<<<<<< HEAD
 import { findPageById } from '../page.mjs';
 import { createPageResponse } from '../page.mjs';
-=======
->>>>>>> origin/development
 
 const routeTester = new express()
 routeTester.use("/page", pageRouter)
@@ -60,7 +57,6 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
       expect(json).not.toBe(null)
   })
   
-<<<<<<< HEAD
 
 
 
@@ -137,6 +133,4 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
     });
   })
   
-=======
->>>>>>> origin/development
 })
