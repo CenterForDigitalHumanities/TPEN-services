@@ -1,0 +1,50 @@
+name: TPEN3 Services end to end tests on PR to main
+on:
+  pull_request:
+    branches: main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Create .env from secrets
+        uses: SpicyPizza/create-envfile@v2
+        with:
+          envkey_DOWN: ${{ secrets.DOWN }}
+          envkey_READONLYL: ${{ secrets.READONLY }}
+          envkey_SERVERURL: ${{ secrets.SERVERURL }}
+          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
+          envkey_MONGODB: ${{ secrets.MONGODB }}
+          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
+          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
+          envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
+          envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
+          envkey_MARIADB: ${{ secrets.MARIADB }}
+          envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
+          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
+          envkey_RERUMURL: ${{ secrets.RERUMURL }}
+          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
+          envkey_TINYPEN: ${{ secrets.TINYPEN }}
+          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
+          envkey_DOMAIN: ${{ secrets.DOMAIN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: "21"
+      - name: Cache node modules
+        uses: actions/cache@master
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies and run the test
+        run: |
+          npm install
+          npm run E2Etests
+          

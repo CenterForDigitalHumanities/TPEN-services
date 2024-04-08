@@ -1,31 +1,54 @@
-/** Logic for the /project endpoint */
-import * as utils from '../utilities/shared.mjs'
-import * as fs from 'fs'
+export async function getUserProjects(userAgent, options) {
+  try {
+    // Implemented the logic to filter projects based on options  
+    let projectList = [{id : "123", "title" : "MyProj"}]
 
-export async function findTheProjectByID(id = null) {
-  let project = null
-  if (!utils.validateID(id)) return project
-
-  // Mock a pause for endpoints that fail, to mock the time it takes for some async stuff to decide it failed.
-  const mockPause = new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(null)
-    }, 1500)
-  })
-
-  if (id && id === 7085) {
-    let projectFileBuffer = fs.readFileSync('./public/project.json', (err, data) => {
-      if (err) {
-        console.error(err)
-        return null
-      }
-    })
-    project = projectFileBuffer !== null && JSON.parse(projectFileBuffer.toString())
+    // Create Project JSON objects for each project
+    return projectList
+  } catch (error) {
+    
+    return {status : 500, message : 'Error retrieving user projects from the database',error : error.message}
   }
-
-  // Mock the scenario where it takes a couple seconds to look for but not find the Project.
-  if (project === null) {
-    project = await mockPause
-  }
-  return project
 }
+export async function responseMapping(projects){
+  
+  const projectList = projects.map(project => ({
+    id: project.id,
+    title: project.title
+  }))
+
+  return projectList
+
+}
+export async function respondWithProjects(user, options, res){
+   let projects = await logic.getUserProjects(user)
+
+  if (hasRoles !== 'ALL') {
+    projects = projects.filter(project => (
+      project.roles.some(role => hasRoles.includes(role))
+    ))
+  }
+  if (exceptRoles !== 'NONE') {
+    projects = projects.filter(project => {
+      !project.roles.some(role => exceptRoles.includes(role))
+    })
+  }
+
+  if (createdBefore === 'NOW') {
+    createdBefore = Date.now()
+  }
+  projects = projects.filter(project => createdAfter < project.created && project.crated < createdBefore)
+
+  if (modifiedBefore === 'NOW') {
+    modifiedBefore = Date.now()
+  }
+  projects = projects.filter(project => modifiedAfter < project.lastModified && project.lastModified < modifiedAfter)
+
+  if (count) {
+    projects = projects.length
+  } else {
+    projects = projects.map(project => ({"id": project.id, "title": project.title})) 
+  }
+  res.status(200).send(projects)
+}
+
