@@ -1,7 +1,8 @@
 import projectsRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
-import 'dotenv/config'
+import dotenv from 'dotenv'
+dotenv.config()
 
 process.env.AUDIENCE = "provide audience to test"
 

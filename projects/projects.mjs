@@ -1,6 +1,7 @@
 /** Logic for the /projects endpoint */
 import * as fs from 'fs'
 
+// Mock projects list for now
 export async function getUserProjects(user) {
   let projects = []
   let project

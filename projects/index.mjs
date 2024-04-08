@@ -49,15 +49,15 @@ function validateQueries(queries) {
  */
 export async function respondWithProjects(user, options, res){
   // Set option defaults
-  let hasRoles       = options.hasRoles       ?? 'ALL' 
-  let exceptRoles    = options.exceptRoles    ?? 'NONE'
+  const hasRoles       = options.hasRoles       ?? 'ALL' 
+  const exceptRoles    = options.exceptRoles    ?? 'NONE'
   let createdBefore  = options.createdBefore  ?? 'NOW'
   let modifiedBefore = options.modifiedBefore ?? 'NOW'
-  let createdAfter   = options.createdAfter   ?? 0
-  let modifiedAfter  = options.modifiedAfter  ?? 0
-  let fields         = options.fields         ?? ['id', 'title']
-  let count          = options.count          ?? false
-  let {isPublic, hasCollaborators, tags} = options
+  const createdAfter   = options.createdAfter   ?? 0
+  const modifiedAfter  = options.modifiedAfter  ?? 0
+  const fields         = options.fields         ?? ['id', 'title']
+  const count          = options.count          ?? false
+  const {isPublic, hasCollaborators, tags} = options
 
   let projects = await logic.getUserProjects(user)
 
@@ -75,7 +75,7 @@ export async function respondWithProjects(user, options, res){
   if (createdBefore === 'NOW') {
     createdBefore = Date.now()
   }
-  projects = projects.filter(project => createdAfter < project.created && project.crated < createdBefore)
+  projects = projects.filter(project => createdAfter < project.created && project.created < createdBefore)
 
   if (modifiedBefore === 'NOW') {
     modifiedBefore = Date.now()
@@ -84,13 +84,13 @@ export async function respondWithProjects(user, options, res){
 
   if (count) {
     // count parameter overrides fields parameter
-    projects = projects.length
+    res.status(200).send(projects.length)
   } else {
     // TODO: get only the fields specified in fields parameter
     projects = projects.map(project => ({"id": project.id, "title": project.title})) // TEMP until other fields implemented
   }
 
-  res.status(200).send(projects)
+  res.status(200).json(projects)
 }
 
 router
