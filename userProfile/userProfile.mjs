@@ -2,12 +2,13 @@
 import DatabaseDriver from "../database/driver.mjs"
 
 // This module will use the TinyPEN API (RERUM Mongo DB)
-const database = new DatabaseDriver("tiny")
+const database = new DatabaseDriver("mongo")
 
 export async function findUserById(id = null) {
   try {
+    
         let userProfile  = await database.find({ id: id })
-      // Needed to be getting from DB , but now as we dont have DB connection just mocking as below
+      // Needed to be getting from DB as above, but now as we dont have DB connection , just mocking as below
       if(userProfile)
       {
         userProfile = {
