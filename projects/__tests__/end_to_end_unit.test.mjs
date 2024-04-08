@@ -63,7 +63,5 @@ describe('Projects endpoint end to end unit test (spinning up the endpoint and u
   //   expect(res.statusCode).toBe(200)
   //   expect(res.body).toBeTruthy()
   // })
-
-  // it('Authenticated GET request with query ')
   
 })
