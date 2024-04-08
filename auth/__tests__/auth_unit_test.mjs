@@ -1,5 +1,5 @@
 import express from "express"
-import request from "supertest" 
+import request from "supertest"
 import auth0Middleware from "../index.mjs"
 
 process.env.AUDIENCE = "provide audience to test"
@@ -8,19 +8,27 @@ process.env.AUDIENCE = "provide audience to test"
 const app = express()
 
 app.use(auth0Middleware())
-const timeOut = process.env.TEST_TIMEOUT
+const timeOut = process.env.TEST_TIMEOUT ?? 5000
 
 describe("auth0Middleware #auth_test", () => {
-  it("should return 401 Unauthorized without valid token", async () => {
-    const res = await request(app).get("/protected-route")
+  it(
+    "should return 401 Unauthorized without valid token",
+    async () => {
+      const res = await request(app).get("/protected-route")
 
-    expect(res.status).toBe(401)
-  }, timeOut)
+      expect(res.status).toBe(401)
+    },
+    timeOut
+  )
 
-  it("No user should be found on req if token is invalid", async () => {
-    const res = await request(app).get("/protected-route")
-    expect(res.req.user).toBeUndefined()
-  }, timeOut)
+  it(
+    "No user should be found on req if token is invalid",
+    async () => {
+      const res = await request(app).get("/protected-route")
+      expect(res.req.user).toBeUndefined()
+    },
+    timeOut
+  )
 
   it("should set req.user with payload from auth and call next", async () => {
     const mockRequest = {
