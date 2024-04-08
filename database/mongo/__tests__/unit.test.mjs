@@ -10,7 +10,7 @@ const database = new DatabaseController()
 
 let test_proj = { "@type": "Project", "name": "Test Project" }
 let test_group = { "@type": "Group", "name": "Test Group" }
-let test_userPreferences = { "@type": "UserPreferences", "name": 'Test UserReferences' }
+let test_user = { "@type": "User", "name": "Test User" }
 
 beforeAll(async () => {
     return await database.connect()
@@ -35,9 +35,9 @@ describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
         test_group["_id"] = result["_id"]
         expect(result["_id"]).toBeTruthy()
     })
-    it('creates a new userPreferences', async () => {
-        const result = await database.save(test_userPreferences)
-        test_userPreferences["_id"] = result["_id"]
+    it('creates a new User', async () => {
+        const result = await database.save(test_user)
+        test_user["_id"] = result["_id"]
         expect(result["_id"]).toBeTruthy()
     })
 
@@ -51,9 +51,9 @@ describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
         const result = await database.update(test_group)
         expect(result["_id"]).toBeTruthy()
     })
-    it('updates an existing userPreferences', async () => {
-        test_userPreferences.name = "Test UserPreferences -- Updated"
-        const result = await database.update(test_userPreferences)
+    it('updates an existing User', async () => {
+        test_user.name = "Test User -- Updated"
+        const result = await database.update(test_user)
         expect(result["_id"]).toBeTruthy()
     })
 
@@ -65,9 +65,9 @@ describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
         const result = await database.find(test_group)
         expect(result[0]["_id"]).toBe(test_group["_id"])
     })
-    it('Finds matching userPreferences by query', async () => {
-        const result = await database.find(test_userPreferences)
-        expect(result[0]["_id"]).toBe(test_userPreferences["_id"])
+    it('Finds matching User by query', async () => {
+        const result = await database.find(test_user)
+        expect(result[0]["_id"]).toBe(test_user["_id"])
     })
 
     //TODO
