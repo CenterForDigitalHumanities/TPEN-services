@@ -4,7 +4,8 @@ import * as logic from './projects.mjs'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
 import auth0Middleware from '../auth/index.mjs'
-import 'dotenv/config'
+import dotenv from 'dotenv'
+dotenv.config()
 
 let router = express.Router()
 router.use(
@@ -37,36 +38,39 @@ router.use(
  * @param queries A JSON object of query parameters for the project list lookup.
  * @return An array containing a boolean (true for validated) and an error message, if any.
  */
-function validateQueries({queries}) {
+function validateQueries({ hasRoles, exceptRoles, createdBefore, modifiedBefore, createdAfter, modifiedAfter, fields, count, isPublic, hasCollaborators, tags }) {
   let validation = [true, '']
-  if (!(hasRoles === 'NONE' || hasRoles === 'ALL' || Array.isArray(hasRoles)))
-    validation = [false, 'hasRoles must be either "NONE" or a list of roles.']
+  if (!(typeof hasRoles === 'string' || Array.isArray(hasRoles)))
+    validation = [false, 'hasRoles must be either "ALL" or a list of roles.']
   
-  if (!(exceptRoles === 'NONE' || exceptRoles === 'ALL' || Array.isArray(exceptRoles)))
-    validation = [false, 'exceptRoles must be either "NONE", "ALL", or a list of roles.']
+  else if (!(typeof exceptRoles === 'string' || Array.isArray(exceptRoles)))
+    validation = [false, 'exceptRoles must be either "NONE" or a list of roles.']
   
-  if (!(typeof createdBefore === 'number' || createdBefore === 'NOW'))
+  else if (createdBefore && !(parseInt(createdBefore) !== NaN || createdBefore === 'NOW'))
     validation = [false, 'createdBefore must be either "NOW" or a date in UNIX time.']
   
-  if (typeof createdAfter !== 'number')
+  else if (modifiedBefore && !(parseInt(modifiedBefore) !== NaN || modifiedBefore === 'NOW'))
+    validation = [false, 'modifiedBefore must be either "NOW" or a date in UNIX time.']
+  
+  else if (createdAfter && parseInt(createdAfter) === NaN)
     validation = [false, 'createdAfter must be a date in UNIX time.']
   
-  if (typeof modifiedAfter !== 'number')
+  else if (modifiedAfter && parseInt(modifiedAfter) === NaN)
     validation = [false, 'modifiedAfter must be a date in UNIX time.']
   
-  if (!Array.isArray(fields))
+  else if (!(typeof fields === 'string' || Array.isArray(fields)))
     validation = [false, 'fields must be an array of string fields.']
   
-  if (typeof count !== 'boolean') 
+  else if (count && !(count === 'true' || count === 'false')) 
     validation = [false, 'count must be a boolean.']
   
-  if (isPublic && typeof isPublic !== 'boolean')
+  else if (isPublic && !(isPublic === 'true' || isPublic === 'false'))
     validation = [false, 'isPublic must be a boolean or left undefined.']
   
-  if (hasCollaborators && typeof hasCollaborators !== 'boolean')
+  else if (hasCollaborators && !(hasCollaborators === 'true' || hasCollaborators === 'false'))
     validation = [false, 'hasCollaborators must be a boolean or left undefined.']
   
-  if (tags && !Array.isArray(tags))
+  else if (tags && !Array.isArray(tags))
     validation = [false, 'tags must be either an array of strings or left undefined.']
 
   return validation
@@ -87,8 +91,8 @@ export async function respondWithProjects(user, options, res){
   const createdAfter   = options.createdAfter   ?? 0
   const modifiedAfter  = options.modifiedAfter  ?? 0
   const fields         = options.fields         ?? ['id', 'title']
-  const count          = options.count          ?? false
-  const {isPublic, hasCollaborators, tags} = options
+  const count          = options.count          ?? 'false' // count query is read as a string
+  const {isPublic, hasCollaborators, tags} = options // isPublic and hasCollaborators, while representing booleans, are also read as strings
 
   const validation = validateQueries({
     "hasRoles": hasRoles,
@@ -104,7 +108,7 @@ export async function respondWithProjects(user, options, res){
     "tags": tags
   })
   if (!validation[0]) {
-    utils.respondWithError(400, validation[1])
+    utils.respondWithError(res, 400, validation[1])
     return
   }
 
@@ -131,9 +135,13 @@ export async function respondWithProjects(user, options, res){
   }
   projects = projects.filter(project => modifiedAfter < project.lastModified && project.lastModified < modifiedAfter)
 
-  if (count) {
-    // count parameter overrides fields parameter
-    res.status(200).send(projects.length)
+  // TODO: `isPublic`, `hasCollaborators`, and `tags` queries 
+
+  if (count === 'true') {
+    res.status(200)
+      .set('Content-Type', 'text/plain; charset=utf-8')
+      .send(projects.length.toString())
+    return
   } else {
     // TODO: get only the fields specified in fields parameter
     projects = projects.map(project => ({"id": project.id, "title": project.title})) // TEMP until other fields implemented
