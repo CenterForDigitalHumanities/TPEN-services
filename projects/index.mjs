@@ -130,22 +130,16 @@ export async function respondWithProjects(user, options, res){
   }
   projects = projects.filter(project => createdAfter < project.created && project.created < createdBefore)
 
-  if (modifiedBefore === 'NOW') {
-    modifiedBefore = Date.now()
-  }
-  projects = projects.filter(project => modifiedAfter < project.lastModified && project.lastModified < modifiedAfter)
-
-  // TODO: `isPublic`, `hasCollaborators`, and `tags` queries 
+  // TODO: `isPublic`, `modifiedBefore`, `hasCollaborators`, and `tags` queries 
 
   if (count === 'true') {
     res.status(200)
       .set('Content-Type', 'text/plain; charset=utf-8')
       .send(projects.length.toString())
     return
-  } else {
-    // TODO: get only the fields specified in fields parameter
-    projects = projects.map(project => ({"id": project.id, "title": project.title})) // TEMP until other fields implemented
   }
+  // TODO: get only the fields specified in fields parameter
+  projects = projects.map(project => ({"id": project.id, "title": project.title})) // TEMP until other fields implemented
 
   res.status(200).json(projects)
 }
@@ -153,7 +147,7 @@ export async function respondWithProjects(user, options, res){
 router
   .route('/')
   .get(auth0Middleware(), (req, res, next) => {
-    respondWithProjects(req.user, req.query, res)
+    respondWithProjects(req.user?.["http://store.rerum.io/agent"] ?? 404, req.query, res)
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')

@@ -1,27 +1,41 @@
 /** Logic for the /projects endpoint */
-import * as fs from 'fs'
 
 // Mock projects list for now
-export async function getUserProjects(user) {
-  let projects = []
-  let project
-
-  // Mock a pause for endpoints that fail, to mock the time it takes for some async stuff to decide it failed.
-  const mockPause = new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve([])
-    }, 1500)
-  })
-
-  let projectFileBuffer = fs.readFileSync('./public/project.json', (err, data) => {
-    if (err) throw err
-  })
-  project = projectFileBuffer !== null && [JSON.parse(projectFileBuffer.toString()), JSON.parse(projectFileBuffer.toString())]
-
-  // Mock the scenario where it takes a couple seconds to look for but not find the Project.
-  if (project === null) {
-    projects = await mockPause
+// User -1 for failure, 404 for none found, other for success
+class User {
+  constructor(id = -1) {
+    this.id = id
   }
-  return projects
+  getProjects() {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        switch (this.id) {
+          case -1: return reject()
+          case 404: return resolve([])
+          default: return resolve([{
+            "id": "#ProjectId",
+            "title": "ProjectTitle",
+            "creator": this.id,
+            "group": "#GroupId",
+            "layers": [
+              "#LayerId"
+            ],
+            "created": 1,
+            "lastModified": "#PageId",
+            "viewer": "https://static.t-pen.org/#ProjectId",
+            "license": "CC-BY",
+            "manifest": "https://example.com/manifest.json",
+            "tools": [],
+            "options": {}
+          }])
+        }
+      }, 1500)
+    })
+  }
+}
 
+export async function getUserProjects(user) {
+  const u = new User(user)
+  const projects = await u.getProjects()
+  return projects
 }
