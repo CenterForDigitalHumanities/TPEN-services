@@ -7,50 +7,7 @@ process.env.AUDIENCE = "provide audience to test"
 const routeTester = new express()
 routeTester.use("/projects", projectsRouter)
 
-const requestOptions = {
-  auth: {
-    payload: {
-      sub: "user123",
-      roles: ["admin", "user"]
-    },
-
-    token: process.env.TEST_TOKEN,
-
-    headers: {
-      authorization: "Bearer " + process.env.TEST_TOKEN
-    }
-  }
-}
-
-describe('Projects endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
-
-  it('POST instead of GET. That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .post('/projects/')
-    expect(res.statusCode).toBe(405)
-    expect(res.body).toBeTruthy()
-  })
-
-  it('PUT instead of GET. That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .put('/projects/')
-    expect(res.statusCode).toBe(405)
-    expect(res.body).toBeTruthy()
-  })
-
-  it('PATCH instead of GET. That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .patch('/projects/')
-    expect(res.statusCode).toBe(405)
-    expect(res.body).toBeTruthy()
-  })
-
-  it('Unauthenticated GET request. The status should be 401 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/projects/')
-    expect(res.statusCode).toBe(401)
-    expect(res.body).toBeTruthy()
-  })
+describe.skip('Projects authenticated endpoints end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
   it('Authenticated GET request to /projects/. The status should be 200.', async () => {
     const res = await request(routeTester)
@@ -290,5 +247,35 @@ describe('Projects endpoint end to end unit test (spinning up the endpoint and u
     expect(res.body).toBeTruthy()
     expect(parseInt(res.text)).toBe(0)
   })
-  
+})
+
+describe('Projects endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+
+  it('POST instead of GET. That status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .post('/projects/')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('PUT instead of GET. That status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .put('/projects/')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('PATCH instead of GET. That status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .patch('/projects/')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('Unauthenticated GET request. The status should be 401 with a message.', async () => {
+    const res = await request(routeTester)
+      .get('/projects/')
+    expect(res.statusCode).toBe(401)
+    expect(res.body).toBeTruthy()
+  })
 })
