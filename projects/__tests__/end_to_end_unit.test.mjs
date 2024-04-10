@@ -290,5 +290,4 @@ describe('Projects endpoint end to end unit test (spinning up the endpoint and u
     expect(res.body).toBeTruthy()
     expect(parseInt(res.text)).toBe(0)
   })
-  
 })

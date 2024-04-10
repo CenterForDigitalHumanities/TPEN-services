@@ -163,21 +163,4 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       .get('/project/7085?text=lines&view=html')
     expect(res.statusCode).toBe(400)
   })
-  it('should return an array of projects with default fields', async () => {
-    const response = await request(routeTester)
-      .get('/project') 
-      .query({ id: '1' })
-    expect(response.status).toBe(200)
-    expect(Array.isArray(response.body)).toBe(true)
-    response.body.forEach(project => {
-      expect(project).toHaveProperty('id')
-      expect(project).toHaveProperty('title')
-    })
-  })
-  it('should return projects when no project ID is provided', async () => {
-    const response = await request(routeTester)
-      .get('/project')
-    expect(response.status).toBe(200)
-    expect(response.body).toBeInstanceOf(Array)
-  })
 })

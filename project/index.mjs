@@ -158,52 +158,6 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
-router.get('/',  async (req, res, next) => {
-
-  try {
-    const mockUserFromTokenProcessing = { "id": "123", "type": "User", "other": "props" }
-    let projects = await logic.getUserProjects(mockUserFromTokenProcessing, req.query)
-    
-    if (req.query.hasRoles !== 'All') {
-      projects = projects.filter(project => project.roles && project.roles.some(role => req.query.hasRoles.includes(role)))
-    }
-    if (req.query.exceptRoles !== 'NONE') {
-      projects = projects.filter(project => !project.roles || !project.roles.some(role => req.query.exceptRoles.includes(role)))
-    }
-    if (req.query.createdBefore === 'NOW') {
-      const createdBeforeTimestamp = Date.now()
-      projects = projects.filter(project => project.created < createdBeforeTimestamp)
-    }
-    if (req.query.modifiedBefore === 'NOW') {
-      const modifiedBeforeTimestamp = Date.now()
-      projects = projects.filter(project => project.lastModified < modifiedBeforeTimestamp)
-    }
-    if (req.query.count) {
-      return res.status(200).json({ count: projects.length })
-    }
-    if (req.query.fields) {
-      const filteredProjects = projects.map(project => {
-        const filteredProject = {}
-        req.query.fields.split(',').forEach(field => {
-          filteredProject[field] = project[field]
-        })
-        return filteredProject
-      })
-      return res.status(200).json(filteredProjects)
-    }
-    // Default: return projects with id and title
-    const defaultProjects = projects.map(project => ({ id: project.id, title: project.title }))
-    return res.status(200).json(defaultProjects)
-  } catch (error) {
-    console.error(error)
-    // Check if the error is a database-related error
-    if (error.message.includes('database')) {
-      return res.status(500).json({ error: 'Database error. Please try again later.' })
-    }
-    return res.status(500).json({ error: 'Internal Server Error' })
-  }
-})
-
 router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
