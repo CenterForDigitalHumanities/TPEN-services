@@ -57,5 +57,4 @@ function respondWithPage(res, pageObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(pageObject)
 }
-
 export default router
