@@ -15,16 +15,14 @@ This driver interacts with the private TPEN Mongo Database (users collection).
  */
 export async function findUserById(id = null) {
   // Mocking user object directly instead of fetching from the database
-  if (id !== 111 && id !== 222) {
-    userProfile = {
-      id: id,
-      orchid_id: "0000-0000-3245-1188", // Dummy orchid ID
-      display_name: "Samply McSampleface" // Dummy display name
-    };
-  } else {
+  if (id === 111 || id === 222) {
     throw new Error("Internal Server Error");
   }
-
+  const userProfile = {
+    id: id,
+    orchid_id: "0000-0000-3245-1188", // Dummy orchid ID
+    display_name: "Samply McSampleface" // Dummy display name
+  };
   return mapUserProfile(userProfile);
 }
 /**
