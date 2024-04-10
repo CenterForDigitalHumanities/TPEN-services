@@ -25,6 +25,7 @@ import projectRouter from './project/index.mjs'
 import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
 import projectsRouter from './projects/index.mjs'
+import userProfileRouter from './userProfile/index.mjs'
 
 let app = express()
 
@@ -60,6 +61,7 @@ app.use('/project', projectRouter)
 app.use('/line', lineRouter) 
 app.use('/page', pageRouter)
 app.use('/projects', projectsRouter)
+app.use('/user', userProfileRouter)
 
 //catch 404 because of an invalid site path
 app.use(function(req, res, next) {
