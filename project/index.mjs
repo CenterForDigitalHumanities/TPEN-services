@@ -1,3 +1,4 @@
+
 import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import * as logic from './project.mjs'
@@ -119,7 +120,7 @@ export function respondWithProject(req, res, project) {
           retVal = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
           break
         case 'json':
-          break 
+          break
         default:
           utils.respondWithError(res, 400, 'Improper request.  Parameter "view" must be "json," "xml," or "html."')
           break
@@ -137,10 +138,8 @@ export function respondWithProject(req, res, project) {
   res.location(id).status(200).send(retVal)
 }
 
-// GET /projects/:id route
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
-  // Check if the ID is valid
   if (!utils.validateID(id)) {
     utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
     return
@@ -159,39 +158,33 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
-// GET /projects route
-router.get('/', async (req, res, next) => {
-  // Check if a project ID is provided
-  if (!req.query.id) {
-    utils.respondWithError(res, 400, 'Improper request. There was no project ID.')
-    return
-  }
-
-  const { hasRoles, exceptRoles, createdBefore, modifiedBefore, count, fields } = req.query
+router.get('/',  async (req, res, next) => {
 
   try {
-    let projects = await logic.getUserProjects(req.user, req.query)
-    if (hasRoles !== 'All') {
-      projects = projects.filter(project => project.roles && project.roles.some(role => hasRoles.includes(role)))
+    const mockUserFromTokenProcessing = { "id": "123", "type": "User", "other": "props" }
+    let projects = await logic.getUserProjects(mockUserFromTokenProcessing, req.query)
+    
+    if (req.query.hasRoles !== 'All') {
+      projects = projects.filter(project => project.roles && project.roles.some(role => req.query.hasRoles.includes(role)))
     }
-    if (exceptRoles !== 'NONE') {
-      projects = projects.filter(project => !project.roles || !project.roles.some(role => exceptRoles.includes(role)))
+    if (req.query.exceptRoles !== 'NONE') {
+      projects = projects.filter(project => !project.roles || !project.roles.some(role => req.query.exceptRoles.includes(role)))
     }
-    if (createdBefore === 'NOW') {
+    if (req.query.createdBefore === 'NOW') {
       const createdBeforeTimestamp = Date.now()
       projects = projects.filter(project => project.created < createdBeforeTimestamp)
     }
-    if (modifiedBefore === 'NOW') {
+    if (req.query.modifiedBefore === 'NOW') {
       const modifiedBeforeTimestamp = Date.now()
       projects = projects.filter(project => project.lastModified < modifiedBeforeTimestamp)
     }
-    if (count) {
+    if (req.query.count) {
       return res.status(200).json({ count: projects.length })
     }
-    if (fields) {
+    if (req.query.fields) {
       const filteredProjects = projects.map(project => {
         const filteredProject = {}
-        fields.split(',').forEach(field => {
+        req.query.fields.split(',').forEach(field => {
           filteredProject[field] = project[field]
         })
         return filteredProject
@@ -215,7 +208,4 @@ router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
-router.all('/:id', (req, res, next) => {
-  utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-})
 export default router
