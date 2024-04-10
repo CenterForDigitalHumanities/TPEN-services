@@ -37,11 +37,12 @@ router.route('/:id?')
       utils.respondWithError(res, 400, 'No user ID provided')
       return
     }
-      if (!utils.validateID(id)) {
-          utils.respondWithError(res, 400, 'The TPEN3 page ID must be a number')
-        return
-      }
-      id = parseInt(id)
+    if (!utils.validateID(id)) {
+      utils.respondWithError(res, 400, 'The TPEN3 user ID must be a number')
+      return
+    }
+    id = parseInt(id)
+    try{
       const userObject = await service.findUserById(id)
       if (userObject) {
         respondWithUserProfile(res, userObject);
@@ -49,17 +50,21 @@ router.route('/:id?')
       else {
         utils.respondWithError(res, 404, `TPEN3 user "${id}" does not exist.`)
       }
-    })
+    }
+    catch (error) {
+      utils.respondWithError(res,500,error.message)
+    }  
+  })
 
 //post handler
 .post(async (req, res, next) => {
   // open for future Modifications as needed
-  utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  utils.respondWithError(res, 501, 'Not Implemented, please use GET.')
 })
 ///put handler
 .put(async (req, res, next) => {
   // open for future Modifications as needed
-  utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  utils.respondWithError(res, 501, 'Not Implemented, please use GET.')
 })
 
 .all((req, res, next) => {
