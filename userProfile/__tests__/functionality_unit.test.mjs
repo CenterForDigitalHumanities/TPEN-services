@@ -9,22 +9,23 @@ describe('userProfile endpoint functionality unit test (just testing helper func
   })
   
   it('Throws error and handles if id is 111', async () => {
+    try {
       const res = await findUserById(111);
-      console.log(res)
-      expect(res.status).toBe(500)
-      expect(res.error).toBe('Internal Server Error')
+      expect(true).toBe(false);
+    } catch (error) {
+      expect(error.message).toBe('Internal Server Error');
+    }
+  });
   
-    })
-    
-
-    it('Throws error and handles if id is 222', async () => {
+  it('Throws error and handles if id is 222', async () => {
+    try {
       const res = await findUserById(222);
-      console.log(res)
-      expect(res.status).toBe(500)
-      expect(res.error).toBe('Internal Server Error')
+      expect(true).toBe(false);
+    } catch (error) {
+      expect(error.message).toBe('Internal Server Error');
+    }
+  });
   
-    })
-
   it('TPEN3 user does exist.  Finding the user results in the user JSON', async () => {
     let user = await findUserById(123)
     expect(user).not.toBe(null)
