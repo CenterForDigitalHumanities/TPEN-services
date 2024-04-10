@@ -28,8 +28,6 @@ router.use(
   })
 )
 
-
-
 router.route('/:id?')
   .get(async (req, res, next) => {
     let id = req.params.id
@@ -45,7 +43,7 @@ router.route('/:id?')
     try{
       const userObject = await service.findUserById(id)
       if (userObject) {
-        respondWithUserProfile(res, userObject);
+        respondWithUserProfile(res, userObject)
       }
       else {
         utils.respondWithError(res, 404, `TPEN3 user "${id}" does not exist.`)
@@ -61,7 +59,8 @@ router.route('/:id?')
   // open for future Modifications as needed
   utils.respondWithError(res, 501, 'Not Implemented, please use GET.')
 })
-///put handler
+
+//put handler
 .put(async (req, res, next) => {
   // open for future Modifications as needed
   utils.respondWithError(res, 501, 'Not Implemented, please use GET.')
@@ -71,14 +70,9 @@ router.route('/:id?')
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
-
-
-
 function respondWithUserProfile(res, userObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(userObject)
 }
-
-
 
 export default router

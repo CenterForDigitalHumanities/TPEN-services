@@ -27,7 +27,6 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
-
  
   it('Call to /user with a TPEN3 user ID that does not exist. The status should be 400 with a message.', async () => {
     const res = await request(routeTester)
@@ -50,4 +49,3 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.body).toBeTruthy()
   })
 })
-

@@ -1,4 +1,4 @@
-import DatabaseDriver from "../database/driver.mjs"
+//import DatabaseDriver from "../database/driver.mjs"
 
 /**
 Represents a database driver for the TPEN MongoDB database.
@@ -16,15 +16,16 @@ This driver interacts with the private TPEN Mongo Database (users collection).
 export async function findUserById(id = null) {
   // Mocking user object directly instead of fetching from the database
   if (id === 111 || id === 222) {
-    throw new Error("Internal Server Error");
+    throw new Error("Internal Server Error")
   }
   const userProfile = {
     id: id,
     orchid_id: "0000-0000-3245-1188", // Dummy orchid ID
     display_name: "Samply McSampleface" // Dummy display name
-  };
-  return mapUserProfile(userProfile);
+  }
+  return mapUserProfile(userProfile)
 }
+
 /**
  * Maps a user profile object to a standardized format.
  * 
@@ -56,19 +57,13 @@ function mapUserProfile(userProfile) {
  */
  function getProjects(options= null) 
  {
-  
-  if(options)
-  {
+  if(options){
     // This is a mock usally i  need to rtetrive projects from the bellow call
     //return getUserProjects(options)
   }
-  else
-  {
+  else{
     // This is a mock usally i  need to rtetrive projects from the bellow call
     //return getUserProjects(options)
   }
-
   return [ { id: "32333435363738", title: "My Project 1"} , { id: "98979695949392", title: "My Project 2"} ]
  }
-
-

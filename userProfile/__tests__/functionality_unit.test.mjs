@@ -24,7 +24,7 @@ describe('userProfile endpoint functionality unit test (just testing helper func
     } catch (error) {
       expect(error.message).toBe('Internal Server Error')
     }
-  });
+  })
   
   it('TPEN3 user does exist.  Finding the user results in the user JSON', async () => {
     let user = await findUserById(123)
@@ -51,7 +51,4 @@ describe('userProfile endpoint functionality unit test (just testing helper func
     const user = await findUserById(123)
     expect(user.profile).not.toBe(null)
   })
-
-
 })
-
