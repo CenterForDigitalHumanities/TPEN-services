@@ -26,7 +26,7 @@ export const removeProperties = (obj, ...propertiesToRemove)=>{
 export const includeOnly = (obj, property)=>{
   let filteredObj = {}
 
-  for(key in obj){
+  for(const key in obj){
     if (key === property){
       filteredObj[key] = obj[key]
     }
