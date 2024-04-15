@@ -1,6 +1,8 @@
 import express from 'express'
 import * as utils from '../utilities/shared.mjs'
-import * as service from './userProfile.mjs'
+//import * as service from './userProfile.mjs'
+import {User} from "../classes/User/User.mjs"
+
 import cors from 'cors'
 
 let router = express.Router()
@@ -35,13 +37,8 @@ router.route('/:id?')
       utils.respondWithError(res, 400, 'No user ID provided')
       return
     }
-    if (!utils.validateID(id)) {
-      utils.respondWithError(res, 400, 'The TPEN3 user ID must be a number')
-      return
-    }
-    id = parseInt(id)
     try{
-      const userObject = await service.findUserById(id)
+      const userObject = await new User(id)
       if (userObject) {
         respondWithUserProfile(res, userObject)
       }
