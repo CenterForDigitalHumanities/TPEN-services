@@ -1,4 +1,14 @@
 import * as utils from '../utilities/shared.mjs'
+import Database from "../database/driver.mjs"
+
+const database = new Database("mongo")
+
+export async function deleteLine(){
+  return await database.delete()
+}
+export async function updateLine(){
+  return await database.update()
+}
 
 export async function findLineById(id = null, options = {}) {
   if (id === null || id === undefined || !utils.validateID(id)) {

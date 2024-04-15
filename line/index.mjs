@@ -59,10 +59,38 @@ router.route('/')
   .all((req, res, next) => {
     return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   })
-
+ router.delete('/line/:id', async (req, res, next) => {
+  let id = req.params.id
+  const result = await logic.deleteLine(id)
+  if(result._dbaction){
+    utils.respondWithError(res, result.status, result.message)
+  }
+  else{
+    successfulResponse(res, 204, null, `Line ${id} is marked as deleted`)
+    res.status(204)
+   }
+   })
+.all((req, res, next) => {
+  utils.respondWithError(res, 405, 'Improper request method, please use DELETE.')
+})
+router.put('/line/:id', async (req, res, next) => {
+  const b = req.body
+  const result = await logic.updateLine(b)
+  if(result["@id"]){
+    successfulResponse(res, 200, result)
+  }
+  else{
+    utils.respondWithError(res, result.status, result.message)
+  }
+})
+.all((req, res, next) => {
+  utils.respondWithError(res, 405, 'Improper request method, please use PUT.')
+})
+ 
 function respondWithLine(res, lineObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(lineObject)
 }
+
 
 export default router
