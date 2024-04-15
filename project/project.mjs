@@ -1,5 +1,8 @@
 import * as utils from '../utilities/shared.mjs'
 import * as fs from 'fs'
+import DatabaseDriver from "../database/driver.mjs"
+
+const database = new DatabaseDriver("mongo")
 
 export async function findTheProjectByID(id = null) {
   let project = null
@@ -20,4 +23,11 @@ export async function findTheProjectByID(id = null) {
     project = await mockPause
   }
   return project
+}
+
+/** 
+ * Save project to Mongo database
+ */
+export async function saveProject(projectJSON) {
+  return await database.save(projectJSON)
 }

@@ -162,4 +162,21 @@ router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
+router.route('/create')
+  .post(async (req, res, next) => {
+    if (!utils.isValidJSON(res.body)) {
+      utils.respondWithError(res, 400, "Improperly formatted JSON")
+      return
+    }
+    const logicResult = logic.saveProject(res.body)
+    if (logicResult["_id"]) {
+      res.status(201).json(logicResult)
+    } else {
+      utils.respondWithError(res, logicResult.status, logicResult.message)
+    }
+  })
+  .all((req, res, next) => {
+    utils.respondWithError(res, 405, "Improper request method, please use POST.")
+  })
+
 export default router
