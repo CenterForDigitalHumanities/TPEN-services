@@ -1,82 +1,92 @@
-import {removeProperties} from "../../utilities/removeProperties.mjs"
+import dbDriver from "../../database/driver.mjs"
+import {
+  includeOnly,
+  removeProperties
+} from "../../utilities/removeProperties.mjs"
 
 export class User {
-  constructor(database) {
-    this.database = database
+  constructor(user = null, database = "mongo") {
+    this.database = new dbDriver(database)
+
+    if (user instanceof Object) {
+      this.id = user._id
+    } else {
+      this.id = user
+    }
+    this._fetchUser()
   }
 
-  async getUserById(userId, privateDetails=["profile", "@type", "agent"]) {
+  async _fetchUser() {
     let user = await this.database.find({
-      _id: userId,
-      "@type": "UserPreferences"
+      _id: this.id,
+      "@type": "users"
     })
     if (Array.isArray(user)) {
       user = user[0]
     }
-    return removeProperties(user, ...privateDetails)
+    this.id = user?._id 
+    return (this.user = user)
   }
 
-  async getSelf(userId) {
+  async getUserById() {
+    // returns user's public info
+
+    return includeOnly(this.user, "profile")
+    // return removeProperties(this.user, "profile", "mbox", "cardInfo")
+  }
+
+  async getSelf() {
     // returns full user object, only use this when the user is unthenticated i.e, logged in and getting himself.
-    const user = await this.database.find({
-      _id: userId,
-      "@type": "UserPreferences"
-    })
-    if (Array.isArray(user)) {
-      return user[0]
-    } else {
-      return user
-    }
+    return this.user
+
+    // const user = await this.database.find({
+    //   _id: userId,
+    //   "@type": "UserPreferences"
+    // })
+    // if (Array.isArray(user)) {
+    //   return user[0]
+    // } else {
+    //   return user
+    // }
   }
 
-  async updateUser(data) {
-    if(!data) return 
-    const previousUser = await this.getSelf(data?._id);
-    const updatedUser = { ...previousUser, ...data }; 
-     const result = await this.database.update(updatedUser);
-     return result
+  async updateRecord(data) {
+    // updates user object. use with PUT or PATCH
+    if (!data) return
+    const previousUser = this.user
+    const newRecord = {...previousUser, ...data}
+    const updatedUser = await this.database.update(newRecord)
+    return updatedUser
   }
 
-  async getProjects(userId) {  
+  async getProjects() {
     const projects = await this.database.find({
       "@type": "Project",
-      author: userId
+      creator: this.id
     })
-    return projects 
-}
+    return projects
+  }
 
- /**
-  * 
-  * @param projectData JSON object containing project detail including {"author":"user._id"}
-  * @returns the same object if creation is successful
-  */
+
+
+  
+  /**
+   *
+   * @param projectData JSON object containing project detail including {"creator":"id"}
+   * @returns the same object if creation is successful
+   */
   async createProject(projectData) {
-     const newProject = await this.database.save({...projectData, "@type":"Project"})
+    const newProject = await this.database.save({
+      ...projectData,
+      "@type": "Project",
+      creator: this.id
+    })
     return newProject
- }
-
-
-
-
-
-
-
-
-async createUser(userData) {
-    const newUser = await this.database.save(userData)
-    return newUser
   }
 
-
-async deleteUser(userId) {
-    try {
-      await this.database.delete(id, userId)
-      return true
-    } catch (error) {
-      throw new Error("Failed to delete user")
-    }
+  async deleteUser() {
+    await this.database.delete(user)
   }
- 
 
   // Method to update a project
   async updateProject(data) {
