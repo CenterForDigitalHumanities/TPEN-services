@@ -158,6 +158,38 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
+
+router.post('/:id/addLayer', async (req, res, next) => {
+  const id = req.params.id;
+  if (!utils.validateID(id)) {
+    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number');
+    return;
+  }
+  try {
+    const { label, creator, items } = req.body;
+
+    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items);
+
+    const annotationPages = [];
+    for (const item of items) {
+      const annotationPage = logic.AnnotationPageFactory(item.id, item.target, item.items);
+      annotationPages.push(annotationPage);
+    }
+
+    await logic.saveAnnotationCollection(annotationCollection);
+    for (const page of annotationPages) {
+      await logic.saveAnnotationPage(page);
+    }
+
+    await logic.updateProjectLayers(id, annotationCollection.id);
+
+    res.status(200).json({ message: 'Layer created successfully', annotationCollection });
+  } catch (err) {
+    utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.');
+  }
+});
+
+
 router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
