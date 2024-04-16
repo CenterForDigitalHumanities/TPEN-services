@@ -87,3 +87,5 @@ const publicDetails = await userObject.getUserById()
 const userProjects = await userObject.getProjects()
 
 console.log(userObject)
+
+
