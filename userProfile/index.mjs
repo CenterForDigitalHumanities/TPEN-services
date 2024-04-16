@@ -40,7 +40,7 @@ router.route('/:id?')
     try{
       const userObject = await new User(id)
       if (userObject) {
-        respondWithUserProfile(res, userObject)
+        respondWithUserProfile(res, userObject.getUserById())
       }
       else {
         utils.respondWithError(res, 404, `TPEN3 user "${id}" does not exist.`)
