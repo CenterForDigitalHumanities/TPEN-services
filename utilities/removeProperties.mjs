@@ -20,14 +20,14 @@ export const removeProperties = (obj, ...propertiesToRemove)=>{
 /**
  * 
  * @param {*} obj object to be filtered
- * @param {*} property the only property to return; string
- * @returns object with one property
+ * @param {*} properties the only properties to return; array of strings
+ * @returns object with selected properties
  */
-export const includeOnly = (obj, property)=>{
+export const includeOnly = (obj, ...properties)=>{
   let filteredObj = {}
 
   for(const key in obj){
-    if (key === property){
+    if (properties.includes(key)){
       filteredObj[key] = obj[key]
     }
   }

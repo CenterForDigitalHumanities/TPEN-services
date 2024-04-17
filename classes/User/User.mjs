@@ -26,7 +26,7 @@ export class User {
     })
     user = user[0]
     this.id = user?._id
-    const publicUser = includeOnly(user, "profile")
+    const publicUser = includeOnly(user, "profile", "_id")
     this.user = publicUser
     return publicUser
   }
@@ -50,8 +50,7 @@ export class User {
     return updatedUser
   }
 
-  async getProjects() {
-
+  async getProjects() { 
     // this assumes that the project object includes the following properties
     // {
     //   "@type":"Project"
@@ -64,9 +63,7 @@ export class User {
     if(!user) return []
     const allProjects = await database.find({
       "@type": "Project"
-    })
-   
-
+    }) 
     const userProjects = []
     allProjects?.map((project) => {
       if (project.creator === this.id) {

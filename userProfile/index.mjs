@@ -1,81 +1,74 @@
-import express from 'express'
-import * as utils from '../utilities/shared.mjs'
+import express from "express"
+import * as utils from "../utilities/shared.mjs"
 //import * as service from './userProfile.mjs'
 import {User} from "../classes/User/User.mjs"
 
-import cors from 'cors'
+import cors from "cors"
 
 let router = express.Router()
 router.use(
   cors({
-    "methods" : "GET",
-    "allowedHeaders" : [
-      'Content-Type',
-      'Content-Length',
-      'Allow',
-      'Authorization',
-      'Location',
-      'ETag',
-      'Connection',
-      'Keep-Alive',
-      'Date',
-      'Cache-Control',
-      'Last-Modified',
-      'Link',
-      'X-HTTP-Method-Override'
+    methods: "GET",
+    allowedHeaders: [
+      "Content-Type",
+      "Content-Length",
+      "Allow",
+      "Authorization",
+      "Location",
+      "ETag",
+      "Connection",
+      "Keep-Alive",
+      "Date",
+      "Cache-Control",
+      "Last-Modified",
+      "Link",
+      "X-HTTP-Method-Override"
     ],
-    "exposedHeaders" : "*",
-    "origin" : "*",
-    "maxAge" : "600"
+    exposedHeaders: "*",
+    origin: "*",
+    maxAge: "600"
   })
 )
 
-router.route('/:id?')
+router
+  .route("/:id?")
   .get(async (req, res, next) => {
     let id = req.params.id
     if (!id) {
-      utils.respondWithError(res, 400, 'No user ID provided')
+      utils.respondWithError(res, 400, "No user ID provided")
       return
     }
-    try{
-      const userObject =  new User(id)
+    try {
+      const userObject = new User(id)
       if (userObject) {
-        respondWithUserProfile(res, await userObject.getSelf())
-      }
-      else {
+        respondWithUserProfile(res, await userObject.getUserById())
+      } else {
         utils.respondWithError(res, 404, `TPEN3 user "${id}" does not exist.`)
       }
+    } catch (error) {
+      utils.respondWithError(res, 500, error.message)
     }
-    catch (error) {
-      utils.respondWithError(res,500,error.message)
-    }  
   })
 
-//post handler
-.post(async (req, res, next) => {
-  // open for future Modifications as needed
-  utils.respondWithError(res, 501, 'Not Implemented, please use GET.')
-})
+  //post handler
+  .post(async (req, res, next) => {
+    // open for future Modifications as needed
+    utils.respondWithError(res, 501, "Not Implemented, please use GET.")
+  })
 
-//put handler
-.put(async (req, res, next) => {
-  // open for future Modifications as needed
-  utils.respondWithError(res, 501, 'Not Implemented, please use GET.')
-})
+  //put handler
+  .put(async (req, res, next) => {
+    // open for future Modifications as needed
+    utils.respondWithError(res, 501, "Not Implemented, please use GET.")
+  })
 
-.all((req, res, next) => {
-  utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-})
-
-router.get("/:id/projects", async (req, res)=>{
-
-  const userObj = new User(req.params.id)
-  const myProjects = await userObj.getProjects()
-  res.json(myProjects)
-})
+  .all((req, res, next) => {
+    utils.respondWithError(res, 405, "Improper request method, please use GET.")
+  })
 
 function respondWithUserProfile(res, userObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8')
+  res.set("Content-Type", "application/json; charset=utf-8")
+  res.set("Location", `/user/${userObject._id}`)
   res.status(200).json(userObject)
 }
 
