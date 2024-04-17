@@ -14,7 +14,7 @@ export class User {
       this.id = user._id
     } else {
       this.id = user
-    } 
+    }
   }
 
   async getUserById() {
@@ -51,41 +51,36 @@ export class User {
   }
 
   async getProjects() {
+
+    // this assumes that the project object includes the following properties
+    // {
+    //   "@type":"Project"
+    //   creator:"user._id",
+    //   groups:{
+    //     members:[{agent:"user.agent", _id:"user._id"}]
+    //   } 
+    // }
+    const user = await this.getSelf() 
+    if(!user) return []
     const allProjects = await database.find({
       "@type": "Project"
     })
+   
+
     const userProjects = []
     allProjects?.map((project) => {
-      project.group?.members?.map((member) => {
-        // const memberId = member.agent.split("id/")[1]
-        // if(memberId === this.id){
-        //   userProjects.push(project)
-        // }
-
-        if (member.agent === this.getSelf().agent || member._id === this.id) {
-          userProjects.push(project)
-        }
-      })
+      if (project.creator === this.id) {
+        userProjects.push(project)
+      } else {
+        project?.groups?.members?.map(async (member) => {
+          if (member.agent === user?.agent || member._id === this.id) {
+            userProjects.push(project)
+          }
+        })
+      }
     })
-
+ 
     return userProjects
   }
-
-  // async getProjects() {
-  //   const projects = await database.find({
-  //     "@type": "Project",
-  //     creator: this.id
-  //   })
-  //   return projects
-  // }
-}
-
-// Usage
-const userObject = new User("660d801652df1c2243d6d935")
-const fullDetails = await userObject.getSelf()
-const publicDetails = await userObject.getUserById()
-const userProjects = await userObject.getProjects()
-
-console.log(userObject)
-
-
+ 
+} 

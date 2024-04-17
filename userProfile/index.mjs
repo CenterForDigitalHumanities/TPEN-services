@@ -67,6 +67,13 @@ router.route('/:id?')
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
+router.get("/:id/projects", async (req, res)=>{
+
+  const userObj = new User(req.params.id)
+  const myProjects = await userObj.getProjects()
+  res.json(myProjects)
+})
+
 function respondWithUserProfile(res, userObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(userObject)
