@@ -54,19 +54,19 @@ export function respondWithProject(req, res, project) {
     case textType:
       switch (textType) {
         case 'blob':
-          res.set('Content-Type', 'text/plain; charset=utf-8')
+          res.set('Content-Type', 'text/plain charset=utf-8')
           retVal = 'mock text'
           break
         case 'layers':
-          res.set('Content-Type', 'application/json; charset=utf-8')
+          res.set('Content-Type', 'application/json charset=utf-8')
           retVal = [{ name: 'Layer.name', id: '#AnnotationCollectionId', textContent: 'concatenated blob' }]
           break
         case 'pages':
-          res.set('Content-Type', 'application/json; charset=utf-8')
+          res.set('Content-Type', 'application/json charset=utf-8')
           retVal = [{ name: 'Page.name', id: '#AnnotationPageId', textContent: 'concatenated blob' }]
           break
         case 'lines':
-          res.set('Content-Type', 'application/json; charset=utf-8')
+          res.set('Content-Type', 'application/json charset=utf-8')
           retVal = [
             {
               name: 'Page.name',
@@ -84,7 +84,7 @@ export function respondWithProject(req, res, project) {
     case image:
       switch (image) {
         case 'thumb':
-          res.set('Content-Type', 'text/uri-list; charset=utf-8')
+          res.set('Content-Type', 'text/uri-list charset=utf-8')
           retVal = 'https://example.com'
           break
         default:
@@ -112,11 +112,11 @@ export function respondWithProject(req, res, project) {
     case view:
       switch (view) {
         case 'xml':
-          res.set('Content-Type', 'text/xml; charset=utf-8')
+          res.set('Content-Type', 'text/xml charset=utf-8')
           retVal = '<xml><id>7085</id></xml>'
           break
         case 'html':
-          res.set('Content-Type', 'text/html; charset=utf-8')
+          res.set('Content-Type', 'text/html charset=utf-8')
           retVal = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
           break
         case 'json':
@@ -128,7 +128,7 @@ export function respondWithProject(req, res, project) {
       break
 
     default:
-      res.set('Content-Type', 'application/json; charset=utf-8')
+      res.set('Content-Type', 'application/json charset=utf-8')
       res.location(id)
       res.status(200)
       res.json(project)
@@ -159,36 +159,59 @@ router.get('/:id', async (req, res, next) => {
 })
 
 
-router.post('/:id/addLayer', async (req, res, next) => {
-  const id = req.params.id;
+/*router.post('/:id/addLayer', async (req, res, next) => {
+  const id = req.params.id
   if (!utils.validateID(id)) {
-    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number');
-    return;
+    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+    return
+  }
+  
+  try {
+    console.log("Here")
+    const { label, creator, items } = req.body
+    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items)
+    const annotationPages = []
+    for (const item of items) {
+      const annotationPage = logic.AnnotationPageFactory(item.id, item.target, item.items)
+      annotationPages.push(annotationPage)
+    }
+    console.log("Here")
+    //await logic.saveAnnotationCollection(annotationCollection)
+    
+    
+    const annotationPages = []
+    for (const item of items) {
+      const annotationPage = logic.AnnotationPageFactory(item.id, item.target, item.items)
+      annotationPages.push(annotationPage)
+    }
+    await logic.saveAnnotationCollection(annotationCollection)
+    for (const page of annotationPages) {
+      await logic.saveAnnotationPage(page)
+    }
+    await logic.updateProjectLayers(id, annotationCollection.id)
+    res.status(200).json({ message: 'Layer created successfully', annotationCollection })
+  } catch (err) {
+    utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
+  }
+}) */
+
+router.post('/:id/addLayer', async (req, res, next) => {
+  const id = req.params.id
+  if (!utils.validateID(id)) {
+    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+    return
   }
   try {
-    const { label, creator, items } = req.body;
-
-    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items);
-
-    const annotationPages = [];
-    for (const item of items) {
-      const annotationPage = logic.AnnotationPageFactory(item.id, item.target, item.items);
-      annotationPages.push(annotationPage);
-    }
-
-    await logic.saveAnnotationCollection(annotationCollection);
-    for (const page of annotationPages) {
-      await logic.saveAnnotationPage(page);
-    }
-
-    await logic.updateProjectLayers(id, annotationCollection.id);
-
-    res.status(200).json({ message: 'Layer created successfully', annotationCollection });
+    const { label, creator, items } = req.body
+    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items)
+    await logic.saveAnnotationCollection(annotationCollection)
+    //Iam facing error updating the project
+    //await logic.updateProjectLayers(id, annotationCollection.id)
+    res.status(200).json({ message: 'Layer created successfully', annotationCollection })
   } catch (err) {
-    utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.');
+    utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
   }
-});
-
+})
 
 router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')

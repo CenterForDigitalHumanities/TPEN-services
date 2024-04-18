@@ -1,6 +1,9 @@
 import * as utils from '../utilities/shared.mjs'
 import * as fs from 'fs'
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid'
+import DatabaseDriver from "../database/driver.mjs"
+
+const database = new DatabaseDriver("tiny")
 
 export async function findTheProjectByID(id = null) {
   let project = null
@@ -26,58 +29,66 @@ export async function findTheProjectByID(id = null) {
 
 export async function saveAnnotationCollection(annotationCollection) {
   try {
-    //await db.collection('annotation_collections').insertOne(annotationCollection);
+    await database.save(annotationCollection)
   } catch (error) {
-    throw new Error('Error saving annotation collection to the database');
+    throw new Error('Error saving annotation collection to the database')
   }
 }
 
-export async function saveAnnotationPage(annotationPage) {
+export async function updateProjectLayers(projectId, annotationCollectionId) {
   try {
-   //await db.collection('annotation_pages').insertOne(annotationPage);
+    const project = await findTheProjectByID(projectId);
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    project.layers.push(annotationCollectionId);
+    await database.update(project);
   } catch (error) {
-    throw new Error('Error saving annotation page to the database');
+    throw new Error('Error updating project layers');
   }
 }
 
 
 export function AnnotationCollectionFactory(label, creator, items) {
-  const id = `https://store.rerum.io/v1/id/${uuid.v4()}`;
+  const id = generateUniqueID();
+  const context = "http://www.w3.org/ns/anno.jsonld";
+  const type = "AnnotationCollection";
   const total = items.length;
-  const first = items.length > 0 ? items[0].id : null;
-  const last = items.length > 0 ? items[items.length - 1].id : null;
-  const partOf = `https://static.t-pen.org/${uuid.v4()}/project.json`;
+  const partOf = generatePartOf(); 
+  const annotationPages = items.map(item => AnnotationPageFactory(item.id, item.target, item.items));
   const annotationCollection = {
-    '@context': 'http://www.w3.org/ns/anno.jsonld',
-    id,
-    type: 'AnnotationCollection',
-    label,
-    creator,
-    total,
-    first,
-    last,
-    partOf
+    "@context": context,
+    "id": id,
+    "type": type,
+    "label": label,
+    "creator": creator,
+    "total": total,
+    "partOf": partOf,
+    "items": annotationPages
   };
   return annotationCollection;
 }
 
+export function generateUniqueID() {
+  return `https://store.rerum.io/v1/id/${uuidv4()}`
+}
+
+export function generatePartOf() {
+  const partOf = 'https://static.t-pen.org/{stud || hex}/project.json'
+  return partOf
+}
+
 export function AnnotationPageFactory(id, target, items) {
-  // Generate unique ID for the annotation page
-  const pageId = `https://store.rerum.io/v1/id/${uuid.v4()}`;
-
-  // Generate next page URL
-  const nextPage = items.length > 1 ? `https://store.rerum.io/v1/id/${uuid.v4()}` : null;
-
-  // Create the annotation page object
+  const pageId = generateUniqueID()
+  const nextPage = items.length > 1 ? generateUniqueID() : null
   const annotationPage = {
     '@context': 'http://www.w3.org/ns/anno.jsonld',
     id: pageId,
     type: 'AnnotationPage',
     partOf: id,
-    target,
+    target: target,
     next: nextPage,
-    items
-  };
-
-  return annotationPage;
+    items: items
+  }
+  return annotationPage
 }
