@@ -25,7 +25,6 @@ export async function findTheProjectByID(id = null) {
   return project
 }
 
-
 export async function saveAnnotationCollection(annotationCollection) {
   try {
     await database.save(annotationCollection)
@@ -36,25 +35,24 @@ export async function saveAnnotationCollection(annotationCollection) {
 
 export async function updateProjectLayers(projectId, annotationCollectionId) {
   try {
-    const project = await findTheProjectByID(projectId);
+    const project = await findTheProjectByID(projectId)
     if (!project) {
-      throw new Error('Project not found');
+      throw new Error('Project not found')
     }
-    project.layers.push(annotationCollectionId);
-    await database.update(project);
+    project.layers.push(annotationCollectionId)
+    await database.update(project)
   } catch (error) {
-    throw new Error('Error updating project layers');
+    throw new Error('Error updating project layers')
   }
 }
 
-
 export function AnnotationCollectionFactory(label, creator, items) {
-  const id = generateUniqueID();
-  const context = "http://www.w3.org/ns/anno.jsonld";
-  const type = "AnnotationCollection";
-  const total = items.length;
-  const partOf = generatePartOf(); 
-  const annotationPages = items.map(item => AnnotationPageFactory(item.id, item.target, item.items));
+  const id = generateUniqueID()
+  const context = "http://www.w3.org/ns/anno.jsonld"
+  const type = "AnnotationCollection"
+  const total = items.length
+  const partOf = generatePartOf() 
+  const annotationPages = items.map(item => AnnotationPageFactory(item.id, item.target, item.items))
   const annotationCollection = {
     "@context": context,
     "id": id,
@@ -64,19 +62,19 @@ export function AnnotationCollectionFactory(label, creator, items) {
     "total": total,
     "partOf": partOf,
     "items": annotationPages
-  };
-  return annotationCollection;
+  }
+  return annotationCollection
 }
 
 export function generateUniqueID() {
   // Generate a random unique ID
-  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const idLength = 16; // Adjust the length of the ID as needed
-  let id = '';
-  for (let i = 0; i < idLength; i++) {
-    id += characters.charAt(Math.floor(Math.random() * characters.length));
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  const idLength = 16 // Adjust the length of the ID as needed
+  let id = ''
+  for (let i = 0 ;i < idLength; i++) {
+    id += characters.charAt(Math.floor(Math.random() * characters.length))
   }
-  return `https://store.rerum.io/v1/id/${id}`;
+  return `https://store.rerum.io/v1/id/${id}`
 }
 
 export function generatePartOf() {
