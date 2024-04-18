@@ -1,6 +1,5 @@
 import * as utils from '../utilities/shared.mjs'
 import * as fs from 'fs'
-import { v4 as uuidv4 } from 'uuid'
 import DatabaseDriver from "../database/driver.mjs"
 
 const database = new DatabaseDriver("tiny")
@@ -70,7 +69,14 @@ export function AnnotationCollectionFactory(label, creator, items) {
 }
 
 export function generateUniqueID() {
-  return `https://store.rerum.io/v1/id/${uuidv4()}`
+  // Generate a random unique ID
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const idLength = 16; // Adjust the length of the ID as needed
+  let id = '';
+  for (let i = 0; i < idLength; i++) {
+    id += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return `https://store.rerum.io/v1/id/${id}`;
 }
 
 export function generatePartOf() {
