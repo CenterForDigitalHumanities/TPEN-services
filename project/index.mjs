@@ -164,11 +164,11 @@ router.all('/', (req, res, next) => {
 
 router.route('/create')
   .post(async (req, res, next) => {
-    if (!utils.isValidJSON(res.body)) {
+    if (!utils.isValidJSON(req.body)) {
       utils.respondWithError(res, 400, "Improperly formatted JSON")
       return
     }
-    const logicResult = logic.saveProject(res.body)
+    const logicResult = await logic.saveProject(req.body)
     if (logicResult["_id"]) {
       res.status(201).json(logicResult)
     } else {
