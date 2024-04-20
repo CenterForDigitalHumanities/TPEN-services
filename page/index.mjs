@@ -51,7 +51,29 @@ router.route('/:id?')
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  });
+  })
+
+
+router.post('/:id/appendLine', async (req, res) => {
+  try {
+    const annotation = await service.appendLine(req.body)
+    return res.status(201).json(annotation);
+  } catch (error) {
+    console.error('Error appending line to page:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+
+router.post('/:id/prependLine', async (req, res) => {
+  try {
+    const annotation = await service.prependLine(req.body)
+    return res.status(201).json(annotation)
+  } catch (error) {
+    console.error('Error appending line to page:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
 
 function respondWithPage(res, pageObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
