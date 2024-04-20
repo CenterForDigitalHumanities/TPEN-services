@@ -1,49 +1,20 @@
 import * as utils from '../utilities/shared.mjs'
-import * as fs from 'fs'
 import DatabaseDriver from "../database/driver.mjs"
 
 const database = new DatabaseDriver("tiny")
+const mongoDatabase = new DatabaseDriver("mongo")
 
 export async function findTheProjectByID(id = null) {
-  let project = null
-  if (!utils.validateID(id)) return project
-  const mockPause = new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(null)
-    }, 1500)
-  })
-
-  if (id && id === 7085) {
-    let projectFileBuffer = fs.readFileSync('./public/project.json', (err, data) => {
-      if (err) throw err
-    })
-    project = projectFileBuffer !== null && JSON.parse(projectFileBuffer.toString())
+    return await mongoDatabase.find({_id : id,"@type": "Project"});
   }
-  if (project === null) {
-    project = await mockPause
-  }
-  return project
-}
 
 export async function saveAnnotationCollection(annotationCollection) {
-  try {
-    await database.save(annotationCollection)
-  } catch (error) {
-    throw new Error('Error saving annotation collection to the database')
-  }
+    return database.save(annotationCollection)
 }
 
-export async function updateProjectLayers(projectId, annotationCollectionId) {
-  try {
-    const project = await findTheProjectByID(projectId)
-    if (!project) {
-      throw new Error('Project not found')
-    }
-    project.layers.push(annotationCollectionId)
-    await database.update(project)
-  } catch (error) {
-    throw new Error('Error updating project layers')
-  }
+export async function updateProjectLayers(project, annotationCollectionId){
+  project.layers.push(annotationCollectionId)
+  return await mongoDatabase.update(project)
 }
 
 export function AnnotationCollectionFactory(label, creator, items) {
@@ -51,7 +22,8 @@ export function AnnotationCollectionFactory(label, creator, items) {
   const context = "http://www.w3.org/ns/anno.jsonld"
   const type = "AnnotationCollection"
   const total = items.length
-  const partOf = generatePartOf() 
+  //For now just considering part of as is hex
+  const partOf = generatePartOf(false)
   const annotationPages = items.map(item => AnnotationPageFactory(item.id, item.target, item.items))
   const annotationCollection = {
     "@context": context,
@@ -67,9 +39,8 @@ export function AnnotationCollectionFactory(label, creator, items) {
 }
 
 export function generateUniqueID() {
-  // Generate a random unique ID
   const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  const idLength = 16 // Adjust the length of the ID as needed
+  const idLength = 16
   let id = ''
   for (let i = 0 ;i < idLength; i++) {
     id += characters.charAt(Math.floor(Math.random() * characters.length))
@@ -77,10 +48,12 @@ export function generateUniqueID() {
   return `https://store.rerum.io/v1/id/${id}`
 }
 
-export function generatePartOf() {
-  const partOf = 'https://static.t-pen.org/{stud || hex}/project.json'
-  return partOf
+export function generatePartOf(isStud) {
+  const projectType = isStud ? 'stud' : 'hex';
+  const partOf = `https://static.t-pen.org/${projectType}/project.json`;
+  return partOf;
 }
+
 
 export function AnnotationPageFactory(id, target, items) {
   const pageId = generateUniqueID()

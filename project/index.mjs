@@ -145,7 +145,6 @@ router.get('/:id', async (req, res, next) => {
     return
   }
   id = parseInt(id)
-
   try {
     const projectObj = await logic.findTheProjectByID(id)
     if (projectObj) {
@@ -158,26 +157,43 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
-router.post('/:id/addLayer', async (req, res, next) => {
-  const id = req.params.id
-  if (!utils.validateID(id)) {
-    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+const addLayersValidator = (req, res, next) => {
+  if(!req.params.id){
+    utils.respondWithError(res, 400, 'Bad Request: The TPEN3 project ID provided is null. Please provide a valid project ID.')
     return
   }
-  try {
+  const { label, creator, items } = req.body
+  if (!label || !creator || !items) {
+    utils.respondWithError(res, 400, 'Bad Request: The request body must contain label, creator, and items fields.')
+    return
+  }
+  next()
+}
+
+router.route('/:id/addLayer')
+  .post(addLayersValidator, async (req, res, next) => {
+    const id = req.params.id
     const { label, creator, items } = req.body
     const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items)
-    await logic.saveAnnotationCollection(annotationCollection)
-    //Iam facing error updating the project
-    //await logic.updateProjectLayers(id, annotationCollection.id)
-    res.status(200).json({ message: 'Layer created successfully', annotationCollection })
-  } catch (err) {
-    utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
-  }
-})
 
-router.all('/', (req, res, next) => {
-  utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+    console.log(annotationCollection)
+
+    const response = await logic.saveAnnotationCollection(annotationCollection)
+    const projectsArray = await logic.findTheProjectByID(id)
+    if(projectsArray.length <= 0) {
+      utils.respondWithError(res, 404, 'Project not found with ID: ${id}')
+    }
+    const project =  projectsArray[0]
+    
+    try{
+      await logic.updateProjectLayers(project, annotationCollection.id)
+    }catch(error){
+      utils.respondWithError(res, 500, 'Annotation collection is added with id ' + annotationCollection.id 
+      + 'but failed to update the project layers.Error caused : ' + error.message)
+    }
+    res.status(201).json(response)
+}).all((req, res, next) => {
+  utils.respondWithError(res, 405, 'Improper request method, please use POST.')
 })
 
 export default router
