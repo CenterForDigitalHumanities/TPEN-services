@@ -41,7 +41,7 @@ router.route('/:id?')
       id = parseInt(id)
       const pageObject = await service.findPageById(id)
       if (pageObject) {
-        respondWithPage(res, pageObject);
+        respondWithPage(res, pageObject)
       } else {
         utils.respondWithError(res, 404, `TPEN3 page "${id}" does not exist.`)
       }
@@ -57,7 +57,7 @@ router.route('/:id?')
 router.post('/:id/appendLine', async (req, res) => {
   try {
     const annotation = await service.appendLine(req.body)
-    return res.status(201).json(annotation);
+    return res.status(201).json(annotation)
   } catch (error) {
     console.error('Error appending line to page:', error)
     return res.status(500).json({ error: 'Internal server error' })

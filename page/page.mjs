@@ -27,6 +27,11 @@ export async function findPageById(id = null) {
   
     return page
   }
+  /**
+ * Appends a line to an annotation page.Line is added to the end of any existing lines
+ * @param {object} annotationPage - The annotation page to append the line to.
+ * @returns {Promise<object>} - A promise resolving to the updated annotation collection.
+ */
   export async function appendLine(annotationPage) {
     const annotationCollection = {
       "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -57,6 +62,11 @@ export async function findPageById(id = null) {
   
     return annotationCollection
   }
+  /**
+ * Prepends a line to an annotation page.
+ * @param {object} annotationPage - The annotation page to prepend the line to.
+ * @returns {Promise<object>} - A promise resolving to the updated annotation collection.
+ */
   export async function prependLine(annotationPage) {
     const annotationCollection = {
       "@context": "http://www.w3.org/ns/anno.jsonld",
