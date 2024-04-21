@@ -54,19 +54,19 @@ export function respondWithProject(req, res, project) {
     case textType:
       switch (textType) {
         case 'blob':
-          res.set('Content-Type', 'text/plain charset=utf-8')
+          res.set('Content-Type', 'text/plain; charset=utf-8')
           retVal = 'mock text'
           break
         case 'layers':
-          res.set('Content-Type', 'application/json charset=utf-8')
+          res.set('Content-Type', 'application/json; charset=utf-8')
           retVal = [{ name: 'Layer.name', id: '#AnnotationCollectionId', textContent: 'concatenated blob' }]
           break
         case 'pages':
-          res.set('Content-Type', 'application/json charset=utf-8')
+          res.set('Content-Type', 'application/json; charset=utf-8')
           retVal = [{ name: 'Page.name', id: '#AnnotationPageId', textContent: 'concatenated blob' }]
           break
         case 'lines':
-          res.set('Content-Type', 'application/json charset=utf-8')
+          res.set('Content-Type', 'application/json; charset=utf-8')
           retVal = [
             {
               name: 'Page.name',
@@ -84,7 +84,7 @@ export function respondWithProject(req, res, project) {
     case image:
       switch (image) {
         case 'thumb':
-          res.set('Content-Type', 'text/uri-list charset=utf-8')
+          res.set('Content-Type', 'text/uri-list; charset=utf-8')
           retVal = 'https://example.com'
           break
         default:
@@ -112,11 +112,11 @@ export function respondWithProject(req, res, project) {
     case view:
       switch (view) {
         case 'xml':
-          res.set('Content-Type', 'text/xml charset=utf-8')
+          res.set('Content-Type', 'text/xml; charset=utf-8')
           retVal = '<xml><id>7085</id></xml>'
           break
         case 'html':
-          res.set('Content-Type', 'text/html charset=utf-8')
+          res.set('Content-Type', 'text/html; charset=utf-8')
           retVal = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
           break
         case 'json':
@@ -128,7 +128,7 @@ export function respondWithProject(req, res, project) {
       break
 
     default:
-      res.set('Content-Type', 'application/json charset=utf-8')
+      res.set('Content-Type', 'application/json; charset=utf-8')
       res.location(id)
       res.status(200)
       res.json(project)
@@ -145,6 +145,7 @@ router.get('/:id', async (req, res, next) => {
     return
   }
   id = parseInt(id)
+
   try {
     const projectObj = await logic.findTheProjectByID(id)
     if (projectObj) {
@@ -155,6 +156,10 @@ router.get('/:id', async (req, res, next) => {
   } catch (err) {
     utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
   }
+})
+
+router.all('/', (req, res, next) => {
+  utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
 const addLayersValidator = (req, res, next) => {
@@ -174,19 +179,15 @@ router.route('/:id/addLayer')
   .post(addLayersValidator, async (req, res, next) => {
     const id = req.params.id
     const { label, creator, items } = req.body
-    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items)
-
-    console.log(annotationCollection)
-
+    const annotationCollection = await logic.AnnotationCollectionFactory(label, creator, items)
     const response = await logic.saveAnnotationCollection(annotationCollection)
-    const projectsArray = await logic.findTheProjectByID(id)
+    const projectsArray = await logic.findTheProjectUsingID(id)
     if(projectsArray.length <= 0) {
-      utils.respondWithError(res, 404, 'Project not found with ID: ${id}')
+      utils.respondWithError(res, 404, 'Project not found with ID: ' + id + 'The annotation is saved in Annotation collection with id: ' + response.id)
     }
     const project =  projectsArray[0]
-    
     try{
-      await logic.updateProjectLayers(project, annotationCollection.id)
+      logic.updateProjectLayers(project, annotationCollection.id)
     }catch(error){
       utils.respondWithError(res, 500, 'Annotation collection is added with id ' + annotationCollection.id 
       + 'but failed to update the project layers.Error caused : ' + error.message)
