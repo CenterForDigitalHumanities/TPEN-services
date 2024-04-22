@@ -50,20 +50,53 @@ export class User {
     return updatedUser
   }
 
-  async getProjects() { 
+
+async getByAgent(agent){
+  if(!agent){
+    const error = new Error("No agent provided")
+    error.code = 400
+    error.statusCode = 400
+    throw error
+  }
+
+  const user = await database.find({agent, "@type":"User"})
+  
+  return user[0]
+
+}
+
+
+  async create(data) {
+    // POST requests
+    if (!data) {
+      const error = new Error("No data provided")
+      error.code = 400
+      error.statusCode = 400
+      throw error
+    }
+
+    try {
+      const user = await database.save({...data, "@type":"User"})
+      return user
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getProjects() {
     // this assumes that the project object includes the following properties
     // {
     //   "@type":"Project"
     //   creator:"user._id",
     //   groups:{
     //     members:[{agent:"user.agent", _id:"user._id"}]
-    //   } 
+    //   }
     // }
-    const user = await this.getSelf() 
-    if(!user) return []
+    const user = await this.getSelf()
+    if (!user) return []
     const allProjects = await database.find({
       "@type": "Project"
-    }) 
+    })
     const userProjects = []
     allProjects?.map((project) => {
       if (project.creator === this.id) {
@@ -76,8 +109,7 @@ export class User {
         })
       }
     })
- 
+
     return userProjects
   }
- 
-} 
+}

@@ -22,7 +22,7 @@ export function isValidJSON(input = "") {
  * @param input A string which should be a valid Integer number
  * @return boolean For whether or not the supplied string was a valid Integer number
  */
-export function validateID(id) {
+export function validateID(id, type="mongo") {
   if (type === "mongo") {
     // const pattern = /^[0-9a-fA-F]{24}$/;
     // return pattern.test(id);

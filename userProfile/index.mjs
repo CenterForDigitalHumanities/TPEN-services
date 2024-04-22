@@ -3,7 +3,7 @@ import * as utils from "../utilities/shared.mjs"
 //import * as service from './userProfile.mjs'
 import {User} from "../classes/User/User.mjs"
 
-import cors from "cors"
+import cors from "cors" 
 
 let router = express.Router()
 router.use(
@@ -32,15 +32,15 @@ router.use(
 
 router
   .route("/:id?")
-  .get(async (req, res, next) => {
+  .get(async (req, res, next) => { 
     let id = req.params.id
     if (!id) {
       utils.respondWithError(res, 400, "No user ID provided")
       return
     }
-    
+
     if (!utils.validateID(id)) {
-      utils.respondWithError(res, 400, 'The ID provided is invalid')
+      utils.respondWithError(res, 400, "The ID provided is invalid")
       return
     }
 
@@ -77,5 +77,5 @@ function respondWithUserProfile(res, userObject) {
   res.set("Location", `/user/${userObject._id}`)
   res.status(200).json(userObject)
 }
-
+ 
 export default router

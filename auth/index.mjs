@@ -1,6 +1,7 @@
 import * as utils from "../utilities/shared.mjs"
 import {auth} from "express-oauth2-jwt-bearer"
 import {extractToken, extractUser, isTokenExpired} from "../utilities/token.mjs"
+import {User} from "../classes/User/User.mjs"
 
 export function authenticateUser() {
   return (req, res, next) => {
@@ -25,6 +26,8 @@ export function authenticateUser() {
 }
 
 function auth0Middleware() {
+  console.log("verifying")
+  console.log(process.env.AUDIENCE)
   // This function verifies authorization tokens using Auth0 library. to protect a route using this function in a different component:
   // 1. import the function in that component
   // 2. apply to route in the following way
@@ -33,15 +36,26 @@ function auth0Middleware() {
   //      b. to protect an individual route; route.get("/project", auth0Middleware(), controller)
   //      c. to protect all routes in the app; app.use(auth0Middleware())
   const verifier = auth({
-    // audience: process.env.AUDIENCE,
+    // audience: process.env.AUDIENCE, 
     audience: process.env.AUDIENCE,
     issuerBaseURL: `https://${process.env.DOMAIN}/`
   })
 
   // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sib, roles, etc.
-  function setUser(req, res, next) {
+  async function setUser(req, res, next) {
     const {payload} = req.auth
-    req.user = payload
+
+    const agent = payload["http://store.rerum.io/agent"]
+    const userObj = new User(payload._id)
+    const user = await userObj.getByAgent(agent)
+    if (!user) {
+      const userId = agent.split("id/")[1] 
+      const newUser = await userObj.create({...payload, _id: userId})
+      req.user = newUser
+    } else {
+      req.user = payload
+    }
+
     next()
   }
 
