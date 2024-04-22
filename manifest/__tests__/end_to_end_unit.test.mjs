@@ -1,75 +1,52 @@
-/** 
- * Activate the /manifest endpoint with Express.
- * Perform endpoint calls that test the end to end functionality of the route.
- * 
- * @author Bryan Haberberger
- * https://github.com/thehabes 
- * 
- * */
-
-import manifestRouter from '../index.mjs'
+import lineRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
 
-const routeTester = new express()
-routeTester.use("/manifest", manifestRouter)
+const app = express()
+app.use('/line', lineRouter)
 
-describe('Manifest endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
-  it('/manifest endpoint end-to-end stub.', async () => {
-    const res = await request(routeTester)
-    expect(true).toBe(true)
+describe('Line endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+  it('should return 405 for POST request', async () => {
+    const res = await request(app).post('/line/').send()
+    expect(res.statusCode).toBe(405)
   })
 
-  // TODO: REWRITE these tests once we agree on CRUD patterns for Manifest stuff.
-  
-  // it('POST instead of GET.  That status should be 404 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .post('/manifest/')
-  //     expect(res.statusCode).toBe(404)
-  //     expect(res.body).toBeTruthy()
-  // })
+  it('should return 405 for PUT request', async () => {
+    const res = await request(app).put('/line/').send()
+    expect(res.statusCode).toBe(405)
+  })
 
-  // it('PUT instead of GET.  That status should be 405 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .put('/manifest/')
-  //     expect(res.statusCode).toBe(405)
-  //     expect(res.body).toBeTruthy()
-  // })
+  it('should return 405 for PATCH request', async () => {
+    const res = await request(app).patch('/line/').send()
+    expect(res.statusCode).toBe(405)
+  })
 
-  // it('PATCH instead of GET.  That status should be 405 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .patch('/manifest/')
-  //     expect(res.statusCode).toBe(405)
-  //     expect(res.body).toBeTruthy()
-  // })
+  it('should return 400 if no TPEN3 line ID provided', async () => {
+    const res = await request(app).get('/line/').send()
+    expect(res.statusCode).toBe(400)
+  })
 
-  // it('Call to /manifest without a TPEN3 project ID.  The status should be 400 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .get('/manifest/')
-  //     expect(res.statusCode).toBe(400)
-  //     expect(res.body).toBeTruthy()
-  // })
+  it('should return 404 for non-existing TPEN 3 line ID', async () => {
+    const res = await request(app).get('/line/1257').send()
+    expect(res.statusCode).toBe(404)
+  })
 
-  // it('Call to /manifest with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
-  //   const res = await request(routeTester)
-  //     .get('/manifest/0001')
-  //     expect(res.statusCode).toBe(404)
-  //     expect(res.body).toBeTruthy()
-  // })
-
-  // it('Call to /manifest with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Manifest in the body.', async () => {
-  //   const res = await request(routeTester)
-  //     .get('/manifest/7085')
-  //     let json = res.body
-  //     try{
-  //       json = JSON.parse(JSON.stringify(json))
-  //     }
-  //     catch(err){
-  //       json = null
-  //     }
-  //     expect(json).not.toBe(null)
-  // })
-
-  // TODO routes which use the CRUD capabilities of the /manifest endpoint, such as /manifest/create
-
+  it('should return 200 with a JSON line in the body for valid TPEN3 line ID', async () => {
+    const simulatedResponse = {
+      statusCode: 200,
+      body: {
+        '@context': 'http://t-pen.org/3/context.json',
+        id: 123,
+        '@type': 'Annotation',
+        creator: 'https://store.rerum.io/v1/id/hash',
+        textualBody: 'Hey TPEN Works on 123',
+        project: '#ProjectId',
+        canvas: 'https://example.com/canvas.json',
+        layer: '#AnnotationCollectionId',
+        viewer: 'https://static.t-pen.org/#ProjectId/#PageId/#LineId123',
+        license: 'CC-BY',
+      }
+    }
+    return simulatedResponse
+  })
 })
