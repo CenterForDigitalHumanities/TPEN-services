@@ -83,12 +83,12 @@ class DatabaseController {
      * Generate an new mongo _id as a hex string (as opposed _id object, for example) 
      * @return A hex string or error
      * */
-    newID() {
+
+    async reserveId(seed) {
         try {
-            return new ObjectId().toHexString()
+            return ObjectId(seed).toHexString()
         } catch (err) {
-            console.error(err)
-            return err
+            return new ObjectId().toHexString()
         }
     }
 
@@ -166,7 +166,7 @@ class DatabaseController {
                 err_out.status = 400
                 throw err_out
             }
-            const id = this.newID()
+            const id = this.reserveId()
             data["_id"] = id
             const result = await this.db.collection(collection).insertOne(data)
             if (result.insertedId) {

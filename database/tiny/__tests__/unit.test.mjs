@@ -40,6 +40,18 @@ describe('TinyPen Unit Functions. #tiny_unit #db', () => {
         expect(result[0]["@id"]).toBe(test_manifest["@id"])
     })
 
+    it('Assigns a new id for an Object', async () => {
+        const noSeedResult = await database.reserveId()
+        const badSeedResult = await database.reserveId("🕵️‍♀️🍤")
+        const goodSeedResult = await database.reserveId(500)
+        expect(typeof noSeedResult).toEqual('string')
+        expect(noSeedResult).toHaveLength(24)
+        expect(typeof badSeedResult).toEqual('string')
+        expect(badSeedResult).toHaveLength(24)
+        expect(typeof goodSeedResult).toEqual('string')
+        expect(goodSeedResult).toHaveLength(24)
+    })
+
     //TODO
     it('Deletes an object with the provided id', async () => {
         expect(true).toBeTruthy()
