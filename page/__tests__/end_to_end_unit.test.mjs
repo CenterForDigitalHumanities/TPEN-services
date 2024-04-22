@@ -54,5 +54,44 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
       }
       expect(json).not.toBe(null)
   })
-  
+  it('should add a line to the end of the annotation page', async () => {
+    const res = await request(routeTester)
+      .post(`/page/662335c0496553f03ae35c5/appendLine`)
+      .send({
+        "@context":  "http://store.rerum.io/v1/context.json",
+        "id": "https://devstore.rerum.io/v1/id/662335c0496553f03ae35c59",
+        "type": "Annotation",
+        "motivation": "supplementing",
+        "body": {
+          "type": "TextualBody",
+          "value": "transcribendo!",
+          "format": "text/plain",
+          "language": "la"
+        },
+        "target": "https://manifest/canvas/4#xywh=10,20,145,55"
+      })
+
+    expect(res.statusCode).toBe(201)
+
+  })
+
+  it('should add a line to the beginning of the annotation page', async () => {
+    const res = await request(routeTester)
+      .post(`/page/662335c0496553f03ae35c5/prependLine`)
+      .send({
+        "@context":  "http://store.rerum.io/v1/context.json",
+        "id": "https://devstore.rerum.io/v1/id/662335c0496553f03ae35c59",
+        "type": "Annotation",
+        "motivation": "supplementing",
+        "body": {
+          "type": "TextualBody",
+          "value": "transcribendo!",
+          "format": "text/plain",
+          "language": "la"
+        },
+        "target": "https://manifest/canvas/4#xywh=10,20,145,55"
+      });
+
+    expect(res.statusCode).toBe(201)
+  })
 })

@@ -1,57 +1,55 @@
-import express from 'express'
-import * as utils from '../utilities/shared.mjs'
-import cors from 'cors'
-import * as logic from './line.mjs'
+import express from 'express';
+import cors from 'cors';
+import * as logic from './line.mjs';
+import * as utils from '../utilities/shared.mjs';
 
-const router = express.Router()
+const router = express.Router();
 
-router.use(cors({
-  methods: 'GET',
-  allowedHeaders: [
-    'Content-Type',
-    'Content-Length',
-    'Allow',
-    'Authorization',
-    'Location',
-    'ETag',
-    'Connection',
-    'Keep-Alive',
-    'Date',
-    'Cache-Control',
-    'Last-Modified',
-    'Link',
-    'X-HTTP-Method-Override'
-  ],
-  exposedHeaders: '*',
-  origin: '*',
-  maxAge: '600'
-}))
+router.use(
+  cors({
+    methods: 'GET',
+    allowedHeaders: [
+      'Content-Type',
+      'Content-Length',
+      'Allow',
+      'Authorization',
+      'Location',
+      'ETag',
+      'Connection',
+      'Keep-Alive',
+      'Date',
+      'Cache-Control',
+      'Last-Modified',
+      'Link',
+      'X-HTTP-Method-Override'
+    ],
+    exposedHeaders: '*',
+    origin: '*',
+    maxAge: '600'
+  })
+);
 
 router.route('/:id')
   .get(async (req, res, next) => {
     try {
-      let id = req.params.id
+      const id = req.params.id;
 
       if (!utils.validateID(id)) {
-        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
+        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number');
       }
 
-      id = parseInt(id)
-
-      const lineObject = await findLineById(id)
+      const lineObject = await logic.findLineById(id);
 
       if (lineObject.statusCode === 404) {
-        return utils.respondWithError(res, 404, lineObject.body)
-      } 
-    } catch (error) {
-      return utils.respondWithError(res, 500, 'Internal Server Error')
-    }
-  })
+        return utils.respondWithError(res, 404, lineObject.body);
+      }
 
-router.route('/')
-  .get((req, res, next) => {
-    return utils.respondWithError(res, 400, 'Improper request.  There was no line ID.')
-  })
+      utils.respondWithSuccess(res, lineObject.body); 
+    } catch (error) {
+      console.error(error);
+      return utils.respondWithError(res, 500, 'Internal Server Error');
+    }
+  });
 
 // I am using the below route for testing  and retriving the Annotation as mentioned as issue to check
 router.get('/:id/retrive', async (req, res) => {
@@ -118,10 +116,12 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-function respondWithLine(res, lineObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.status(200).json(lineObject)
-}
+router.route('/')
+  .get((req, res, next) => {
+    return utils.respondWithError(res, 400, 'Improper request. There was no line ID.');
+  })
+  .all((req, res, next) => {
+    return utils.respondWithError(res, 405, 'Improper request method, please use GET.');
+  });
 
-
-export default router
+export default router;
