@@ -2,54 +2,53 @@ import express from 'express';
 import cors from 'cors';
 import * as logic from './line.mjs';
 import * as utils from '../utilities/shared.mjs';
+import { findLineById } from './line.mjs'
 
-const router = express.Router();
+const router = express.Router()
 
-router.use(
-  cors({
-    methods: 'GET',
-    allowedHeaders: [
-      'Content-Type',
-      'Content-Length',
-      'Allow',
-      'Authorization',
-      'Location',
-      'ETag',
-      'Connection',
-      'Keep-Alive',
-      'Date',
-      'Cache-Control',
-      'Last-Modified',
-      'Link',
-      'X-HTTP-Method-Override'
-    ],
-    exposedHeaders: '*',
-    origin: '*',
-    maxAge: '600'
-  })
-);
+router.use(cors({
+  methods: 'GET',
+  allowedHeaders: [
+    'Content-Type',
+    'Content-Length',
+    'Allow',
+    'Authorization',
+    'Location',
+    'ETag',
+    'Connection',
+    'Keep-Alive',
+    'Date',
+    'Cache-Control',
+    'Last-Modified',
+    'Link',
+    'X-HTTP-Method-Override'
+  ],
+  exposedHeaders: '*',
+  origin: '*',
+  maxAge: '600'
+}))
 
 router.route('/:id')
   .get(async (req, res, next) => {
     try {
-      const id = req.params.id;
+      let id = req.params.id
 
       if (!utils.validateID(id)) {
-        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number');
+        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
       }
 
-      const lineObject = await logic.findLineById(id);
+      id = parseInt(id)
+
+      const lineObject = await findLineById(id)
 
       if (lineObject.statusCode === 404) {
-        return utils.respondWithError(res, 404, lineObject.body);
-      }
-
-      utils.respondWithSuccess(res, lineObject.body); 
+        return utils.respondWithError(res, 404, lineObject.body)
+      } 
     } catch (error) {
-      console.error(error);
-      return utils.respondWithError(res, 500, 'Internal Server Error');
+      console.error(error)
+      return utils.respondWithError(res, 500, 'Internal Server Error')
     }
-  });
+  })
 
 // I am using the below route for testing  and retriving the Annotation as mentioned as issue to check
 router.get('/:id/retrive', async (req, res) => {
