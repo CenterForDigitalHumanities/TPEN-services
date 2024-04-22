@@ -139,15 +139,28 @@ export function respondWithProject(req, res, project) {
 }
 
 /**
- * Check for valid project keys and create defaults
- * @param {Object} project The project to be saved to database
+ * Check for valid project keys and create defaults, then send to database
+ * @param {Object} req The request object
  * @param {Object} res The response object
  */
-function validateProjectToSave(project, res) {
+async function createNewProject(req, res) {
+  let project = req.body
+  /* 
+  TODO:
+    - Add creator based on authenticated user
+    - Add group
+    - Add slug (and figure out a good way to format it)
+    - Check for manifest, create one in the database if it doesn't exist
+  */
+
+  // TEMPORARY stubbing out required keys we need to generate
+  project.creator = "user"
+  project.group = "group"
+  project.slug = "slug"
+
   // Required keys
-  if (!project.creator) {} // TODO: Add creator based on authenticated user
   if (project.created) {
-    if (parseInt(createdBefore) === NaN) {
+    if (parseInt(project.created) === NaN) {
       utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
       return
     }
@@ -155,7 +168,6 @@ function validateProjectToSave(project, res) {
     utils.respondWithError(res, 400, 'Project must have key "created"')
     return
   }
-  // if (!project.group) {}
   if (project.license) {
     if (typeof project.license !== 'string') {
       utils.respondWithError(res, 400, 'Project key "license" must be a string')
@@ -163,15 +175,6 @@ function validateProjectToSave(project, res) {
     }
   } else {
     project.license = "CC-BY"
-  }
-  if (project.manifest) {
-    if (!URL.canParse(project.manifest)) {
-      utils.respondWithError(res, 400, 'Project key "manifest" must be a valid URL')
-      return
-    }
-  } else {
-    utils.respondWithError(res, 400, 'Project must have key "manifest"')
-    return
   }
   if (project.title) {
     if (typeof project.title !== 'string') {
@@ -183,12 +186,6 @@ function validateProjectToSave(project, res) {
   }
 
   // Optional keys
-  if (project.viewer) {
-    if (!URL.canParse(project.viewer)) {
-      utils.respondWithError(res, 400, 'Project key "viewer" must be a valid URL')
-      return
-    }
-  }
   if (project.tools) {
     if (!Array.isArray(project.tools)) {
       utils.respondWithError(res, 400, 'Project key "tools" must be an array')
@@ -205,6 +202,16 @@ function validateProjectToSave(project, res) {
       return
     }
   }
+
+  req.body["@type"] = "Project"
+  const logicResult = await logic.saveProject(req.body)
+
+  // Check that project was saved
+  if (logicResult["_id"]) {
+    res.status(201).json(logicResult)
+  } else {
+    utils.respondWithError(res, logicResult.status, logicResult.message)
+  }
 }
 
 router.route('/create')
@@ -213,13 +220,7 @@ router.route('/create')
       utils.respondWithError(res, 400, "Improperly formatted JSON")
       return
     }
-    const logicResult = await logic.saveProject(req.body)
-    // Check that project was saved
-    if (logicResult["_id"]) {
-      res.status(201).json(logicResult)
-    } else {
-      utils.respondWithError(res, logicResult.status, logicResult.message)
-    }
+    await createNewProject(req, res)
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, "Improper request method, please use POST.")
