@@ -38,6 +38,12 @@ router
       utils.respondWithError(res, 400, "No user ID provided")
       return
     }
+    
+    if (!utils.validateID(id)) {
+      utils.respondWithError(res, 400, 'The ID provided is invalid')
+      return
+    }
+
     try {
       const userObject = new User(id)
       if (userObject) {

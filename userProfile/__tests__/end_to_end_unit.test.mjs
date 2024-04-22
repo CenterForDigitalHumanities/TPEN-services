@@ -35,7 +35,7 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.body).toBeTruthy()
   })
 
-  it.skip('Call to /user with a TPEN3 user ID thatis  an alpha', async () => {
+  it('Call to /user with a TPEN3 user ID thatis  an alpha', async () => {
     const res = await request(routeTester)
       .get('/user/abc')
     expect(res.statusCode).toBe(400)
