@@ -138,6 +138,40 @@ export function respondWithProject(req, res, project) {
   res.location(id).status(200).send(retVal)
 }
 
+/**
+ * Check for valid project keys and create defaults
+ * @param {Object} project The project to be saved to database
+ * @param {Object} res The response object
+ */
+function validateProjectToSave(project, res) {
+  // Required keys
+  if (!project.creator) console.log("")
+  if (!project.created) 
+    utils.respondWithError(res, 400, 'Project must have key "created"')
+  else if (parseInt(createdBefore) === NaN)
+    utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
+  if (!project.group) console.log("")
+  if (!project.license) project.license = "CC-BY"
+  if (!project.manifest) utils.respondWithError(res, 400, 'Project must have key "manifest"')
+  if (!project.title) console.log("")
+
+  // Optional keys
+  if (project.viewer) {
+    if (!URL.canParse(project.viewer))
+      utils.respondWithError(res, 400, 'Project key "viewer" must be a valid URL')
+  }
+  if (project.tools) {
+    if (!Array.isArray(project.tools))
+      utils.respondWithError(res, 400, 'Project key "tools" must be an array')
+  }
+  if (project.tags) {
+    if (!Array.isArray(project.tags))
+      utils.respondWithError(res, 400, 'Project key "tags" must be an array')
+    if (!project.tags.every(tag => typeof tag === 'string'))
+      utils.respondWithError(res, 400, 'Project key "tags" must be an array of strings')
+  }
+}
+
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
   if (!utils.validateID(id)) {
@@ -169,6 +203,7 @@ router.route('/create')
       return
     }
     const logicResult = await logic.saveProject(req.body)
+    // Check that project was saved
     if (logicResult["_id"]) {
       res.status(201).json(logicResult)
     } else {
