@@ -164,3 +164,62 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     expect(res.statusCode).toBe(400)
   })
 })
+
+describe('Project endpoint end to end unit test to /project/create #end2end_unit', () => {
+  it('GET instead of POST. The status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .get('/project/create')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('PUT instead of POST. The status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .put('/project/create')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('PATCH instead of POST. The status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .patch('/project/create')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+/*   it('sends request with valid project. The status should be 201', async () => {
+    const project = {
+      creator: 'test',
+      created: Date.now(),
+      title: 'Test Project',
+      manifest: 'http://example.com/manifest',
+    }
+  }) */
+
+  it('sends request with missing "creator" key. The status should be 400', async () => {
+    const project = {
+      creator: 'test',
+      title: 'Test Project',
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-URI "manifest" key. The status should be 400', async () => {
+    const project = {
+      creator: 'test',
+      created: Date.now(),
+      title: 'Test Project',
+      manifest: 'invalid-url',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+})

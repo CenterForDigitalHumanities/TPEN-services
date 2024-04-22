@@ -145,32 +145,85 @@ export function respondWithProject(req, res, project) {
  */
 function validateProjectToSave(project, res) {
   // Required keys
-  if (!project.creator) console.log("")
-  if (!project.created) 
+  if (!project.creator) console.log("") // TODO: Add creator based on authenticated user
+  if (project.created) {
+    if (parseInt(createdBefore) === NaN) {
+      utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
+      return
+    }
+  } else {
     utils.respondWithError(res, 400, 'Project must have key "created"')
-  else if (parseInt(createdBefore) === NaN)
-    utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
-  if (!project.group) console.log("")
-  if (!project.license) project.license = "CC-BY"
-  if (!project.manifest) utils.respondWithError(res, 400, 'Project must have key "manifest"')
-  if (!project.title) console.log("")
+    return
+  }
+  // if (!project.group) console.log("")
+  if (project.license) {
+    if (typeof project.license !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "license" must be a string')
+      return
+    }
+  } else {
+    project.license = "CC-BY"
+  }
+  if (project.manifest) {
+    if (!URL.canParse(project.manifest)) {
+      utils.respondWithError(res, 400, 'Project key "manifest" must be a valid URL')
+      return
+    }
+  } else {
+    utils.respondWithError(res, 400, 'Project must have key "manifest"')
+    return
+  }
+  if (project.title) {
+    if (typeof project.title !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "title" must be a string')
+      return
+    }
+  } else {
+    project.title = "Project" + project.creator + project.created.toString()
+  }
 
   // Optional keys
   if (project.viewer) {
-    if (!URL.canParse(project.viewer))
+    if (!URL.canParse(project.viewer)) {
       utils.respondWithError(res, 400, 'Project key "viewer" must be a valid URL')
+      return
+    }
   }
   if (project.tools) {
-    if (!Array.isArray(project.tools))
+    if (!Array.isArray(project.tools)) {
       utils.respondWithError(res, 400, 'Project key "tools" must be an array')
+      return
+    }
   }
   if (project.tags) {
-    if (!Array.isArray(project.tags))
+    if (!Array.isArray(project.tags)) {
       utils.respondWithError(res, 400, 'Project key "tags" must be an array')
-    if (!project.tags.every(tag => typeof tag === 'string'))
+      return
+    }
+    if (!project.tags.every(tag => typeof tag === 'string')) {
       utils.respondWithError(res, 400, 'Project key "tags" must be an array of strings')
+      return
+    }
   }
 }
+
+router.route('/create')
+  .post(async (req, res, next) => {
+    if (!utils.isValidJSON(req.body)) {
+      utils.respondWithError(res, 400, "Improperly formatted JSON")
+      return
+    }
+    const logicResult = await logic.saveProject(req.body)
+    // Check that project was saved
+    if (logicResult["_id"]) {
+      res.status(201).json(logicResult)
+    } else {
+      utils.respondWithError(res, logicResult.status, logicResult.message)
+    }
+  })
+  .all((req, res, next) => {
+    utils.respondWithError(res, 405, "Improper request method, please use POST.")
+  })
 
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
@@ -195,23 +248,5 @@ router.get('/:id', async (req, res, next) => {
 router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
-
-router.route('/create')
-  .post(async (req, res, next) => {
-    if (!utils.isValidJSON(req.body)) {
-      utils.respondWithError(res, 400, "Improperly formatted JSON")
-      return
-    }
-    const logicResult = await logic.saveProject(req.body)
-    // Check that project was saved
-    if (logicResult["_id"]) {
-      res.status(201).json(logicResult)
-    } else {
-      utils.respondWithError(res, logicResult.status, logicResult.message)
-    }
-  })
-  .all((req, res, next) => {
-    utils.respondWithError(res, 405, "Improper request method, please use POST.")
-  })
 
 export default router
