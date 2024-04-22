@@ -27,16 +27,9 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /project with a non-numeric project ID.  The status should be 400 with a message.', async () => {
+  it('Call to /project with a non-hexadecimal project ID.  The status should be 400 with a message.', async () => {
     const res = await request(routeTester)
-      .get('/project/abc')
-      expect(res.statusCode).toBe(400)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project with a partially numeric project ID.  The status should be 400 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/abc123')
+      .get('/project/zzz')
       expect(res.statusCode).toBe(400)
       expect(res.body).toBeTruthy()
   })

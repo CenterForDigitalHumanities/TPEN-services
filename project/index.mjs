@@ -3,6 +3,9 @@ import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import * as logic from './project.mjs'
 import cors from 'cors'
+import DatabaseDriver from "../database/driver.mjs"
+
+const database = new DatabaseDriver("mongo")
 
 let router = express.Router()
 
@@ -228,11 +231,10 @@ router.route('/create')
 
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
-  if (!utils.validateID(id)) {
-    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
+  if (Number.isNaN(parseInt(id, 16))) {    // TODO: replace condition with `!database.isValid(id)` once that's implemented
+    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a hexadecimal string')
     return
   }
-  id = parseInt(id)
 
   try {
     const projectObj = await logic.findTheProjectByID(id)
