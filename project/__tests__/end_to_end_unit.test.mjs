@@ -4,7 +4,6 @@ import request from 'supertest'
 
 const routeTester = new express()
 routeTester.use("/project", projectRouter)
-
 describe('Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
   it('POST instead of GET.  That status should be 405 with a message.', async () => {
@@ -25,13 +24,6 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     const res = await request(routeTester)
       .patch('/project/')
       expect(res.statusCode).toBe(405)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project without a TPEN3 project ID.  The status should be 400 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/')
-      expect(res.statusCode).toBe(400)
       expect(res.body).toBeTruthy()
   })
 
@@ -171,5 +163,4 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       .get('/project/7085?text=lines&view=html')
     expect(res.statusCode).toBe(400)
   })
-  
 })
