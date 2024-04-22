@@ -180,14 +180,18 @@ describe('Project endpoint end to end unit test to /project/create #end2end_unit
     expect(res.body).toBeTruthy()
   })
 
-/*   it('sends request with valid project. The status should be 201', async () => {
+  it('sends request with valid project. The status should be 201', async () => {
     const project = {
-      creator: 'test',
       created: Date.now(),
-      title: 'Test Project',
-      manifest: 'http://example.com/manifest',
+      manifest: 'http://example.com/manifest'
     }
-  }) */
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(201)
+    expect(res.body).toBeTruthy()
+    expect(res.body._id).toBeTruthy()
+  })
 
   it('sends request with missing "creator" key. The status should be 400', async () => {
     const project = {
@@ -208,6 +212,104 @@ describe('Project endpoint end to end unit test to /project/create #end2end_unit
       created: Date.now(),
       title: 'Test Project',
       manifest: 'invalid-url',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-string "license" key. The status should be 400', async () => {
+    const project = {
+      created: Date.now(),
+      manifest: 'http://example.com/manifest',
+      license: 'invalid-license'
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-string "title" key. The status should be 400', async () => {
+    const project = {
+      created: Date.now(),
+      manifest: 'http://example.com/manifest',
+      title: 'invalid-title'
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-numeric "created" key. The status should be 400', async () => {
+    const project = {
+      created: 'invalid-date',
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-array "tools" key. The status should be 400', async () => {
+    const project = {
+      tools: 'invalid-tools',
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with "tools" key containing no strings. The status should be 400', async () => {
+    const project = {
+      tools: [1, 2, 3],
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with "tools" key partially containing strings. The status should be 400', async () => {
+    const project = {
+      tools: ['1', 2, 3],
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-string "@type" key. The status should be 400', async () => {
+    const project = {
+      "@type": 123,
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with "@type" set to something other than "Project". The status should be 400', async () => {
+    const project = {
+      "@type": "Manifest",
+      manifest: 'http://example.com/manifest',
     }
     const res = await request(routeTester)
       .post('/project/create')

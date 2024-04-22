@@ -163,7 +163,7 @@ async function createNewProject(req, res) {
 
   // Required keys
   if (project.created) {
-    if (parseInt(project.created) === NaN) {
+    if (Number.isNaN(parseInt(project.created))) {
       utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
       return
     }
@@ -205,15 +205,27 @@ async function createNewProject(req, res) {
       return
     }
   }
+  if (project["@type"]) {
+    if (typeof project["@type"] !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "@type" must be a string')
+      return
+    }
+    if (project["@type"] !== "Project") {
+      utils.respondWithError(res, 400, 'Project key "@type" must be "Project"')
+      return
+    }
+  } else {
+    project["@type"] = "Project"
+  }
 
-  req.body["@type"] = "Project"
+  // Save project and check if it was done correctly
   const logicResult = await logic.saveProject(req.body)
-
-  // Check that project was saved
   if (logicResult["_id"]) {
     res.status(201).json(logicResult)
+    return
   } else {
     utils.respondWithError(res, logicResult.status, logicResult.message)
+    return
   }
 }
 
