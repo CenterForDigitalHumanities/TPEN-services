@@ -34,6 +34,9 @@ describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     it('isValidId', async () => {
         expect(typeof d.isValidId).toBe("function")
     })
+    it('asValidId', async () => {
+        expect(typeof d.asValidId).toBe("function")
+    })
 })
 
 describe('Can connect to all registered controllers.  #driver_unit #db',()=>{

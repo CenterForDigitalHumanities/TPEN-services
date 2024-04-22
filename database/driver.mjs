@@ -122,8 +122,17 @@ class dbDriver {
      * @param id The id to check.
      * @return boolean
      */
-    async isValidId(id) {
+    isValidId(id) {
         return this.controller.isValidId(id)
+    }
+
+    /**
+     * Create a valid ID from a supplied string or number.
+     * @param id The id to validify.
+     * @return string | number
+     */
+    asValidId(id) {
+        return this.controller.asValidId(id)
     }
 }
 
