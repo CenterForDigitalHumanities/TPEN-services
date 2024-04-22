@@ -74,4 +74,8 @@ describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
     it('Deletes an object with the provided id', async () => {
         expect(true).toBeTruthy()
     })
+
+    it('Validates a possible id string', async () => {
+        expect(database.isValidID("anything")).toBeTruthy()
+    })
 })
