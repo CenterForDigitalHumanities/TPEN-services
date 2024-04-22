@@ -145,7 +145,7 @@ export function respondWithProject(req, res, project) {
  */
 function validateProjectToSave(project, res) {
   // Required keys
-  if (!project.creator) console.log("") // TODO: Add creator based on authenticated user
+  if (!project.creator) {} // TODO: Add creator based on authenticated user
   if (project.created) {
     if (parseInt(createdBefore) === NaN) {
       utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
@@ -155,7 +155,7 @@ function validateProjectToSave(project, res) {
     utils.respondWithError(res, 400, 'Project must have key "created"')
     return
   }
-  // if (!project.group) console.log("")
+  // if (!project.group) {}
   if (project.license) {
     if (typeof project.license !== 'string') {
       utils.respondWithError(res, 400, 'Project key "license" must be a string')
@@ -208,7 +208,7 @@ function validateProjectToSave(project, res) {
 }
 
 router.route('/create')
-  .post(async (req, res, next) => {
+  .post(async (req, res, next) => {     // TODO: Add authentication to this endpoint
     if (!utils.isValidJSON(req.body)) {
       utils.respondWithError(res, 400, "Improperly formatted JSON")
       return
