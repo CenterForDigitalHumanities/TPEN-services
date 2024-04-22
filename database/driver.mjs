@@ -116,6 +116,15 @@ class dbDriver {
     async find(query) {
         return this.controller.find(query).catch(err => err)
     }
+
+    /**
+     * Check if the submitted chars represent a valid id in the current controller.
+     * @param id The id to check.
+     * @return boolean
+     */
+    async isValidId(id) {
+        return this.controller.isValidId(id)
+    }
 }
 
 export default dbDriver

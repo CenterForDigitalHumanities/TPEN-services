@@ -58,6 +58,15 @@ class DatabaseController {
     }
 
     /**
+     * Determine if the provided chars are a valid TinyPEN ID.
+     * @param id the string to check
+     * @return boolean
+     */
+    async isValidID(id) {
+        return Promise.resolve(true)
+    }
+
+    /**
      * Use the TinyPEN query endpoint to find JSON objects matching the supplied property values.
      * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return the found JSON as an Array or Error

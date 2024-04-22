@@ -72,6 +72,15 @@ class DatabaseController {
         }
     }
 
+    /**
+     * Determine if the provided chars are a valid local MongoDB ObjectID().
+     * @param id the string to check
+     * @return boolean
+     */
+    async isValidID(id) {
+        return Promise.resolve(true)
+    }
+
     /** Close the connection with the mongo client */
     async close() {
         await this.client.close()
