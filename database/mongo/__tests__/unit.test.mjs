@@ -1,24 +1,25 @@
 /**
-    * This should test unit actions against the MongoDB Controller.
-    * 
-    * @author Bryan Haberberger
-    * https://github.com/thehabes 
-*/
+ * This should test unit actions against the MongoDB Controller.
+ *
+ * @author Bryan Haberberger
+ * https://github.com/thehabes
+ */
 
-import DatabaseController from '../controller.mjs'
+import DatabaseController from "../controller.mjs"
 const database = new DatabaseController()
+const timeOut = process.env.DB_TEST_TIMEOUT ?? 6500
 
-let test_proj = { "@type": "Project", "name": "Test Project" }
-let test_group = { "@type": "Group", "name": "Test Group" }
-let test_user = { "@type": "User", "name": "Test User" }
+let test_proj = {"@type": "Project", name: "Test Project"}
+let test_group = {"@type": "Group", name: "Test Group"}
+let test_user = {"@type": "User", name: "Test User"}
 
 beforeAll(async () => {
-    return await database.connect()
-})
+  return await database.connect()
+}, 10000)
 
 afterAll(async () => {
-    return await database.close()
-})
+  return await database.close()
+}, 10000)
 
 describe('Mongo Database Unit Functions. #mongo_unit #db', () => {
     it('connects for an active connection', async () => {
