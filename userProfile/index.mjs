@@ -5,6 +5,8 @@ import {User} from "../classes/User/User.mjs"
 
 import cors from "cors" 
 
+import auth0Middleware from '../auth/index.mjs'
+
 let router = express.Router()
 router.use(
   cors({
@@ -29,6 +31,23 @@ router.use(
     maxAge: "600"
   })
 )
+
+router
+  .route("/tester")
+  .get(auth0Middleware(), async (req, res, next) => {
+    console.log("auth applied.  This is the user from the token.")
+    console.log(req.user)
+    let id = req.user['http://store.rerum.io/agent']
+    console.log("This is the agent from the token we use with new User(id)")
+    console.log(id)
+    const u = new User(id)
+    console.log("This is the user obj from the resulting new User(id) call")
+    console.log(u)
+    console.log("This is the req.user after all the logic before sending the response")
+    console.log(req.user)
+    res.status(200)
+    res.send()
+  })
 
 router
   .route("/:id?")
