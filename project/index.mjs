@@ -205,6 +205,16 @@ async function createNewProject(req, res) {
       return
     }
   }
+  if (project.manifest) {
+    if (typeof project.manifest !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "manifest" must be a string')
+      return
+    }
+    if (!url.canParse(project.manifest)) {
+      utils.respondWithError(res, 400, 'Project key "manifest" must be a valid URL')
+      return
+    }
+  }
   if (project["@type"]) {
     if (typeof project["@type"] !== 'string') {
       utils.respondWithError(res, 400, 'Project key "@type" must be a string')

@@ -205,6 +205,20 @@ describe('Project endpoint end to end unit test to /project/create #end2end_unit
     expect(res.body).toBeTruthy()
   })
 
+  it('sends request with non-URI "manifest" key. The status should be 400', async () => {
+    const project = {
+      creator: 'test',
+      created: Date.now(),
+      title: 'Test Project',
+      manifest: 'invalid-url',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
   it('sends request with non-string "license" key. The status should be 400', async () => {
     const project = {
       created: Date.now(),
