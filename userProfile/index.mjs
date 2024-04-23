@@ -37,11 +37,12 @@ router
   .get(auth0Middleware(), async (req, res, next) => {
     console.log("auth applied.  This is the user from the token.")
     console.log(req.user)
-    let id = req.user['http://store.rerum.io/agent']
-    console.log("This is the agent from the token we use with new User(id)")
-    console.log(id)
+    let agentURI = req.user['http://store.rerum.io/agent']
+    console.log("This is the agent from the token")
+    console.log(agentURI)
+    const id = agentURI.split("/").pop()
     console.log("Noting that when this request was made there was no matching tpen.users user")
-    console.log(`The user below should be a new, existing tpen.users user in the database with _id '${id.split("/").pop()}'`)
+    console.log(`The user below should be a new, existing tpen.users user in the database with _id '${id}'`)
     const u = new User(id)
     const obj = await u.getSelf()
     console.log("This is the user obj from the resulting new User(id) call")
