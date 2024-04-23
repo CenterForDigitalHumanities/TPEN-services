@@ -45,7 +45,7 @@ router
     console.log(`The user below should be a new, existing tpen.users user in the database with _id '${id}'`)
     const u = new User(id)
     const obj = await u.getSelf()
-    console.log("This is the user obj from the resulting new User(id) call")
+    console.log("This is the user obj from the resulting new User(id).getSelf() call")
     console.log(obj)
     res.status(200)
     res.send()
