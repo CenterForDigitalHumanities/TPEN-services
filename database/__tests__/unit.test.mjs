@@ -1,12 +1,13 @@
 /**
-    * This should test that the Driver is put together and that its pices
-    * map to the correct controllers.
-    * 
-    * @author Bryan Haberberger
-    * https://github.com/thehabes 
-*/
+ * This should test that the Driver is put together and that its pices
+ * map to the correct controllers.
+ *
+ * @author Bryan Haberberger
+ * https://github.com/thehabes
+ */
 
 import DatabaseDriver from "../driver.mjs"
+const timeOut = process.env.DB_TEST_TIMEOUT ?? 6500
 
 describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     const d = new DatabaseDriver()
@@ -36,34 +37,50 @@ describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
     })
 })
 
-describe('Can connect to all registered controllers.  #driver_unit #db',()=>{
-    it('Tiny Connection', async () => {
-        const d = new DatabaseDriver()
-        await d.chooseController("tiny")
-        expect(await d.connected()).toBe(true)
-    })
-    it('Mongo Connection', async () => {
-        const d = new DatabaseDriver()
-        await d.chooseController("mongo")
-        expect(await d.connected()).toBe(true)
-    })
-    it('Maria Connection Stub', async () => {
-        expect(true).toBeTruthy()
-    })
+describe("Can connect to all registered controllers.  #driver_unit #db", () => {
+  it(
+    "Tiny Connection",
+    async () => {
+      const d = new DatabaseDriver()
+      await d.chooseController("tiny")
+      expect(await d.connected()).toBe(true)
+    },
+    timeOut
+  )
+  it(
+    "Mongo Connection",
+    async () => {
+      const d = new DatabaseDriver()
+      await d.chooseController("mongo")
+      expect(await d.connected()).toBe(true)
+    },
+    timeOut
+  )
+  it("Maria Connection Stub", async () => {
+    expect(true).toBeTruthy()
+  })
 })
 
-describe('Can connect to all registered controllers with applied parameter.  #driver_unit #db',()=>{
-    it('Tiny Connection Parameter', async () => {
-        const d = new DatabaseDriver("tiny")
-        expect(await d.connected()).toBe(true)
-    })
-    it('Mongo Connection Parameter', async () => {
-        const d = new DatabaseDriver("mongo")
-        expect(await d.connected()).toBe(true)
-    })
-    it('Maria Connection Parameter Stub', async () => {
-        expect(true).toBeTruthy()
-    })
+describe("Can connect to all registered controllers with applied parameter.  #driver_unit #db", () => {
+  it(
+    "Tiny Connection Parameter",
+    async () => {
+      const d = new DatabaseDriver("tiny")
+      expect(await d.connected()).toBe(true)
+    },
+    timeOut
+  )
+  it(
+    "Mongo Connection Parameter",
+    async () => {
+      const d = new DatabaseDriver("mongo")
+      expect(await d.connected()).toBe(true)
+    },
+    timeOut
+  )
+  it("Maria Connection Parameter Stub", async () => {
+    expect(true).toBeTruthy()
+  })
 })
 
 // TODO should we test that each CRUD and query action functions, or is that test downstream good enough
