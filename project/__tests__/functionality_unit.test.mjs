@@ -15,8 +15,8 @@ describe('Project endpoint functionality unit test (just testing helper function
     expect(project).not.toBe(null)
   })
   it('should generate an annotation collection object with correct properties', () => {
-    const label = 'Test Annotation Collection';
-    const creator = 'Test Creator';
+    const label = 'Test Annotation Collection'
+    const creator = 'Test Creator'
     const items = [
       {
         id: 'annotation1',
@@ -28,8 +28,8 @@ describe('Project endpoint functionality unit test (just testing helper function
         target: 'http://example.com/target2',
         items: [{ body: 'Body 2', target: 'http://example.com/target2' }],
       },
-    ];
-    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items);
+    ]
+    const annotationCollection = logic.AnnotationCollectionFactory(label, creator, items)
     expect(annotationCollection).toBeTruthy()
   })
   it('Saving an annotation collection', async () => {

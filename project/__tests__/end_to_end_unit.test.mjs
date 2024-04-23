@@ -111,7 +111,7 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     expect(res.statusCode).toBe(200)
   })
   it('POST /project/:id/addLayer with invalid payload', async () => {
-    const invalidProjectID = 'invalidProjectID';
+    const invalidProjectID = 'invalidProjectID'
     const payload =  {
       "label" : "Project - Layer Title",
       "creator" : "https://store.rerum.io/v1/id/agentHex",
@@ -137,10 +137,10 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
           }
         ]
       } ]
-    };
+    }
     const res = await request(routeTester)
       .post(`/project/${invalidProjectID}/addLayer`)
-      .send(payload);
-    expect(res.status).toBe(500);
+      .send(payload)
+    expect(res.status).toBe(500)
   })
 })
