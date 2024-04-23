@@ -140,29 +140,25 @@ export function respondWithProject(req, res, project) {
 
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
-  if (!utils.validateID(id)) {
-    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
-    return
+  if(!id){
+    utils.respondWithError(res, 400, 'BAD Request: Please send the id of the project you would like to retrieve.')
   }
-  id = parseInt(id)
-
   try {
-    const projectObj = await logic.findTheProjectByID(id)
-    if (projectObj) {
-      respondWithProject(req, res, projectObj)
-    } else {
-      utils.respondWithError(res, 404, `TPEN3 project "${req.params.id}" does not exist.`)
+    const projectsArray = await logic.findTheProjectByID(id)
+    if(projectsArray.length <= 0) {
+      utils.respondWithError(res, 404, 'Project not found with ID: ' + id )
     }
+    res.status(200).json(projectsArray[0])
   } catch (err) {
     utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
   }
 })
-
 router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
 const addLayersValidator = (req, res, next) => {
+  console.log("Here2")
   if(!req.params.id){
     utils.respondWithError(res, 400, 'Bad Request: The TPEN3 project ID provided is null. Please provide a valid project ID.')
     return
@@ -177,13 +173,15 @@ const addLayersValidator = (req, res, next) => {
 
 router.route('/:id/addLayer')
   .post(addLayersValidator, async (req, res, next) => {
+    console.log("Here")
+    console.log(req)
     const id = req.params.id
     const { label, creator, items } = req.body
     const annotationCollection = await logic.AnnotationCollectionFactory(label, creator, items)
     const response = await logic.saveAnnotationCollection(annotationCollection)
-    const projectsArray = await logic.findTheProjectUsingID(id)
+    const projectsArray = await logic.findTheProjectByID(id)
     if(projectsArray.length <= 0) {
-      utils.respondWithError(res, 404, 'Project not found with ID: ' + id + 'The annotation is saved in Annotation collection with id: ' + response.id)
+      utils.respondWithError(res, 404, 'Project not found with ID: ' + id + ' The annotation is saved in Annotation collection with id: ' + response.id)
     }
     const project =  projectsArray[0]
     try{
@@ -192,7 +190,7 @@ router.route('/:id/addLayer')
       utils.respondWithError(res, 500, 'Annotation collection is added with id ' + annotationCollection.id 
       + 'but failed to update the project layers.Error caused : ' + error.message)
     }
-    res.status(201).json(response)
+    res.status(201).json(annotationCollection)
 }).all((req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use POST.')
 })
