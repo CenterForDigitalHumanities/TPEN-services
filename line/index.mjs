@@ -1,7 +1,7 @@
-import express from 'express';
-import cors from 'cors';
-import * as logic from './line.mjs';
-import * as utils from '../utilities/shared.mjs';
+import express from 'express'
+import cors from 'cors'
+import * as logic from './line.mjs'
+import * as utils from '../utilities/shared.mjs'
 import { findLineById } from './line.mjs'
 
 const router = express.Router()
@@ -49,15 +49,22 @@ router.route('/:id')
       return utils.respondWithError(res, 500, 'Internal Server Error')
     }
   })
-
-// I am using the below route for testing  and retriving the Annotation as mentioned as issue to check
+/**
+ * Route to retrieve annotations by line ID
+ * Used for testing purposes
+ * @param {number} id - The ID of the line to retrieve annotations for
+ */
 router.get('/:id/retrive', async (req, res) => {
   const id = req.params.id
   const siblingAnnotation = await logic.findingSiblingAnnotation(id)
   return res.status(201).json(siblingAnnotation)
 })
 
-
+/**
+ * Route to insert a line after the specified line ID
+ * @param {number} id - The ID of the line to insert after
+ * @param {object} req.body - The data to insert
+ */
 router.post('/:id/after', async (req, res) => {
   try {
     const id = req.params.id
@@ -71,7 +78,11 @@ router.post('/:id/after', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-
+/**
+ * Route to insert a line before the specified line ID
+ * @param {number} id - The ID of the line to insert before
+ * @param {object} req.body - The data to insert
+ */
 router.post('/:id/before', async (req, res) => {
   try {
     const id = req.params.id
@@ -85,7 +96,10 @@ router.post('/:id/before', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
- 
+ /**
+ * Route to delete a line by ID
+ * @param {number} id - The ID of the line to delete
+ */
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id
@@ -99,7 +113,11 @@ router.delete('/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-
+/**
+ * Route to update a line by ID
+ * @param {number} id - The ID of the line to update
+ * @param {object} req.body - The updated data
+ */
 router.put('/:id', async (req, res) => {
   try {
     const id = req.params.id
@@ -117,10 +135,10 @@ router.put('/:id', async (req, res) => {
 
 router.route('/')
   .get((req, res, next) => {
-    return utils.respondWithError(res, 400, 'Improper request. There was no line ID.');
+    return utils.respondWithError(res, 400, 'Improper request. There was no line ID.')
   })
   .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.');
-  });
+    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  })
 
-export default router;
+export default router

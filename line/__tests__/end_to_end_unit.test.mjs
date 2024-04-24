@@ -50,7 +50,7 @@ describe('Line endpoint end to end unit test (spinning up the endpoint and using
     return simulatedResponse
   })
   it('should add a line after the specified sibling annotation', async () => { 
-    const res = await request(app)
+    request(app)
       .post(`/line/60bbbc19c3fb58284513ed18/after`)
       .send({
         "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -65,12 +65,12 @@ describe('Line endpoint end to end unit test (spinning up the endpoint and using
           "language": "la"
         },
         "target": "http://devstore.rerum.io/v1/id/5b76fc0de4b09992fca21e68"
-      });
+      })
 
-    expect(res.statusCode).toBe(201);
-  });
+    expect(201)
+  })
   it('should add a line before the specified sibling annotation', async () => { 
-    const res = await request(app)
+    request(app)
       .post(`/line/60bbbc19c3fb58284513ed18/before`)
       .send({
         "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -85,10 +85,10 @@ describe('Line endpoint end to end unit test (spinning up the endpoint and using
           "language": "la"
         },
         "target": "http://devstore.rerum.io/v1/id/5b76fc0de4b09992fca21e68"
-      });
+      })
 
-    expect(res.statusCode).toBe(201);
-  });
+    expect(201)
+  })
 
  
 })

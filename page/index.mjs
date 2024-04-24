@@ -32,21 +32,11 @@ router.use(
 router.route('/:id?')
   .get(async (req, res, next) => {
     let id = req.params.id
-
-    if (id) {
-      if (!utils.validateID(id)) {
-        utils.respondWithError(res, 400, 'The TPEN3 page ID must be a number')
-        return
-      }
-      id = parseInt(id)
-      const pageObject = await service.findPageById(id)
-      if (pageObject) {
+    const pageObject = await service.findPageById(id)
+    if (pageObject) {
         respondWithPage(res, pageObject)
-      } else {
-        utils.respondWithError(res, 404, `TPEN3 page "${id}" does not exist.`)
-      }
     } else {
-      utils.respondWithError(res, 400, 'No page ID provided')
+      utils.respondWithError(res, 400, 'No page exsist for this Id')
     }
   })
   .all((req, res, next) => {
@@ -56,25 +46,64 @@ router.route('/:id?')
 
 router.post('/:id/appendLine', async (req, res) => {
   try {
-    const annotation = await service.appendLine(req.body)
-    return res.status(201).json(annotation)
+    const id = req.params.id
+    const annotation = req.body
+    const annotationPage = await service.findPageById(id)
+    if (annotationPage.length === 0) {
+      return res.status(404).json({ error: 'Page is empty' })
+    }
+    const updatedAnnotationPage = await service.appendAnnotationToPage(annotation,annotationPage)
+    const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)
+    if(logicResult["@id"]){
+      successfulResponse(res, 200, logicResult)
+   }
+   else{
+      utils.respondWithError(res, logicResult.status, logicResult.message)
+   }
   } catch (error) {
     console.error('Error appending line to page:', error)
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
 
+function successfulResponse(res, code, data=null, message=null){
+  let data_iri = null
+  if(data && !Array.isArray(data)) data_iri = data["@id"] ?? data.id
+  if(data_iri) res.location(data_iri)
+  res.status(code)
+  if(data) {
+     res.json(data)
+  }
+  else if(message) {
+     res.send(message)
+  }
+  else{
+     res.send()
+  }
+}
 
 router.post('/:id/prependLine', async (req, res) => {
   try {
-    const annotation = await service.prependLine(req.body)
-    return res.status(201).json(annotation)
+    const id = req.params.id
+    const annotation = req.body
+    const annotationPage = await service.findPageById(id)
+    if (annotationPage.length === 0) {
+      return res.status(404).json({ error: 'Page is empty' })
+    }
+    const updatedAnnotationPage = await service.prependAnnotationToPage(annotation,annotationPage)
+    console.log(updatedAnnotationPage)
+    const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)
+    if(logicResult["@id"]){
+      successfulResponse(res, 200, logicResult)
+   }
+   else{
+      utils.respondWithError(res, logicResult.status, logicResult.message)
+   }
   } catch (error) {
     console.error('Error appending line to page:', error)
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-
 function respondWithPage(res, pageObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(pageObject)

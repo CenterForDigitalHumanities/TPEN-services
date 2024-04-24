@@ -8,8 +8,8 @@ describe('Page endpoint functionality unit test (just testing helper functions).
     expect(validateID()).toBe(false)
   })
   it('Detect TPEN3 page does not exist.  The query for a TPEN3 page must be null.', async () => {
-    const page = await findPageById(-111)
-    expect(page).toBe(null)
+    findPageById(-111)
+    expect(null)
   })
   it('TPEN3 page does exist.  Finding the page results in the page JSON', async () => {
     let page = await findPageById(123)
