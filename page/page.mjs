@@ -17,7 +17,7 @@ export async function updateAnnotationPage(annotationPage) {
  * @param {object} annotationPage - The annotation page to append the line to.
  * @returns {Promise<object>} - A promise resolving to the updated annotation collection.
  */
-  export async function appendAnnotationToPage(annotation,annotationPage) {
+  export async function appendAnnotationToPage(annotation, annotationPage) {
     const { 
       '@context': context, 
       '@id': id, 
@@ -28,20 +28,20 @@ export async function updateAnnotationPage(annotationPage) {
       items,
       creator 
     } = annotationPage[0]
-    const newItems = items.push(annotation)
+    items.push(annotation)
     const updatedAnnotationPage = {
-      "@context": context,
-      "@id": id,
-      "type": type,
-      "target": target,
-      "next": next,
-      "items": newItems,
-      "partOf": partOf,
-      "creator": creator
+        "@context": context,
+        "@id": id,
+        "type": type,
+        "target": target,
+        "next": next,
+        "items": items,
+        "partOf": partOf,
+        "creator": creator
     }
-    return updatedAnnotationPage
-  }
 
+    return updatedAnnotationPage
+}
   /**
  * Prepends a line to an annotation page.
  * @param {object} annotationPage - The annotation page to prepend the line to.

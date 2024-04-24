@@ -77,7 +77,7 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
 
   it('should add a line to the beginning of the annotation page', async () => {
     request(routeTester)
-      .post(`/page/6627fc3d5cc3848690279f7c/prependLine`)
+      .post(`6627fc3d5cc3848690279f7c/prependLine`)
       .send({
         "@context": "http://www.w3.org/ns/anno.jsonld",
         "@id": "https://devstore.rerum.io/v1/id/662801cbe8afc731e3b58e52",

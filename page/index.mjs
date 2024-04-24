@@ -43,7 +43,9 @@ router.route('/:id?')
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 
-
+/**
+ * Route handler for POST requests to append a line to a page.
+ */
 router.post('/:id/appendLine', async (req, res) => {
   try {
     const id = req.params.id
@@ -65,7 +67,13 @@ router.post('/:id/appendLine', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-
+/**
+ * Function to send a successful response with optional data or message.
+ * @param {object} res - Express response object
+ * @param {number} code - HTTP status code
+ * @param {object|null} data - Optional data to be sent in the response
+ * @param {string|null} message - Optional message to be sent in the response
+ */
 function successfulResponse(res, code, data=null, message=null){
   let data_iri = null
   if(data && !Array.isArray(data)) data_iri = data["@id"] ?? data.id
@@ -81,7 +89,9 @@ function successfulResponse(res, code, data=null, message=null){
      res.send()
   }
 }
-
+/**
+ * Route handler for POST requests to prepend a line to a page.
+ */
 router.post('/:id/prependLine', async (req, res) => {
   try {
     const id = req.params.id
