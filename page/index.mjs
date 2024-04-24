@@ -1,3 +1,5 @@
+// index.mjs
+
 import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import * as service from './page.mjs'
@@ -34,9 +36,9 @@ router.route('/:id?')
     let id = req.params.id
     const pageObject = await service.findPageById(id)
     if (pageObject) {
-        respondWithPage(res, pageObject)
+      respondWithPage(res, pageObject)
     } else {
-      utils.respondWithError(res, 400, 'No page exsist for this Id')
+      utils.respondWithError(res, 400, 'No page exists for this Id')
     }
   })
   .all((req, res, next) => {
@@ -54,41 +56,22 @@ router.post('/:id/appendLine', async (req, res) => {
     if (annotationPage.length === 0) {
       return res.status(404).json({ error: 'Page is empty' })
     }
-    const updatedAnnotationPage = await service.appendAnnotationToPage(annotation,annotationPage)
+    const updatedAnnotationPage = await service.appendAnnotationToPage(annotation, annotationPage)
     const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)
-    if(logicResult["@id"]){
+    if (logicResult["@id"]) {
+      // Update Annotation Collection and Project
+      await service.updateAnnotationCollection(logicResult)
+      await service.updateProject(logicResult)
       successfulResponse(res, 200, logicResult)
-   }
-   else{
+    } else {
       utils.respondWithError(res, logicResult.status, logicResult.message)
-   }
+    }
   } catch (error) {
     console.error('Error appending line to page:', error)
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-/**
- * Function to send a successful response with optional data or message.
- * @param {object} res - Express response object
- * @param {number} code - HTTP status code
- * @param {object|null} data - Optional data to be sent in the response
- * @param {string|null} message - Optional message to be sent in the response
- */
-function successfulResponse(res, code, data=null, message=null){
-  let data_iri = null
-  if(data && !Array.isArray(data)) data_iri = data["@id"] ?? data.id
-  if(data_iri) res.location(data_iri)
-  res.status(code)
-  if(data) {
-     res.json(data)
-  }
-  else if(message) {
-     res.send(message)
-  }
-  else{
-     res.send()
-  }
-}
+
 /**
  * Route handler for POST requests to prepend a line to a page.
  */
@@ -100,20 +83,46 @@ router.post('/:id/prependLine', async (req, res) => {
     if (annotationPage.length === 0) {
       return res.status(404).json({ error: 'Page is empty' })
     }
-    const updatedAnnotationPage = await service.prependAnnotationToPage(annotation,annotationPage)
-    console.log(updatedAnnotationPage)
+    const updatedAnnotationPage = await service.prependAnnotationToPage(annotation, annotationPage)
     const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)
-    if(logicResult["@id"]){
+    if (logicResult["@id"]) {
+      // Update Annotation Collection and Project
+      await service.updateAnnotationCollection(logicResult)
+      await service.updateProject(logicResult)
       successfulResponse(res, 200, logicResult)
-   }
-   else{
+    } else {
       utils.respondWithError(res, logicResult.status, logicResult.message)
-   }
+    }
   } catch (error) {
-    console.error('Error appending line to page:', error)
+    console.error('Error prepending line to page:', error)
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
+
+/**
+ * Function to send a successful response with optional data or message.
+ * @param {object} res - Express response object
+ * @param {number} code - HTTP status code
+ * @param {object|null} data - Optional data to be sent in the response
+ * @param {string|null} message - Optional message to be sent in the response
+ */
+function successfulResponse(res, code, data = null, message = null) {
+  let data_iri = null
+  if (data && !Array.isArray(data)) data_iri = data["@id"] ?? data.id
+  if (data_iri) res.location(data_iri)
+  res.status(code)
+  if (data) {
+    res.json(data)
+  }
+  else if (message) {
+    res.send(message)
+  }
+  else {
+    res.send()
+  }
+}
+
+
 function respondWithPage(res, pageObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(pageObject)
