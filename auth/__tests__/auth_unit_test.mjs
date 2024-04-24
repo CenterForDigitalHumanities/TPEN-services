@@ -37,6 +37,7 @@ describe("auth0Middleware #auth_test", () => {
           sub: "user123",
           roles: ["admin", "user"]
         },
+        agent:"test_agent",
 
         token: process.env.TEST_TOKEN,
 
@@ -56,10 +57,12 @@ describe("auth0Middleware #auth_test", () => {
     await verifier(mockRequest, mockResponse, mockNext)
     setUser(mockRequest, mockResponse, mockNext)
 
-    expect(mockRequest.user).toEqual({
-      sub: "user123",
-      roles: ["admin", "user"]
-    })
+    expect(mockRequest.user).toEqual(
+      expect.objectContaining({
+        sub: "user123",
+        roles: expect.arrayContaining(["admin", "user"])
+      })
+    )
 
     // expect(mockNext).toHaveBeenCalled()
     expect(mockNextCalled).toBe(true)

@@ -166,7 +166,7 @@ class DatabaseController {
                 err_out.status = 400
                 throw err_out
             }
-            const id = this.reserveId()
+            const id = this.reserveId(data?._id) 
             data["_id"] = id
             const result = await this.db.collection(collection).insertOne(data)
             if (result.insertedId) {
