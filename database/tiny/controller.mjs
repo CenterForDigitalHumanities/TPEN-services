@@ -6,6 +6,7 @@
  * https://github.com/thehabes 
  */ 
 
+import { ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 let storedEnv = dotenv.config()
 let err_out = Object.assign(new Error(), {"status":123, "message":"N/A", "_dbaction":"N/A"})
@@ -55,6 +56,29 @@ class DatabaseController {
             console.error(err)
             return false
         }
+    }
+
+    /**
+     * Determine if the provided chars are a valid TinyPEN ID.
+     * @param id the string to check
+     * @return boolean
+     */
+    isValidId(id) {
+        // Expect a String, Integer, or Hexstring-ish
+        try {
+            if (ObjectId.isValid(id)) { return true }
+            const intTest = Number(id)
+            if (!isNaN(intTest) && ObjectId.isValid(intTest)) { return true }
+            if (ObjectId.isValid(id.padStart(24, "0"))) { return true }
+        } catch(err) {
+            // just false
+        }
+        return false
+    }
+
+    asValidId(id) {
+        if (ObjectId.isValid(id)) { return id }
+        return id.toString().replace(/[^0-9a-f]/gi, "").substring(0,24).padStart(24, "0")
     }
 
     /**
