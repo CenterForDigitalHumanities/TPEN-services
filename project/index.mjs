@@ -253,7 +253,7 @@ router.route('/create')
 
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
-  if (Number.isNaN(parseInt(id, 16))) {    // TODO: replace condition with `!database.isValid(id)` once that's implemented
+  if (!database.isValidId(id)) {
     utils.respondWithError(res, 400, 'The TPEN3 project ID must be a hexadecimal string')
     return
   }
