@@ -185,7 +185,7 @@ async function createNewProject(req, res) {
       return
     }
   } else {
-    project.title = "Project" + project.creator + project.created.toString()
+    project.title = "Project" + project.creator + project.created.toString() // Create a default title
   }
 
   // Optional keys
