@@ -168,6 +168,13 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
     expect(result[0]["_id"]).toBe(test_user["_id"])
   })
 
+  //TODO
+  it("Deletes an object with the provided id", async () => {
+    expect(true).toBeTruthy()
+  })
+})
+
+describe("Mongo Database Utilities. #mongo_unit #db", () => {
   it("Assigns a new id for an Object", async () => {
     const noSeedResult = await database.reserveId()
     const badSeedResult = await database.reserveId("🕵️‍♀️🍤")
@@ -178,10 +185,5 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
     expect(badSeedResult).toHaveLength(24)
     expect(typeof goodSeedResult).toEqual("string")
     expect(goodSeedResult).toHaveLength(24)
-  })
-
-  //TODO
-  it("Deletes an object with the provided id", async () => {
-    expect(true).toBeTruthy()
   })
 })
