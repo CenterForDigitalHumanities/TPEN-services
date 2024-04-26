@@ -15,17 +15,7 @@ const database = new DatabaseDriver("mongo")
  * A full Manifest object without an ID to be created in RERUM
  * @see https://store.rerum.io/v1/API.html#create
  */
-export async function saveManifest(manifestJSON, id){
-   let reserved_id = null
-   if(id){
-      // A valid id should result in itself
-      reserved_id = await database.reserveId(id)
-      if(reserved_id !== id){
-         console.error("id could not be reserved.  It is invalid, or it is taken.")
-         return {"status":400, "message":"id could not be reserved.  It is invalid, or it is taken."}
-      }
-      manifestJSON["_id"] = reserved_id
-   }
+export async function saveManifest(manifestJSON){
    return await database.save(manifestJSON)
 }
 

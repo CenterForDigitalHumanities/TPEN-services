@@ -66,8 +66,8 @@ router.route('/create')
    .post(async (req, res, next) => {
       const j = req.body
       // For the body here use "@type":"Project" so the obj goes to tpen.projects.  Make sure this _id isn't in there.
-      const logicResult = await logic.saveManifest(j, '662bceca0b2fbab1bb0c6d4f')
-      if(logicResult["@id"]){
+      const logicResult = await logic.saveManifest(j)
+      if(logicResult["_id"]){
          successfulResponse(res, 201, logicResult)
       }
       else{
