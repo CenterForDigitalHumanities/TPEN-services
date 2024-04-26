@@ -88,12 +88,12 @@ class DatabaseController {
         console.log("mongo controller should reserve this seed")
         console.log(seed)
         try {
-            console.log("reserving...")
-            return new ObjectId(seed).toHexString()
+            console.log("reserving in mongo controller...")
+            return Promise.resolve(new ObjectId(seed).toHexString())
         } catch (err) {
-            console.log("failed to reserve")
+            console.log("failed to reserve in mongo controller")
             console.error(err)
-            return new ObjectId().toHexString()
+            return Promise.resolve(new ObjectId().toHexString())
         }
     }
 
