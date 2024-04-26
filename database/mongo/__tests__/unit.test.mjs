@@ -9,9 +9,9 @@ import DatabaseController from "../controller.mjs"
 const database = new DatabaseController()
 const timeOut = process.env.DB_TEST_TIMEOUT ?? 6500
 
-let test_proj = {"@type": "Project", name: "Test Project"}
-let test_group = {"@type": "Group", name: "Test Group"}
-let test_user = {"@type": "User", name: "Test User"}
+let test_proj = { "@type": "Project", name: "Test Project" }
+let test_group = { "@type": "Group", name: "Test Group" }
+let test_user = { "@type": "User", name: "Test User" }
 
 beforeAll(async () => {
   return await database.connect()
@@ -115,6 +115,19 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
   //TODO
   it("Deletes an object with the provided id", async () => {
     expect(true).toBeTruthy()
+  })
+  it('Validates a possible id string', () => {
+    expect(database.isValidId(123)).toBeTruthy()
+    expect(database.isValidId(-123)).toBeTruthy()
+    expect(database.isValidId("123")).toBeTruthy()
+    expect(database.isValidId({})).toBeFalsy()
+    expect(database.isValidId('123abc123abc123abc123abc')).toBeTruthy()
+    expect(database.isValidId('123abc123abc123abc123abcTooLong')).toBeFalsy()
+
+    expect(database.asValidId(123)).toBe(123)
+    expect(database.asValidId('123abc123abc123abc123abc')).toBe('123abc123abc123abc123abc')
+    expect(database.asValidId({})).toBe('000000000000000000becbec')
+    expect(database.asValidId(-123)).toBe(-123)
   })
 })
 

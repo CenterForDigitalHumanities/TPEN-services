@@ -73,4 +73,18 @@ describe("TinyPen Unit Functions. #tiny_unit #db", () => {
     it('Deletes an object with the provided id', async () => {
         expect(true).toBeTruthy()
     })
+
+    it('Validates a possible id string', async () => {
+        expect(database.isValidId(123)).toBeTruthy()
+        expect(database.isValidId(-123)).toBeTruthy()
+        expect(database.isValidId("123")).toBeTruthy()
+        expect(database.isValidId({})).toBeFalsy()
+        expect(database.isValidId('123abc123abc123abc123abc')).toBeTruthy()
+        expect(database.isValidId('123abc123abc123abc123abcTooLong')).toBeFalsy()
+
+        expect(database.asValidId(123)).toBe(123)
+        expect(database.asValidId('123abc123abc123abc123abc')).toBe('123abc123abc123abc123abc')
+        expect(database.asValidId({})).toBe('000000000000000000becbec')
+        expect(database.asValidId(-123)).toBe(-123)
+    })
 })
