@@ -1,5 +1,5 @@
 import dbDriver from "../../database/driver.mjs"
-let err_out = Object.assign(new Error(), {"status":123, "message":"N/A"})
+let err_out = Object.assign(new Error(), {"status":500, "message":"N/A"})
 
 import DatabaseController from "../../database/mongo/controller.mjs"
 import {
@@ -34,7 +34,7 @@ export class User {
   }
 
   async getSelf() {
-    // returns full user object, only use this when the user is unthenticated i.e, logged in and getting himself.
+    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
 
     const user = await database.find({
       _id: this.id,
@@ -113,10 +113,3 @@ async getByAgent(agent){
     return userProjects
   }
 }
-
-
-
-const userObj = new User("660d801652df1c2243d6d935")
-
-console.log(await userObj.getSelf())
-
