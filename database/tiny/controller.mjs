@@ -60,9 +60,9 @@ class DatabaseController {
 
     async reserveId(seed) {
         try {
-            return ObjectId(seed).toHexString()
+            return Promise.resolve(ObjectId(seed).toHexString())
         } catch (err) {
-            return new ObjectId().toHexString()
+            return Promise.resolve(new ObjectId().toHexString())
         }
     }
 

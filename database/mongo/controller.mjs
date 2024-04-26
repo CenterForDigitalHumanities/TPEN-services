@@ -85,16 +85,16 @@ class DatabaseController {
      * */
 
     async reserveId(seed) {
-        console.log("mongo controller should reserve this seed")
-        console.log(seed)
-        try {
-            console.log("reserving in mongo controller...")
-            return Promise.resolve(new ObjectId(seed).toHexString())
-        } catch (err) {
-            console.log("failed to reserve in mongo controller")
-            console.error(err)
-            return Promise.resolve(new ObjectId().toHexString())
-        }
+      console.log("mongo controller should reserve this seed")
+      console.log(seed)
+      try {
+          console.log("reserving in mongo controller...")
+          return Promise.resolve(new ObjectId(seed).toHexString())
+      } catch (err) {
+          console.log("failed to reserve in mongo controller")
+          console.error(err)
+          return Promise.resolve(new ObjectId().toHexString())
+      }
     }
 
     /** 
@@ -171,8 +171,7 @@ class DatabaseController {
                 err_out.status = 400
                 throw err_out
             }
-            const id = this.reserveId(data?._id) 
-            data["_id"] = id
+            data["_id"] = await this.reserveId(data?._id)
             const result = await this.db.collection(collection).insertOne(data)
             if (result.insertedId) {
                 return data
