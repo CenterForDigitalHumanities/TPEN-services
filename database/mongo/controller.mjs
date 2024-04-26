@@ -85,9 +85,14 @@ class DatabaseController {
      * */
 
     async reserveId(seed) {
+        console.log("mongo controller should reserve this seed")
+        console.log(seed)
         try {
-            return ObjectId(seed).toHexString()
+            console.log("reserving...")
+            return new ObjectId(seed).toHexString()
         } catch (err) {
+            console.log("failed to reserve")
+            console.error(err)
             return new ObjectId().toHexString()
         }
     }
