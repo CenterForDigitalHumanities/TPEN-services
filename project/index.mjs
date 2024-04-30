@@ -274,4 +274,40 @@ router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
+
+const addLayersValidator = (req, res, next) => {
+  if(!req.params.id){
+    utils.respondWithError(res, 400, 'Bad Request: The TPEN3 project ID provided is null. Please provide a valid project ID.')
+    return
+  }
+  const { label, creator, items } = req.body
+  if (!label || !creator || !items) {
+    utils.respondWithError(res, 400, 'Bad Request: The request body must contain label, creator, and items fields.')
+    return
+  }
+  next()
+}
+
+router.route('/:id/addLayer')
+  .post(addLayersValidator, async (req, res, next) => {
+    const id = req.params.id
+    const { label, creator, items } = req.body
+    const annotationCollection = await logic.AnnotationCollectionFactory(label, creator, items)
+    const response = await logic.saveAnnotationCollection(annotationCollection)
+    const projectsArray = await logic.findTheProjectByID(id)
+    if(projectsArray.length <= 0) {
+      utils.respondWithError(res, 404, 'Project not found with ID: ' + id + ' The annotation is saved in Annotation collection with id: ' + response.id)
+    }
+    const project =  projectsArray[0]
+    try{
+      logic.updateProjectLayers(project, annotationCollection.id)
+    }catch(error){
+      utils.respondWithError(res, 500, 'Annotation collection is added with id ' + annotationCollection.id 
+      + 'but failed to update the project layers.Error caused : ' + error.message)
+    }
+    res.status(201).json(annotationCollection)
+}).all((req, res, next) => {
+  utils.respondWithError(res, 405, 'Improper request method, please use POST.')
+})
+
 export default router
