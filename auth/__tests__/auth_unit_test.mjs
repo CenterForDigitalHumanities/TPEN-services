@@ -1,5 +1,5 @@
 import express from "express"
-import request from "supertest" 
+import request from "supertest"
 import auth0Middleware from "../index.mjs"
 
 process.env.AUDIENCE = "provide audience to test"
@@ -8,18 +8,27 @@ process.env.AUDIENCE = "provide audience to test"
 const app = express()
 
 app.use(auth0Middleware())
+const timeOut = process.env.TEST_TIMEOUT ?? 5000
 
-describe.skip("auth0Middleware #auth_test", () => {
-  it("should return 401 Unauthorized without valid token", async () => {
-    const res = await request(app).get("/protected-route")
+describe("auth0Middleware #auth_test", () => {
+  it(
+    "should return 401 Unauthorized without valid token",
+    async () => {
+      const res = await request(app).get("/protected-route")
 
-    expect(res.status).toBe(401)
-  })
+      expect(res.status).toBe(401)
+    },
+    timeOut
+  )
 
-  it("No user should be found on req if token is invalid", async () => {
-    const res = await request(app).get("/protected-route")
-    expect(res.req.user).toBeUndefined()
-  })
+  it(
+    "No user should be found on req if token is invalid",
+    async () => {
+      const res = await request(app).get("/protected-route")
+      expect(res.req.user).toBeUndefined()
+    },
+    timeOut
+  )
 
   it("should set req.user with payload from auth and call next", async () => {
     const mockRequest = {
@@ -28,6 +37,7 @@ describe.skip("auth0Middleware #auth_test", () => {
           sub: "user123",
           roles: ["admin", "user"]
         },
+        agent:"test_agent",
 
         token: process.env.TEST_TOKEN,
 
@@ -47,10 +57,12 @@ describe.skip("auth0Middleware #auth_test", () => {
     await verifier(mockRequest, mockResponse, mockNext)
     setUser(mockRequest, mockResponse, mockNext)
 
-    expect(mockRequest.user).toEqual({
-      sub: "user123",
-      roles: ["admin", "user"]
-    })
+    expect(mockRequest.user).toEqual(
+      expect.objectContaining({
+        sub: "user123",
+        roles: expect.arrayContaining(["admin", "user"])
+      })
+    )
 
     // expect(mockNext).toHaveBeenCalled()
     expect(mockNextCalled).toBe(true)

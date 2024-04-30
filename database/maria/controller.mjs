@@ -78,6 +78,7 @@ class DatabaseController {
         return result
     }
 
+    async reserveId(seed) { return seed }
 }
 
 export default DatabaseController

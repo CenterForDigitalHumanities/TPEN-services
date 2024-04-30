@@ -72,6 +72,29 @@ class DatabaseController {
         }
     }
 
+    /**
+     * Determine if the provided chars are a valid local MongoDB ObjectID().
+     * @param id the string to check
+     * @return boolean
+     */
+    isValidId(id) {
+        // Expect a String, Integer, or Hexstring-ish
+        try {
+            if (ObjectId.isValid(id)) { return true }
+            const intTest = Number(id)
+            if (!isNaN(intTest) && ObjectId.isValid(intTest)) { return true }
+            if (ObjectId.isValid(id.padStart(24, "0"))) { return true }
+        } catch(err) {
+            // just false
+        }
+        return false
+    }
+
+    asValidId(id) {
+        if (ObjectId.isValid(id)) { return id }
+        return id.toString().replace(/[^0-9a-f]/gi, "").substring(0,24).padStart(24, "0")
+    }
+
     /** Close the connection with the mongo client */
     async close() {
         await this.client.close()
@@ -83,12 +106,12 @@ class DatabaseController {
      * Generate an new mongo _id as a hex string (as opposed _id object, for example) 
      * @return A hex string or error
      * */
-    newID() {
+
+    async reserveId(seed) {
         try {
-            return new ObjectId().toHexString()
+            return Promise.resolve(new ObjectId(seed).toHexString())
         } catch (err) {
-            console.error(err)
-            return err
+            return Promise.resolve(new ObjectId().toHexString())
         }
     }
 
@@ -166,8 +189,7 @@ class DatabaseController {
                 err_out.status = 400
                 throw err_out
             }
-            const id = this.newID()
-            data["_id"] = id
+            data["_id"] = await this.reserveId(data?._id)
             const result = await this.db.collection(collection).insertOne(data)
             if (result.insertedId) {
                 return data

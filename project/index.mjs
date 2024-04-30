@@ -3,6 +3,9 @@ import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import * as logic from './project.mjs'
 import cors from 'cors'
+import DatabaseDriver from "../database/driver.mjs"
+
+const database = new DatabaseDriver("mongo")
 
 let router = express.Router()
 
@@ -138,61 +141,137 @@ export function respondWithProject(req, res, project) {
   res.location(id).status(200).send(retVal)
 }
 
+/**
+ * Check for valid project keys and create defaults, then send to database
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ */
+async function createNewProject(req, res) {
+  let project = req.body
+  /* 
+  TODO:
+    - Add creator based on authenticated user
+    - Add group
+    - Add slug (and figure out a good way to format it)
+    - Check for manifest, create one in the database if it doesn't exist
+  */
+
+  // TEMPORARY stubbing out required keys we need to generate
+  project.creator = "user"
+  project.group = "group"
+  project.slug = "slug"
+
+  // Required keys
+  if (project.created) {
+    if (Number.isNaN(parseInt(project.created))) {
+      utils.respondWithError(res, 400, 'Project key "created" must be a date in UNIX time')
+      return
+    }
+  } else {
+    utils.respondWithError(res, 400, 'Project must have key "created"')
+    return
+  }
+  if (project.license) {
+    if (typeof project.license !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "license" must be a string')
+      return
+    }
+  } else {
+    project.license = "CC-BY"
+  }
+  if (project.title) {
+    if (typeof project.title !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "title" must be a string')
+      return
+    }
+  } else {
+    project.title = "Project" + project.creator + project.created.toString() // Create a default title
+  }
+
+  // Optional keys
+  if (project.tools) {
+    if (!Array.isArray(project.tools)) {
+      utils.respondWithError(res, 400, 'Project key "tools" must be an array')
+      return
+    }
+  }
+  if (project.tags) {
+    if (!Array.isArray(project.tags)) {
+      utils.respondWithError(res, 400, 'Project key "tags" must be an array')
+      return
+    }
+    if (!project.tags.every(tag => typeof tag === 'string')) {
+      utils.respondWithError(res, 400, 'Project key "tags" must be an array of strings')
+      return
+    }
+  }
+  if (project.manifest) {
+    if (typeof project.manifest !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "manifest" must be a string')
+      return
+    }
+    if (!url.canParse(project.manifest)) {
+      utils.respondWithError(res, 400, 'Project key "manifest" must be a valid URL')
+      return
+    }
+  }
+  if (project["@type"]) {
+    if (typeof project["@type"] !== 'string') {
+      utils.respondWithError(res, 400, 'Project key "@type" must be a string')
+      return
+    }
+    if (project["@type"] !== "Project") {
+      utils.respondWithError(res, 400, 'Project key "@type" must be "Project"')
+      return
+    }
+  } else {
+    project["@type"] = "Project"
+  }
+
+  // Save project and check if it was done correctly
+  const logicResult = await logic.saveProject(req.body)
+  if (logicResult["_id"]) {
+    res.status(201).json(logicResult)
+    return
+  } else {
+    utils.respondWithError(res, logicResult.status, logicResult.message)
+    return
+  }
+}
+
+router.route('/create')
+  .post(async (req, res, next) => {     // TODO: Add authentication to this endpoint
+    if (!utils.isValidJSON(req.body)) {
+      utils.respondWithError(res, 400, "Improperly formatted JSON")
+      return
+    }
+    await createNewProject(req, res)
+  })
+  .all((req, res, next) => {
+    utils.respondWithError(res, 405, "Improper request method, please use POST.")
+  })
+
 router.get('/:id', async (req, res, next) => {
   let id = req.params.id
-  if(!id){
-    utils.respondWithError(res, 400, 'BAD Request: Please send the id of the project you would like to retrieve.')
+  if (!database.isValidId(id)) {
+    utils.respondWithError(res, 400, 'The TPEN3 project ID must be a hexadecimal string')
+    return
   }
+
   try {
-    const projectsArray = await logic.findTheProjectByID(id)
-    if(projectsArray.length <= 0) {
-      utils.respondWithError(res, 404, 'Project not found with ID: ' + id )
+    const projectObj = await logic.findTheProjectByID(id)
+    if (projectObj) {
+      respondWithProject(req, res, projectObj)
+    } else {
+      utils.respondWithError(res, 404, `TPEN3 project "${req.params.id}" does not exist.`)
     }
-    res.status(200).json(projectsArray[0])
   } catch (err) {
     utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
   }
 })
+
 router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-})
-
-const addLayersValidator = (req, res, next) => {
-  console.log("Here2")
-  if(!req.params.id){
-    utils.respondWithError(res, 400, 'Bad Request: The TPEN3 project ID provided is null. Please provide a valid project ID.')
-    return
-  }
-  const { label, creator, items } = req.body
-  if (!label || !creator || !items) {
-    utils.respondWithError(res, 400, 'Bad Request: The request body must contain label, creator, and items fields.')
-    return
-  }
-  next()
-}
-
-router.route('/:id/addLayer')
-  .post(addLayersValidator, async (req, res, next) => {
-    console.log("Here")
-    console.log(req)
-    const id = req.params.id
-    const { label, creator, items } = req.body
-    const annotationCollection = await logic.AnnotationCollectionFactory(label, creator, items)
-    const response = await logic.saveAnnotationCollection(annotationCollection)
-    const projectsArray = await logic.findTheProjectByID(id)
-    if(projectsArray.length <= 0) {
-      utils.respondWithError(res, 404, 'Project not found with ID: ' + id + ' The annotation is saved in Annotation collection with id: ' + response.id)
-    }
-    const project =  projectsArray[0]
-    try{
-      logic.updateProjectLayers(project, annotationCollection.id)
-    }catch(error){
-      utils.respondWithError(res, 500, 'Annotation collection is added with id ' + annotationCollection.id 
-      + 'but failed to update the project layers.Error caused : ' + error.message)
-    }
-    res.status(201).json(annotationCollection)
-}).all((req, res, next) => {
-  utils.respondWithError(res, 405, 'Improper request method, please use POST.')
 })
 
 export default router
