@@ -35,9 +35,9 @@ describe("auth0Middleware #auth_test", () => {
       auth: {
         payload: {
           sub: "user123",
-          roles: ["admin", "user"]
+          roles: ["admin", "user"],
+          "http://store.rerum.io/agent":"test_agent/id/1234567890"
         },
-        agent:"test_agent",
 
         token: process.env.TEST_TOKEN,
 
