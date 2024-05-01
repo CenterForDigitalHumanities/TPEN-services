@@ -11,7 +11,7 @@ jobs:
         uses: SpicyPizza/create-envfile@v2
         with:
           envkey_DOWN: ${{ secrets.DOWN }}
-          envkey_READONLYL: ${{ secrets.READONLY }}
+          envkey_READONLY: ${{ secrets.READONLY }}
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
           envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
           envkey_MONGODB: ${{ secrets.MONGODBDEV }}
@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
-          node-version: "21"
+          node-version: "^20.2.0"
       - name: Cache node modules
         uses: actions/cache@master
         env:
