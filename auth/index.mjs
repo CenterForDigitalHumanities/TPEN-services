@@ -45,7 +45,10 @@ function auth0Middleware() {
  
   const agent = payload["http://store.rerum.io/agent"]
   if(!agent){
-    return utils.respondWithError(res, 401, "Invalid token, missing agent claim")
+    const err = new Error("Invalid token, missing agent claim")
+    err.status = 401
+    next(err)
+    return
   }
   const userObj = new User(payload._id)
   const user = await userObj.getByAgent(agent)
