@@ -43,25 +43,19 @@ function auth0Middleware() {
   async function setUser(req, res, next) {
     const {payload} = req.auth 
  
-    const agent = payload["http://store.rerum.io/agent"]
-  if(agent){
-    const userObj = new User(payload._id)
-    const user = await userObj.getByAgent(agent)
-    if (!user) {
-      const userId = agent.split("id/")[1] 
-      const newUser = await userObj.create({...payload, _id: userId})
-      req.user = newUser
-    } 
-
-  }else{
-    req.user = payload
+  const agent = payload["http://store.rerum.io/agent"]
+  if(!agent){
+    return utils.respondWithError(res, 401, "Invalid token, missing agent claim")
   }
+  const userObj = new User(payload._id)
+  const user = await userObj.getByAgent(agent)
+  req.user = user ?? await userObj.create({...payload, _id: agent.split("id/")[1], agent})
  
-    next()
-  }
+  next()
+}
  
   return [verifier, setUser]
- }
+}
  
 
 export default auth0Middleware
