@@ -1,18 +1,28 @@
-// page.mjs
 
 import DatabaseDriver from "../database/driver.mjs"
 const database = new DatabaseDriver("tiny")
+const mongoDatabase = new DatabaseDriver("mongo")
 
 export async function findPageById(id = null) {
   if (id) {
-    return await database.find({ _id: id, "type": "AnnotationPage" })
+    return await database.find({ _id: id})
   }
 }
-
+export async function findTheProjectByID(id = null) {
+  const project = {_id : id,"@type": "Project"}
+  return await mongoDatabase.find(project)
+}
 export async function updateAnnotationPage(annotationPage) {
   return await database.update(annotationPage)
 }
-
+/**
+ * Updates the Annotation Collection.
+ * @param {object} annotationPage - The updated annotation page.
+ * @returns {Promise<void>} - A promise resolving after updating the Annotation Collection.
+ */
+export async function updateAnnotationCollection(annotationCollection) {
+  return await database.update(annotationCollection)
+}
 /**
  * Appends a line to an annotation page. Line is added to the end of any existing lines.
  * @param {object} annotationPage - The annotation page to append the line to.
@@ -75,23 +85,9 @@ export async function prependAnnotationToPage(annotations, annotationPage) {
   }
   return updatedAnnotationPage
 }
-export async function findAnnotationCollectionByPageId(pageId) {
-  const page = await findPageById(pageId)
-  if (page && page[0] && page[0].partOf) {
-    const collectionId = page[0].partOf
-    return await database.find({_id: collectionId, "type": "AnnotationCollection"})
-  }
+export async function findAnnotationCollectionById(annotationCollectionId) {
+    return await database.find({_id: annotationCollectionId})
 }
-
-/**
- * Updates the Annotation Collection.
- * @param {object} annotationPage - The updated annotation page.
- * @returns {Promise<void>} - A promise resolving after updating the Annotation Collection.
- */
-export async function updateAnnotationCollection(annotationCollection) {
-  return await database.update(annotationCollection)
-}
-
 /**
  * Updates the Project.
  * @param {object} annotationPage - The updated annotation page.
@@ -99,5 +95,5 @@ export async function updateAnnotationCollection(annotationCollection) {
  */
 
 export async function updateProject(project) {
-  return await database.update(project)
+  return await mongoDatabase.update(project)
 }

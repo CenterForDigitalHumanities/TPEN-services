@@ -1,12 +1,8 @@
-// index.mjs
-
 import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import * as service from './page.mjs'
 import cors from 'cors'
-
 let router = express.Router()
-
 router.use(
   cors({
     methods: 'GET',
@@ -30,7 +26,6 @@ router.use(
     maxAge: '600'
   })
 )
-
 router.route('/:id?')
   .get(async (req, res, next) => {
     let id = req.params.id
@@ -44,7 +39,6 @@ router.route('/:id?')
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   })
-
 /**
  * Route handler for POST requests to append a line to a page.
  */
@@ -56,13 +50,39 @@ router.post('/:id/appendLine', async (req, res) => {
     if (annotationPage.length === 0) {
       return res.status(404).json({ error: 'Page is empty' })
     }
-    const updatedAnnotationPage = await service.appendAnnotationToPage(annotation, annotationPage)
-    const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)
+    var updatedAnnotationPage = await service.appendAnnotationToPage(annotation, annotationPage)
+    const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)  
     if (logicResult["@id"]) {
-      // Update Annotation Collection and Project
-      await service.updateAnnotationCollection(logicResult)
-      await service.updateProject(logicResult)
-      successfulResponse(res, 200, logicResult)
+      const partOfId = updatedAnnotationPage.partOf.split('/').pop();
+      var annotationCollection = await service.findAnnotationCollectionById(partOfId)
+      annotationCollection = annotationCollection[0]
+      if (
+        annotationCollection.first != null &&
+        annotationCollection.first != undefined &&
+        Object.keys(annotationCollection.first).length !== 0 &&
+        annotationCollection.first != ""
+      ) {
+        annotationCollection.first.items.push(...updatedAnnotationPage.items);
+      } else {
+        annotationCollection.first = updatedAnnotationPage;
+      }
+     const response = await service.updateAnnotationCollection(annotationCollection)
+     const collectionId = annotationCollection["@id"].split('/').pop()
+     const project = await service.findTheProjectByID(collectionId)
+     if (!Array.isArray(project) && project) {
+      if (!project.layers.includes(partOfId)) {
+        project.layers.push(partOfId)
+        await service.updateProject(project)
+      }
+    } else {
+      const newproject = {
+        _id: collectionId,
+        "@type": "Project",
+        layers: [annotationPage[0]["@id"]]
+      }
+      await service.updateProject(newproject)
+    }
+      successfulResponse(res, 200, response)
     } else {
       utils.respondWithError(res, logicResult.status, logicResult.message)
     }
@@ -71,7 +91,6 @@ router.post('/:id/appendLine', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-
 /**
  * Route handler for POST requests to prepend a line to a page.
  */
@@ -87,7 +106,8 @@ router.post('/:id/prependLine', async (req, res) => {
     const logicResult = await service.updateAnnotationPage(updatedAnnotationPage)
     if (logicResult["@id"]) {
       // Update Annotation Collection and Project
-      await service.updateAnnotationCollection(logicResult)
+      const annotationCollection = await service.findAnnotationCollectionById(id)// Get the annotation collection associated with the page
+      await service.updateAnnotationCollection(annotationCollection, updatedAnnotationPage) // Pass both annotationCollection and updatedAnnotationPage
       await service.updateProject(logicResult)
       successfulResponse(res, 200, logicResult)
     } else {
@@ -98,7 +118,6 @@ router.post('/:id/prependLine', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
-
 /**
  * Function to send a successful response with optional data or message.
  * @param {object} res - Express response object
