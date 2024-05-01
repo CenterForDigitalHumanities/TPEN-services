@@ -1,6 +1,7 @@
 import express from "express"
 import request from "supertest"
 import auth0Middleware from "../index.mjs"
+import { ObjectId } from "mongodb"
 
 process.env.AUDIENCE = "provide audience to test"
 // this test has a had time reading env directly. add
@@ -30,13 +31,13 @@ describe("auth0Middleware #auth_test", () => {
     timeOut
   )
 
-  it.skip("should set req.user with payload from auth and call next", async () => {
+  it("should set req.user with payload from auth and call next", async () => {
     const mockRequest = {
       auth: {
         payload: {
           sub: "user123",
           roles: ["admin", "user"],
-          "http://store.rerum.io/agent":"test_agent/id/1234567890"
+          "http://store.rerum.io/agent":`test_agent/id/${new ObjectId()}`
         },
 
         token: process.env.TEST_TOKEN,
