@@ -43,13 +43,13 @@ function auth0Middleware() {
   async function setUser(req, res, next) {
     const {payload} = req.auth 
  
-    const agent = payload["http://store.rerum.io/agent"]
+  const agent = payload["http://store.rerum.io/agent"]
   if(agent){
     const userObj = new User(payload._id)
     const user = await userObj.getByAgent(agent)
     if (!user) {
       const userId = agent.split("id/")[1] 
-      const newUser = await userObj.create({...payload, _id: userId})
+      const newUser = await userObj.create({...payload, _id: userId, agent})
       req.user = newUser
     } 
 
