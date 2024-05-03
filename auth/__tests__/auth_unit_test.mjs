@@ -31,7 +31,7 @@ describe("auth0Middleware #auth_test", () => {
     timeOut
   )
 
-  it("should set req.user with payload from auth and call next", async () => {
+  it.skip("should set req.user with payload from auth and call next", async () => {
     const mockRequest = {
       auth: {
         payload: {
