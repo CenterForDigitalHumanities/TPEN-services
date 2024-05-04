@@ -10,30 +10,11 @@ import express from 'express'
 import * as logic from './manifest.mjs'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
+import common_cors from '../utilities/common_cors.json'
 
 let router = express.Router()
 router.use(
-  cors({
-    "methods" : "GET",
-    "allowedHeaders" : [
-      'Content-Type',
-      'Content-Length',
-      'Allow',
-      'Authorization',
-      'Location',
-      'ETag',
-      'Connection',
-      'Keep-Alive',
-      'Date',
-      'Cache-Control',
-      'Last-Modified',
-      'Link',
-      'X-HTTP-Method-Override'
-    ],
-    "exposedHeaders" : "*",
-    "origin" : "*",
-    "maxAge" : "600"
-  })
+  cors(common_cors)
 )
 
 

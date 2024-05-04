@@ -2,30 +2,13 @@ import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
 import { findLineById } from './line.mjs'
+import common_cors from '../utilities/common_cors.json'
 
 const router = express.Router()
 
-router.use(cors({
-  methods: 'GET',
-  allowedHeaders: [
-    'Content-Type',
-    'Content-Length',
-    'Allow',
-    'Authorization',
-    'Location',
-    'ETag',
-    'Connection',
-    'Keep-Alive',
-    'Date',
-    'Cache-Control',
-    'Last-Modified',
-    'Link',
-    'X-HTTP-Method-Override'
-  ],
-  exposedHeaders: '*',
-  origin: '*',
-  maxAge: '600'
-}))
+router.use(
+  cors(common_cors)
+)
 
 router.route('/:id')
   .get(async (req, res, next) => {
