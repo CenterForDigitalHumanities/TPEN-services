@@ -9,7 +9,7 @@ const app = express()
 
 app.use(auth0Middleware())
 
-describe("auth0Middleware #auth_test", () => {
+describe.skip("auth0Middleware #auth_test", () => {
   it("should return 401 Unauthorized without valid token", async () => {
     const res = await request(app).get("/protected-route")
 

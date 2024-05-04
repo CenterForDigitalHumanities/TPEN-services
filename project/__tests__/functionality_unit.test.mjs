@@ -15,5 +15,4 @@ describe('Project endpoint functionality unit test (just testing helper function
     let project = await findTheProjectByID(7085)
     expect(project).not.toBe(null)
   })
-
 })
