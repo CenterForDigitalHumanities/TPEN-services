@@ -4,6 +4,7 @@ import * as utils from '../utilities/shared.mjs'
 import * as logic from './project.mjs'
 import DatabaseDriver from "../database/driver.mjs"
 import cors from 'cors'
+import common_cors from '../utilities/common_cors.json'
 
 const database = new DatabaseDriver("mongo")
 let router = express.Router()
