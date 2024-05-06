@@ -274,7 +274,13 @@ router.all('/', (req, res, next) => {
   utils.respondWithError(res, 405, 'Improper request method, please use GET.')
 })
 
-
+/**
+ * Middleware function to validate the request body for adding layers to a project.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {void}
+ */
 const addLayersValidator = (req, res, next) => {
   if(!req.params.id){
     utils.respondWithError(res, 400, 'Bad Request: The TPEN3 project ID provided is null. Please provide a valid project ID.')
@@ -288,6 +294,14 @@ const addLayersValidator = (req, res, next) => {
   next()
 }
 
+/**
+ * Adds a new layer to a project identified by the provided ID.
+ * @param {string} id - The ID of the project to which the layer will be added.
+ * @param {Object} req - The request object containing the layer information.
+ * @param {Object} res - The response object to send the result.
+ * @param {Function} next - The next middleware function.
+ * @returns {void}
+ */
 router.route('/:id/addLayer')
   .post(addLayersValidator, async (req, res, next) => {
     const id = req.params.id
