@@ -28,6 +28,7 @@ export class User {
     })
     user = user[0]
     this.id = user?._id
+    // this.agent = user?._id
     const publicUser = includeOnly(user, "profile", "_id")
     this.user = publicUser
     return publicUser
@@ -51,6 +52,16 @@ export class User {
     const updatedUser = await database.update(newRecord)
     return updatedUser
   }
+
+  async addPublicInfo(data) {
+    // add or modify public info
+    if (!data) return
+    const previousUser = this.user
+    const publicProfile = {...previousUser.profile, ...data}
+    const updatedUser = await database.update({...previousUser, profile:publicProfile})
+    return updatedUser
+  }
+
 
 
 async getByAgent(agent){
@@ -87,7 +98,7 @@ async getByAgent(agent){
     // this assumes that the project object includes the following properties
     // {
     //   "@type":"Project"
-    //   creator:"user._id",
+    //   creator:"user.agent",
     //   groups:{
     //     members:[{agent:"user.agent", _id:"user._id"}]
     //   }
@@ -96,10 +107,10 @@ async getByAgent(agent){
     if (!user) return []
     const allProjects = await database.find({
       "@type": "Project"
-    })
-    const userProjects = []
+    }) 
+     const userProjects = []
     allProjects?.map((project) => {
-      if (project.creator === this.id) {
+      if (project.creator === user.agent) {
         userProjects.push(project)
       } else {
         project?.groups?.members?.map(async (member) => {
