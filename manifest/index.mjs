@@ -10,7 +10,7 @@ import express from 'express'
 import * as logic from './manifest.mjs'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
-import common_cors from '../utilities/common_cors.json'
+import common_cors from '../utilities/common_cors.json' assert {type: 'json'}
 
 let router = express.Router()
 router.use(
