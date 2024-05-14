@@ -33,23 +33,32 @@ router.use(
 router.get("/profile", auth0Middleware(), async (req, res) => {
   const user = await req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
+  try {
   const userObj = new User(user._id)
   const userProfile = await userObj.getSelf()
   res.set("Content-Type", "application/json; charset=utf-8")
 
   res.status(200).json(userProfile)
+  } catch (error) {
+    respondWithError(res, error?.status, error?.message)
+  }
 })
 
 router.get("/projects", auth0Middleware(), async (req, res) => {
   const user = await req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user") 
 
+ try {
   const userObj = new User(user._id)
   const userProjects = await userObj.getProjects()
 
   res.set("Content-Type", "application/json; charset=utf-8")
 
   res.status(200).json(userProjects)
+
+} catch (error) {
+   respondWithError(res, error?.status, error?.message)
+ }
 })
 
 export default router
