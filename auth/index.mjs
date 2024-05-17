@@ -58,7 +58,7 @@ try {
   req.user = user ?? await userObj.create({...payload, _id: agent.split("id/")[1], agent})
 } catch (error) { 
 
-// next(error)
+next(error)
 } 
  
   next()
