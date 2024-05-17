@@ -213,6 +213,7 @@ class DatabaseController {
      * @return The inserted document JSON or error JSON
      */
     async update(data) {
+        console.log(data)
         // Note this may be an alias for save()
         err_out._dbaction = "replaceOne"
         try {

@@ -50,9 +50,16 @@ function auth0Middleware() {
     next(err)
     return
   }
+
+ 
+try {
   const userObj = new User(payload._id)
-  const user = await userObj.getByAgent(agent)
+  const user = await userObj.getByAgent(agent) 
   req.user = user ?? await userObj.create({...payload, _id: agent.split("id/")[1], agent})
+} catch (error) { 
+
+// next(error)
+} 
  
   next()
 }
