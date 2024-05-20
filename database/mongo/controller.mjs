@@ -212,8 +212,7 @@ class DatabaseController {
      * @param data JSON from an HTTP POST request.  It must contain an id.
      * @return The inserted document JSON or error JSON
      */
-    async update(data) {
-        console.log(data)
+    async update(data) { 
         // Note this may be an alias for save()
         err_out._dbaction = "replaceOne"
         try {
