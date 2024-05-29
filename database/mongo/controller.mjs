@@ -274,8 +274,13 @@ class DatabaseController {
     /**
      * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s 
      */
-    async getByID(id) {
-        return await this.find({ "_id": id })
+    async getByID(id, collection) {
+        const type = collection => ({
+            "projects": "Project",
+            "groups": "Group",
+            "users": "User",
+            "userPerferences": "UserPreference"}[collection]) ?? type
+        return await this.find({ "_id": id, '@type': type })
     }
 
 }

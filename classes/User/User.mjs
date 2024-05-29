@@ -30,11 +30,7 @@ export class User {
       throw err_out
     }
 
-    return database
-      .find({
-        _id: this.id,
-        "@type": "User"
-      })
+    return database.getByID(this.id,"User")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
