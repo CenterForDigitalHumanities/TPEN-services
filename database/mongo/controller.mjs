@@ -275,11 +275,12 @@ class DatabaseController {
      * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s 
      */
     async getById(id, collection) {
-        const type = collection => ({
+        const typeMap = {
             "projects": "Project",
             "groups": "Group",
             "users": "User",
-            "userPerferences": "UserPreference"}?.[collection]) ?? collection
+            "userPerferences": "UserPreference"}
+        const type = typeMap[collection] ?? collection
         return await this.find({ "_id": id, '@type': type })
     }
 
