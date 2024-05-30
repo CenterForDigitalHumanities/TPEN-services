@@ -36,7 +36,7 @@ export class User {
       throw err_out
     }
 
-    return database.getByID(this.id,"User")
+    return database.getById(this.id,"User")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp

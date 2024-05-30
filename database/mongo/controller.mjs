@@ -274,7 +274,7 @@ class DatabaseController {
     /**
      * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s 
      */
-    async getByID(id, collection) {
+    async getById(id, collection) {
         const type = collection => ({
             "projects": "Project",
             "groups": "Group",
