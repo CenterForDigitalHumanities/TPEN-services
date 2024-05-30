@@ -279,7 +279,7 @@ class DatabaseController {
             "projects": "Project",
             "groups": "Group",
             "users": "User",
-            "userPerferences": "UserPreference"}[collection]) ?? type
+            "userPerferences": "UserPreference"}?.[collection]) ?? collection
         return await this.find({ "_id": id, '@type': type })
     }
 
