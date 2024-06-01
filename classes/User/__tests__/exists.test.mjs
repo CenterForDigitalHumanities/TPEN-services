@@ -2,7 +2,7 @@ import {User} from "../User.mjs"
 
 const user = new User("user._id") 
 
-describe("user Class appears and behaves as expected #user_exists_test", () => {
+describe("user Class appears and behaves as expected #user_exists_test #user_class", () => {
   it("Imports user", () => {
     expect(User.constructor).toBeInstanceOf(Function)
   }) 
