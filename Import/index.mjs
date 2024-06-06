@@ -8,69 +8,53 @@ export class Project {
     this.data = data
   }
 
-  async save() {
+  async create(payload) {
     return database
-      .save({...this.data, "@type": "Project"})
+      .save({...payload, "@type": "Project"})
       .then((savedProject) => {
-       
         return savedProject
-      }) 
-  }
-
-  static async fetchManifest(projectId) {
-    const url = `https://t-pen.org/TPEN/project/${projectId}`
-    return fetch(url)
-      .then((response) => {
-        return response.json()
       })
-   }
-
-  static async processManifest(projectId) { 
-    return Project.fetchManifest(projectId).then((manifest) => { 
-       // Process manifest into new Project
-      //Return newProject
-      // UNDER CONSTRUCTION
-
-      let newProject = {}
-
-      const iiifManifest = new Manifest(manifest["@id"]) 
-      const sequences = iiifManifest.getSequences()
-
-      newProject.sequences = sequences
-      newProject.metadata = iiifManifest.getMetadata()
-      newProject.label = iiifManifest.getLabel()
-
-    
-      return newProject
-    }).catch((err)=>{
-      console.log(err)
-    })
-
-
   }
 
-  static async importProject(projectId) {
-    return Project.fetchManifest(projectId)
-      .then((manifest) => { 
+  static async fetchManifest(manifestId) {
+    const url = `https://t-pen.org/TPEN/project/${projectId}`
+    return fetch(url).then((response) => {
+      return response.json()
+    })
+  }
+
+  static async processManifest(manifestId) {
+    return Project.fetchManifest(manifestId)
+      .then((manifest) => {
+        let newProject = {}
+        newProject.title = manifest.title
+        newProject.label = manifest.label
+        newProject.metadata = manifest.metadata
+        newProject.pages = manifest.items ?? manifest.sequences
+
+        return newProject
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
+
+  static async importProject(manifestId) {
+    return Project.fetchManifest(manifestId)
+      .then((manifest) => {
         return Project.processManifest(manifest)
       })
-      .then((newManifest) => {
-        const project = new Project(newManifest)
-        return project.save()
-      })
-      .then((savedProject) => {
-        console.log("Project imported successfully:", savedProject)
+      .then(async (project) => {
+        const projectObj = new Project(project)
+        const savedProject = await projectObj.create(project)
         return savedProject
-      })
+      }) 
       .catch((err) => {
         console.error("Failed to import project:", err)
         throw err
       })
   }
 }
-
-
-
 
 // ToDo before PR
 // remove test link from app.js
