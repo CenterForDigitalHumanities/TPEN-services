@@ -19,7 +19,7 @@ export class ImportProject {
 
   static async processPageFromCanvas(canvases) {
     let pages = []
-
+  
     try {
       canvases.map(async (canvas) => {
         let pageObj = new Page()

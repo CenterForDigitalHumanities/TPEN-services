@@ -1,6 +1,6 @@
 import express from "express"
-import cors from "cors"
-import {Project} from "./index.mjs"
+import cors from "cors" 
+import { ImportProject } from "./index.mjs"
 
 const router = express.Router()
 router.use(
@@ -30,7 +30,7 @@ router.use(
 router.get("/", async (req, res) => {
   const projectId = "4080"
 
-  Project.processManifest()
+  ImportProject.processManifest()
     .then((savedProject) => {
       res.status(200).json(savedProject)
     })
