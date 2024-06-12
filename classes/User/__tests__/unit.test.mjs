@@ -4,7 +4,9 @@ import express from "express"
 import {User} from "../User.mjs"
 
 import privateProfileRouter from "../../../userProfile/privateProfile.mjs"
-import auth0Middleware from "../../../auth/index.mjs"
+ 
+import mainApp from "../../../app.mjs"
+
 
 jest.mock("../User.mjs")
 jest.mock("../../../auth/index.mjs")
@@ -32,6 +34,24 @@ let token = process.env.TEST_TOKEN
 // })
 
 app.use("/my", privateProfileRouter)
+
+describe("GET /my/profile #user_class", () => {
+  it("should return 200", async () => {
+    const response = await request(mainApp)
+      .get("/my/profile")
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(200)
+  })
+})
+
+describe("GET /my/projects #user_class", () => {
+  it("should return 200", async () => {
+    const response = await request(mainApp)
+      .get("/my/projects")
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(200)
+  })
+})
 
 describe("GET /my/profile #user_class", () => {
   it("should return 200", async () => {
