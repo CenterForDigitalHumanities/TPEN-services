@@ -4,7 +4,7 @@ import Project from "../classes/Project/Project.mjs"
 import dbDriver from "../database/driver.mjs"
 
 const database = new dbDriver("mongo")
-
+// THIS MODULE WILL BE DELETED. CONTENT MOVED TO /Classes/Project/
 export class ImportProject {
   constructor(data) {
     this.data = data
@@ -73,4 +73,7 @@ export class ImportProject {
       })
   }
 }
- 
+
+// ToDo before PR
+// remove test link from app.js
+// clean up route in ./index.mjs

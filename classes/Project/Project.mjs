@@ -1,12 +1,11 @@
 import dbDriver from "../../database/driver.mjs"
-import validateProjectPayload from "../../utilities/validateProjectPayload.mjs"
+import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
 import {User} from "../User/User.mjs"
 
 let err_out = Object.assign(new Error(), {
-  status: 123,
-  message: "N/A",
-  _dbaction: "N/A"
-})
+  status: 500,
+  message: "Unknown Server error",
+ })
 
 const database = new dbDriver("mongo")
 
@@ -16,13 +15,14 @@ export default class Project {
   }
 
   async create(payload) {
+    // validation checks for all the required elements without which a project cannot be created.
+    console.log(payload)
     const validation = validateProjectPayload(payload)
-
+ 
     if (!validation.isValid) {
-      return {
-        status: 400,
-        message: validation.errors
-      }
+      err_out.status = 400
+      err_out.message =   validation.errors
+      throw err_out
     }
 
     try {
