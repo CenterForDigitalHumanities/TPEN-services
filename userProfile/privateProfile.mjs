@@ -48,7 +48,7 @@ router.get("/profile", auth0Middleware(), async (req, res) => {
       })
     })
 })
- 
+
 router.get("/projects", auth0Middleware(), async (req, res) => {
   const user = await req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
