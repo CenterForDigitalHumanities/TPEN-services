@@ -11,10 +11,15 @@ export default class ImportProject {
 
   static async fetchManifest(manifestId) {
     // This url does not currently return the expected json object when called programmatically
+    console.log("Fetch Manifest 2")
     const url = `https://t-pen.org/TPEN/project/${manifestId}`
     return fetch(url).then((response) => {
-     
       return response.json()
+    })
+    .catch(err => {
+      console.log("Could not fetch manifest 2")
+      console.error(err)
+      return err
     })
   }
 

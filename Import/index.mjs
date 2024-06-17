@@ -11,9 +11,16 @@ export class ImportProject {
   }
 
   static async fetchManifest(manifestId) {
+    console.log("fetch manifest 1")
     const url = `https://t-pen.org/TPEN/project/${manifestId}`
     return fetch(url).then((response) => {
-      return response.json()
+      let j = response.json()
+      console.log(j)
+      return j
+    }).catch(err => {
+      console.error("Could not fetch manifest 1")
+      console.error(err)
+      return err
     })
   }
 
