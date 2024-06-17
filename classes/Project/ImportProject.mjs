@@ -1,8 +1,6 @@
-import dbDriver from "../../database/driver.mjs"
-import { Page } from "../Page/Page.mjs"
+ import { Page } from "../Page/Page.mjs"
 import Project from "./Project.mjs"
 
-const database = new dbDriver("mongo")
 
 export default class ImportProject {
   constructor(data) {
@@ -10,16 +8,12 @@ export default class ImportProject {
   }
 
   static async fetchManifest(manifestId) {
-    // This url does not currently return the expected json object when called programmatically
-    console.log("Fetch Manifest 2")
-    const url = `https://t-pen.org/TPEN/project/${manifestId}`
+     const url = `https://t-pen.org/TPEN/project/${manifestId}`
     return fetch(url).then((response) => {
       return response.json()
     })
     .catch(err => {
-      console.log("Could not fetch manifest 2")
-      console.error(err)
-      return err
+       return err
     })
   }
 
@@ -38,9 +32,7 @@ export default class ImportProject {
   
     return newProject;
   }
-  
-
-
+ 
   static async processPageFromCanvas(canvases) {
    
    if(!canvases.length) return []
@@ -59,9 +51,7 @@ export default class ImportProject {
       }
       return  pages
   }
-
-
-
+ 
   static async fromManifest(manifestId) {
     return ImportProject.fetchManifest(manifestId)
       .then((manifest) => {
