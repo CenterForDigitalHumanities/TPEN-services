@@ -18,29 +18,22 @@ export default class ImportProject {
     })
   }
 
-  static async processManifest(manifestId) {
-   return ImportProject.fetchManifest(manifestId)
-     .then((manifest) => {
-       let newProject = {}
-       newProject.title = manifest.title
-       newProject.label = manifest.label
-       newProject.metadata = manifest.metadata
-
-       let canvas
-       if (manifest.items) {
-         canvas = manifest?.items
-       } else {
-         canvas = manifest?.sequences?.canvases
-       }
-
-       newProject.pages = ImportProject.processPageFromCanvas(canvas)
-
-       return newProject
-     })
-     .catch((err) => {
-       console.log(err)
-     })
- }
+  static async processManifest(manifest) {
+    let newProject = {}
+    newProject.title = manifest.label
+    newProject.label = manifest.label
+    newProject.metadata = manifest.metadata
+     let canvas;
+    if (manifest.items) {
+      canvas = manifest.items;
+    } else {
+      canvas = manifest?.sequences[0]?.canvases;
+    }
+     newProject.pages = await ImportProject.processPageFromCanvas(canvas);
+  
+    return newProject;
+  }
+  
 
 
   static async processPageFromCanvas(canvases) {
@@ -59,8 +52,7 @@ export default class ImportProject {
       } catch (error) {
       console.log(error)
       }
-
-     return pages
+      return  pages
   }
 
 
@@ -70,8 +62,8 @@ export default class ImportProject {
       .then((manifest) => {
         return ImportProject.processManifest(manifest)
       })
-      .then(async (project) => {
-        const projectObj = new Project()
+      .then(async (project) => { 
+         const projectObj = new Project()
         const savedProject = await projectObj.create(project)
         return savedProject
       })

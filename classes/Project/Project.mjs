@@ -15,8 +15,7 @@ export default class Project {
   }
 
   async create(payload) {
-    // validation checks for all the required elements without which a project cannot be created.
-    console.log(payload)
+    // validation checks for all the required elements without which a project cannot be created. modify validateProjectPayload function to include more elements as they become available (layers,... )
     const validation = validateProjectPayload(payload)
  
     if (!validation.isValid) {
@@ -32,9 +31,8 @@ export default class Project {
         message: "Project created successfully",
         data: result
       }
-    } catch (err) {
-      console.error(err)
-      return {
+    } catch (err) { 
+      throw {
         status: err.status || 500,
         message: err.message || "An error occurred while creating the project"
       }

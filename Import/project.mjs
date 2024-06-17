@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
   const manifestId = "4080"  
   ImportProject.fromManifest(manifestId)
     .then((savedProject) => {
-     res.status(200).json(savedProject)
+     res.status(201).json(savedProject)
     })
     .catch((error) => {
      res.status(error.status??500).json({message:error?.message})
