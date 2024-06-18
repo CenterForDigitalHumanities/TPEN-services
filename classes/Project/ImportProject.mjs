@@ -22,12 +22,7 @@ export default class ImportProject {
     newProject.title = manifest.label
     newProject.label = manifest.label
     newProject.metadata = manifest.metadata
-     let canvas;
-    if (manifest.items) {
-      canvas = manifest.items;
-    } else {
-      canvas = manifest?.sequences[0]?.canvases;
-    }
+     let canvas = manifest.items??manifest?.sequences[0]?.canvases;
      newProject.pages = await ImportProject.processPageFromCanvas(canvas);
   
     return newProject;
