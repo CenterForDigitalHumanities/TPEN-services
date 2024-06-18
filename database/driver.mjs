@@ -118,6 +118,16 @@ class dbDriver {
     }
 
     /**
+     * Get a database record by its ID.
+     * @param id The ID of the record to retrieve.
+     * @collection collection The collection or table to search.
+     * @return JSON of the matched document or standard error object
+     */
+    async getById(id, collection) {
+        return this.controller.getById(id, collection).catch(err => err)
+    }
+
+    /**
      * Reserve a valid ID from the database for use in building a record 
      * without collision.
      * @param seed A seed to base the ID on, depending on the driver.

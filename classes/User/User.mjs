@@ -21,7 +21,13 @@ export class User {
 
   async getUserById() {
     // returns user's public info
-    // find() will be replaced with getById() when the find error in DatabaseController() is fixed
+
+    return this.getSelf()
+    .then((user) => includeOnly(user, "profile", "_id"))
+  }
+
+  async getSelf() {
+    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
 
     if (!this.id) {
       err_out.message =
@@ -30,33 +36,7 @@ export class User {
       throw err_out
     }
 
-    return database
-      .find({
-        _id: this.id,
-        "@type": "User"
-      })
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        const user = resp[0]
-        this.id = user?._id
-        const publicUser = includeOnly(user, "profile", "_id")
-        this.user = publicUser
-        return publicUser
-      })
-      .catch((err) => {
-        throw err
-      })
-  }
-
-  async getSelf() {
-    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
-    return database
-      .find({
-        _id: this.id,
-        "@type": "User"
-      })
+    return database.getById(this.id,"User")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp

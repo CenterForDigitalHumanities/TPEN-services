@@ -27,16 +27,9 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /project with a non-numeric project ID.  The status should be 400 with a message.', async () => {
+  it('Call to /project with a non-hexadecimal project ID.  The status should be 400 with a message.', async () => {
     const res = await request(routeTester)
-      .get('/project/abc')
-      expect(res.statusCode).toBe(400)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project with a partially numeric project ID.  The status should be 400 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/abc123')
+      .get('/project/zzz')
       expect(res.statusCode).toBe(400)
       expect(res.body).toBeTruthy()
   })
@@ -162,5 +155,165 @@ describe('Project endpoint end to end unit test (spinning up the endpoint and us
     const res = await request(routeTester)
       .get('/project/7085?text=lines&view=html')
     expect(res.statusCode).toBe(400)
+  })
+})
+
+describe('Project endpoint end to end unit test to /project/create #end2end_unit', () => {
+  it('GET instead of POST. The status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .get('/project/create')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('PUT instead of POST. The status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .put('/project/create')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('PATCH instead of POST. The status should be 405 with a message.', async () => {
+    const res = await request(routeTester)
+      .patch('/project/create')
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with valid project. The status should be 201', async () => {
+    const project = {
+      created: Date.now(),
+      manifest: 'http://example.com/manifest'
+    }
+    request(routeTester)
+      .post('/project/create')
+      .send(project)
+      .expect(201)
+      .expect('_id', expect.any(String))
+  })
+
+  it('sends request with missing "created" key. The status should be 400', async () => {
+    const project = {
+      creator: 'test',
+      title: 'Test Project',
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-URI "manifest" key. The status should be 400', async () => {
+    const project = {
+      creator: 'test',
+      created: Date.now(),
+      title: 'Test Project',
+      manifest: 'invalid-url',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-string "license" key. The status should be 400', async () => {
+    const project = {
+      created: Date.now(),
+      manifest: 'http://example.com/manifest',
+      license: 123
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-string "title" key. The status should be 400', async () => {
+    const project = {
+      created: Date.now(),
+      manifest: 'http://example.com/manifest',
+      title: 123
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-numeric "created" key. The status should be 400', async () => {
+    const project = {
+      created: 'invalid-date',
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-array "tools" key. The status should be 400', async () => {
+    const project = {
+      tools: 'invalid-tools',
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with "tools" key containing no strings. The status should be 400', async () => {
+    const project = {
+      tools: [1, 2, 3],
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with "tools" key partially containing strings. The status should be 400', async () => {
+    const project = {
+      tools: ['1', 2, 3],
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with non-string "@type" key. The status should be 400', async () => {
+    const project = {
+      "@type": 123,
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('sends request with "@type" set to something other than "Project". The status should be 400', async () => {
+    const project = {
+      "@type": "Manifest",
+      manifest: 'http://example.com/manifest',
+    }
+    const res = await request(routeTester)
+      .post('/project/create')
+      .send(project)
+    expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
   })
 })

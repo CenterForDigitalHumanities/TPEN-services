@@ -1,33 +1,13 @@
 import express from "express"
 import {respondWithError, respondWithJSON} from "../utilities/shared.mjs"
 import {User} from "../classes/User/User.mjs"
-
+import common_cors from '../utilities/common_cors.json' assert {type: 'json'}
 import cors from "cors"
 import auth0Middleware from "../auth/index.mjs"
 
 const router = express.Router()
 router.use(
-  cors({
-    methods: "GET",
-    allowedHeaders: [
-      "Content-Type",
-      "Content-Length",
-      "Allow",
-      "Authorization",
-      "Location",
-      "ETag",
-      "Connection",
-      "Keep-Alive",
-      "Date",
-      "Cache-Control",
-      "Last-Modified",
-      "Link",
-      "X-HTTP-Method-Override"
-    ],
-    exposedHeaders: "*",
-    origin: "*",
-    maxAge: "600"
-  })
+  cors(common_cors)
 )
 
 router.get("/profile", auth0Middleware(), async (req, res) => {
@@ -48,7 +28,7 @@ router.get("/profile", auth0Middleware(), async (req, res) => {
       })
     })
 })
- 
+
 router.get("/projects", auth0Middleware(), async (req, res) => {
   const user = await req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")

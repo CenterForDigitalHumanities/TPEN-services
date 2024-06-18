@@ -1,6 +1,7 @@
 import express from "express"
 import request from "supertest"
 import auth0Middleware from "../index.mjs"
+import { ObjectId } from "mongodb"
 
 process.env.AUDIENCE = "provide audience to test"
 // this test has a had time reading env directly. add
@@ -35,9 +36,9 @@ describe("auth0Middleware #auth_test", () => {
       auth: {
         payload: {
           sub: "user123",
-          roles: ["admin", "user"]
+          roles: ["admin", "user"],
+          "http://store.rerum.io/agent":`test_agent/id/${new ObjectId()}`
         },
-        agent:"test_agent",
 
         token: process.env.TEST_TOKEN,
 
