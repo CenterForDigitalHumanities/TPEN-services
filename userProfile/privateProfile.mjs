@@ -3,35 +3,46 @@ import {respondWithError, respondWithJSON} from "../utilities/shared.mjs"
 import {User} from "../classes/User/User.mjs"
 import common_cors from '../utilities/common_cors.json' assert {type: 'json'}
 import cors from "cors"
+import auth0Middleware from "../auth/index.mjs"
 
 const router = express.Router()
 router.use(
   cors(common_cors)
 )
 
-router.get("/profile", async (req, res) => {
-  const user = await req.user 
-  if (!user) return respondWithError(res, 401, "Unauthorized user") 
+router.get("/profile", auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthorized user")
+
   const userObj = new User(user._id)
-  const userProfile = await userObj.getSelf()
-  res.set("Content-Type", "application/json; charset=utf-8") 
-
-  res.status(200).json(userProfile)
+  userObj
+    .getSelf()
+    .then((userData) => {
+      res.status(200).json(userData)
+    })
+    .catch((error) => {
+      res.status(error.status || error.code || 500).json({
+        error:
+          error.message || "An error occurred while fetching the user data.",
+        status: error.status || "Error"
+      })
+    })
 })
 
-router.get("/projects", async (req, res) => {
-  const {_id} = await req.user 
+router.get("/projects", auth0Middleware(), async (req, res) => {
+  const user = await req.user
+  if (!user) return respondWithError(res, 401, "Unauthorized user")
 
-  if (!_id) return respondWithError(res, 401, "Unauthorized user")
+  try {
+    const userObj = new User(user._id)
+    const userProjects = await userObj.getProjects()
 
-  const userObj = new User(_id) 
-  const userProjects = await userObj.getProjects()
+    res.set("Content-Type", "application/json; charset=utf-8")
 
-  res.set("Content-Type", "application/json; charset=utf-8")
-
-  res.status(200).json(userProjects)
+    res.status(200).json(userProjects)
+  } catch (error) {
+    respondWithError(res, error?.status, error?.message)
+  }
 })
-
- 
 
 export default router

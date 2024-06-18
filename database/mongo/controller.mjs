@@ -212,7 +212,7 @@ class DatabaseController {
      * @param data JSON from an HTTP POST request.  It must contain an id.
      * @return The inserted document JSON or error JSON
      */
-    async update(data) {
+    async update(data) { 
         // Note this may be an alias for save()
         err_out._dbaction = "replaceOne"
         try {
@@ -274,8 +274,14 @@ class DatabaseController {
     /**
      * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s 
      */
-    async getByID(id) {
-        return await this.find({ "_id": id })
+    async getById(id, collection) {
+        const typeMap = {
+            "projects": "Project",
+            "groups": "Group",
+            "users": "User",
+            "userPerferences": "UserPreference"}
+        const type = typeMap[collection] ?? collection
+        return await this.find({ "_id": id, '@type': type })
     }
 
 }

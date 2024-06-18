@@ -20,13 +20,15 @@
    "repository": "github:CenterForDigitalHumanities/rerum_server_nodejs",
    "scripts": {
       "start": "node ./bin/tpen3_services.mjs",
+      "dev": "nodemon ./bin/tpen3_services.mjs",
       "allTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
       "unitTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",
       "E2Etests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
       "existsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",
       "functionsTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t functions_unit ",
       "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t db ",
-      "authTest": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t auth_test "
+      "authTest": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t auth_test ",
+      "userClassTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t user_class "
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",
@@ -47,6 +49,7 @@
       "@jest-mock/express": "^2.0.2",
       "jest": "^29.7.0",
       "jest-esm-transformer": "^1.0.0",
+      "nodemon": "^3.1.2",
       "supertest": "^6.2.2"
    },
    "engines": {
