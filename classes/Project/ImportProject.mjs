@@ -19,8 +19,7 @@ export default class ImportProject {
 
   static async processManifest(manifest) {
     let newProject = {}
-    newProject.title = manifest.label
-    newProject.label = manifest.label
+    newProject.title = manifest.label 
     newProject.metadata = manifest.metadata
   
     newProject["@context"] = "http://t-pen.org/3/context.json"
