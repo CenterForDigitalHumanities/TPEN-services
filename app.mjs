@@ -66,6 +66,7 @@ app.use('/page', pageRouter)
 app.use('/projects', projectsRouter)
 app.use('/user', userProfileRouter)
 app.use('/my',  privateProfileRouter)
+app.use('/test',  testRouter)
 
 //catch 404 because of an invalid site path
 app.use(function(req, res, next) {
