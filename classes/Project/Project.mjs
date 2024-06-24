@@ -25,12 +25,8 @@ export default class Project {
     }
 
     try {
-      const result = await database.save({...payload, "@type": "Project"})
-      return {
-        status: 201,
-        message: "Project created successfully",
-        data: result
-      }
+     return await database.save({...payload, "@type": "Project"})
+    
     } catch (err) { 
       throw {
         status: err.status || 500,
