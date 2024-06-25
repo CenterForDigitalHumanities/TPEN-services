@@ -1,17 +1,65 @@
-import projectsRouter from '../index.mjs'
-import express from 'express'
-import request from 'supertest'
+import projectsRouter from "../index.mjs"
+import express from "express"
+import request from "supertest"
 
 process.env.AUDIENCE = "provide audience to test"
 
 const routeTester = new express()
 routeTester.use("/projects", projectsRouter)
 
-describe.skip('Projects authenticated endpoints end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+import app from "../../app.mjs"
+import {jest} from "@jest/globals"
+import ImportProject from "../../classes/Project/ImportProject.mjs"
 
-  it('Authenticated GET request to /projects/. The status should be 200.', async () => {
+let token = process.env.TEST_TOKEN
+
+describe("POST /import-project/:manifestId #importTests", () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("should import project successfully", async () => {
+    const manifestId = "4050"
+    const mockProject = {
+      status: 201,
+      message: "Project imported successfully",
+      data: {title: "Test Project"}
+    }
+
+    jest.spyOn(ImportProject, "fromManifest").mockResolvedValue(mockProject)
+
+    const response = await request(app)
+      .post(`/projects/import/:${manifestId}`)
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(201)
+    expect(response.body).toEqual(mockProject)
+  })
+
+  it('should return 400 if manifestId is not provided', async () => {
+    const response = await request(app).post('/projects/import/:').set("Authorization", `Bearer ${token}`);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Manifest ID is required for import');
+  });
+
+  it("should handle unknown server errors", async () => {
+    const manifestId = "4050"
+
+    jest
+      .spyOn(ImportProject, "fromManifest")
+      .mockRejectedValue(new Error("Import error"))
+
+    const response = await request(app)
+      .post(`/projects/import/:${manifestId}`)
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(500)
+    expect(response.body.message).toBeTruthy()
+  })
+})
+
+describe.skip("Projects authenticated endpoints end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
+  it("Authenticated GET request to /projects/. The status should be 200.", async () => {
     const res = await request(routeTester)
-      .get('/projects/')
+      .get("/projects/")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -19,81 +67,81 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   })
 
   // Testing various queries
-  it('Authenticated GET to /projects?hasRoles=ALL. The status should be 200. with an array in the body', async () => {
+  it("Authenticated GET to /projects?hasRoles=ALL. The status should be 200. with an array in the body", async () => {
     const res = await request(routeTester)
-      .get('/projects?hasRoles=ALL')
+      .get("/projects?hasRoles=ALL")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?hasRoles=admin. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?hasRoles=admin. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?hasRoles=admin')
+      .get("/projects?hasRoles=admin")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?hasRoles=admin&hasRoles=collaborator. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?hasRoles=admin&hasRoles=collaborator. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?hasRoles=admin&hasRoles=collaborator')
+      .get("/projects?hasRoles=admin&hasRoles=collaborator")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?exceptRoles=NONE. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?exceptRoles=NONE. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?exceptRoles=NONE')
+      .get("/projects?exceptRoles=NONE")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?exceptRoles=admin. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?exceptRoles=admin. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?exceptRoles=admin')
+      .get("/projects?exceptRoles=admin")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?exceptRoles=admin&exceptRoles=collaborator. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?exceptRoles=admin&exceptRoles=collaborator. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?exceptRoles=admin&exceptRoles=collaborator')
+      .get("/projects?exceptRoles=admin&exceptRoles=collaborator")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?createdBefore=NOW. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?createdBefore=NOW. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?createdBefore=NOW')
+      .get("/projects?createdBefore=NOW")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?createdBefore=1755500000000. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?createdBefore=1755500000000. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?createdBefore=1755500000000')
+      .get("/projects?createdBefore=1755500000000")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
-  
-  it('Authenticated GET to /projects?createdBefore=1000. The status should be 200 with an empty array in the body.', async () => {
+
+  it("Authenticated GET to /projects?createdBefore=1000. The status should be 200 with an empty array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?createdBefore=1000')
+      .get("/projects?createdBefore=1000")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -101,62 +149,66 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
     expect(res.body.length).toBe(0)
   })
 
-  it('Authenticated GET to /projects?modifiedBefore=NOW. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?modifiedBefore=NOW. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?modifiedBefore=NOW')
+      .get("/projects?modifiedBefore=NOW")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('Authenticated GET to /projects?modifiedBefore=1755500000000. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?modifiedBefore=1755500000000. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?modifiedBefore=1755500000000')
+      .get("/projects?modifiedBefore=1755500000000")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
-  
-  it('Authenticated GET to /projects?modifiedBefore=1000. The status should be 200 with an empty array in the body.', async () => {
+
+  it("Authenticated GET to /projects?modifiedBefore=1000. The status should be 200 with an empty array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?modifiedBefore=1000')
+      .get("/projects?modifiedBefore=1000")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
     expect(res.body.length).toBe(0)
   })
-  
-  it('Authenticated GET to /projects?createdAfter=1000. The status should be 200 with an array in the body.', async () => {
+
+  it("Authenticated GET to /projects?createdAfter=1000. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?createdAfter=1000')
+      .get("/projects?createdAfter=1000")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
-  
-  it('Authenticated GET to /projects?modifedAfter=1000. The status should be 200 with an array in the body.', async () => {
+
+  it("Authenticated GET to /projects?modifedAfter=1000. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?modifedAfter=1000')
+      .get("/projects?modifedAfter=1000")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
   })
-  
-  it('Authenticated GET to /projects?fields=id&fields=title. The status should be 200 with an array in the body, with each object having only the specified fields.', async () => {
+
+  it("Authenticated GET to /projects?fields=id&fields=title. The status should be 200 with an array in the body, with each object having only the specified fields.", async () => {
     const res = await request(routeTester)
-      .get('/projects?fields=id&fields=title')
+      .get("/projects?fields=id&fields=title")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(Array.isArray(res.body)).toBe(true)
-    expect(res.body.every(project => JSON.stringify(Object.keys(project)) === '["id", "title"]'))
+    expect(
+      res.body.every(
+        (project) => JSON.stringify(Object.keys(project)) === '["id", "title"]'
+      )
+    )
   })
-  
+
   // TODO: reenable once we have fully implemented the fields parameter, and maybe add more tests for it
   /*
   it('Authenticated GET to /projects?fields=id. The status should be 200 with an array in the body, with each object having only the specified fields.', async () => {
@@ -171,9 +223,9 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   */
 
   // TODO: Update test to check for publicity (once query is properly implemented)
-  it('Authenticated GET to /projects?isPublic=true. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?isPublic=true. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?isPublic=true')
+      .get("/projects?isPublic=true")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -181,9 +233,9 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   })
 
   // TODO: Update test to check for publicity (once query is properly implemented)
-  it('Authenticated GET to /projects?isPublic=false. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?isPublic=false. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?isPublic=false')
+      .get("/projects?isPublic=false")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -191,9 +243,9 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   })
 
   // TODO: Update test to check for collaborators (once query is properly implemented)
-  it('Authenticated GET to /projects?hasCollaborators=true. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?hasCollaborators=true. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?hasCollaborators=true')
+      .get("/projects?hasCollaborators=true")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -201,9 +253,9 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   })
 
   // TODO: Update test to check for no collaborators (once query is properly implemented)
-  it('Authenticated GET to /projects?hasCollaborators=false. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?hasCollaborators=false. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?hasCollaborators=false')
+      .get("/projects?hasCollaborators=false")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -211,37 +263,37 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   })
 
   // TODO: add test for `tags` query once implemented
- 
-  it('Authenticated GET to /projects?count=true. The status should be 200 with a number in the body.', async () => {
+
+  it("Authenticated GET to /projects?count=true. The status should be 200 with a number in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?count=true')
+      .get("/projects?count=true")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(parseInt(res.text)).not.toBe(NaN)
   })
 
-  it('Authenticated GET to /projects?count=false. The status should be 200 with an array in the body.', async () => {
+  it("Authenticated GET to /projects?count=false. The status should be 200 with an array in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?count=true')
+      .get("/projects?count=true")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(parseInt(res.text)).not.toBe(NaN)
   })
-   
-  it('Authenticated GET to /projects?createdBefore=1000&count=true. The status should be 200 with 0 in the body.', async () => {
+
+  it("Authenticated GET to /projects?createdBefore=1000&count=true. The status should be 200 with 0 in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?createdBefore=1000&count=true')
+      .get("/projects?createdBefore=1000&count=true")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
     expect(parseInt(res.text)).toBe(0)
   })
-   
-  it('Authenticated GET to /projects?modifiedBefore=1000&count=true. The status should be 200 with 0 in the body.', async () => {
+
+  it("Authenticated GET to /projects?modifiedBefore=1000&count=true. The status should be 200 with 0 in the body.", async () => {
     const res = await request(routeTester)
-      .get('/projects?modifiedBefore=1000&count=true')
+      .get("/projects?modifiedBefore=1000&count=true")
       .auth(process.env.TEST_TOKEN, {type: "bearer"})
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -249,32 +301,27 @@ describe.skip('Projects authenticated endpoints end to end unit test (spinning u
   })
 })
 
-describe('Projects endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
-
-  it('POST instead of GET. That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .post('/projects/')
+describe("Projects endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
+  it("POST instead of GET. That status should be 405 with a message.", async () => {
+    const res = await request(routeTester).post("/projects/")
     expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
-  it('PUT instead of GET. That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .put('/projects/')
+  it("PUT instead of GET. That status should be 405 with a message.", async () => {
+    const res = await request(routeTester).put("/projects/")
     expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
-  it('PATCH instead of GET. That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .patch('/projects/')
+  it("PATCH instead of GET. That status should be 405 with a message.", async () => {
+    const res = await request(routeTester).patch("/projects/")
     expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
-  it('Unauthenticated GET request. The status should be 401 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/projects/')
+  it("Unauthenticated GET request. The status should be 401 with a message.", async () => {
+    const res = await request(routeTester).get("/projects/")
     expect(res.statusCode).toBe(401)
     expect(res.body).toBeTruthy()
   })
