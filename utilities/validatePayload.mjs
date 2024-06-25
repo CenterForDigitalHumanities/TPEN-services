@@ -2,7 +2,7 @@ export function validateProjectPayload(payload) {
   if (!payload) return {isValid:false, errors:"Project cannot be created from an empty object"}
 
   // include other required parameters (layers, ...) as they become known.
-  const requiredElements = [ "metadata", "label", "title"]
+  const requiredElements = [ "metadata", "layers", "title", "manifest", "@context"]
   const missingElements = requiredElements.filter(
     (element) => !payload.hasOwnProperty(element)
   )
