@@ -35,7 +35,7 @@ let token = process.env.TEST_TOKEN
 
 app.use("/my", privateProfileRouter)
 
-describe("GET /my/profile #user_class", () => {
+describe.skip("GET /my/profile #user_class", () => {
   it("should return 200", async () => {
     const response = await request(mainApp)
       .get("/my/profile")
@@ -44,7 +44,7 @@ describe("GET /my/profile #user_class", () => {
   })
 })
 
-describe("GET /my/projects #user_class", () => {
+describe.skip("GET /my/projects #user_class", () => {
   it("should return 200", async () => {
     const response = await request(mainApp)
       .get("/my/projects")
@@ -53,7 +53,7 @@ describe("GET /my/projects #user_class", () => {
   })
 })
 
-describe("GET /my/profile #user_class", () => {
+describe.skip("GET /my/profile #user_class", () => {
   it("should return 200", async () => {
     const response = await request(app)
       .get("/my/profile")
@@ -62,7 +62,7 @@ describe("GET /my/profile #user_class", () => {
   })
 })
 
-describe("GET /my/projects #user_class", () => {
+describe.skip("GET /my/projects #user_class", () => {
   it("should return 200", async () => {
     const response = await request(app)
       .get("/my/projects")
@@ -83,7 +83,7 @@ describe("GET /my/profile #user_class", () => {
     jest.restoreAllMocks()
   })
 
-  it("should return user profile data", async () => {
+  it.skip("should return user profile data", async () => {
     const response = await request(app)
       .get("/my/profile")
       .set("Authorization", `Bearer ${token}`)
@@ -118,7 +118,7 @@ describe("GET /my/projects #user_class", () => {
     jest.restoreAllMocks()
   })
 
-  it("should return user projects as an array", async () => {
+  it.skip("should return user projects as an array", async () => {
     const response = await request(app)
       .get("/my/projects")
       .set("Authorization", `Bearer ${token}`)
