@@ -1,6 +1,10 @@
 import projectRouter from '../index.mjs'
 import express from 'express'
 import request from 'supertest'
+import app from "../../app.mjs"
+import {jest} from "@jest/globals"
+import ImportProject from "../../classes/Project/ImportProject.mjs"
+
 
 const routeTester = new express()
 routeTester.use("/project", projectRouter)
@@ -315,5 +319,50 @@ describe('Project endpoint end to end unit test to /project/create #end2end_unit
       .send(project)
     expect(res.statusCode).toBe(400)
     expect(res.body).toBeTruthy()
+  })
+})
+
+let token = process.env.TEST_TOKEN
+
+describe("GET /import-project/:manifestId #importTests", () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("should import project successfully", async () => {
+    const manifestId = "4050"
+    const mockProject = {
+      status: 201,
+      message: "Project imported successfully",
+      data: {title: "Test Project"}
+    }
+
+    jest.spyOn(ImportProject, "fromManifest").mockResolvedValue(mockProject)
+
+    const response = await request(app)
+      .get(`/project/import/:${manifestId}`)
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(201)
+    expect(response.body).toEqual(mockProject)
+  })
+
+  it('should return 400 if manifestId is not provided', async () => {
+    const response = await request(app).get('/project/import/:').set("Authorization", `Bearer ${token}`);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Manifest ID is required for import');
+  });
+
+  it("should handle unknown server errors", async () => {
+    const manifestId = "4050"
+
+    jest
+      .spyOn(ImportProject, "fromManifest")
+      .mockRejectedValue(new Error("Import error"))
+
+    const response = await request(app)
+      .get(`/project/import/:${manifestId}`)
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(500)
+    expect(response.body.message).toBeTruthy()
   })
 })

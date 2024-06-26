@@ -6,8 +6,7 @@ import cors from "cors"
 import auth0Middleware from "../auth/index.mjs"
 import dotenv from "dotenv"
 import common_cors from "../utilities/common_cors.json" assert {type: "json"}
-import ImportProject from "../classes/Project/ImportProject.mjs"
-dotenv.config()
+ dotenv.config()
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -166,19 +165,5 @@ router
   .all((req, res, next) => {
     utils.respondWithError(res, 405, "Improper request method, please use GET.")
   })
-router.route("/import/:manifestId").post(auth0Middleware(), async (req, res) => {
-  let { manifestId } = req.params;
-  if (manifestId.startsWith(':')) {
-    manifestId = manifestId.slice(1);
-  } 
-  if(!manifestId) return res.status(400).json({message:"Manifest ID is required for import"})
-
  
-  try {
-    const result = await ImportProject.fromManifest(manifestId);
-     res.status(201).json(result);
-  } catch (error) { 
-    res.status(500).json({ status: error.status??500, message:error.message });
-  }
-}) 
 export default router
