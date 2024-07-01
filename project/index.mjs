@@ -320,19 +320,40 @@ router.get("/:id", async (req, res, next) => {
   }
 })
 
-router.route("/import/:manifestId").get(auth0Middleware(), async (req, res) => {
-  let {manifestId} = req.params
-  if (manifestId.startsWith(":")) {
-    manifestId = manifestId.slice(1)
-  }
-  if (!manifestId)
-    return res.status(400).json({message: "Manifest ID is required for import"})
+router.route("/import").post(auth0Middleware(), async (req, res) => {
+   let {createFrom} = req.query
+  createFrom = createFrom?.toLowerCase()
 
-  try {
-    const result = await ImportProject.fromManifest(manifestId)
-    res.status(201).json(result)
-  } catch (error) {
-    res.status(500).json({status: error.status ?? 500, message: error.message})
+  if (!createFrom)
+    return res
+      .status(400)
+      .json({
+        message:
+          "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC' "
+      })
+
+  if (createFrom === "url") {
+    const manifestURL = req.body.url
+
+    if (!manifestURL)
+      return res
+        .status(400)
+        .json({message: "Manifest URL is required for import"})
+
+    try {
+      const result = await ImportProject.fromManifestURL(manifestURL)
+      res.status(201).json(result)
+    } catch (error) {
+      res
+        .status(500)
+        .json({status: error.status ?? 500, message: error.message})
+    }
+  } else {
+    res
+      .status(400)
+      .json({
+        message: `Import from ${createFrom} is not available. Create from URL instead`
+      })
   }
 })
 

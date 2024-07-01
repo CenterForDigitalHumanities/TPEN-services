@@ -6,9 +6,8 @@ export default class ImportProject {
     this.data = data
   }
 
-  static async fetchManifest(manifestId) {
-    const url = `https://t-pen.org/TPEN/project/${manifestId}`
-    return fetch(url)
+  static async fetchManifest(url) {
+     return fetch(url)
       .then((response) => {
         return response.json()
       })
@@ -56,19 +55,15 @@ export default class ImportProject {
     return layers
   }
 
-  static async fromManifest(manifestId) {
+  static async fromManifestURL(manifestId) {
     return ImportProject.fetchManifest(manifestId)
       .then((manifest) => {
         return ImportProject.processManifest(manifest)
       })
       .then(async (project) => {
         const projectObj = new Project()
-        const savedProject = await projectObj.create(project)
-        return {
-          status: 201,
-          message: "Project imported successfully",
-          data: savedProject
-        }
+        return await projectObj.create(project)
+ 
       })
       .catch((err) => {
         console.error("Failed to import project:", err)
