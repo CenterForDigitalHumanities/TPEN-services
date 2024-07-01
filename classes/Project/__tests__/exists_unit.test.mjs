@@ -18,7 +18,7 @@ describe('ImportProject Class #importTests', () => {
   });
 
   it('should have a static fromManifest method', () => {
-    expect(typeof ImportProject.fromManifest).toBe('function');
+    expect(typeof ImportProject.fromManifestURL).toBe('function');
   });
 
  });

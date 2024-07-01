@@ -22,10 +22,10 @@ describe('ImportProject.fetchManifest #importTests', () => {
       json: jest.fn().mockResolvedValue(mockManifest)
     });
 
-    const manifestId = '1';
-    const result = await ImportProject.fetchManifest(manifestId);
+    const manifestURL = 'https://examplemanifest.com/001';
+    const result = await ImportProject.fetchManifest(manifestURL);
 
-    expect(global.fetch).toHaveBeenCalledWith(`https://t-pen.org/TPEN/project/${manifestId}`);
+    expect(global.fetch).toHaveBeenCalledWith(manifestURL);
     expect(result).toEqual(mockManifest);
   });
 });
