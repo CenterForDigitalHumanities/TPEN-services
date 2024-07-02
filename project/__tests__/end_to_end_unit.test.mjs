@@ -4,10 +4,10 @@ import request from "supertest"
 import app from "../../app.mjs"
 import {jest} from "@jest/globals"
 import ImportProject from "../../classes/Project/ImportProject.mjs"
- 
+
 const routeTester = new express()
 routeTester.use("/project", projectRouter)
- describe("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
+describe("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
   it("POST instead of GET.  That status should be 405 with a message.", async () => {
     const res = await request(routeTester).post("/project/")
     expect(res.statusCode).toBe(405)
@@ -319,8 +319,8 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
 
   it("should return 400 if manifest URL is not provided when createFrom=url", async () => {
     const response = await request(app)
-    .post("/project/import?createFrom=url")
-    .set("Authorization", `Bearer ${token}`)
+      .post("/project/import?createFrom=url")
+      .set("Authorization", `Bearer ${token}`)
       .send({})
     expect(response.status).toBe(400)
     expect(response.body.message).toBe("Manifest URL is required for import")
@@ -335,7 +335,8 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
 
     const response = await request(app)
       .post(`/project/import?createFrom=url`)
-      .set("Authorization", `Bearer ${token}`).send({url:manifestURL})
+      .set("Authorization", `Bearer ${token}`)
+      .send({url: manifestURL})
     expect(response.status).toBe(500)
     expect(response.body.message).toBeTruthy()
   })

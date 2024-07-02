@@ -345,7 +345,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       res.status(201).json(result)
     } catch (error) {
       res
-        .status(500)
+        .status(error.status??500)
         .json({status: error.status ?? 500, message: error.message})
     }
   } else {

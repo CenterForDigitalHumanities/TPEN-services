@@ -1,110 +1,109 @@
- import { jest } from '@jest/globals';
-import ImportProject from '../ImportProject.mjs';
+import {jest} from "@jest/globals"
+import ImportProject from "../ImportProject.mjs"
 
-describe('ImportProject.fetchManifest #importTests', () => {
+describe("ImportProject.fetchManifest #importTests", () => {
   beforeEach(() => {
-    global.fetch = jest.fn();
-  });
+    global.fetch = jest.fn()
+  })
 
   afterEach(() => {
-    jest.resetAllMocks();
-  });
+    jest.resetAllMocks()
+  })
 
-  it('should return a manifest object', async () => {
+  it("should return a manifest object", async () => {
     const mockManifest = {
       "@id": "http://example.com/manifest/1",
-      "label": "Example Manifest",
-      "metadata": {},
-      "items": []
-    };
+      label: "Example Manifest",
+      metadata: {},
+      items: []
+    }
 
     global.fetch.mockResolvedValue({
       json: jest.fn().mockResolvedValue(mockManifest)
-    });
+    })
 
-    const manifestURL = 'https://examplemanifest.com/001';
-    const result = await ImportProject.fetchManifest(manifestURL);
+    const manifestURL = "https://examplemanifest.com/001"
+    const result = await ImportProject.fetchManifest(manifestURL)
 
-    expect(global.fetch).toHaveBeenCalledWith(manifestURL);
-    expect(result).toEqual(mockManifest);
-  });
-});
+    expect(global.fetch).toHaveBeenCalledWith(manifestURL)
+    expect(result).toEqual(mockManifest)
+  })
+})
 
-
- 
-describe('ImportProject.processManifest/processLayerFromCanvas #importTests', () => {
-  it('should process the manifest correctly with layers', async () => {
+describe("ImportProject.processManifest/processLayerFromCanvas #importTests", () => {
+  it("should process the manifest correctly with layers", async () => {
     const mockManifest = {
       "@id": "http://example.com/manifest/1",
-      "label": "Example Manifest",
-      "metadata": [{ "label": "Author", "name": "Voo Onoja" }],
-      "items": [
+      label: "Example Manifest",
+      metadata: [{label: "Author", name: "Voo Onoja"}],
+      items: [
         {
           "@id": "http://example.com/canvas/1",
-          "otherContent": [
+          otherContent: [
             {
-              "on": "http://example.com/canvas/1",
-              "resources": [
+              on: "http://example.com/canvas/1",
+              resources: [
                 {
                   "@id": "http://example.com/line/1",
-                  "type": "Line",
-                  "value": "Sample Text"
+                  type: "Line",
+                  value: "Sample Text"
                 }
               ]
             }
           ]
         }
       ]
-    };
+    }
 
-    jest.spyOn(ImportProject, 'processLayerFromCanvas').mockResolvedValue([
+    jest.spyOn(ImportProject, "processLayerFromCanvas").mockResolvedValue([
       {
         "@id": "http://example.com/canvas/1",
         "@type": "Layer",
-        "pages": [
+        pages: [
           {
-            "canvas": "http://example.com/canvas/1",
-            "lines": [
+            canvas: "http://example.com/canvas/1",
+            lines: [
               {
                 "@id": "http://example.com/line/1",
-                "type": "Line",
-                "value": "Sample Text"
+                type: "Line",
+                value: "Sample Text"
               }
             ]
           }
         ]
       }
-    ]);
+    ])
 
     const expectedProject = {
       title: "Example Manifest",
-      metadata: [{ "label": "Author", "name": "Voo Onoja" }],
+      metadata: [{label: "Author", name: "Voo Onoja"}],
       "@context": "http://t-pen.org/3/context.json",
       manifest: "http://example.com/manifest/1",
       layers: [
         {
           "@id": "http://example.com/canvas/1",
           "@type": "Layer",
-          "pages": [
+          pages: [
             {
-              "canvas": "http://example.com/canvas/1",
-              "lines": [
+              canvas: "http://example.com/canvas/1",
+              lines: [
                 {
                   "@id": "http://example.com/line/1",
-                  "type": "Line",
-                  "value": "Sample Text"
+                  type: "Line",
+                  value: "Sample Text"
                 }
               ]
             }
           ]
         }
       ]
-    };
+    }
 
-    const result = await ImportProject.processManifest(mockManifest);
+    const result = await ImportProject.processManifest(mockManifest)
 
-    expect(result).toEqual(expectedProject);
-    expect(ImportProject.processLayerFromCanvas).toHaveBeenCalledWith(mockManifest.items);
-  });
-
-});
+    expect(result).toEqual(expectedProject)
+    expect(ImportProject.processLayerFromCanvas).toHaveBeenCalledWith(
+      mockManifest.items
+    )
+  })
+})
