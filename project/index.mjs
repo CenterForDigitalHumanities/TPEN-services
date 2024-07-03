@@ -6,6 +6,7 @@ import cors from "cors"
 import common_cors from "../utilities/common_cors.json" assert {type: "json"}
 import auth0Middleware from "../auth/index.mjs"
 import ImportProject from "../classes/Project/ImportProject.mjs"
+import validateURL from "../utilities/validateURL.mjs"
 
 const database = new DatabaseDriver("mongo")
 let router = express.Router()
@@ -333,12 +334,20 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       })
 
   if (createFrom === "url") {
-    const manifestURL = req.body.url
+    const manifestURL = req?.body?.url
+    
+    let checkURL = await validateURL(manifestURL)
+    
+    if (!checkURL.valid)  return res
+        .status(checkURL.status)
+        .json({message: checkURL.message}) 
 
-    if (!manifestURL)
-      return res
-        .status(400)
-        .json({message: "Manifest URL is required for import"})
+    // return res.json(validation)
+
+    // if (!manifestURL)
+    //   return res
+    //     .status(400)
+    //     .json({message: "Manifest URL is required for import"})
 
     try {
       const result = await ImportProject.fromManifestURL(manifestURL)

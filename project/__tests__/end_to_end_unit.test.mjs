@@ -317,17 +317,17 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
     )
   })
 
-  it("should return 400 if manifest URL is not provided when createFrom=url", async () => {
+  it("should return 404 if manifest URL is not provided when createFrom=url", async () => {
     const response = await request(app)
       .post("/project/import?createFrom=url")
       .set("Authorization", `Bearer ${token}`)
       .send({})
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(404)
     expect(response.body.message).toBe("Manifest URL is required for import")
   })
 
   it("should handle unknown server errors", async () => {
-    const manifestURL = "https://examplemanifest/001"
+    const manifestURL = "https://t-pen.org/TPEN/project/4080"
 
     jest
       .spyOn(ImportProject, "fromManifestURL")
