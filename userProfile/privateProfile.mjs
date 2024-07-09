@@ -21,11 +21,7 @@ router.get("/profile", auth0Middleware(), async (req, res) => {
       res.status(200).json(userData)
     })
     .catch((error) => {
-      res.status(error.status || error.code || 500).json({
-        error:
-          error.message || "An error occurred while fetching the user data.",
-        status: error.status || "Error"
-      })
+     respondWithError(res, error.status || error.code || 500, error.message?? "An error occurred while fetching the user data.")
     })
 })
 
