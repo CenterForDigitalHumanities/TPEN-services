@@ -1,3 +1,5 @@
+import DatabaseController from "../database/mongo/controller.mjs"
+
 /**
  * Check if the supplied input is valid JSON or not.
  * @param input A string or Object that should be JSON conformant.
@@ -19,20 +21,25 @@ export function isValidJSON(input=""){
  * @param input A string which should be a valid Integer number
  * @return boolean For whether or not the supplied string was a valid Integer number
  */ 
-export function validateID(id){
-   if(!isNaN(id)){
+export function validateID(id, type="mongo"){
+   if(type == "mongo"){
+      return new DatabaseController().isValidId(id)
+   }else{
+      if(!isNaN(id)){
       try{
          id = parseInt(id)
          return true   
       }
       catch(no){}
    } 
-   return false
+   return false 
+   }
+  
 }
 
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message ){
-   res.status(status).send(message)
+   res.status(status).json({message})
 }
 
 // Send a successful response with the appropriate JSON
