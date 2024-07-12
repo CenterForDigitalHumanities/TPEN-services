@@ -67,14 +67,14 @@ export default class ImportProject {
     return layers
   }
 
-  static async fromManifestURL(manifestId) {
+  static async fromManifestURL(manifestId, creator) {
     return ImportProject.fetchManifest(manifestId)
       .then((manifest) => {
         return ImportProject.processManifest(manifest)
       })
       .then(async (project) => {
         const projectObj = new Project()
-        return await projectObj.create(project)
+        return await projectObj.create({...project, creator})
       })
       .catch((err) => {
         err_out.status = err.status??500
