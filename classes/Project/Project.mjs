@@ -1,6 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
 import {User} from "../User/User.mjs"
+import ProjectFactory from "./ProjectFactory.mjs"
 
 let err_out = Object.assign(new Error(), {
   status: 500,
@@ -11,8 +12,7 @@ const database = new dbDriver("mongo")
 
 export default class Project {
   #creator
-  constructor() { 
-  }
+  constructor() {}
 
   /**
    * @param {any} userAgent
@@ -31,7 +31,7 @@ export default class Project {
     }
 
     try {
-      return await database.save({...payload, "@type": "Project"})
+      return database.saveProject(payload, "Project")
     } catch (err) {
       throw {
         status: err.status || 500,

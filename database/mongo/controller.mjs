@@ -176,13 +176,8 @@ class DatabaseController {
     async save(data) {
         err_out._dbaction = "insertOne"
         try {
-            //need to determine what collection (projects, groups, userPerferences) this goes into.
-            const data_type = data["@type"] ?? data.type
-            if (!data_type){
-                err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
-                err_out.status = 400
-                throw err_out
-            }
+            //need to determine what collection (projects, groups, userPerferences) this goes into. 
+            const data_type = this.determineDataType(data) 
             const collection = discernCollectionFromType(data_type)
             if (!collection){
                 err_out.message = `Cannot figure which collection for object of type '${data_type}'`
@@ -282,6 +277,27 @@ class DatabaseController {
             "userPerferences": "UserPreference"}
         const type = typeMap[collection] ?? collection
         return await this.find({ "_id": id, '@type': type })
+    }
+
+
+    async saveProject(data, type) {  
+            this.determineDataType(data, type)   
+            return await this.save(data) 
+        }
+ 
+
+     determineDataType(data, type) {
+        const data_type = data["@type"] ?? data.type ?? type;
+        if (!data_type) {
+            const err_out = {
+                message: `Cannot find 'type' on this data, and so cannot figure out a collection for it.`,
+                status: 400,
+                _dbaction: "insertOne"
+            };
+            throw err_out;
+        }
+        if (!data["@type"] && !data.type) data["@type"] = data_type;
+        return data_type;
     }
 
 }
