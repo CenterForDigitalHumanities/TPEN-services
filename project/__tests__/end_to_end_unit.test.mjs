@@ -3,7 +3,7 @@ import express from "express"
 import request from "supertest"
 import app from "../../app.mjs"
 import {jest} from "@jest/globals"
-import ImportProject from "../../classes/Project/ImportProject.mjs"
+import ProjectFactory from "../../classes/Project/ProjectFactory.mjs"
 
 const routeTester = new express()
 let token = process.env.TEST_TOKEN
@@ -54,7 +54,9 @@ describe("Project endpoint end to end unit test (spinning up the endpoint and us
 
 describe("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
   it("GET instead of POST. The status should be 404 with a message.", async () => {
-    const res = await request(routeTester).get("/project/create") .set("Authorization", `Bearer ${token}`)
+    const res = await request(routeTester)
+      .get("/project/create")
+      .set("Authorization", `Bearer ${token}`)
     expect(res.statusCode).toBe(400)
     expect(res.body).toBeTruthy()
   })
@@ -99,8 +101,6 @@ describe("Project endpoint end to end unit test to /project/create #end2end_unit
   })
 })
 
-
-
 describe("POST /project/import?createFrom=URL #importTests", () => {
   afterEach(() => {
     jest.restoreAllMocks()
@@ -115,7 +115,7 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
       layers: []
     }
 
-    jest.spyOn(ImportProject, "fromManifestURL").mockResolvedValue(mockProject)
+    jest.spyOn(ProjectFactory, "fromManifestURL").mockResolvedValue(mockProject)
 
     const response = await request(app)
       .post(`/project/import?createFrom=URL`)
@@ -123,7 +123,7 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
       .send({url: manifestURL})
     expect(response.status).toBe(201)
     expect(response.body).toEqual(mockProject)
-    expect(ImportProject.fromManifestURL).toHaveBeenCalledWith(manifestURL)
+    expect(ProjectFactory.fromManifestURL).toHaveBeenCalledWith(manifestURL)
   })
 
   it("should return 400 if createFrom is not provided #importTests", async () => {
@@ -150,7 +150,7 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
     const manifestURL = "https://t-pen.org/TPEN/project/4080"
 
     jest
-      .spyOn(ImportProject, "fromManifestURL")
+      .spyOn(ProjectFactory, "fromManifestURL")
       .mockRejectedValue(new Error("Import error"))
 
     const response = await request(app)
