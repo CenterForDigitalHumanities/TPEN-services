@@ -58,11 +58,8 @@ export default class Project {
     }
     return database
       .getById(projectId, "Project")
-      .then((resp) => (resp?.length ? resp[0] : resp))
+      .then((resp) => resp)
   }
 
-  async getProjects() {
-    const userObj = new User(this.id)
-    return await userObj.getProjects()
-  }
+
 }

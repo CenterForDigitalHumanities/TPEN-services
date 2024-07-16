@@ -116,6 +116,9 @@ class dbDriver {
     async find(query) {
         return this.controller.find(query).catch(err => err)
     }
+    async findOne(query) {
+        return this.controller.findOne(query).catch(err => err)
+    }
 
     /**
      * Get a database record by its ID.

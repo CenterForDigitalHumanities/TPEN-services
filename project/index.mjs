@@ -349,15 +349,16 @@ router
     const projectObj = new Project(id)
     projectObj
       .getById(id)
-      .then((userData) => {
-        if (!Object.keys(userData).length) {
+      .then((project) => {
+        console.log(project)
+        if (!project) {
           return respondWithError(
             res,
             200,
             `No TPEN3 project with ID '${id}' found`
           )
         }
-        return res.status(200).json(userData)
+        return res.status(200).json(project)
       })
       .catch((error) => {
         return respondWithError(

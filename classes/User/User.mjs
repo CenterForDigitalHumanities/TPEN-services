@@ -21,9 +21,7 @@ export class User {
 
   async getUserById() {
     // returns user's public info
-
-    return this.getSelf()
-    .then((user) => includeOnly(user, "profile", "_id"))
+    return this.getSelf().then((user) => includeOnly(user, "profile", "_id"))
   }
 
   async getSelf() {
@@ -36,12 +34,13 @@ export class User {
       throw err_out
     }
 
-    return database.getById(this.id,"User")
+    return database
+      .getById(this.id, "User")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
         }
-        return resp[0]
+        return resp
       })
       .catch((err) => {
         throw err
@@ -61,13 +60,15 @@ export class User {
 
     return database
       .update(newRecord)
-      .then((resp) => { 
+      .then((resp) => {
         if (resp instanceof Error) {
           throw resp
         }
         return resp
       })
-      .catch((err) => {throw err})
+      .catch((err) => {
+        throw err
+      })
   }
 
   async getByAgent(agent) {
@@ -78,7 +79,7 @@ export class User {
     }
 
     return database
-      .find({
+      .findOne({
         agent,
         "@type": "User"
       })
@@ -86,11 +87,11 @@ export class User {
         if (resp instanceof Error) {
           throw resp
         }
-        return resp[0]
+        return resp
       })
       .catch((err) => {
         throw err
-      }) 
+      })
   }
 
   async create(data) {
@@ -125,7 +126,6 @@ export class User {
       err_out.status = 404
       throw err_out
     }
- 
 
     return database
       .find({"@type": "Project"})
