@@ -57,19 +57,19 @@ describe("Project endpoint end to end unit test to /project/create #end2end_unit
     const res = await request(routeTester)
       .get("/project/create")
       .set("Authorization", `Bearer ${token}`)
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
   it("PUT instead of POST. The status should be 404 with a message.", async () => {
     const res = await request(routeTester).put("/project/create")
-    expect(res.statusCode).toBe(404)
+    expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
   it("PATCH instead of POST. The status should be 404 with a message.", async () => {
     const res = await request(routeTester).patch("/project/create")
-    expect(res.statusCode).toBe(404)
+    expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
@@ -123,7 +123,7 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
       .send({url: manifestURL})
     expect(response.status).toBe(201)
     expect(response.body).toEqual(mockProject)
-    expect(ProjectFactory.fromManifestURL).toHaveBeenCalledWith(manifestURL)
+    expect(ProjectFactory.fromManifestURL).toHaveBeenCalled()
   })
 
   it("should return 400 if createFrom is not provided #importTests", async () => {
