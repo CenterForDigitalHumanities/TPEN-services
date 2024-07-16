@@ -282,10 +282,12 @@ router.route("/create").post(auth0Middleware(), async (req, res) => {
   } catch (error) {
     respondWithError(
       res,
-      error.status || error.code || 500,
-      error.message || "Unknown server error"
+      error.status ?? error.code ?? 500,
+      error.message ?? "Unknown server error"
     )
   }
+}).all((req, res)=>{
+  respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/import").post(auth0Middleware(), async (req, res) => {
@@ -320,6 +322,8 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       message: `Import from ${createFrom} is not available. Create from URL instead`
     })
   }
+}).all((req, res)=>{
+  respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/:id").get(auth0Middleware(), async (req, res) => {
@@ -354,6 +358,13 @@ router.route("/:id").get(auth0Middleware(), async (req, res) => {
         error.message ?? "An error occurred while fetching the user data."
       )
     })
+}).all((req, res)=>{
+  respondWithError(res, 405, "Improper request method. Use GET instead")
 })
+
+router.all((req, res)=>{
+  respondWithError(res, 405, "Improper request method. Use POST instead")
+})
+
 
 export default router

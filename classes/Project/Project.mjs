@@ -11,10 +11,12 @@ const database = new dbDriver("mongo")
 
 export default class Project {
   #creator
-  constructor(userId) {
-    this.id = userId
+  constructor() { 
   }
 
+  /**
+   * @param {any} userAgent
+   */
   set creator(userAgent) {
     this.#creator = userAgent
   }
