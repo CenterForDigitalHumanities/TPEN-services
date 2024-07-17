@@ -22,6 +22,7 @@ import cors from 'cors'
 import indexRouter from './index.mjs'
 import manifestRouter from './manifest/index.mjs'
 import projectRouter from './project/index.mjs'
+import projectsRouter from './project/projects.mjs'
 import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
  import userProfileRouter from './userProfile/index.mjs'
@@ -58,6 +59,7 @@ app.all('*', (req, res, next) => {
 app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project', projectRouter)
+app.use('/projects', projectsRouter)
 app.use('/line', lineRouter) 
 app.use('/page', pageRouter) 
 app.use('/user', userProfileRouter)

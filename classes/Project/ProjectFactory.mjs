@@ -6,19 +6,20 @@ let err_out = Object.assign(new Error(), {
   message: "Unknown Server error"
 })
 
-export default class ImportProject {
+export default class ProjectFactory {
   constructor(data) {
     this.data = data
   }
 
-  static async fetchManifest(url) {
+  static async fetchManifest(url) { 
     return fetch(url)
       .then((response) => {
         return response.json()
       })
       .catch((err) => {
-        err_out.status = 404
-        err_out.message = "Manifest not found. Please check URL"
+        err_out.status = err.status??404
+        err_out.message = err.message??"Manifest not found. Please check URL" 
+        console.log(err)
         throw err_out
       })
   }
@@ -36,7 +37,7 @@ export default class ImportProject {
     newProject["@context"] = "http://t-pen.org/3/context.json"
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
-    newProject.layers = await ImportProject.processLayerFromCanvas(canvas)
+    newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
 
     return newProject
   }
@@ -67,18 +68,18 @@ export default class ImportProject {
     return layers
   }
 
-  static async fromManifestURL(manifestId) {
-    return ImportProject.fetchManifest(manifestId)
+  static async fromManifestURL(manifestId, creator) {
+    return ProjectFactory.fetchManifest(manifestId)
       .then((manifest) => {
-        return ImportProject.processManifest(manifest)
+        return ProjectFactory.processManifest(manifest)
       })
       .then(async (project) => {
         const projectObj = new Project()
-        return await projectObj.create(project)
+        return await projectObj.create({...project, creator})
       })
       .catch((err) => {
-        err_out.status = err.status??500
-        err_out.message = err.message?? "Internal Server Error"
+        err_out.status = err.status ?? 500
+        err_out.message = err.message ?? "Internal Server Error"
         throw err_out
       })
   }

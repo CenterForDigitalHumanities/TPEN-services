@@ -1,12 +1,14 @@
 import express from "express"
-import * as utils from "../utilities/shared.mjs"
-import * as logic from "./project.mjs"
+import {validateID, respondWithError} from "../utilities/shared.mjs"
+import * as logic from "./projects.mjs"
 import DatabaseDriver from "../database/driver.mjs"
 import cors from "cors"
 import common_cors from "../utilities/common_cors.json" assert {type: "json"}
 import auth0Middleware from "../auth/index.mjs"
-import ImportProject from "../classes/Project/ImportProject.mjs"
+import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
 import validateURL from "../utilities/validateURL.mjs"
+import Project from "../classes/Project/Project.mjs"
+import {User} from "../classes/User/User.mjs"
 
 const database = new DatabaseDriver("mongo")
 let router = express.Router()
@@ -26,7 +28,7 @@ export function respondWithProject(req, res, project) {
   )
   let responseType = null
   if (passedQueries.length > 1) {
-    utils.respondWithError(
+    respondWithError(
       res,
       400,
       "Improper request. Only one response type may be queried."
@@ -79,7 +81,7 @@ export function respondWithProject(req, res, project) {
           ]
           break
         default:
-          utils.respondWithError(
+          respondWithError(
             res,
             400,
             'Improper request.  Parameter "text" must be "blob," "layers," "pages," or "lines."'
@@ -95,7 +97,7 @@ export function respondWithProject(req, res, project) {
           retVal = "https://example.com"
           break
         default:
-          utils.respondWithError(
+          respondWithError(
             res,
             400,
             'Improper request.  Parameter "image" must be "thumbnail."'
@@ -115,7 +117,7 @@ export function respondWithProject(req, res, project) {
           }
           break
         default:
-          utils.respondWithError(
+          respondWithError(
             res,
             400,
             'Improper request.  Parameter "lookup" must be "manifest."'
@@ -138,7 +140,7 @@ export function respondWithProject(req, res, project) {
         case "json":
           break
         default:
-          utils.respondWithError(
+          respondWithError(
             res,
             400,
             'Improper request.  Parameter "view" must be "json," "xml," or "html."'
@@ -181,7 +183,7 @@ async function createNewProject(req, res) {
   // Required keys
   if (project.created) {
     if (Number.isNaN(parseInt(project.created))) {
-      utils.respondWithError(
+      respondWithError(
         res,
         400,
         'Project key "created" must be a date in UNIX time'
@@ -189,12 +191,12 @@ async function createNewProject(req, res) {
       return
     }
   } else {
-    utils.respondWithError(res, 400, 'Project must have key "created"')
+    respondWithError(res, 400, 'Project must have key "created"')
     return
   }
   if (project.license) {
     if (typeof project.license !== "string") {
-      utils.respondWithError(res, 400, 'Project key "license" must be a string')
+      respondWithError(res, 400, 'Project key "license" must be a string')
       return
     }
   } else {
@@ -202,7 +204,7 @@ async function createNewProject(req, res) {
   }
   if (project.title) {
     if (typeof project.title !== "string") {
-      utils.respondWithError(res, 400, 'Project key "title" must be a string')
+      respondWithError(res, 400, 'Project key "title" must be a string')
       return
     }
   } else {
@@ -212,17 +214,17 @@ async function createNewProject(req, res) {
   // Optional keys
   if (project.tools) {
     if (!Array.isArray(project.tools)) {
-      utils.respondWithError(res, 400, 'Project key "tools" must be an array')
+      respondWithError(res, 400, 'Project key "tools" must be an array')
       return
     }
   }
   if (project.tags) {
     if (!Array.isArray(project.tags)) {
-      utils.respondWithError(res, 400, 'Project key "tags" must be an array')
+      respondWithError(res, 400, 'Project key "tags" must be an array')
       return
     }
     if (!project.tags.every((tag) => typeof tag === "string")) {
-      utils.respondWithError(
+      respondWithError(
         res,
         400,
         'Project key "tags" must be an array of strings'
@@ -232,29 +234,21 @@ async function createNewProject(req, res) {
   }
   if (project.manifest) {
     if (typeof project.manifest !== "string") {
-      utils.respondWithError(
-        res,
-        400,
-        'Project key "manifest" must be a string'
-      )
+      respondWithError(res, 400, 'Project key "manifest" must be a string')
       return
     }
     if (!url.canParse(project.manifest)) {
-      utils.respondWithError(
-        res,
-        400,
-        'Project key "manifest" must be a valid URL'
-      )
+      respondWithError(res, 400, 'Project key "manifest" must be a valid URL')
       return
     }
   }
   if (project["@type"]) {
     if (typeof project["@type"] !== "string") {
-      utils.respondWithError(res, 400, 'Project key "@type" must be a string')
+      respondWithError(res, 400, 'Project key "@type" must be a string')
       return
     }
     if (project["@type"] !== "Project") {
-      utils.respondWithError(res, 400, 'Project key "@type" must be "Project"')
+      respondWithError(res, 400, 'Project key "@type" must be "Project"')
       return
     }
   } else {
@@ -267,107 +261,119 @@ async function createNewProject(req, res) {
     res.status(201).json(logicResult)
     return
   } else {
-    utils.respondWithError(res, logicResult.status, logicResult.message)
+    respondWithError(res, logicResult.status, logicResult.message)
     return
   }
 }
 
 router
   .route("/create")
-  .post(async (req, res, next) => {
-    // TODO: Add authentication to this endpoint
-    if (!utils.isValidJSON(req.body)) {
-      utils.respondWithError(res, 400, "Improperly formatted JSON")
-      return
-    }
-    await createNewProject(req, res)
-  })
-  .all((req, res, next) => {
-    utils.respondWithError(
-      res,
-      405,
-      "Improper request method, please use POST."
-    )
-  })
+  .post(auth0Middleware(), async (req, res) => {
+    const user = req.user
 
-router.get("/:id", async (req, res, next) => {
-  let id = req.params.id
-  if (!database.isValidId(id)) {
-    utils.respondWithError(
-      res,
-      400,
-      "The TPEN3 project ID must be a hexadecimal string"
-    )
-    return
-  }
+    if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
 
-  try {
-    const projectObj = await logic.findTheProjectByID(id)
-    if (projectObj) {
-      respondWithProject(req, res, projectObj)
-    } else {
-      utils.respondWithError(
+    const projectObj = new Project(user?._id)
+
+    let project = req.body
+    project = {...project, creator: user?.agent}
+
+    try {
+      const newProject = await projectObj.create(project)
+      res.status(200).json(newProject)
+    } catch (error) {
+      respondWithError(
         res,
-        404,
-        `TPEN3 project "${req.params.id}" does not exist.`
+        error.status ?? error.code ?? 500,
+        error.message ?? "Unknown server error"
       )
     }
-  } catch (err) {
-    utils.respondWithError(
-      res,
-      500,
-      "The TPEN3 server encountered an internal error."
-    )
-  }
-})
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use POST instead")
+  })
 
-router.route("/import").post(auth0Middleware(), async (req, res) => {
-   let {createFrom} = req.query
-  createFrom = createFrom?.toLowerCase()
+router
+  .route("/import")
+  .post(auth0Middleware(), async (req, res) => {
+    let {createFrom} = req.query
+    let user = req.user
+    createFrom = createFrom?.toLowerCase()
 
-  if (!createFrom)
-    return res
-      .status(400)
-      .json({
+    if (!createFrom)
+      return res.status(400).json({
         message:
           "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC' "
       })
 
-  if (createFrom === "url") {
-    const manifestURL = req?.body?.url
-    
-    let checkURL = await validateURL(manifestURL)
-    
-    if (!checkURL.valid)  return res
-        .status(checkURL.status)
-        .json({message: checkURL.message}) 
+    if (createFrom === "url") {
+      const manifestURL = req?.body?.url
 
-    // return res.json(validation)
+      let checkURL = await validateURL(manifestURL)
 
-    // if (!manifestURL)
-    //   return res
-    //     .status(400)
-    //     .json({message: "Manifest URL is required for import"})
+      if (!checkURL.valid)
+        return res.status(checkURL.status).json({message: checkURL.message})
 
-    try {
-      const result = await ImportProject.fromManifestURL(manifestURL)
-      res.status(201).json(result)
-    } catch (error) {
-      res
-        .status(error.status??500)
-        .json({status: error.status ?? 500, message: error.message})
-    }
-  } else {
-    res
-      .status(400)
-      .json({
+      try {
+        const result = await ProjectFactory.fromManifestURL(manifestURL, user?.agent)
+        res.status(201).json(result)
+      } catch (error) {
+        res
+          .status(error.status ?? 500)
+          .json({status: error.status ?? 500, message: error.message})
+      }
+    } else {
+      res.status(400).json({
         message: `Import from ${createFrom} is not available. Create from URL instead`
       })
-  }
-})
+    }
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use POST instead")
+  })
 
-router.all("/", (req, res, next) => {
-  utils.respondWithError(res, 405, "Improper request method, please use GET.")
+router
+  .route("/:id")
+  .get(auth0Middleware(), async (req, res) => {
+    let id = req.params.id
+    if (!id) {
+      return respondWithError(res, 400, "No TPEN3 ID provided")
+    } else if (!validateID(id)) {
+      return respondWithError(
+        res,
+        400,
+        "The TPEN3 project ID provided is invalid"
+      )
+    }
+
+    const projectObj = new Project(id)
+    projectObj
+      .getById(id)
+      .then((project) => {
+        console.log(project)
+        if (!project) {
+          return respondWithError(
+            res,
+            200,
+            `No TPEN3 project with ID '${id}' found`
+          )
+        }
+        return res.status(200).json(project)
+      })
+      .catch((error) => {
+        return respondWithError(
+          res,
+          error.status || error.code || 500,
+          error.message ?? "An error occurred while fetching the user data."
+        )
+      })
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+  })
+
+router.all((req, res) => {
+  respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 export default router

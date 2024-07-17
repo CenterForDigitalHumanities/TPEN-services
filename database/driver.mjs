@@ -116,6 +116,9 @@ class dbDriver {
     async find(query) {
         return this.controller.find(query).catch(err => err)
     }
+    async findOne(query) {
+        return this.controller.findOne(query).catch(err => err)
+    }
 
     /**
      * Get a database record by its ID.
@@ -125,6 +128,16 @@ class dbDriver {
      */
     async getById(id, collection) {
         return this.controller.getById(id, collection).catch(err => err)
+    }
+    /**
+     * 
+     * @param {*} payload body of project to be saved
+     * @param {*} collection collection of table
+     * @returns 
+     */
+
+    async saveProject(payload, collection) {
+        return this.controller.saveProject(payload, collection).catch(err => err)
     }
 
     /**
