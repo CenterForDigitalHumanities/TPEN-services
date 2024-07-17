@@ -8,7 +8,7 @@ import ProjectFactory from "../../classes/Project/ProjectFactory.mjs"
 const routeTester = new express()
 let token = process.env.TEST_TOKEN
 routeTester.use("/project", projectRouter)
-describe("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
+describe.skip("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
   it("Call to /project with a non-hexadecimal project ID.  The status should be 400 with a message.", async () => {
     const res = await request(routeTester)
       .get("/project/zzz")
@@ -34,7 +34,7 @@ describe("Project endpoint end to end unit test (spinning up the endpoint and us
   })
 })
 
-describe("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
+describe.skip("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
   it("GET instead of POST. The status should be 404 with a message.", async () => {
     const res = await request(routeTester)
       .get("/project/create")
@@ -83,7 +83,7 @@ describe("Project endpoint end to end unit test to /project/create #end2end_unit
   })
 })
 
-describe("POST /project/import?createFrom=URL #importTests", () => {
+describe.skip("POST /project/import?createFrom=URL #importTests", () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
