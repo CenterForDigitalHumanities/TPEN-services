@@ -22,7 +22,7 @@ router.route("/:id?").get(async (req, res) => {
     .getUserById()
     .then((userData) => {
       if(!Object.keys(userData).length){
-        return respondWithError(res, 200, `No TPEN3 user with ID '${id}' found`)
+        return respondWithError(res, 404, `No TPEN3 user with ID '${id}' found`)
       }
       res.status(200).json(userData)
     })
