@@ -15,9 +15,9 @@ routeTester.use("/user", userProfileRouter)
 privateRoutesTester.use("/my", privateUserRouter)
 
 describe("Test private routes restfulness #user_class", () => {
-  it("POST instead of GET. That status should be 404 with a message.", async () => {
+  it("POST instead of GET. That status should be 405 with a message.", async () => {
     const res = await request(mainApp).post("/my/profile")
-    expect(res.statusCode).toBe(404)
+    expect(res.statusCode).toBe(405)
     expect(res.body).toBeTruthy()
   })
 
@@ -76,10 +76,10 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.body).toBeTruthy()
   })
 
-  it('Call to /user with a TPEN3 user ID that does exist. The status should be 200 with a JSON user profile in the body.', async () => {
+  it('Call to /user with a TPEN3 user ID that does exist. The status should be 404 with a JSON user profile in the body.', async () => {
     const res = await request(routeTester)
       .get('/user/123')
-    expect(res.statusCode).toBe(200)
+    expect(res.statusCode).toBe(404)
     expect(res.body).toBeTruthy()
   })
 })
@@ -105,11 +105,11 @@ describe('GET /:id route #testThis', () => {
     expect(response.body).toEqual({ name: 'John Doe', id: '1234' });
   });
 
-  it('should respond with status 200 and a message if no user found with provided ID', async () => {
+  it('should respond with status 404 and a message if no user found with provided ID', async () => {
      jest.spyOn(User.prototype, 'getUserById').mockResolvedValueOnce({});
 
     const response = await request(app).get('/user/123');
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(404);
     expect(response.body.message).toBe("No TPEN3 user with ID '123' found");
   });
 

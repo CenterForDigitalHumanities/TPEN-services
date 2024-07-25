@@ -23,7 +23,7 @@ router
 
     if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
 
-    const projectObj = new Project(user?._id)
+    const projectObj = new Project()
 
     let project = req.body
     project = {...project, creator: user?.agent}
@@ -36,6 +36,7 @@ router
     } catch (error) {
       respondWithError(
         res,
+
         error.status ?? error.code ?? 500,
         error.message ?? "Unknown server error"
       )

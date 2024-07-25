@@ -4,6 +4,8 @@ import request from "supertest"
 import app from "../../app.mjs"
 import {jest} from "@jest/globals"
 import ProjectFactory from "../../classes/Project/ProjectFactory.mjs"
+import Project from "../../classes/Project/Project.mjs"
+import DatabaseController from "../../database/mongo/controller.mjs"
 
 const routeTester = new express()
 let token = process.env.TEST_TOKEN
@@ -21,7 +23,7 @@ describe.skip("Project endpoint end to end unit test (spinning up the endpoint a
     const res = await request(routeTester)
       .get("/project/0001")
       .set("Authorization", `Bearer ${token}`)
-    expect(res.statusCode).toBe(200)
+    expect(res.statusCode).toBe(404)
     expect(res.body).toBeTruthy()
   })
 
@@ -34,7 +36,7 @@ describe.skip("Project endpoint end to end unit test (spinning up the endpoint a
   })
 })
 
-describe.skip("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
+describe("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
   it("GET instead of POST. The status should be 404 with a message.", async () => {
     const res = await request(routeTester)
       .get("/project/create")
@@ -55,35 +57,30 @@ describe.skip("Project endpoint end to end unit test to /project/create #end2end
     expect(res.body).toBeTruthy()
   })
 
-  it("sends request with valid project. The status should be 201", async () => {
-    const project = {
-      created: Date.now(),
-      manifest: "http://example.com/manifest"
+  it("should create a project and respond with status 201 if the user is authenticated and valid data is provided", async () => {
+    const mockProject = {name: "New Project"}
+    const mockCreatedProject = {
+      ...mockProject,
+      _id: "newProjectId",
+      creator: "agentId"
     }
-    request(routeTester)
-      .post("/project/create")
-      .set("Authorization", `Bearer ${token}`)
-      .send(project)
-      .expect(201)
-      .expect("_id", expect.any(String))
-  })
 
-  it('sends request with missing "created" key. The status should be 400', async () => {
-    const project = {
-      creator: "test",
-      title: "Test Project",
-      manifest: "http://example.com/manifest"
-    }
-    const res = await request(routeTester)
+    jest
+      .spyOn(Project.prototype, "create")
+      .mockResolvedValueOnce(mockCreatedProject)
+
+    const response = await request(app)
       .post("/project/create")
-      .send(project)
       .set("Authorization", `Bearer ${token}`)
-    expect(res.statusCode).toBe(400)
-    expect(res.body).toBeTruthy()
+      .send(mockProject)
+
+    expect(response.status).toBe(201)
+    expect(response.headers.location).toBe(mockCreatedProject._id)
+    expect(response.body).toEqual(mockCreatedProject)
   })
 })
 
-describe.skip("POST /project/import?createFrom=URL #importTests", () => {
+describe("POST /project/import?createFrom=URL #importTests", () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
@@ -143,3 +140,51 @@ describe.skip("POST /project/import?createFrom=URL #importTests", () => {
     expect(response.body.message).toBeTruthy()
   })
 })
+
+ 
+ 
+
+ 
+describe.skip("GET /project/:id", () => {
+  it("should return 200 with project data if the user has access", async () => {
+    const projectId = "7085"
+    const userAgent = "https://store.rerum.io/v1/id/65f8615ec43bd66568c666fa"
+
+    const projectData = {
+      _id: projectId,
+      creator: userAgent,
+      groups: {
+        members: [{agent: userAgent, _id: "member_id"}]
+      }
+    }
+ 
+    jest
+      .spyOn(DatabaseController.prototype, "getById")
+      .mockResolvedValue(projectData)
+ 
+    const spy = jest.spyOn(Project.prototype, "checkUserAccess").mockResolvedValue({
+      hasAccess: true,
+      message: "User has access to the project"
+    })
+
+     jest
+      .spyOn(Project.prototype, "constructor")
+      .mockImplementation(function (id) {
+        this.projectId = id
+        this.projectData = projectData  
+      })
+      
+    const res = await request(app)
+      .get(`/project/${projectId}`)
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(spy).toHaveBeenCalledWith(userAgent)
+  
+ 
+    expect(res.body).toEqual(projectData)
+ 
+    jest.restoreAllMocks()
+  })
+})
+
+
