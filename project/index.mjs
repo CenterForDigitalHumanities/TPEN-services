@@ -1,7 +1,6 @@
 import express from "express"
 import {validateID, respondWithError} from "../utilities/shared.mjs"
-import * as logic from "./projects.mjs"
-import DatabaseDriver from "../database/driver.mjs"
+ import DatabaseDriver from "../database/driver.mjs"
 import cors from "cors"
 import common_cors from "../utilities/common_cors.json" assert {type: "json"}
 import auth0Middleware from "../auth/index.mjs"
