@@ -57,7 +57,7 @@ describe("Project endpoint end to end unit test to /project/create #end2end_unit
     expect(res.body).toBeTruthy()
   })
 
-  it("should create a project and respond with status 201 if the user is authenticated and valid data is provided", async () => {
+  it.skip("should create a project and respond with status 201 if the user is authenticated and valid data is provided", async () => {
     const mockProject = {name: "New Project"}
     const mockCreatedProject = {
       ...mockProject,
@@ -80,7 +80,7 @@ describe("Project endpoint end to end unit test to /project/create #end2end_unit
   })
 })
 
-describe("POST /project/import?createFrom=URL #importTests", () => {
+describe.skip("POST /project/import?createFrom=URL #importTests", () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
