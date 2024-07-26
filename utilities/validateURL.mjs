@@ -32,7 +32,7 @@ async function validateURL(url) {
 
     const data = await response.json()
 
-    let dataType = data["@type"] 
+    let dataType = data["@type"] ?? data.type
 
     if (dataType !== "sc:Manifest" && dataType !== "Manifest") {
       return {

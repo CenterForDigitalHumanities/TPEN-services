@@ -1,7 +1,7 @@
 import {jest} from "@jest/globals"
 import ProjectFactory from "../ProjectFactory.mjs"
 
-describe("ProjectFactory.fetchManifest #importTests", () => {
+describe("ProjectFactory.loadManifest #importTests", () => {
   beforeEach(() => {
     global.fetch = jest.fn()
   })
@@ -23,14 +23,14 @@ describe("ProjectFactory.fetchManifest #importTests", () => {
     })
 
     const manifestURL = "https://examplemanifest.com/001"
-    const result = await ProjectFactory.fetchManifest(manifestURL)
+    const result = await ProjectFactory.loadManifest(manifestURL)
 
     expect(global.fetch).toHaveBeenCalledWith(manifestURL)
     expect(result).toEqual(mockManifest)
   })
 })
 
-describe("ProjectFactory.processManifest/processLayerFromCanvas #importTests", () => {
+describe("ProjectFactory.DBObjectFromManifest/processLayerFromCanvas #importTests", () => {
   it("should process the manifest correctly with layers", async () => {
     const mockManifest = {
       "@id": "http://example.com/manifest/1",
@@ -76,6 +76,7 @@ describe("ProjectFactory.processManifest/processLayerFromCanvas #importTests", (
 
     const expectedProject = {
       title: "Example Manifest",
+      "@type":"Project",
       metadata: [{label: "Author", name: "Voo Onoja"}],
       "@context": "http://t-pen.org/3/context.json",
       manifest: "http://example.com/manifest/1",
@@ -99,7 +100,7 @@ describe("ProjectFactory.processManifest/processLayerFromCanvas #importTests", (
       ]
     }
 
-    const result = await ProjectFactory.processManifest(mockManifest)
+    const result = await ProjectFactory.DBObjectFromManifest(mockManifest)
 
     expect(result).toEqual(expectedProject)
     expect(ProjectFactory.processLayerFromCanvas).toHaveBeenCalledWith(

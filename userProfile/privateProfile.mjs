@@ -14,9 +14,9 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
 
-  const userObj = new User(user._id)
+  const userObj = new User()
   userObj
-    .getSelf()
+    .getSelf(user._id)
     .then((userData) => {
       res.status(200).json(userData)
     })

@@ -17,22 +17,26 @@ router.route("/:id?").get(async (req, res) => {
   if (!validateID(id)) {
     return respondWithError(res, 400, "The TPEN3 user ID is invalid")
   }
-  const userObj = new User(id)
-  userObj
-    .getUserById()
-    .then((userData) => {
-      if(!Object.keys(userData).length){
-        return respondWithError(res, 404, `No TPEN3 user with ID '${id}' found`)
-      }
-      res.status(200).json(userData)
-    })
-    .catch((error) => {
-      respondWithError(
-        res,
-        error.status || error.code || 500,
-        error.message ?? "An error occurred while fetching the user data."
-      )
-    })
+
+ ( async ()=>{
+
+ try {
+  const userObj = await new User(id)
+  const publicUserInfo =  userObj.userData 
+  if(publicUserInfo){
+    res.status(200).json(publicUserInfo)
+  }else{
+    return respondWithError(res, 404, `No TPEN3 user with ID '${id}' found`)
+  }
+ } catch (error) {
+  respondWithError(
+    res,
+    error.status || error.code || 500,
+    error.message ?? "An error occurred while fetching the user data."
+  )
+ }
+
+  })() 
 })
 
 export default router

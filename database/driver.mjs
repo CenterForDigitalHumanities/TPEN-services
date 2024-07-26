@@ -129,16 +129,6 @@ class dbDriver {
     async getById(id, collection) {
         return this.controller.getById(id, collection).catch(err => err)
     }
-    /**
-     * 
-     * @param {*} payload body of project to be saved
-     * @param {*} collection collection of table
-     * @returns 
-     */
-
-    async saveProject(payload, collection) {
-        return this.controller.saveProject(payload, collection).catch(err => err)
-    }
 
     /**
      * Reserve a valid ID from the database for use in building a record 

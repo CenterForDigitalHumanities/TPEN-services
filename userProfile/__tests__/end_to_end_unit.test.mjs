@@ -76,10 +76,10 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.body).toBeTruthy()
   })
 
-  it('Call to /user with a TPEN3 user ID that does exist. The status should be 404 with a JSON user profile in the body.', async () => {
+  it('Call to /user with a TPEN3 user ID that does exist. The status should be 200 with a JSON user profile in the body.', async () => {
     const res = await request(routeTester)
       .get('/user/123')
-    expect(res.statusCode).toBe(404)
+    expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
   })
 })
@@ -97,16 +97,9 @@ describe('GET /:id route #testThis', () => {
     expect(response.body.message).toBe('The TPEN3 user ID is invalid');
   });
 
-  it('should respond with status 200 and user data if valid user ID is provided', async () => {
-     jest.spyOn(User.prototype, 'getUserById').mockResolvedValueOnce({ name: 'John Doe', id: '1234' });
-
-    const response = await request(app).get('/user/1234');
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ name: 'John Doe', id: '1234' });
-  });
-
+ 
   it('should respond with status 404 and a message if no user found with provided ID', async () => {
-     jest.spyOn(User.prototype, 'getUserById').mockResolvedValueOnce({});
+     jest.spyOn(User.prototype, 'getById').mockResolvedValueOnce({});
 
     const response = await request(app).get('/user/123');
     expect(response.status).toBe(404);

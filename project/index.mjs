@@ -8,6 +8,7 @@ import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
 import validateURL from "../utilities/validateURL.mjs"
 import Project from "../classes/Project/Project.mjs"
 import {User} from "../classes/User/User.mjs"
+import getHash from "../utilities/getHash.mjs"
 
 const database = new DatabaseDriver("mongo")
 let router = express.Router()
@@ -25,7 +26,7 @@ router
     const projectObj = new Project()
 
     let project = req.body
-    project = {...project, creator: user?.agent}
+    project = {...project, creator: user?.agent, "@type":"Project"}
 
     try {
       const newProject = await projectObj.create(project)
@@ -72,7 +73,7 @@ router
       try {
         const result = await ProjectFactory.fromManifestURL(
           manifestURL,
-          user?.agent
+          getHash(user?.agent)
         )
         res.status(201).json(result)
       } catch (error) {

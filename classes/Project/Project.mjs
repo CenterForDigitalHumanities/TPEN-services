@@ -1,21 +1,12 @@
 import dbDriver from "../../database/driver.mjs"
 import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
-import {User} from "../User/User.mjs"
-import ProjectFactory from "./ProjectFactory.mjs"
-
-let err_out = Object.assign(new Error(), {
-  status: 500,
-  message: "Unknown Server error"
-})
-
+ 
 const database = new dbDriver("mongo")
 
-export default class Project {
-  #creator
+export default class Project { 
   constructor(projectId) {
     this.projectId = projectId
-    this.projectData = null
-
+    this.projectData = null 
     if (projectId) {
       return (async () => {
         await this.#getById(projectId)
@@ -27,21 +18,17 @@ export default class Project {
   /**
    * @param {any} userAgent
    */
-  set creator(userAgent) {
-    this.#creator = userAgent
-  }
+
   async create(payload) {
     // validation checks for all the required elements without which a project cannot be created. modify validateProjectPayload function to include more elements as they become available (layers,... )
     const validation = validateProjectPayload(payload)
 
     if (!validation.isValid) {
-      err_out.status = 400
-      err_out.message = validation.errors
-      throw err_out
+      throw {status: 400, message: validation.errors}
     }
 
     try {
-      return database.saveProject(payload, "Project")
+      return database.save(payload)
     } catch (err) {
       throw {
         status: err.status || 500,
@@ -52,26 +39,12 @@ export default class Project {
 
   async delete(projectId) {
     if (!projectId) {
-      err_out.message = "Project ID is required"
-      err_out.status = 400
-      throw err_out
+      throw {status: 400, message: "Project ID is required"}
     }
 
     return database.remove(projectId)
   }
-
-  async #getById(projectId) {
-    if (!projectId) {
-      err_out.message = "Project ID is required"
-      err_out.status = 400
-      throw err_out
-    }
-    return database.getById(projectId, "Project").then((resp) => {
-      this.projectData = resp
-    })
-  }
-
-
+ 
  checkUserAccess(userAgent) {
   if (!this.projectData) {
     return {
@@ -115,4 +88,13 @@ export default class Project {
     message: "User has no access to this project.",
   };
 }
+async #getById(projectId) {
+  if (!projectId) {
+    throw {status: 400, message: "Project ID is required"}
+  }
+  return database.getById(projectId, "Project").then((resp) => {
+    this.projectData = resp
+  })
+}
+
 }

@@ -319,11 +319,6 @@ class DatabaseController {
     return await this.findOne({_id: id, "@type": type})
   }
 
-  async saveProject(data, type) {
-    data["@type"] = type ?? this.determineDataType(data, type)
-    return await this.save(data)
-  }
-
   determineDataType(data) {
     const data_type = data["@type"] ?? data.type
     if (!data_type) {

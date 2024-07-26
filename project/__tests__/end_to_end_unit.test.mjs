@@ -89,6 +89,7 @@ describe("POST /project/import?createFrom=URL #importTests", () => {
     const manifestURL = "https://t-pen.org/TPEN/project/4080"
     const mockProject = {
       title: "Test Project",
+      "@type": "@Project",
       metadata: [{label: "title", value: "Lorem Ipsum"}],
       " @context": "http://t-pen.org/3/context.json",
       layers: []
