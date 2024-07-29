@@ -10,7 +10,7 @@ import DatabaseController from "../../database/mongo/controller.mjs"
 const routeTester = new express()
 let token = process.env.TEST_TOKEN
 routeTester.use("/project", projectRouter)
-describe.skip("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit", () => {
+describe.skip("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit #projectTest", () => {
   it("Call to /project with a non-hexadecimal project ID.  The status should be 400 with a message.", async () => {
     const res = await request(routeTester)
       .get("/project/zzz")
@@ -29,7 +29,7 @@ describe.skip("Project endpoint end to end unit test (spinning up the endpoint a
 
   it("Call to /project with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Project in the body.", async () => {
     const res = await request(routeTester)
-      .get("/project/7085")
+      .get("/project/6602dd2314cd575343f513ba")
       .set("Authorization", `Bearer ${token}`)
     expect(res.statusCode).toBe(200)
     expect(res.body).toBeTruthy()
@@ -143,49 +143,5 @@ describe.skip("POST /project/import?createFrom=URL #importTests", () => {
 })
 
  
- 
-
- 
-describe.skip("GET /project/:id", () => {
-  it("should return 200 with project data if the user has access", async () => {
-    const projectId = "7085"
-    const userAgent = "https://store.rerum.io/v1/id/65f8615ec43bd66568c666fa"
-
-    const projectData = {
-      _id: projectId,
-      creator: userAgent,
-      groups: {
-        members: [{agent: userAgent, _id: "member_id"}]
-      }
-    }
- 
-    jest
-      .spyOn(DatabaseController.prototype, "getById")
-      .mockResolvedValue(projectData)
- 
-    const spy = jest.spyOn(Project.prototype, "checkUserAccess").mockResolvedValue({
-      hasAccess: true,
-      message: "User has access to the project"
-    })
-
-     jest
-      .spyOn(Project.prototype, "constructor")
-      .mockImplementation(function (id) {
-        this.projectId = id
-        this.projectData = projectData  
-      })
-      
-    const res = await request(app)
-      .get(`/project/${projectId}`)
-      .set("Authorization", `Bearer ${token}`)
-
-    expect(spy).toHaveBeenCalledWith(userAgent)
-  
- 
-    expect(res.body).toEqual(projectData)
- 
-    jest.restoreAllMocks()
-  })
-})
 
 
