@@ -32,8 +32,15 @@ async function validateURL(url) {
 
     const data = await response.json()
 
-    if (data["@type"] !== "sc:Manifest") {
-      return {valid: false, message: "@type is not manifest", status: 422}
+    let dataType = data["@type"] ?? data.type
+
+    if (dataType !== "sc:Manifest" && dataType !== "Manifest") {
+      return {
+        valid: false,
+        message: `Could not determine type of payload from ${url}`,
+        resolvedPayload: data,
+        status: 422
+      }
     }
 
     return {valid: true}

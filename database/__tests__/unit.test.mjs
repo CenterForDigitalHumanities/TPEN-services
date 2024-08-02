@@ -7,34 +7,34 @@
  */
 
 import DatabaseDriver from "../driver.mjs"
-const timeOut = process.env.DB_TEST_TIMEOUT ?? 6500
+const TIME_OUT = process.env.DB_TEST_TIMEOUT ?? 6500
 
-describe('Driver CRUD and query is registered.  #driver_unit #db',()=>{
-    const d = new DatabaseDriver()
-    it('create', async () => {
-        expect(typeof d.save).toBe("function")
-    })
-    it('update', async () => {
-        expect(typeof d.update).toBe("function")
-    })
-    it('delete', async () => {
-        expect(typeof d.delete).toBe("function")
-    })
-    it('find', async () => {
-        expect(typeof d.find).toBe("function")
-    })
-    it('choose controller', async () => {
-        expect(typeof d.chooseController).toBe("function")
-    })
-    it('connected', async () => {
-        expect(typeof d.connected).toBe("function")
-    })
-    it('close', async () => {
-        expect(typeof d.close).toBe("function")
-    })
-    it('reserveId', async () => {
-        expect(typeof d.reserveId).toBe("function")
-    })
+describe("Driver CRUD and query is registered.  #driver_unit #db", () => {
+  const d = new DatabaseDriver()
+  it("create", async () => {
+    expect(typeof d.save).toBe("function")
+  })
+  it("update", async () => {
+    expect(typeof d.update).toBe("function")
+  })
+  it("delete", async () => {
+    expect(typeof d.delete).toBe("function")
+  })
+  it("find", async () => {
+    expect(typeof d.find).toBe("function")
+  })
+  it("choose controller", async () => {
+    expect(typeof d.chooseController).toBe("function")
+  })
+  it("connected", async () => {
+    expect(typeof d.connected).toBe("function")
+  })
+  it("close", async () => {
+    expect(typeof d.close).toBe("function")
+  })
+  it("reserveId", async () => {
+    expect(typeof d.reserveId).toBe("function")
+  })
 })
 
 describe("Can connect to all registered controllers.  #driver_unit #db", () => {
@@ -45,7 +45,7 @@ describe("Can connect to all registered controllers.  #driver_unit #db", () => {
       await d.chooseController("tiny")
       expect(await d.connected()).toBe(true)
     },
-    timeOut
+    TIME_OUT
   )
   it(
     "Mongo Connection",
@@ -54,7 +54,7 @@ describe("Can connect to all registered controllers.  #driver_unit #db", () => {
       await d.chooseController("mongo")
       expect(await d.connected()).toBe(true)
     },
-    timeOut
+    TIME_OUT
   )
   it("Maria Connection Stub", async () => {
     expect(true).toBeTruthy()
@@ -68,7 +68,7 @@ describe("Can connect to all registered controllers with applied parameter.  #dr
       const d = new DatabaseDriver("tiny")
       expect(await d.connected()).toBe(true)
     },
-    timeOut
+    TIME_OUT
   )
   it(
     "Mongo Connection Parameter",
@@ -76,7 +76,7 @@ describe("Can connect to all registered controllers with applied parameter.  #dr
       const d = new DatabaseDriver("mongo")
       expect(await d.connected()).toBe(true)
     },
-    timeOut
+    TIME_OUT
   )
   it("Maria Connection Parameter Stub", async () => {
     expect(true).toBeTruthy()

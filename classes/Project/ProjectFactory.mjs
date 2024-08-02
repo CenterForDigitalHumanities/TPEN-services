@@ -1,39 +1,38 @@
-import {Page} from "../Page/Page.mjs"
 import Project from "./Project.mjs"
-
-let err_out = Object.assign(new Error(), {
-  status: 500,
-  message: "Unknown Server error"
-})
 
 export default class ProjectFactory {
   constructor(data) {
     this.data = data
   }
 
-  static async fetchManifest(url) { 
+  static async loadManifest(url) {
     return fetch(url)
       .then((response) => {
         return response.json()
       })
       .catch((err) => {
-        err_out.status = err.status??404
-        err_out.message = err.message??"Manifest not found. Please check URL" 
-        console.log(err)
-        throw err_out
+        throw {
+          status: err.status ?? 404,
+          message: err.message ?? "Manifest not found. Please check URL"
+        }
       })
   }
-
-  static async processManifest(manifest) {
+/**
+ * processes a manifest object into a project object that can be saved into the Project tablein the DB
+ * @param {*} manifest : The manifest object to be processed
+ * @returns object of project data
+ */
+  static async DBObjectFromManifest(manifest) {
     if (!manifest) {
-      err_out.status = 404
-      err_out.message = "No manifest found. Cannot process empty object"
-      throw err_out
+      throw {
+        status: 404,
+        message: err.message ?? "No manifest found. Cannot process empty object"
+      }
     }
     let newProject = {}
+    newProject["@type"] = "Project"
     newProject.title = manifest.label
-    newProject.metadata = manifest.metadata
-
+    newProject.metadata = manifest.metadata 
     newProject["@context"] = "http://t-pen.org/3/context.json"
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
@@ -69,18 +68,19 @@ export default class ProjectFactory {
   }
 
   static async fromManifestURL(manifestId, creator) {
-    return ProjectFactory.fetchManifest(manifestId)
+    return ProjectFactory.loadManifest(manifestId)
       .then((manifest) => {
-        return ProjectFactory.processManifest(manifest)
+        return ProjectFactory.DBObjectFromManifest(manifest)
       })
       .then(async (project) => {
         const projectObj = new Project()
         return await projectObj.create({...project, creator})
       })
       .catch((err) => {
-        err_out.status = err.status ?? 500
-        err_out.message = err.message ?? "Internal Server Error"
-        throw err_out
+        throw {
+          status: err.status ?? 500,
+          message: err.message ?? "Internal Server Error"
+        }
       })
   }
 }

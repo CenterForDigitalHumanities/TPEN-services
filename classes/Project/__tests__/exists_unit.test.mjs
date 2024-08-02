@@ -5,12 +5,12 @@ describe("ProjectFactory Class #importTests", () => {
     expect(ProjectFactory.prototype.constructor).toBeInstanceOf(Function)
   })
 
-  it("should have a static fetchManifest method", () => {
-    expect(typeof ProjectFactory.fetchManifest).toBe("function")
+  it("should have a static loadManifest method", () => {
+    expect(typeof ProjectFactory.loadManifest).toBe("function")
   })
 
-  it("should have a static processManifest method", () => {
-    expect(typeof ProjectFactory.processManifest).toBe("function")
+  it("should have a static DBObjectFromManifest method", () => {
+    expect(typeof ProjectFactory.DBObjectFromManifest).toBe("function")
   })
 
   it("should have a static processLayerFromCanvas method", () => {
