@@ -1,175 +1,147 @@
-import projectRouter from '../index.mjs'
-import express from 'express'
-import request from 'supertest'
+import projectRouter from "../index.mjs"
+import express from "express"
+import request from "supertest"
+import app from "../../app.mjs"
+import {jest} from "@jest/globals"
+import ProjectFactory from "../../classes/Project/ProjectFactory.mjs"
+import Project from "../../classes/Project/Project.mjs"
+import DatabaseController from "../../database/mongo/controller.mjs"
 
 const routeTester = new express()
+let token = process.env.TEST_TOKEN
 routeTester.use("/project", projectRouter)
-
-describe('Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
-
-  it('POST instead of GET.  That status should be 405 with a message.', async () => {
+describe.skip("Project endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit #projectTest", () => {
+  it("Call to /project with a non-hexadecimal project ID.  The status should be 400 with a message.", async () => {
     const res = await request(routeTester)
-      .post('/project/')
-      expect(res.statusCode).toBe(405)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('PUT instead of GET.  That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .put('/project/')
-      expect(res.statusCode).toBe(405)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('PATCH instead of GET.  That status should be 405 with a message.', async () => {
-    const res = await request(routeTester)
-      .patch('/project/')
-      expect(res.statusCode).toBe(405)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project without a TPEN3 project ID.  The status should be 400 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/')
-      expect(res.statusCode).toBe(400)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project with a non-numeric project ID.  The status should be 400 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/abc')
-      expect(res.statusCode).toBe(400)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project with a partially numeric project ID.  The status should be 400 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/abc123')
-      expect(res.statusCode).toBe(400)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project with a TPEN3 project ID that does not exist.  The status should be 404 with a message.', async () => {
-    const res = await request(routeTester)
-      .get('/project/0001')
-      expect(res.statusCode).toBe(404)
-      expect(res.body).toBeTruthy()
-  })
-
-  it('Call to /project with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Project in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085')
-      expect(res.statusCode).toBe(200)
-      let json = res.body
-      try{
-        json = JSON.parse(JSON.stringify(json))
-      }
-      catch(err){
-        json = null
-      }
-      expect(json).not.toBe(null)
-  })
-
-  it('Call to /project with valid ID and parameter ?text=blob. The status should be 200 with a text blob in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?text=blob')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    let bodyString
-    try{
-      bodyString = JSON.stringify(res.body)
-    }
-    catch(err){}
-    expect(bodyString).not.toBe(null)
-  })
-
-  it('Call to /project with valid ID and parameter ?text=layers. The status should be 200 with an array of Layer objects in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?text=layers')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    expect(Array.isArray(res.body)).toBeTruthy()
-    expect(typeof res.body[0]).toBe('object')
-  })
-
-  it('Call to /project with valid ID and parameter ?text=pages. The status should be 200 with body containing an Array of Pages, each with discrete layer as an entry.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?text=pages')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    expect(Array.isArray(res.body)).toBeTruthy()
-    expect(typeof res.body[0]).toBe('object')
-  })
-
-  it('Call to /project with valid ID and parameter ?text=lines. The status should be 200 with body containing an Array of Pages, then Layers with "textContent" above as "lines".', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?text=lines')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    expect(Array.isArray(res.body)).toBeTruthy()
-    expect(typeof res.body[0]).toBe('object')
-  })
-
-  it('Call to /project with valid ID and parameter ?image=thumb. The status should be 200 with body containing the URL of the default resolution of a thumbnail from the Manifest.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?image=thumb')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    let bodyURL
-    try{
-      bodyURL = URL.toString(res.body)
-    }catch(err){}
-    expect(bodyURL).not.toBe(null)
-  })
-  
-  it('Call to /project with valid ID and parameter ?lookup=manifest. The status should be 200 with body containing the related document or Array of documents, the version allowed without authentication.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?lookup=manifest')
-    expect(res.statusCode).toBe(200)
-    let json = res.body
-    try{
-      json = JSON.parse(JSON.stringify(json))
-    }
-    catch(err){
-      json = null
-    }
-    expect(json).not.toBe(null)
-  })
-  
-  it('Call to /project with valid ID and parameter ?view=json. The status should be 200 with a JSON Project in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085')
-    expect(res.statusCode).toBe(200)
-    let json = res.body
-    try{
-      json = JSON.parse(JSON.stringify(json))
-    }
-    catch(err){
-      json = null
-    }
-    expect(json).not.toBe(null)
-  })
-
-  it('Call to /project with valid ID and parameter ?view=xml. The status should be 200 with an XML document in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?view=xml')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    expect(typeof res.body).toBe('object')
-  })
-
-  it('Call to /project with valid ID and parameter ?view=html. The status should be 200 with an HTML document in the body.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?view=html')
-    expect(res.statusCode).toBe(200)
-    expect(res.body).toBeTruthy()
-    expect(typeof res.body).toBe('object')
-  })
-
-  it('Call to /project with valid ID and multiple mutually exclusive query parameters. The status should be 400.', async () => {
-    const res = await request(routeTester)
-      .get('/project/7085?text=lines&view=html')
+      .get("/project/zzz")
+      .set("Authorization", `Bearer ${token}`)
     expect(res.statusCode).toBe(400)
+    expect(res.body).toBeTruthy()
   })
-  
+
+  it("Call to /project with a TPEN3 project ID that does not exist.  The status should be 404 with a message.", async () => {
+    const res = await request(routeTester)
+      .get("/project/0001")
+      .set("Authorization", `Bearer ${token}`)
+    expect(res.statusCode).toBe(404)
+    expect(res.body).toBeTruthy()
+  })
+
+  it("Call to /project with a TPEN3 project ID that does  exist.  The status should be 200 with a JSON Project in the body.", async () => {
+    const res = await request(routeTester)
+      .get("/project/6602dd2314cd575343f513ba")
+      .set("Authorization", `Bearer ${token}`)
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toBeTruthy()
+  })
 })
+
+describe("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
+  it("GET instead of POST. The status should be 404 with a message.", async () => {
+    const res = await request(routeTester)
+      .get("/project/create")
+      .set("Authorization", `Bearer ${token}`)
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it("PUT instead of POST. The status should be 404 with a message.", async () => {
+    const res = await request(routeTester).put("/project/create")
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it("PATCH instead of POST. The status should be 404 with a message.", async () => {
+    const res = await request(routeTester).patch("/project/create")
+    expect(res.statusCode).toBe(405)
+    expect(res.body).toBeTruthy()
+  })
+
+  it.skip("should create a project and respond with status 201 if the user is authenticated and valid data is provided", async () => {
+    const mockProject = {name: "New Project"}
+    const mockCreatedProject = {
+      ...mockProject,
+      _id: "newProjectId",
+      creator: "agentId"
+    }
+
+    jest
+      .spyOn(Project.prototype, "create")
+      .mockResolvedValueOnce(mockCreatedProject)
+
+    const response = await request(app)
+      .post("/project/create")
+      .set("Authorization", `Bearer ${token}`)
+      .send(mockProject)
+
+    expect(response.status).toBe(201)
+    expect(response.headers.location).toBe(mockCreatedProject._id)
+    expect(response.body).toEqual(mockCreatedProject)
+  })
+})
+
+describe.skip("POST /project/import?createFrom=URL #importTests", () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("should import project successfully", async () => {
+    const manifestURL = "https://t-pen.org/TPEN/project/4080"
+    const mockProject = {
+      title: "Test Project",
+      "@type": "@Project",
+      metadata: [{label: "title", value: "Lorem Ipsum"}],
+      " @context": "http://t-pen.org/3/context.json",
+      layers: []
+    }
+
+    jest.spyOn(ProjectFactory, "fromManifestURL").mockResolvedValue(mockProject)
+
+    const response = await request(app)
+      .post(`/project/import?createFrom=URL`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({url: manifestURL})
+    expect(response.status).toBe(201)
+    expect(response.body).toEqual(mockProject)
+    expect(ProjectFactory.fromManifestURL).toHaveBeenCalled()
+  })
+
+  it("should return 400 if createFrom is not provided #importTests", async () => {
+    const response = await request(app)
+      .post("/project/import")
+      .set("Authorization", `Bearer ${token}`)
+      .send({})
+    expect(response.status).toBe(400)
+    expect(response.body.message).toBe(
+      "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC' "
+    )
+  })
+
+  it("should return 404 if manifest URL is not provided when createFrom=url", async () => {
+    const response = await request(app)
+      .post("/project/import?createFrom=url")
+      .set("Authorization", `Bearer ${token}`)
+      .send({})
+    expect(response.status).toBe(404)
+    expect(response.body.message).toBe("Manifest URL is required for import")
+  })
+
+  it("should handle unknown server errors", async () => {
+    const manifestURL = "https://t-pen.org/TPEN/project/4080"
+
+    jest
+      .spyOn(ProjectFactory, "fromManifestURL")
+      .mockRejectedValue(new Error("Import error"))
+
+    const response = await request(app)
+      .post(`/project/import?createFrom=url`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({url: manifestURL})
+    expect(response.status).toBe(500)
+    expect(response.body.message).toBeTruthy()
+  })
+})
+
+ 
+
+

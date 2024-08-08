@@ -1,0 +1,21 @@
+{
+  "methods": "GET",
+  "allowedHeaders": [
+    "Content-Type",
+    "Content-Length",
+    "Allow",
+    "Authorization",
+    "Location",
+    "ETag",
+    "Connection",
+    "Keep-Alive",
+    "Date",
+    "Cache-Control",
+    "Last-Modified",
+    "Link",
+    "X-HTTP-Method-Override"
+  ],
+  "exposedHeaders": "*",
+  "origin": "*",
+  "maxAge": "600"
+}

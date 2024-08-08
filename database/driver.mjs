@@ -116,6 +116,47 @@ class dbDriver {
     async find(query) {
         return this.controller.find(query).catch(err => err)
     }
+    async findOne(query) {
+        return this.controller.findOne(query).catch(err => err)
+    }
+
+    /**
+     * Get a database record by its ID.
+     * @param id The ID of the record to retrieve.
+     * @collection collection The collection or table to search.
+     * @return JSON of the matched document or standard error object
+     */
+    async getById(id, collection) {
+        return this.controller.getById(id, collection).catch(err => err)
+    }
+
+    /**
+     * Reserve a valid ID from the database for use in building a record 
+     * without collision.
+     * @param seed A seed to base the ID on, depending on the driver.
+     * @return The reserved ID or error JSON
+     */
+    async reserveId(seed) {
+        return this.controller.reserveId(seed).catch(err => err)
+    }
+
+    /**
+     * Check if the submitted chars represent a valid id in the current controller.
+     * @param id The id to check.
+     * @return boolean
+     */
+    isValidId(id) {
+        return this.controller.isValidId(id)
+    }
+
+    /**
+     * Create a valid ID from a supplied string or number.
+     * @param id The id to validify.
+     * @return string | number
+     */
+    asValidId(id) {
+        return this.controller.asValidId(id)
+    }
 }
 
 export default dbDriver

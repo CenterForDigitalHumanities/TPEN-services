@@ -1,198 +1,148 @@
-/** Route handler for the /project endpoint */
-import express from 'express'
-import * as logic from './project.mjs'
-import * as utils from '../utilities/shared.mjs'
-import cors from 'cors'
+import express from "express"
+import {validateID, respondWithError} from "../utilities/shared.mjs"
+ import DatabaseDriver from "../database/driver.mjs"
+import cors from "cors"
+import common_cors from "../utilities/common_cors.json" assert {type: "json"}
+import auth0Middleware from "../auth/index.mjs"
+import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
+import validateURL from "../utilities/validateURL.mjs"
+import Project from "../classes/Project/Project.mjs"
+import {User} from "../classes/User/User.mjs"
+import getHash from "../utilities/getHash.mjs"
 
+const database = new DatabaseDriver("mongo")
 let router = express.Router()
-router.use(
-  cors({
-    methods: 'GET',
-    allowedHeaders: [
-      'Content-Type',
-      'Content-Length',
-      'Allow',
-      'Authorization',
-      'Location',
-      'ETag',
-      'Connection',
-      'Keep-Alive',
-      'Date',
-      'Cache-Control',
-      'Last-Modified',
-      'Link',
-      'X-HTTP-Method-Override',
-    ],
-    exposedHeaders: '*',
-    origin: '*',
-    maxAge: '600',
-  })
-)
 
-// Send a successful response with the appropriate JSON or alternate response based on params
-export function respondWithProject(req, res, project) {
-  const id = project['@id'] ?? project.id ?? null
+router.use(cors(common_cors))
 
-  let textType = req.query.text
-  let image = req.query.image
-  let lookup = req.query.lookup
-  let view = req.query.view
 
-  let passedQueries = [textType, image, lookup, view]
-    .filter(elem => elem !== undefined)
-  let responseType = null
-  if (passedQueries.length > 1) {
-    utils.respondWithError(res, 400, 
-      'Improper request. Only one response type may be queried.'
-    )
-    return
-  } else if (passedQueries.length === 1) {
-    responseType = passedQueries[0]
-  }
-
-  let embed = req.query.embed
-
-  let retVal;
-  switch (responseType) {
-
-    case textType:
-      switch (textType) {
-        case "blob":
-          res.set('Content-Type', 'text/plain; charset=utf-8')
-          // return: a complete blob of text of all lines concatenated
-          /* retVal =
-            project.layers.map(layer =>
-              db.getByID(layer).getLines().map(line => line.textualBody).join(" ")
-              .join(" ")
-          ) */
-          retVal = 'mock text'
-          break
-        case "layers":
-          res.set('Content-Type', 'application/json; charset=utf-8')
-          /* retVal = project.layers.map(layer => db.getByID(layer)) */
-          retVal = [  
-            { "name": "Layer.name", "id": "#AnnotationCollectionId", "textContent": "concatenated blob" }  
-          ]
-          break
-        case "pages":
-          res.set('Content-Type', 'application/json; charset=utf-8')
-          /* retVal = project.layers.flatMap(layer => db.getByID(layer).getPages()) */
-          retVal = [  
-            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": "concatenated blob" }  
-          ]
-          break
-        case "lines":
-          res.set('Content-Type', 'application/json; charset=utf-8')
-          retVal = [  
-            { "name": "Page.name", "id": "#AnnotationPageId", "textContent": [{ "id" : "#AnnotationId", "textualBody" : "single annotation content" }]}  
-          ]
-          break
-        default:
-          utils.respondWithError(res, 400, 
-            'Improper request.  Parameter "text" must be "blob," "layers," "pages," or "lines."')
-          break
-      }
-      break
-
-    case image:
-      switch (image) {
-        case "thumb":
-          res.set('Content-Type', 'text/uri-list; charset=utf-8')
-          // return: the URL of the default resolution of a thumbnail from the Manifest
-          retVal = 'https://example.com'
-          // make sure to handle this differently if req.query.embed is true
-          break
-        default:
-          utils.respondWithError(res, 400, 
-            'Improper request.  Parameter "image" must be "thumbnail."')
-          break
-      }
-      break
-
-    case lookup:
-      switch (lookup) {
-        case "manifest":
-          // return: (layers[], annotations[], metadata[], group) find the related document or Array of documents and return that instead, the version allowed without authentication
-          retVal = {
-            "@context":"http://iiif.io/api/presentation/2/context.json",
-            "@id":"https://t-pen.org/TPEN/manifest/7085/manifest.json",
-            "@type":"sc:Manifest",
-            "label":"Ct Interlinear Glosses Mt 5",
-          }
-          break
-        default:
-          utils.respondWithError(res, 400, 
-            'Improper request.  Parameter "lookup" must be "manifest."')
-          break
-      }
-      break
-
-    case view:
-      switch (view) {
-        case "xml":
-          res.set('Content-Type', 'text/xml; charset=utf-8')
-          // is a chance to get the document as an XML file
-          retVal = '<xml><id>7085</id></xml>'
-          break
-        case "html":
-          res.set('Content-Type', 'text/html; charset=utf-8')
-          //  is a readonly viewer HTML Document presenting the project data
-          retVal = '<html><body> <pre tpenid="7085"> {"id": "7085", ...}</pre>  </body></html>'
-          break
-        case "json":
-          break // Let the default case of the switch(responseType) handle this
-        default:
-          utils.respondWithError(res, 400, 
-            'Improper request.  Parameter "view" must be "json," "xml," or "html."')
-          break
-      }
-      break
-    
-    default:
-      res.set('Content-Type', 'application/json; charset=utf-8')
-      res.location(id)
-      res.status(200)
-      res.json(project)
-      return
-  }
-
-  res.location(id).status(200).send(retVal)
-}
-
-// Expect an /{id} as part of the route, like /project/123
 router
-  .route('/:id')
-  .get(async (req, res, next) => {
-    let id = req.params.id
-    if (!utils.validateID(id)) {
-      utils.respondWithError(res, 400, 'The TPEN3 project ID must be a number')
-      return
-    }
-    id = parseInt(id)
+  .route("/create")
+  .post(auth0Middleware(), async (req, res) => {
+    const user = req.user
+
+    if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+
+    const projectObj = new Project()
+
+    let project = req.body
+    project = {...project, creator: user?.agent, "@type":"Project"}
 
     try {
-      const projectObj = await logic.findTheProjectByID(id)
-      if (projectObj) {
-        respondWithProject(req, res, projectObj)
-      } else {
-        utils.respondWithError(res, 404, `TPEN3 project "${req.params.id}" does not exist.`)
-      }
-    } catch (err) {
-      utils.respondWithError(res, 500, 'The TPEN3 server encountered an internal error.')
+      const newProject = await projectObj.create(project)
+
+      res.setHeader("Location", newProject?._id)
+      res.status(201).json(newProject)
+    } catch (error) {
+      respondWithError(
+        res,
+
+        error.status ?? error.code ?? 500,
+        error.message ?? "Unknown server error"
+      )
     }
   })
-  .all((req, res, next) => {
-    utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use POST instead")
   })
 
-// Handle lack of an /{id} as part of the route
 router
-  .route('/')
-  .get((req, res, next) => {
-    utils.respondWithError(res, 400, 'Improper request.  There was no project ID.')
+  .route("/import")
+  .post(auth0Middleware(), async (req, res) => {
+    let {createFrom} = req.query
+    let user = req.user
+    createFrom = createFrom?.toLowerCase()
+
+    if (!createFrom)
+      return res.status(400).json({
+        message:
+          "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC' "
+      })
+
+    if (createFrom === "url") {
+      const manifestURL = req?.body?.url
+
+      let checkURL = await validateURL(manifestURL)
+
+      if (!checkURL.valid)
+        return res.status(checkURL.status).json({
+          message: checkURL.message,
+          resolvedPayload: checkURL.resolvedPayload
+        })
+
+      try {
+        const result = await ProjectFactory.fromManifestURL(
+          manifestURL,
+          getHash(user?.agent)
+        )
+        res.status(201).json(result)
+      } catch (error) {
+        res.status(error.status ?? 500).json({
+          status: error.status ?? 500,
+          message: error.message,
+          data: error.resolvedPayload
+        })
+      }
+    } else {
+      res.status(400).json({
+        message: `Import from ${createFrom} is not available. Create from URL instead`
+      })
+    }
   })
-  .all((req, res, next) => {
-    utils.respondWithError(res, 405, 'Improper request method, please use GET.')
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use POST instead")
   })
+
+router
+  .route("/:id")
+  .get(auth0Middleware(), async (req, res) => {
+    const user = req.user
+     let id = req.params.id
+    if (!id) {
+      return respondWithError(res, 400, "No TPEN3 ID provided")
+    } else if (!validateID(id)) {
+      return respondWithError(
+        res,
+        400,
+        "The TPEN3 project ID provided is invalid"
+      )
+    }
+ 
+    (async () => {
+      try {
+        const projectObj = await new Project(id)
+        const project = projectObj.projectData
+        const accessCheck = projectObj.checkUserAccess(user.agent);
+        if (!project) {
+          return respondWithError(
+            res,
+            404,
+            `No TPEN3 project with ID '${id}' found`
+          )
+        } else if (!accessCheck.hasAccess) {
+          return respondWithError(
+            res,
+            401,
+           accessCheck.message
+          )
+        }
+        return res.status(200).json(project)
+      } catch (error) {
+        return respondWithError(
+                res,
+                error.status || error.code || 500,
+                error.message ?? "An error occurred while fetching the user data."
+              )
+      }
+    })()
+ 
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+  })
+
+router.all((req, res) => {
+  respondWithError(res, 405, "Improper request method. Use POST instead")
+})
 
 export default router
