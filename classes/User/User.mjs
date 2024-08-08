@@ -1,41 +1,45 @@
 import dbDriver from "../../database/driver.mjs"
-let err_out = Object.assign(new Error(), {status: 500, message: "N/A"})
-
-import DatabaseController from "../../database/mongo/controller.mjs"
-import {
-  includeOnly,
-  removeProperties
-} from "../../utilities/removeProperties.mjs"
+import {includeOnly} from "../../utilities/removeProperties.mjs"
 
 const database = new dbDriver("mongo")
 export class User {
-  constructor(user) {
-    // database = new DatabaseController() // has a 'find' error that breaks the app at instance. when this this fixed this line will replace the above
-
-    if (user instanceof Object) {
-      this.id = user._id
-    } else {
-      this.id = user
+  constructor(userId) {
+    this.id = userId
+    this.userData = null
+    if (userId) {
+      return (async () => {
+        await this.getById()
+        return this
+      })()
     }
   }
 
-  async getUserById() {
+  async getById() { 
     // returns user's public info
-    return this.getSelf().then((user) => includeOnly(user, "profile", "_id"))
+    try {
+     await this.getSelf(this.id).then((user) => { 
+        let publicUserInfo = includeOnly(user, "profile", "_id")
+        this.userData = publicUserInfo  
+        return publicUserInfo
+      })
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  async getSelf() {
+  async getSelf(id) {
     // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
 
-    if (!this.id) {
-      err_out.message =
-        "No user ID found. Instantiate User class with a proper ID as follows new User(UserId)"
-      err_out.status = 400
-      throw err_out
+    if (!id) {
+      throw {
+        status: 400,
+        message:
+          "No user ID found. Instantiate User class with a proper ID as follows new User(UserId)"
+      }
     }
 
     return database
-      .getById(this.id, "User")
+      .getById(id, "User")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -50,9 +54,10 @@ export class User {
   async updateRecord(data) {
     // updates user object. use with PUT or PATCH on authenticated route only
     if (!data) {
-      err_out.message = "No payload provided"
-      err_out.status = 400
-      throw err_out
+      throw {
+        status: 400,
+        message: "No payload provided"
+      }
     }
 
     const previousUser = await this.getSelf()
@@ -73,9 +78,10 @@ export class User {
 
   async getByAgent(agent) {
     if (!agent) {
-      err_out.message = "No agent provided"
-      err_out.status = 400
-      throw err_out
+      throw {
+        status: 400,
+        message: "No agent provided"
+      }
     }
 
     return database
@@ -97,9 +103,10 @@ export class User {
   async create(data) {
     // POST requests
     if (!data) {
-      err_out.message = "No data provided"
-      err_out.status = 400
-      throw err_out
+      throw {
+        status: 400,
+        message: "No data provided"
+      }
     }
 
     try {
@@ -110,21 +117,24 @@ export class User {
     }
   }
 
+  /**
+   *  this assumes that the project object includes the following properties
+    {
+      "@type":"Project"
+      creator:"user.agent",
+      groups:{
+        members:[{agent:"user.agent", _id:"user._id"}]
+      }
+    }
+   * @returns project object
+   */
   async getProjects() {
-    // this assumes that the project object includes the following properties
-    // {
-    //   "@type":"Project"
-    //   creator:"user.agent",
-    //   groups:{
-    //     members:[{agent:"user.agent", _id:"user._id"}]
-    //   }
-    // }
-
     const user = await this.getSelf()
     if (!user) {
-      err_out.message = "User account not found"
-      err_out.status = 404
-      throw err_out
+      throw {
+        status: 404,
+        message: "User account not found"
+      }
     }
 
     return database

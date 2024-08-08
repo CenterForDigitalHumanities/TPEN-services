@@ -9,7 +9,7 @@ process.env.AUDIENCE = "provide audience to test"
 const app = express()
 
 app.use(auth0Middleware())
-const timeOut = process.env.TEST_TIMEOUT ?? 5000
+const TIME_OUT = process.env.TEST_TIMEOUT ?? 5000
 
 describe("auth0Middleware #auth_test", () => {
   it(
@@ -19,7 +19,7 @@ describe("auth0Middleware #auth_test", () => {
 
       expect(res.status).toBe(401)
     },
-    timeOut
+    TIME_OUT
   )
 
   it(
@@ -28,7 +28,7 @@ describe("auth0Middleware #auth_test", () => {
       const res = await request(app).get("/protected-route")
       expect(res.req.user).toBeUndefined()
     },
-    timeOut
+    TIME_OUT
   )
 
   it.skip("should set req.user with payload from auth and call next", async () => {
