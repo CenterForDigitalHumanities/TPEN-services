@@ -7,11 +7,11 @@ let router = express.Router()
 router.use(cors(common_cors))
 
 router.route("/sendmail").get(async (req, res) => {
-  const receiver = {email: "onoja.jsdev@gmail.com", name: "Onoja Victor"}
+  const receiver = {email: "notreal@scarvex.com", name: "Ohai"}
   const mailerResponse = await sendMail(
     receiver,
-    "Notification of Registeration",
-    "Your registeration was successful"
+    "Notification of Registration",
+    "Your registration was successful"
   )
   res.status(mailerResponse.status).send(mailerResponse.message)
 })

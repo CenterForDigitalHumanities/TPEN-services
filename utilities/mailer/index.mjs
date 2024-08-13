@@ -32,22 +32,19 @@ export const sendMail = async (receiver, subject, message) => {
   const templatepath = path.join(__dirname, "template.html")
   let htmlTemplate = fs.readFileSync(templatepath, "utf-8")
 
-  htmlTemplate = htmlTemplate.replace("{{userName}}", receiver?.name)
+  htmlTemplate = htmlTemplate.replace("{{userName}}", receiver?.name ?? "TPEN User")
   htmlTemplate = htmlTemplate.replace("{{subject}}", subject)
   htmlTemplate = htmlTemplate.replace("{{messageBody}}", message)
 
    try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.TPEN_SUPPORT_EMAIL,
-        pass: process.env.EMAIL_PASSWORD
-      }
+      host: process.env.SMTP_HOST
     })
 
     const mailOptions = {
       from: process.env.TPEN_SUPPORT_EMAIL,
       to: receiver.email,
+      cc: process.env.TPEN_EMAIL_CC,
       subject,
       html: htmlTemplate
     }
