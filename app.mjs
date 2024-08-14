@@ -26,8 +26,7 @@ import pageRouter from './page/index.mjs'
 import lineRouter from './line/index.mjs'
  import userProfileRouter from './userProfile/index.mjs'
 import privateProfileRouter from './userProfile/privateProfile.mjs'
-import testSendMail from './utilities/mailer/routeTester.mjs'
- 
+  
 let app = express()
 
 //Middleware to use
@@ -63,8 +62,7 @@ app.use('/line', lineRouter)
 app.use('/page', pageRouter) 
 app.use('/user', userProfileRouter)
 app.use('/my',  privateProfileRouter) 
-app.use('/test',  testSendMail) 
-
+ 
 //catch 404 because of an invalid site path
 app.use(function(req, res, next) {
     let message = res.statusMessage ?? "This page does not exist"
