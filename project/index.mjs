@@ -145,14 +145,27 @@ router
     .route("/:id/invite-member")
     .post(auth0Middleware(), async (req, res) => {
       const user = req.user
-      const {id: projectId} = req.params
+      const {id: projectId} = req.params 
       const {email, roles} = req.body
+      
       try {
-        const project =  await new Project(projectId)
-        const response = await project.addMember(email, roles)
+        const project = await new Project(projectId)
+        const accessInfo = project.checkUserAccess(user.agent)
 
-        res.json(response)
+        if (
+          accessInfo.hasAccess &&
+          accessInfo.permissions["members"].includes("MODIFY_ALL")
+        ) {
+          const response = await project.addMember(email, roles)
 
+          res.status(200).json(response)
+        } else {
+          res
+            .status(403)
+            .send("You have no permissions to modify members of this project")
+        }
+
+        return res.json(accessInfo.permissions["members"])
       } catch (error) {
         res.status(error.status || 500).send(error.message.toString())
         console.log(error)
