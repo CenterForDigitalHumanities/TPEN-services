@@ -1,6 +1,10 @@
 import dbDriver from "../../database/driver.mjs"
+import Permissions from "../../project/groups/permissions.mjs"
+import Roles from "../../project/groups/roles.mjs"
+import {sendMail} from "../../utilities/mailer/index.mjs"
 import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
- 
+import {User} from "../User/User.mjs"
+
 const database = new dbDriver("mongo")
 
 export default class Project {
@@ -43,6 +47,47 @@ export default class Project {
     }
 
     return database.remove(projectId)
+  }
+
+  async addMember(email, rolesString) {
+    try {
+      const user = await User.getByEmail(email)
+      const roles = this.parseRoles(rolesString)
+
+      if (user) {
+        this.projectData.groups = this.projectData.groups || {}
+        this.projectData.groups[user._id] = {
+          displayName: user.displayName ?? user.nickname,
+          agent:
+            user.agent ??
+            user["http://store.rerum.io/agent"] ??
+            `https://store.rerum.io/v1/id/${user._id}`,
+          roles: roles,
+          permissions: this.getCombinedPermissions(roles)
+        }
+
+        const updatedProject = await this.#updateProject()
+        const message = `You have been successfully added to ${
+          this.projectData?.name
+        } as ${roles.join(", ")}`
+        await sendMail(user, `Invitation to ${this.projectData?.name}`, message)
+
+        return updatedProject
+      } else {
+        console.log(
+          `No user with email ${email} exists. Proceed to send an invitation.`
+        )
+      }
+    } catch (error) {
+      console.error(
+        "Error in adding member:",
+        error.message || error.toString()
+      )
+      throw {
+        status: error.status || 500,
+        message: error.message || "An error occurred while adding the member."
+      }
+    }
   }
 
   checkUserAccess(userAgent) {
@@ -91,9 +136,45 @@ export default class Project {
       message: "User has no access to this project."
     }
   }
+
+
+
+  getCombinedPermissions(roles) {
+    const combinedPermissions = {
+      members: "NONE",
+      project: "NONE",
+      annotations: "NONE"
+    }
+
+    roles.forEach((role) => {
+      const rolePermissions = Permissions[role] || {}
+      Object.keys(rolePermissions).forEach((key) => {
+        combinedPermissions[key] = rolePermissions[key]
+      })
+    })
+
+    return combinedPermissions
+  }
+
+  parseRoles(rolesString) {
+    const roles = rolesString.split(" ")
+
+    roles.forEach((role) => {
+      if (!Object.values(Roles).includes(role)) {
+        throw {status: 406, message: `Invalid role: ${role}`}
+      }
+    })
+
+    return roles
+  }
+
   async #getById(projectId) {
     return database.getById(projectId, "Project").then((resp) => {
       this.projectData = resp
     })
+  }
+
+  async #updateProject() {
+    return await database.update(this.projectData)
   }
 }

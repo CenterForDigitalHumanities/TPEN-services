@@ -113,7 +113,7 @@ router
         const projectObj = await new Project(id)
         const project = projectObj.projectData
         const accessCheck = projectObj.checkUserAccess(user.agent);
-        if (!project) {
+         if (!project) {
           return respondWithError(
             res,
             404,
@@ -140,6 +140,24 @@ router
   .all((req, res) => {
     respondWithError(res, 405, "Improper request method. Use GET instead")
   })
+
+  router
+    .route("/:id/invite-member")
+    .post(auth0Middleware(), async (req, res) => {
+      const user = req.user
+      const {id: projectId} = req.params
+      const {email, roles} = req.body
+      try {
+        const project =  await new Project(projectId)
+        const response = await project.addMember(email, roles)
+
+        res.json(response)
+
+      } catch (error) {
+        res.status(error.status || 500).send(error.message.toString())
+        console.log(error)
+      }
+    })
 
 router.all((req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
