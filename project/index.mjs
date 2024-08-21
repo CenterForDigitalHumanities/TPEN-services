@@ -112,21 +112,29 @@ router
       try {
         const projectObj = await new Project(id)
         const project = projectObj.projectData
-        const accessCheck = projectObj.checkUserAccess(user.agent);
+        const accessInfo = projectObj.checkUserAccess(user.agent)
          if (!project) {
-          return respondWithError(
-            res,
-            404,
-            `No TPEN3 project with ID '${id}' found`
-          )
-        } else if (!accessCheck.hasAccess) {
-          return respondWithError(
-            res,
-            401,
-           accessCheck.message
-          )
-        }
-        return res.status(200).json(project)
+           return respondWithError(
+             res,
+             404,
+             `No TPEN3 project with ID '${id}' found`
+           )
+         } else if (!accessInfo.hasAccess) {
+           return respondWithError(res, 401, accessInfo.message)
+         }
+         const userPermissions = accessInfo.permissions
+         const errorMessage = "User has no required access for this action"
+
+         if (
+           userPermissions["project"] &&
+           userPermissions["project"].toUpperCase() !== "NONE"
+         ) {
+           res.status(200).json(project)
+         } else {
+           respondWithError(res, 403, errorMessage)
+         }
+
+        
       } catch (error) {
         return respondWithError(
                 res,
