@@ -49,7 +49,7 @@ export default class Project {
     return database.remove(projectId)
   }
 
-  async addMember(email, rolesString) {
+  async addMember(email, rolesString) { 
     try {
       const user = await User.getByEmail(email)
       const roles = this.parseRoles(rolesString)
@@ -69,7 +69,7 @@ export default class Project {
         const updatedProject = await this.#updateProject()
         const message = `You have been successfully added to ${
           this.projectData?.name
-        } as ${roles.join(", ")}`
+        }with the following role(s): ${roles.join(", ")}`
         await sendMail(user, `Invitation to ${this.projectData?.name}`, message)
 
         return updatedProject

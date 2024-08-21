@@ -9,6 +9,7 @@ import validateURL from "../utilities/validateURL.mjs"
 import Project from "../classes/Project/Project.mjs"
 import {User} from "../classes/User/User.mjs"
 import getHash from "../utilities/getHash.mjs"
+import {isValidEmail} from "../utilities/validateEmail.mjs"
 
 const database = new DatabaseDriver("mongo")
 let router = express.Router()
@@ -155,6 +156,18 @@ router
       const user = req.user
       const {id: projectId} = req.params 
       const {email, roles} = req.body
+
+      if (!user) {
+        return respondWithError(res, 401, "Unauthenticated request")
+      } else if (!email || !roles) {
+        return respondWithError(
+          res,
+          400,
+          "Invitee's email and role(s) are required"
+        )
+      } else if (!isValidEmail(email)) { 
+        return respondWithError(res, 400, "Invitee email is invalid") 
+      } 
       
       try {
         const project = await new Project(projectId)
@@ -164,17 +177,18 @@ router
           accessInfo.hasAccess &&
           accessInfo.permissions["members"].includes("MODIFY_ALL")
         ) {
-          const response = await project.addMember(email, roles)
-
+           
+          const response = await project.addMember(email, roles) 
+          console.log(response)
           res.status(200).json(response)
+
         } else {
           res
             .status(403)
             .send("You have no permissions to modify members of this project")
         }
 
-        return res.json(accessInfo.permissions["members"])
-      } catch (error) {
+       } catch (error) {
         res.status(error.status || 500).send(error.message.toString())
         console.log(error)
       }
