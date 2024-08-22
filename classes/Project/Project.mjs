@@ -63,6 +63,7 @@ export default class Project {
         updatedProject = await this.inviteExistingTPENUser(user, roles)
       } else {
         let {newUser, projectData} = await this.inviteNewTPENUser(email, roles)
+        // We will replace this URL with the correct url
         const url = `https://cubap.auth0.com/u/signup?invite-code=${newUser.inviteCode}`
         updatedProject = projectData
         user = newUser
