@@ -4,6 +4,7 @@ import Roles from "../../project/groups/roles.mjs"
 import {sendMail} from "../../utilities/mailer/index.mjs"
 import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
 import {User} from "../User/User.mjs"
+import crypto from "crypto"
 
 const database = new dbDriver("mongo")
 
@@ -49,40 +50,30 @@ export default class Project {
     return database.remove(projectId)
   }
 
-  async addMember(email, rolesString) { 
+  async addMember(email, rolesString) {
     try {
-      const user = await User.getByEmail(email)
+      let user = await User.getByEmail(email)
       const roles = this.parseRoles(rolesString)
+      let updatedProject
+      let message = `You have been invited to the TPEN project ${
+        this.projectData?.name
+      } with the following role(s): ${roles.join(", ")}.`
 
       if (user) {
-        this.projectData.groups = this.projectData.groups || {}
-        this.projectData.groups[user._id] = {
-          displayName: user.displayName ?? user.nickname,
-          agent:
-            user.agent ??
-            user["http://store.rerum.io/agent"] ??
-            `https://store.rerum.io/v1/id/${user._id}`,
-          roles: roles,
-          permissions: this.getCombinedPermissions(roles)
-        }
-
-        const updatedProject = await this.#updateProject()
-        const message = `You have been successfully added to ${
-          this.projectData?.name
-        }with the following role(s): ${roles.join(", ")}`
-        await sendMail(user, `Invitation to ${this.projectData?.name}`, message)
-
-        return updatedProject
+        updatedProject = await this.inviteExistingTPENUser(user, roles)
       } else {
-        console.log(
-          `No user with email ${email} exists. Proceed to send an invitation.`
-        )
+        let {newUser, projectData} = await this.inviteNewTPENUser(email, roles)
+        const url = `https://cubap.auth0.com/u/signup?invite-code=${newUser.inviteCode}`
+        updatedProject = projectData
+        user = newUser
+        message += `<p>Click the button below to get started with your project</p> 
+        <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
+        or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
       }
+
+      await sendMail(user, `Invitation to ${this.projectData?.name}`, message)
+      return updatedProject
     } catch (error) {
-      console.error(
-        "Error in adding member:",
-        error.message || error.toString()
-      )
       throw {
         status: error.status || 500,
         message: error.message || "An error occurred while adding the member."
@@ -154,7 +145,7 @@ export default class Project {
   }
 
   parseRoles(rolesString) {
-    const roles = rolesString.split(" ")
+    const roles = rolesString.toUpperCase().split(" ")
 
     roles.forEach((role) => {
       if (!Object.values(Roles).includes(role)) {
@@ -163,6 +154,54 @@ export default class Project {
     })
 
     return roles
+  }
+
+  async inviteExistingTPENUser(user, roles) {
+    this.projectData.groups = this.projectData.groups || {}
+    this.projectData.groups[user._id] = {
+      displayName: user.displayName ?? user.nickname,
+      email: user?.email,
+      agent:
+        user.agent ??
+        user["http://store.rerum.io/agent"] ??
+        `https://store.rerum.io/v1/id/${user._id}`,
+      roles: roles,
+      permissions: this.getCombinedPermissions(roles)
+    }
+
+    return await this.#updateProject()
+  }
+
+  async inviteNewTPENUser(email, roles) {
+    const userPayload = {
+      inviteCode: Date.now(),
+      email
+    }
+    const userObj = new User()
+    const newUser = await userObj.create(userPayload)
+    newUser.agent = `https://store.rerum.io/v1/id/${newUser._id}`
+    newUser.inviteCode = this.#encryptInviteCode(newUser._id)
+
+    await userObj.updateRecord(newUser)
+
+    const projectData = await this.inviteExistingTPENUser(newUser, roles)
+
+    return {newUser, projectData}
+  }
+
+  #encryptInviteCode(userId) {
+    const date = Date.now().toString()
+    const data = `${date}:${userId}`
+
+    const iv = Buffer.from(process.env.INVITE_CODE_IV, "hex")
+    const secretKey = Buffer.from(process.env.INVITE_CODE_SECRET, "hex")
+
+    const cipher = crypto.createCipheriv("aes-256-cbc", secretKey, iv)
+
+    let encrypted = cipher.update(data)
+    encrypted = Buffer.concat([encrypted, cipher.final()])
+
+    return iv.toString("hex") + ":" + encrypted.toString("hex")
   }
 
   async #getById(projectId) {

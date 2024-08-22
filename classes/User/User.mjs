@@ -62,7 +62,7 @@ export class User {
       }
     }
 
-    const previousUser = await this.getSelf()
+    const previousUser = await this.getSelf(data._id)
     const newRecord = {...previousUser, ...data}
 
     return database

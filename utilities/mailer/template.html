@@ -1,21 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>{{subject}}</title>
-</head>
-<body>
-   <p> Hello <strong>{{userName}}</strong>, </p>
-   
-   <p>{{messageBody}} </p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{subject}}</title>
+    <style>
+      .buttonStyle {
+        background-color: #24d4e4; 
+        padding: 10px 20px;
+        margin: 5px auto;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        width: 100%;
+      }
 
-   <img src="https://three.t-pen.org/assets/img/logo.png" alt="TPEN Logo" width="256">
-   <br>
-   <small>
-      This message was sent based on a user action at t-pen.org. 
-      You may reply directly to this message with any concerns. 
-      You are not subscribed to any list and this address is not stored.
-   </small>
-</body>
+      .buttonStyle a {
+        text-decoration: none;
+        color: #fff;
+        font-size:18px
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Hello
+      <strong>{{userName}}</strong>
+      ,
+    </p>
+
+    <p>{{messageBody}}</p>
+
+    <img
+      src="https://three.t-pen.org/assets/img/logo.png"
+      alt="TPEN Logo"
+      width="256"
+    />
+    <br />
+    <small>
+      This message was sent based on a user action at t-pen.org. You may reply
+      directly to this message with any concerns. You are not subscribed to any
+      list and this address is not stored.
+    </small>
+  </body>
 </html>
