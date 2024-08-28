@@ -1,5 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 import {includeOnly} from "../../utilities/removeProperties.mjs"
+import Roles from "../../project/groups/roles.mjs"
+import Permissions from "../../project/groups/permissions.mjs"
 
 const database = new dbDriver("mongo")
 export class User {
@@ -60,7 +62,7 @@ export class User {
       }
     }
 
-    const previousUser = await this.getSelf()
+    const previousUser = await this.getSelf(data._id)
     const newRecord = {...previousUser, ...data}
 
     return database
@@ -99,7 +101,29 @@ export class User {
         throw err
       })
   }
+ static async  getByEmail(email){
+  if (!email) {
+    throw {
+      status: 400,
+      message: "No email provided"
+    }
+  }
 
+  return database
+    .findOne({
+      email,
+      "@type": "User"
+    })
+    .then((resp) => {
+      if (resp instanceof Error) {
+        throw resp
+      }
+      return resp
+    })
+    .catch((err) => {
+      throw err
+    })
+}
   async create(data) {
     // POST requests
     if (!data) {
