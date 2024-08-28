@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 import Permissions from "../../project/groups/permissions.mjs"
 import Roles from "../../project/groups/roles.mjs"
-import {sendMail} from "../../utilities/mailer/index.mjs"
+ import {sendMail} from "../../utilities/mailer/index.mjs"
 import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
 import {User} from "../User/User.mjs"
 import crypto from "crypto"
@@ -55,9 +55,7 @@ export default class Project {
       let user = await User.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       let updatedProject
-      let message = `You have been invited to the TPEN project ${
-        this.projectData?.name
-      } with the following role(s): ${roles.join(", ")}.`
+      let message = `You have been invited to the TPEN project ${this.projectData?.name}. View project <a href=https://www.tpen.org/project/${this.projectData._id}>here</a>.`
 
       if (user) {
         updatedProject = await this.inviteExistingTPENUser(user, roles)
@@ -72,7 +70,7 @@ export default class Project {
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
       }
 
-      await sendMail(user, `Invitation to ${this.projectData?.name}`, message)
+      sendMail(user, `Invitation to ${this.projectData?.name}`, message)
       return updatedProject
     } catch (error) {
       throw {
@@ -82,7 +80,7 @@ export default class Project {
     }
   }
 
-  checkUserAccess(userAgent, action) {
+  checkUserAccess(userId) {
     if (!this.projectData) {
       return {
         hasAccess: false,
@@ -90,7 +88,10 @@ export default class Project {
       }
     }
 
-    if (this.projectData.creator === userAgent) {
+    const isProjectOwner =
+      this.projectData.contributors[userId]?.roles?.includes("OWNER")
+
+    if (isProjectOwner) {
       return {
         hasAccess: true,
         permissions: {
@@ -102,30 +103,26 @@ export default class Project {
       }
     }
 
-    if (!this.projectData.groups) {
+    if (!this.projectData.contributors) {
       return {
         hasAccess: false,
-        message: "Project structure is incomplete. Missing groups information."
+        message:
+          "Project structure is incomplete. Missing contributors information."
       }
     }
 
-    const member = Object.values(this.projectData.groups).find(
-      (member) => member.agent === userAgent
-    )
+    const permissions = this.projectData.contributors[userId]?.permissions
 
-    if (!member) {
-      return {
-        hasAccess: false,
-        message: "User is not a member of this project."
-      }
-    }
-
-    const permissions = member?.permissions
-    return {
-      hasAccess: true,
-      permissions: permissions,
-      message: "User has access to the project"
-    }
+    return permissions
+      ? {
+          hasAccess: true,
+          permissions: permissions,
+          message: "User has access to the project"
+        }
+      : {
+          hasAccess: false,
+          message: "User is not a member of this project."
+        }
   }
 
   getCombinedPermissions(roles) {
@@ -150,7 +147,7 @@ export default class Project {
 
     roles.forEach((role) => {
       if (!Object.values(Roles).includes(role)) {
-        throw {status: 406, message: `Invalid role: ${role}`}
+        console.warn(`uUnrecognized role: ${role}. Update roles with appropraite permissions`)
       }
     })
 
@@ -158,8 +155,8 @@ export default class Project {
   }
 
   async inviteExistingTPENUser(user, roles) {
-    this.projectData.groups = this.projectData.groups || {}
-    this.projectData.groups[user._id] = {
+    this.projectData.contributors = this.projectData.contributors || {}
+    this.projectData.contributors[user._id] = {
       displayName: user.displayName ?? user.nickname,
       email: user?.email,
       agent:
@@ -170,7 +167,7 @@ export default class Project {
       permissions: this.getCombinedPermissions(roles)
     }
 
-    return await this.#updateProject()
+    return await database.update(this.projectData)
   }
 
   async inviteNewTPENUser(email, roles) {
@@ -211,7 +208,5 @@ export default class Project {
     })
   }
 
-  async #updateProject() {
-    return await database.update(this.projectData)
-  }
+ 
 }

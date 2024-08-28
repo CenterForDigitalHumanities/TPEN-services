@@ -112,9 +112,9 @@ router
     (async () => {
       try {
         const projectObj = await new Project(id)
-        const project = projectObj.projectData
-        const accessInfo = projectObj.checkUserAccess(user.agent)
-         if (!project) {
+        const project = projectObj.projectData 
+        const accessInfo = projectObj.checkUserAccess(user._id) 
+          if (!project) {
            return respondWithError(
              res,
              404,
@@ -170,9 +170,9 @@ router
       }
 
       try {
-        const project = await new Project(projectId)
-        const accessInfo = project.checkUserAccess(user.agent)
-
+        const project = await new Project(projectId) 
+        const accessInfo = project.checkUserAccess(user._id)
+        
         if (
           accessInfo.hasAccess &&
           accessInfo.permissions["members"].includes("MODIFY_ALL")
