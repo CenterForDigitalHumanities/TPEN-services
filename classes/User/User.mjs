@@ -1,5 +1,5 @@
 import dbDriver from "../../database/driver.mjs"
-import {includeOnly} from "../../utilities/removeProperties.mjs"
+import { includeOnly } from "../../utilities/removeProperties.mjs"
 import Roles from "../../project/groups/roles.mjs"
 import Permissions from "../../project/groups/permissions.mjs"
 
@@ -16,20 +16,21 @@ export class User {
     }
   }
 
-  async getById() { 
-    // returns user's public info
+  async getById() {
+    // returns user's public info 
     try {
-     await this.getSelf(this.id).then((user) => { 
+      await this.getSelf(this.id).then((user) => {
         let publicUserInfo = includeOnly(user, "profile", "_id")
-        this.userData = publicUserInfo  
+        this.userData = publicUserInfo
         return publicUserInfo
       })
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 
-  async getSelf(id) {
+  async getSelf() {
+    const id = this.id
     // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
 
     if (!id) {
@@ -61,9 +62,9 @@ export class User {
         message: "No payload provided"
       }
     }
-
-    const previousUser = await this.getSelf(data._id)
-    const newRecord = {...previousUser, ...data}
+    this.id = data._id
+    const previousUser = await this.getSelf()
+    const newRecord = { ...previousUser, ...data }
 
     return database
       .update(newRecord)
@@ -101,29 +102,29 @@ export class User {
         throw err
       })
   }
- static async  getByEmail(email){
-  if (!email) {
-    throw {
-      status: 400,
-      message: "No email provided"
-    }
-  }
-
-  return database
-    .findOne({
-      email,
-      "@type": "User"
-    })
-    .then((resp) => {
-      if (resp instanceof Error) {
-        throw resp
+  async getByEmail(email) {
+    if (!email) {
+      throw {
+        status: 400,
+        message: "No email provided"
       }
-      return resp
-    })
-    .catch((err) => {
-      throw err
-    })
-}
+    }
+
+    return database
+      .findOne({
+        email,
+        "@type": "User"
+      })
+      .then((resp) => {
+        if (resp instanceof Error) {
+          throw resp
+        }
+        return resp
+      })
+      .catch((err) => {
+        throw err
+      })
+  }
   async create(data) {
     // POST requests
     if (!data) {
@@ -134,7 +135,7 @@ export class User {
     }
 
     try {
-      const user = await database.save({...data, "@type": "User"})
+      const user = await database.save({ ...data, "@type": "User" })
       return user
     } catch (error) {
       throw error
@@ -162,7 +163,7 @@ export class User {
     }
 
     return database
-      .find({"@type": "Project"})
+      .find({ "@type": "Project" })
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -191,7 +192,7 @@ export class User {
     // add or modify public info
     if (!data) return
     const previousUser = this.user
-    const publicProfile = {...previousUser.profile, ...data}
+    const publicProfile = { ...previousUser.profile, ...data }
     const updatedUser = await database.update({
       ...previousUser,
       profile: publicProfile
