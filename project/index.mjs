@@ -155,18 +155,18 @@ router
     .post(auth0Middleware(), async (req, res) => {
       const user = req.user
       const {id: projectId} = req.params
-      const {email, roles} = req.body
+      const {email, roles} = req.body 
 
       if (!user) {
         return respondWithError(res, 401, "Unauthenticated request")
-      } else if (!email || !roles) {
+      } else if (!email) {
         return respondWithError(
           res,
           400,
-          "Invitee's email and role(s) are required"
+          "Invitee's email is required"
         )
       } else if (!isValidEmail(email)) {
-        return respondWithError(res, 400, "Invitee email is invalid")
+        return respondWithError(res, 400, "Invitee email is invalid") 
       }
 
       try {
@@ -188,6 +188,47 @@ router
         res.status(error.status || 500).send(error.message.toString())
       }
     })
+
+    router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
+      // return res.status(200).json("success")
+
+      const user = req.user
+      const {id: projectId} = req.params
+      const {userId} = req.body
+
+      console.log("Request body is", req.body)
+    
+      if (!user) {
+        return respondWithError(res, 401, "Unauthenticated request")
+      } 
+       else if (!projectId) {
+        return respondWithError(res, 400, "Project ID is required")
+      }
+       else if (!userId) {
+        return respondWithError(res, 400, "User ID is required")
+      }
+    
+      try {
+        const project = await new Project(projectId)
+        const accessInfo = project.checkUserAccess(user._id)
+    
+        if (
+          accessInfo.hasAccess &&
+          accessInfo.permissions["members"].includes("MODIFY_ALL")
+        ) {
+          const response = await project.removeMember(userId)
+          res.status(200).json(response)
+        } else {
+          res
+            .status(403)
+            .send("You do not have permissions to modify members of this project")
+        }
+      } catch (error) {
+        res.status(error.status || 500).send(error.message.toString())
+      }
+    })
+    
+
 
 router.all((req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")

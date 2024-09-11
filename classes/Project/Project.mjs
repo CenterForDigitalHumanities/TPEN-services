@@ -1,9 +1,9 @@
 import dbDriver from "../../database/driver.mjs"
 import Permissions from "../../project/groups/permissions.mjs"
 import Roles from "../../project/groups/roles.mjs"
- import {sendMail} from "../../utilities/mailer/index.mjs"
-import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
-import {User} from "../User/User.mjs"
+import { sendMail } from "../../utilities/mailer/index.mjs"
+import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
+import { User } from "../User/User.mjs"
 import crypto from "crypto"
 
 const database = new dbDriver("mongo")
@@ -29,7 +29,7 @@ export default class Project {
     const validation = validateProjectPayload(payload)
 
     if (!validation.isValid) {
-      throw {status: 400, message: validation.errors}
+      throw { status: 400, message: validation.errors }
     }
 
     try {
@@ -44,7 +44,7 @@ export default class Project {
 
   async delete(projectId) {
     if (!projectId) {
-      throw {status: 400, message: "Project ID is required"}
+      throw { status: 400, message: "Project ID is required" }
     }
 
     return database.remove(projectId)
@@ -52,15 +52,15 @@ export default class Project {
 
   async addMember(email, rolesString) {
     try {
-      let user = await User.getByEmail(email)
+      let userObj = new User()
+      let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       let updatedProject
       let message = `You have been invited to the TPEN project ${this.projectData?.name}. View project <a href=https://www.tpen.org/project/${this.projectData._id}>here</a>.`
-
       if (user) {
         updatedProject = await this.inviteExistingTPENUser(user, roles)
       } else {
-        let {newUser, projectData} = await this.inviteNewTPENUser(email, roles)
+        let { newUser, projectData } = await this.inviteNewTPENUser(email, roles)
         // We will replace this URL with the correct url
         const url = `https://cubap.auth0.com/u/signup?invite-code=${newUser.inviteCode}`
         updatedProject = projectData
@@ -115,14 +115,14 @@ export default class Project {
 
     return permissions
       ? {
-          hasAccess: true,
-          permissions: permissions,
-          message: "User has access to the project"
-        }
+        hasAccess: true,
+        permissions: permissions,
+        message: "User has access to the project"
+      }
       : {
-          hasAccess: false,
-          message: "User is not a member of this project."
-        }
+        hasAccess: false,
+        message: "User is not a member of this project."
+      }
   }
 
   getCombinedPermissions(roles) {
@@ -143,7 +143,7 @@ export default class Project {
   }
 
   parseRoles(rolesString) {
-    const roles = rolesString.toUpperCase().split(" ")
+    const roles = rolesString?.toUpperCase().split(" ") ?? ["CONTRIBUTOR"]
 
     roles.forEach((role) => {
       if (!Object.values(Roles).includes(role)) {
@@ -180,12 +180,36 @@ export default class Project {
     newUser.agent = `https://store.rerum.io/v1/id/${newUser._id}`
     newUser.inviteCode = this.#encryptInviteCode(newUser._id)
 
+
     await userObj.updateRecord(newUser)
 
     const projectData = await this.inviteExistingTPENUser(newUser, roles)
 
-    return {newUser, projectData}
+    return { newUser, projectData }
   }
+
+  async removeMember(userId) {
+    try {
+      if (!this.projectData.contributors || !this.projectData.contributors[userId]) {
+        throw {
+          status: 404,
+          message: "User not found in the project's contributor list."
+        }
+      }
+
+      delete this.projectData.contributors[userId]
+
+      const updatedProject = await database.update(this.projectData)
+
+      return updatedProject
+    } catch (error) {
+      throw {
+        status: error.status || 500,
+        message: error.message || "An error occurred while removing the member."
+      }
+    }
+  }
+
 
   #encryptInviteCode(userId) {
     const date = Date.now().toString()
@@ -208,5 +232,5 @@ export default class Project {
     })
   }
 
- 
+
 }
