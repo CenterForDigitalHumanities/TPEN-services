@@ -1,11 +1,11 @@
 import Roles from "./roles.mjs"
 
 const Permissions = {
-  [Roles.OWNER]: ["*_ * _*"],  
+  [Roles.OWNER]: ["*_*_*"],  
   
   [Roles.LEADER]: [
     "UPDATE_*_PROJECT",
-    "*_*_MEMBER",
+    "*_*_MEMBER", 
     "*_*_ROLE",
     "*_*_PERMISSION",
     "*_*_LAYER",
