@@ -4,7 +4,7 @@ import { ACTIONS, ENTITIES, SCOPES } from "./permissions_parameters.mjs"
 const hasPermission = (role, action, scope, entity) => {
   const rolePermissions = Permissions[role]
 
-  if (!rolePermissions) return false; 
+  if (!rolePermissions) return false
 
    if (rolePermissions[action]?.[scope]?.includes(entity)) {
     return true
@@ -22,7 +22,7 @@ const hasPermission = (role, action, scope, entity) => {
     return true
   }
 
-  return false; 
+  return false
 }
 
 export default hasPermission
