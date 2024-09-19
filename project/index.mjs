@@ -197,7 +197,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
       accessInfo.hasAccess
     ) {
       const response = await project.removeMember(userId)
-      res.status(200).json(response)
+      res.sendStatus(204)
     } else {
       res
         .status(403)
