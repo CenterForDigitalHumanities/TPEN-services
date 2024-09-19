@@ -182,9 +182,7 @@ export default class Project {
 
       delete this.projectData.contributors[userId]
 
-      const updatedProject = await database.update(this.projectData)
-
-      return updatedProject
+      return database.update(this.projectData)
     } catch (error) {
       throw {
         status: error.status || 500,

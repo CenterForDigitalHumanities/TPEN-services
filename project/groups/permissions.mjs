@@ -21,6 +21,10 @@ const Permissions = {
     "DELETE_*_LINE",
     "UPDATE_DESCRIPTION_LAYER",
     "CREATE_*_LAYER"
+  ],
+
+  [Roles.VIEWER]: [
+    "READ_*_*"
   ]
 }
 
