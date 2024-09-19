@@ -1,4 +1,4 @@
-import Roles from "./roles.mjs";
+import Roles from "./roles.mjs"
 
 const Permissions = {
   [Roles.OWNER]: ["*_ * _*"],  
@@ -22,6 +22,6 @@ const Permissions = {
     "UPDATE_DESCRIPTION_LAYER",
     "CREATE_*_LAYER"
   ]
-};
+}
 
-export default Permissions;
+export default Permissions

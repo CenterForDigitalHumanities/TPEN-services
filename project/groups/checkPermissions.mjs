@@ -1,4 +1,4 @@
-import Permissions from "./permissions.js";
+import Permissions from "./permissions.js"
 import { ACTIONS, ENTITIES, SCOPES } from "./permissions_parameters.mjs"
 
 const hasPermission = (role, action, scope, entity) => {

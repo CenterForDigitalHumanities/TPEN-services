@@ -5,6 +5,6 @@ const Roles = {
    VIEWER: 'VIEWER', 
    INSTRUCTOR: 'INSTRUCTOR', 
    STUDENT: 'STUDENT', 
-};
+}
 
-export default Roles;
+export default Roles

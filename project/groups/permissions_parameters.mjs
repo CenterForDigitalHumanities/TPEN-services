@@ -5,7 +5,7 @@ export const ACTIONS = {
     DELETE: "DELETE",
     CREATE: "CREATE",
     ALL: "*"
-  };
+  }
   
 
   export const SCOPES = {
@@ -16,7 +16,7 @@ export const ACTIONS = {
     SELECTOR: "SELECTOR",
     DESCRIPTION: "DESCRIPTION",
     ALL: "*"
-  };
+  }
   
 
   export const ENTITIES = {
@@ -28,5 +28,5 @@ export const ACTIONS = {
     ROLE: "ROLE",
     PERMISSION: "PERMISSION",
     ALL: "*"
-  };
+  }
   
