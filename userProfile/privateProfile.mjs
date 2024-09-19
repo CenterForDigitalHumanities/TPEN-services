@@ -14,9 +14,9 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
 
-  const userObj = new User()
+  const userObj = await new User(user._id)
   userObj
-    .getSelf(user._id)
+    .getSelf()
     .then((userData) => {
       res.status(200).json(userData)
     })
@@ -29,16 +29,15 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
 router.route("/projects").get(auth0Middleware(), async (req, res) => {
   const user = await req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
-
-  try {
-    const userObj = new User(user._id)
+   try {
+    const userObj = await new User(user._id)
     const userProjects = await userObj.getProjects()
 
     res.set("Content-Type", "application/json; charset=utf-8")
 
     res.status(200).json(userProjects)
   } catch (error) {
-    respondWithError(res, error?.status, error?.message)
+    respondWithError(res, error?.status??500, error?.message??error.toString())
   }
 }).all((req, res)=>    respondWithError(res, 405, "Improper request method. Use GET instead")
 )

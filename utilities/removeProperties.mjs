@@ -8,12 +8,12 @@
  */
 export const removeProperties = (obj, ...propertiesToRemove)=>{
  if(!obj) return
- const { ...modifiedObj } = obj;
+ const { ...modifiedObj } = obj
  for (const property of propertiesToRemove) {
-     delete modifiedObj[property];
+     delete modifiedObj[property]
     }
     return modifiedObj
-   // publicUser.links = profile?.links //Assuming something in the profile object is public. Note that profile has to be sourced from the destructure as  const {profile, ...modifiedObj } = obj;
+   // publicUser.links = profile?.links //Assuming something in the profile object is public. Note that profile has to be sourced from the destructure as  const {profile, ...modifiedObj } = obj
 } 
 
 

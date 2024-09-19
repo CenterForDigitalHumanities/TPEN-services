@@ -1,9 +1,9 @@
 import dbDriver from "../../database/driver.mjs"
 import Permissions from "../../project/groups/permissions.mjs"
 import Roles from "../../project/groups/roles.mjs"
- import {sendMail} from "../../utilities/mailer/index.mjs"
-import {validateProjectPayload} from "../../utilities/validatePayload.mjs"
-import {User} from "../User/User.mjs"
+import { sendMail } from "../../utilities/mailer/index.mjs"
+import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
+import { User } from "../User/User.mjs"
 import crypto from "crypto"
 
 const database = new dbDriver("mongo")
@@ -29,7 +29,7 @@ export default class Project {
     const validation = validateProjectPayload(payload)
 
     if (!validation.isValid) {
-      throw {status: 400, message: validation.errors}
+      throw { status: 400, message: validation.errors }
     }
 
     try {
@@ -44,7 +44,7 @@ export default class Project {
 
   async delete(projectId) {
     if (!projectId) {
-      throw {status: 400, message: "Project ID is required"}
+      throw { status: 400, message: "Project ID is required" }
     }
 
     return database.remove(projectId)
@@ -52,15 +52,15 @@ export default class Project {
 
   async addMember(email, rolesString) {
     try {
-      let user = await User.getByEmail(email)
+      let userObj = new User()
+      let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       let updatedProject
       let message = `You have been invited to the TPEN project ${this.projectData?.name}. View project <a href=https://www.tpen.org/project/${this.projectData._id}>here</a>.`
-
       if (user) {
         updatedProject = await this.inviteExistingTPENUser(user, roles)
       } else {
-        let {newUser, projectData} = await this.inviteNewTPENUser(email, roles)
+        let { newUser, projectData } = await this.inviteNewTPENUser(email, roles)
         // We will replace this URL with the correct url
         const url = `https://cubap.auth0.com/u/signup?invite-code=${newUser.inviteCode}`
         updatedProject = projectData
@@ -79,8 +79,8 @@ export default class Project {
       }
     }
   }
-
-  checkUserAccess(userId) {
+ 
+  checkUserAccess(userId, action, scope, entity) {
     if (!this.projectData) {
       return {
         hasAccess: false,
@@ -88,69 +88,52 @@ export default class Project {
       }
     }
 
-    const isProjectOwner =
-      this.projectData.contributors[userId]?.roles?.includes("OWNER")
+    const userRoles = this.projectData.contributors[userId]?.roles
 
-    if (isProjectOwner) {
-      return {
-        hasAccess: true,
-        permissions: {
-          members: "MODIFY_ALL",
-          project: "MODIFY_ALL",
-          annotations: "MODIFY_ALL"
-        },
-        message: "User is the creator of the project and has full access."
-      }
-    }
-
-    if (!this.projectData.contributors) {
+    if (!userRoles) {
       return {
         hasAccess: false,
-        message:
-          "Project structure is incomplete. Missing contributors information."
+        message: "User is not a member of this project."
       }
     }
 
-    const permissions = this.projectData.contributors[userId]?.permissions
+    const combinedPermissions = this.getCombinedPermissions(userRoles) 
 
-    return permissions
+    const hasAccess = combinedPermissions.some(permission => {
+      const [permAction, permScope, permEntity] = permission.split("_")
+
+       return (
+        (permAction === action || permAction === "*") &&
+        (permScope === scope || permScope === "*") &&
+        (permEntity === entity || permEntity === "*")
+      )
+    })
+
+    return hasAccess
       ? {
-          hasAccess: true,
-          permissions: permissions,
-          message: "User has access to the project"
-        }
+        hasAccess: true,
+        permissions: combinedPermissions,
+        message: "User has access to the project."
+      }
       : {
-          hasAccess: false,
-          message: "User is not a member of this project."
-        }
+        hasAccess: false,
+        message:`User does not have ${action} access to ${scope=="*"?"ALL":scope} on ${entity}.`
+      }
   }
 
   getCombinedPermissions(roles) {
-    const combinedPermissions = {
-      members: "NONE",
-      project: "NONE",
-      annotations: "NONE"
-    }
+    const combinedPermissions = []
 
     roles.forEach((role) => {
-      const rolePermissions = Permissions[role] || {}
-      Object.keys(rolePermissions).forEach((key) => {
-        combinedPermissions[key] = rolePermissions[key]
-      })
+      const rolePermissions = Permissions[role] || []
+      combinedPermissions.push(...rolePermissions)
     })
 
     return combinedPermissions
   }
 
   parseRoles(rolesString) {
-    const roles = rolesString.toUpperCase().split(" ")
-
-    roles.forEach((role) => {
-      if (!Object.values(Roles).includes(role)) {
-        console.warn(`uUnrecognized role: ${role}. Update roles with appropraite permissions`)
-      }
-    })
-
+    const roles = rolesString?.toUpperCase().split(" ") ?? ["CONTRIBUTOR"]
     return roles
   }
 
@@ -180,12 +163,34 @@ export default class Project {
     newUser.agent = `https://store.rerum.io/v1/id/${newUser._id}`
     newUser.inviteCode = this.#encryptInviteCode(newUser._id)
 
+
     await userObj.updateRecord(newUser)
 
     const projectData = await this.inviteExistingTPENUser(newUser, roles)
 
-    return {newUser, projectData}
+    return { newUser, projectData }
   }
+
+  async removeMember(userId) {
+    try {
+      if (!this.projectData.contributors || !this.projectData.contributors[userId]) {
+        throw {
+          status: 404,
+          message: "User not found in the project's contributor list."
+        }
+      }
+
+      delete this.projectData.contributors[userId]
+
+      return database.update(this.projectData)
+    } catch (error) {
+      throw {
+        status: error.status || 500,
+        message: error.message || "An error occurred while removing the member."
+      }
+    }
+  }
+
 
   #encryptInviteCode(userId) {
     const date = Date.now().toString()
@@ -208,5 +213,5 @@ export default class Project {
     })
   }
 
- 
+
 }

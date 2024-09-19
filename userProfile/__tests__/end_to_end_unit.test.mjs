@@ -4,7 +4,7 @@ import mainApp from "../../app.mjs"
 import express from "express"
 import request from "supertest"
 import app from '../../app.mjs';  
-import { User } from "../../classes/User/User.mjs";
+import { User } from "../../classes/User/User.mjs"
 
 import {jest} from "@jest/globals"
 
@@ -86,26 +86,26 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
  
 describe('GET /:id route #testThis', () => {
   it('should respond with status 400 if no user ID is provided', async () => {
-    const response = await request(app).get('/user/');
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('No user ID provided');
-  });
+    const response = await request(app).get('/user/')
+    expect(response.status).toBe(400)
+    expect(response.body.message).toBe('No user ID provided')
+  })
 
   it('should respond with status 400 if the provided user ID is invalid', async () => {
-    const response = await request(app).get('/user/jkl');
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('The TPEN3 user ID is invalid');
-  });
+    const response = await request(app).get('/user/jkl')
+    expect(response.status).toBe(400)
+    expect(response.body.message).toBe('The TPEN3 user ID is invalid')
+  })
 
  
   it('should respond with status 404 and a message if no user found with provided ID', async () => {
-     jest.spyOn(User.prototype, 'getById').mockResolvedValueOnce({});
+     jest.spyOn(User.prototype, 'getById').mockResolvedValueOnce({})
 
-    const response = await request(app).get('/user/123');
-    expect(response.status).toBe(404);
-    expect(response.body.message).toBe("No TPEN3 user with ID '123' found");
-  });
+    const response = await request(app).get('/user/123')
+    expect(response.status).toBe(404)
+    expect(response.body.message).toBe("No TPEN3 user with ID '123' found")
+  })
 
 
-});
+})
 

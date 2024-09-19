@@ -2,9 +2,7 @@ const Roles = {
    OWNER: 'OWNER',
    LEADER: 'LEADER',
    CONTRIBUTOR: 'CONTRIBUTOR',
-   VIEWER: 'VIEWER', 
-   INSTRUCTOR: 'INSTRUCTOR', 
-   STUDENT: 'STUDENT', 
-};
+   VIEWER: 'VIEWER' 
+}
 
-export default Roles;
+export default Roles

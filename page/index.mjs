@@ -22,7 +22,7 @@ router.route('/:id?')
       id = parseInt(id)
       const pageObject = await service.findPageById(id)
       if (pageObject) {
-        respondWithPage(res, pageObject);
+        respondWithPage(res, pageObject)
       } else {
         utils.respondWithError(res, 404, `TPEN3 page "${id}" does not exist.`)
       }
@@ -32,7 +32,7 @@ router.route('/:id?')
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  });
+  })
 
 function respondWithPage(res, pageObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')

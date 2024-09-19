@@ -32,7 +32,7 @@ export class Page {
             //start:this.start ?? '',
             //rendering:this.rendering ?? '',
             //items:this.items ?? [],
-        };
+        }
     }
 
     // Method to create a new page
@@ -59,10 +59,10 @@ export class Page {
     addMembershipToManifest(manifest) {
     // Assuming manifest is a reference to the Manifest container object
     // Add the current page to the manifest's membership reference
-    manifest.addPageMembership(this.page);
+    manifest.addPageMembership(this.page)
     
     // Return a promise indicating that the operation is complete
-    return Promise.resolve();
+    return Promise.resolve()
     }
 
 
@@ -81,12 +81,12 @@ export class Page {
     handleTextBlob(lines) {
     // Assuming lines is an array of Line objects
     // If you want to return a continuous concatenated string
-    const continuousText = lines.map(line => line.body).join('');
+    const continuousText = lines.map(line => line.body).join('')
     // If you want to return an array of Line.body strings
-    const lineBodies = lines.map(line => line.body);
+    const lineBodies = lines.map(line => line.body)
     // Depending on your desired behavior, you can choose which one to return
-    return Promise.resolve(continuousText);
-    // Or return Promise.resolve(lineBodies);
+    return Promise.resolve(continuousText)
+    // Or return Promise.resolve(lineBodies)
     }
 
     // Method to handle image annotation
@@ -95,7 +95,7 @@ export class Page {
     // Assuming url is the URL of the image being annotated
     // Here you would process the annotation and determine how to handle it
     // For now, let's just return the URL as it is
-    return Promise.resolve(url);
+    return Promise.resolve(url)
     }
 
     // Method to get sibling pages
@@ -117,7 +117,7 @@ export class Page {
             case 'project':
                 return Promise.resolve('Project information retrieved')
             default:
-                throw new Error('Invalid type specified. Valid types are: parent, siblings, children, project');
+                throw new Error('Invalid type specified. Valid types are: parent, siblings, children, project')
         }
     }
 
@@ -125,7 +125,7 @@ export class Page {
 
     // Method to retrieve metadata only
     getMetadata() {
-        return Promise.resolve('Metadata of the page');
+        return Promise.resolve('Metadata of the page')
     }
 
     // Method to retrieve as HTML document
