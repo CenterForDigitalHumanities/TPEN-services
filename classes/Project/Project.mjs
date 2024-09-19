@@ -79,8 +79,8 @@ export default class Project {
       }
     }
   }
-
-  checkUserAccess(userId) {
+ 
+  checkUserAccess(userId, action, scope, entity) {
     if (!this.projectData) {
       return {
         hasAccess: false,
@@ -88,55 +88,45 @@ export default class Project {
       }
     }
 
-    const isProjectOwner =
-      this.projectData.contributors[userId]?.roles?.includes("OWNER")
+    const userRoles = this.projectData.contributors[userId]?.roles
 
-    if (isProjectOwner) {
-      return {
-        hasAccess: true,
-        permissions: {
-          members: "MODIFY_ALL",
-          project: "MODIFY_ALL",
-          annotations: "MODIFY_ALL"
-        },
-        message: "User is the creator of the project and has full access."
-      }
-    }
-
-    if (!this.projectData.contributors) {
+    if (!userRoles) {
       return {
         hasAccess: false,
-        message:
-          "Project structure is incomplete. Missing contributors information."
+        message: "User is not a member of this project."
       }
     }
 
-    const permissions = this.projectData.contributors[userId]?.permissions
+    const combinedPermissions = this.getCombinedPermissions(userRoles) 
 
-    return permissions
+    const hasAccess = combinedPermissions.some(permission => {
+      const [permAction, permScope, permEntity] = permission.split("_")
+
+       return (
+        (permAction === action || permAction === "*") &&
+        (permScope === scope || permScope === "*") &&
+        (permEntity === entity || permEntity === "*")
+      )
+    })
+
+    return hasAccess
       ? {
         hasAccess: true,
-        permissions: permissions,
-        message: "User has access to the project"
+        permissions: combinedPermissions,
+        message: "User has access to the project."
       }
       : {
         hasAccess: false,
-        message: "User is not a member of this project."
+        message:`User does not have ${action} access to ${scope=="*"?"ALL":scope} on ${entity}.`
       }
   }
 
   getCombinedPermissions(roles) {
-    const combinedPermissions = {
-      members: "NONE",
-      project: "NONE",
-      annotations: "NONE"
-    }
+    const combinedPermissions = []
 
     roles.forEach((role) => {
-      const rolePermissions = Permissions[role] || {}
-      Object.keys(rolePermissions).forEach((key) => {
-        combinedPermissions[key] = rolePermissions[key]
-      })
+      const rolePermissions = Permissions[role] || []
+      combinedPermissions.push(...rolePermissions)
     })
 
     return combinedPermissions
@@ -144,13 +134,6 @@ export default class Project {
 
   parseRoles(rolesString) {
     const roles = rolesString?.toUpperCase().split(" ") ?? ["CONTRIBUTOR"]
-
-    roles.forEach((role) => {
-      if (!Object.values(Roles).includes(role)) {
-        console.warn(`uUnrecognized role: ${role}. Update roles with appropraite permissions`)
-      }
-    })
-
     return roles
   }
 

@@ -1,26 +1,27 @@
-import Roles from "./roles.mjs"
+import Roles from "./roles.mjs";
 
 const Permissions = {
-  [Roles.OWNER]: {
-    members: "MODIFY_ALL",
-    project: "MODIFY_ALL",
-    annotations: "MODIFY_ALL"
-  },
-  [Roles.LEADER]: {
-    members: "MODIFY_ALL",
-    project: "MODIFY_PAGES ADD_COLLECTIONS",
-    annotations: "MODIFY_ALL"
-  },
-  [Roles.CONTRIBUTOR]: {
-    members: "NONE",
-    project: "MODIFY_PAGES ADD_COLLECTIONS",
-    annotations: "MODIFY_ALL"
-  },
-  [Roles.VIEWER]: {
-    members: "NONE",
-    project: "READ_ONLY",
-    annotations: "READ_ONLY"
-  }
-}
+  [Roles.OWNER]: ["*_ * _*"],  
+  
+  [Roles.LEADER]: [
+    "UPDATE_*_PROJECT",
+    "*_*_MEMBER",
+    "*_*_ROLE",
+    "*_*_PERMISSION",
+    "*_*_LAYER",
+    "*_*_PAGE"
+  ],
+  
+  [Roles.CONTRIBUTOR]: [
+    "READ_*_MEMBER",
+    "UPDATE_TEXT_*",
+    "UPDATE_ORDER_*",
+    "UPDATE_SELECTOR_*",
+    "CREATE_SELECTOR_*",
+    "DELETE_*_LINE",
+    "UPDATE_DESCRIPTION_LAYER",
+    "CREATE_*_LAYER"
+  ]
+};
 
-export default Permissions
+export default Permissions;
