@@ -53,15 +53,27 @@ function auth0Middleware() {
 
     try {
       const uid = agent.split("id/")[1]
-      new User(uid).then(async (user) => {
-        req.user = user?.profile ?
-          user : (await user.create({...payload, _id: agent.split("id/")[1], agent}))
+      const user = new User(uid)
+      user.getSelf().then(async (u) => {
+        if(u?.profile) {
+          req.user = u
+          next()
+          return
+        }
+        const dbUser = {
+          _id: uid,
+          agent,
+          _sub : payload.sub,
+          email: payload.name,
+          profile: { displayName: payload.nickname },
+        }
+        user.create(dbUser)
+        req.user = dbUser
+        next()
       })
     } catch (error) {
       next(error)
     }
-
-    next()
   }
 
   return [verifier, setUser]

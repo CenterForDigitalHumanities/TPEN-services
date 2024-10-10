@@ -13,14 +13,13 @@ export class User {
    */
   async #loadFromDB() {
     // load user from database
+    // TODO: possibly delete anything reserved for TPEN only
     this.data = await database.getById(this._id, "User")
     return this
   }
 
   async getSelf() {
-    const data = this.data ?? await this.#loadFromDB()
-    delete data['@type']
-    return data
+    return await (this.data ?? this.#loadFromDB()?.data)
   }
 
   async getPublicInfo() {
@@ -77,12 +76,6 @@ export class User {
    */
   async getProjects() {
     const user = await this.getSelf()
-    if (!user) {
-      throw {
-        status: 404,
-        message: "User account not found"
-      }
-    }
 
     return database
       .find({"@type": "Project"})
