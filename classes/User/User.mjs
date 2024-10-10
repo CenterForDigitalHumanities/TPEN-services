@@ -1,54 +1,33 @@
 import dbDriver from "../../database/driver.mjs"
-import {includeOnly} from "../../utilities/removeProperties.mjs"
 
 const database = new dbDriver("mongo")
 export class User {
-  constructor(userId) {
-    this.id = userId
-    this.userData = null
-    if (userId) {
-      return (async () => {
-        await this.getById()
-        return this
-      })()
-    }
+  constructor(userId = database.reserveId()) {
+    this._id = userId
   }
 
-  async getById() { 
+  /**
+   * Load user from database driver.
+   * @returns user object
+   * @throws {Error} any database error
+   */
+  async #loadFromDB() {
+    // load user from database
+    this.data = await database.getById(this._id, "User")
+    return this
+  }
+
+  async getSelf() {
+    const data = this.data ?? await this.#loadFromDB()
+    delete data['@type']
+    return data
+  }
+
+  async getPublicInfo() {
     // returns user's public info
-    try {
-     await this.getSelf(this.id).then((user) => { 
-        let publicUserInfo = includeOnly(user, "profile", "_id")
-        this.userData = publicUserInfo  
-        return publicUserInfo
-      })
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async getSelf(id) {
-    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
-
-    if (!id) {
-      throw {
-        status: 400,
-        message:
-          "No user ID found. Instantiate User class with a proper ID as follows new User(UserId)"
-      }
-    }
-
-    return database
-      .getById(id, "User")
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
+    const user = await this.getSelf()
+    user.profile._id = user._id
+    return user.profile
   }
 
   async updateRecord(data) {
@@ -65,30 +44,6 @@ export class User {
 
     return database
       .update(newRecord)
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
-  }
-
-  async getByAgent(agent) {
-    if (!agent) {
-      throw {
-        status: 400,
-        message: "No agent provided"
-      }
-    }
-
-    return database
-      .findOne({
-        agent,
-        "@type": "User"
-      })
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
