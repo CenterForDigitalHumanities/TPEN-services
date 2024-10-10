@@ -50,9 +50,6 @@ export class User {
         }
         return resp
       })
-      .catch((err) => {
-        throw err
-      })
   }
 
   async create(data) {
@@ -63,13 +60,8 @@ export class User {
         message: "No data provided"
       }
     }
-
-    try {
-      const user = await database.save({...data, "@type": "User"})
-      return user
-    } catch (error) {
-      throw error
-    }
+    const user = await database.save({...data, "@type": "User"})
+    return user
   }
 
   /**
@@ -113,9 +105,6 @@ export class User {
         })
 
         return userProjects
-      })
-      .catch((error) => {
-        throw error
       })
   }
   async addPublicInfo(data) {
