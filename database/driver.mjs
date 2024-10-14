@@ -136,8 +136,8 @@ class dbDriver {
      * @param seed A seed to base the ID on, depending on the driver.
      * @return The reserved ID or error JSON
      */
-    async reserveId(seed) {
-        return this.controller.reserveId(seed).catch(err => err)
+    reserveId(seed) {
+        return this.controller.reserveId(seed)
     }
 
     /**
