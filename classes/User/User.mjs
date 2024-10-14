@@ -1,57 +1,32 @@
 import dbDriver from "../../database/driver.mjs"
-import { includeOnly } from "../../utilities/removeProperties.mjs"
-import Roles from "../../project/groups/roles.mjs"
-import Permissions from "../../project/groups/permissions.mjs"
 
 const database = new dbDriver("mongo")
 export class User {
-  constructor(userId) {
-    this.id = userId
-    this.userData = null
-    if (userId) {
-      return (async () => {
-        await this.getById()
-        return this
-      })()
-    }
+  constructor(userId = database.reserveId()) {
+    this._id = userId
   }
 
-  async getById() {
-    // returns user's public info 
-    try {
-      await this.getSelf(this.id).then((user) => {
-        let publicUserInfo = includeOnly(user, "profile", "_id")
-        this.userData = publicUserInfo
-        return publicUserInfo
-      })
-    } catch (error) {
-      console.log(error)
-    }
+  /**
+   * Load user from database driver.
+   * @returns user object
+   * @throws {Error} any database error
+   */
+  async #loadFromDB() {
+    // load user from database
+    // TODO: possibly delete anything reserved for TPEN only
+    this.data = await database.getById(this._id, "User")
+    return this
   }
 
   async getSelf() {
-    const id = this.id
-    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
+    return await (this.data ?? this.#loadFromDB()?.data)
+  }
 
-    if (!id) {
-      throw {
-        status: 400,
-        message:
-          "No user ID found. Instantiate User class with a proper ID as follows new User(UserId)"
-      }
-    }
-
-    return database
-      .getById(id, "User")
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
+  async getPublicInfo() {
+    // returns user's public info
+    const user = await this.getSelf()
+    user.profile._id = user._id
+    return user.profile
   }
 
   async updateRecord(data) {
@@ -73,33 +48,6 @@ export class User {
           throw resp
         }
         return resp
-      })
-      .catch((err) => {
-        throw err
-      })
-  }
-
-  async getByAgent(agent) {
-    if (!agent) {
-      throw {
-        status: 400,
-        message: "No agent provided"
-      }
-    }
-
-    return database
-      .findOne({
-        agent,
-        "@type": "User"
-      })
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
       })
   }
   async getByEmail(email) {
@@ -133,13 +81,8 @@ export class User {
         message: "No data provided"
       }
     }
-
-    try {
-      const user = await database.save({ ...data, "@type": "User" })
-      return user
-    } catch (error) {
-      throw error
-    }
+    const user = await database.save({...data, "@type": "User"})
+    return user
   }
 
   /**
@@ -155,12 +98,6 @@ export class User {
    */
   async getProjects() {
     const user = await this.getSelf()
-    if (!user) {
-      throw {
-        status: 404,
-        message: "User account not found"
-      }
-    }
 
     return database
       .find({ "@type": "Project" })
@@ -183,9 +120,6 @@ export class User {
         })
 
         return userProjects
-      })
-      .catch((error) => {
-        throw error
       })
   }
   async addPublicInfo(data) {
