@@ -29,7 +29,7 @@ import privateProfileRouter from './userProfile/privateProfile.mjs'
   
 let app = express()
 
-//Middleware to use
+// Middleware to use
 app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
