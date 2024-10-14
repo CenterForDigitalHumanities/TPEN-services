@@ -1,8 +1,8 @@
 import Group from "../Group.mjs"
-import dbDriver from "../../database/driver.mjs"
+import dbDriver from "../../../database/driver.mjs"
 import { jest } from "@jest/globals"
 
-jest.mock("../../database/driver.mjs")
+jest.mock("../../../database/driver.mjs")
 
 describe("Group Class", () => {
     let group
