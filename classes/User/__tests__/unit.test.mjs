@@ -22,12 +22,12 @@ let token = process.env.TEST_TOKEN
 //       _id: "123456"
 //     },
 //     token:`Bearer ${token}`
-//   };
+//   }
 //   req.user = {
 //     _id: "123456",
 //     username: "exampleUser",
 //     profile: { name: "John Doe" }
-//   };
+//   }
 
 //   next()
 

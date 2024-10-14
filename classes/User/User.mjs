@@ -37,9 +37,9 @@ export class User {
         message: "No payload provided"
       }
     }
-
+    this.id = data._id
     const previousUser = await this.getSelf()
-    const newRecord = {...previousUser, ...data}
+    const newRecord = { ...previousUser, ...data }
 
     return database
       .update(newRecord)
@@ -50,7 +50,29 @@ export class User {
         return resp
       })
   }
+  async getByEmail(email) {
+    if (!email) {
+      throw {
+        status: 400,
+        message: "No email provided"
+      }
+    }
 
+    return database
+      .findOne({
+        email,
+        "@type": "User"
+      })
+      .then((resp) => {
+        if (resp instanceof Error) {
+          throw resp
+        }
+        return resp
+      })
+      .catch((err) => {
+        throw err
+      })
+  }
   async create(data) {
     // POST requests
     if (!data) {
@@ -78,7 +100,7 @@ export class User {
     const user = await this.getSelf()
 
     return database
-      .find({"@type": "Project"})
+      .find({ "@type": "Project" })
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -104,7 +126,7 @@ export class User {
     // add or modify public info
     if (!data) return
     const previousUser = this.user
-    const publicProfile = {...previousUser.profile, ...data}
+    const publicProfile = { ...previousUser.profile, ...data }
     const updatedUser = await database.update({
       ...previousUser,
       profile: publicProfile
