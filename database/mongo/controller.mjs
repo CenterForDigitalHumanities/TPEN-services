@@ -225,11 +225,10 @@ class DatabaseController {
       const result = await this.db.collection(collection).insertOne(data)
       if (result.insertedId) {
         return data
-      } else {
-        err_out.message = `Document was not inserted into the database.`
-        err_out.status = 500
-        throw err_out
       }
+      err_out.message = `Document was not inserted into the database.`
+      err_out.status = 500
+      throw err_out
     } catch (err) {
       // Specifically account for unexpected mongo things.
       if (!err?.message) err.message = err.toString()

@@ -85,8 +85,8 @@ class dbDriver {
      * @param data JSON from an HTTP POST request
      * @return The inserted document JSON or error JSON
      */
-    async save(data) {
-        return this.controller.save(data).catch(err => err)
+    async save(data,collection) {
+        return this.controller.save(data,collection).catch(err => err)
     }
 
     /**
