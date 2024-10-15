@@ -4,11 +4,11 @@ const database = new dbDriver("mongo")
 export default class Group {
     constructor(groupId) {
         this._id = groupId
-        this.members = {}
+        this.members = { roles: [] }
     }
 
     async #loadFromDB() {
-        return database.getById(this.groupId, "Group")
+        return database.getById(this._id, "Group")
     }
 
     async getMembers() {
