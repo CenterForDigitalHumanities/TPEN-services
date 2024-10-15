@@ -214,7 +214,7 @@ class DatabaseController {
     err_out._dbaction = "insertOne"
     try {
       //need to determine what collection (projects, groups, users) this goes into.
-      const data_type = this.determineDataType(data)
+      const data_type = this.determineDataType(data, collection)
       collection ??= discernCollectionFromType(data_type)
       if (!collection) {
         err_out.message = `Cannot figure which collection for object of type '${data_type}'`
@@ -318,8 +318,8 @@ class DatabaseController {
     return await this.findOne({_id: id, "@type": type})
   }
 
-  determineDataType(data) {
-    const data_type = data["@type"] ?? data.type
+  determineDataType(data,override) {
+    const data_type = data["@type"] ?? data.type ?? override
     if (!data_type) {
       const err_out = {
         message: `Cannot find 'type' on this data, and so cannot figure out a collection for it.`,

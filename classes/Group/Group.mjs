@@ -62,10 +62,10 @@ export default class Group {
                     status: 400,
                     message: "Invalid roles"
                 }
-            roles = roles.split(" ")
             }
+            roles = roles.split(" ")
         }
-        this.members[memberId].roles = [...new Set([this.members[memberId].roles.concat(roles)])]        
+        this.members[memberId].roles = [...new Set([...this.members[memberId].roles, ...roles])]      
     }
 
     removeMemberRoles(memberId, roles) {
