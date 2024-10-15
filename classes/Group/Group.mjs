@@ -4,6 +4,7 @@ const database = new dbDriver("mongo")
 export default class Group {
     constructor(groupId) {
         this._id = groupId
+        this.members = {}
     }
 
     async #loadFromDB() {
@@ -11,7 +12,11 @@ export default class Group {
     }
 
     async getMembers() {
-        return this.members ?? await this.#loadFromDB()
+        // if this members is an empty object, load from db
+        if (Object.keys(this.members).length === 0) {
+            return this.#loadFromDB()
+        }
+        return this.members
     }
 
     addMember(memberId, roles) {
@@ -87,7 +92,7 @@ export default class Group {
     }
 
     getByRole(role) {
-        return Object.keys(this.members).filter(memberId => this.members[memberId].roles.includes(role))
+        return this.members && Object.keys(this.members).filter(memberId => this.members[memberId].roles.includes(role))
     }
 
     async save() {
@@ -96,7 +101,7 @@ export default class Group {
 
     static async createNewGroup(creator, payload) {
         const { customRoles, label, members } = payload
-        if (!ownerId) {
+        if (!creator) {
             throw {
                 status: 400,
                 message: "Owner ID is required"
@@ -106,11 +111,11 @@ export default class Group {
         Object.assign(newGroup, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
-        if(!newGroup.getByRole("OWNER").length) {
-            newGroup.addMemberRoles(creator, "OWNER")
+        if(!newGroup.getByRole("OWNER")?.length) {
+            newGroup[newGroup.members[creator] ? "addMemberRoles" : "addMember"](creator, "OWNER")
         }
-        if(!newGroup.getByRole("LEADER").length) {
-            newGroup.addMemberRoles(creator, "LEADER")
+        if(!newGroup.getByRole("LEADER")?.length) {
+            newGroup[newGroup.members[creator] ? "addMemberRoles" : "addMember"](creator, "LEADER")
         }
         return newGroup.save()
     }

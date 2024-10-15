@@ -1,4 +1,5 @@
 import Project from "./Project.mjs"
+import Group from "../Group/Group.mjs" 
 
 export default class ProjectFactory {
   constructor(data) {
