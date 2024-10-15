@@ -21,10 +21,9 @@ export default class Group {
 
     addMember(memberId, roles) {
         if (this.members[memberId]) {
-            throw {
-                status: 400,
-                message: "Member already exists"
-            }
+            const err = new Error("Member already exists")
+            err.status = 400
+            throw err
         }
         this.members[memberId] = { roles: [] }
         this.updateMember(memberId, roles)
