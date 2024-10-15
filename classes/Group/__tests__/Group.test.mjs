@@ -1,6 +1,6 @@
 import Group from "../Group.mjs"
 import dbDriver from "../../../database/driver.mjs"
-import { jest } from "@jest/globals"
+import { expect, jest } from "@jest/globals"
 
 jest.mock("../../../database/driver.mjs")
 
@@ -59,10 +59,13 @@ describe("Group Class", () => {
     })
 
     test("should create a new group", async () => {
-        databaseMock.reserveId.mockReturnValue("01234567890123456789abcd")
-        databaseMock.save.mockResolvedValue("newGroup")
+        databaseMock.reserveId = jest.fn().mockReturnValue("01234567890123456789abcd")
+        databaseMock.save = jest.fn().mockResolvedValue("newGroup")
         const payload = { label: "Test Group" }
         const result = await Group.createNewGroup("01234567890123456789abcd", payload)
-        expect(result).toBe("newGroup")
+        expect(result.creator).toBe("01234567890123456789abcd")
+        expect(result.label).toBe("Test Group")
+        expect(result.members['01234567890123456789abcd']).toBeDefined()
+        expect(result.members['01234567890123456789abcd'].roles).toEqual(["OWNER", "LEADER"])
     })
 })
