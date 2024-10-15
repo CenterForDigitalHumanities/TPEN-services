@@ -77,6 +77,7 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
   })
 
   it('Call to /user with a TPEN3 user ID that does exist. The status should be 200 with a JSON user profile in the body.', async () => {
+    jest.spyOn(User.prototype, 'getPublicInfo').mockResolvedValueOnce({ _id: '123', displayName: 'Test User' })
     const res = await request(routeTester)
       .get('/user/123')
     expect(res.statusCode).toBe(200)
