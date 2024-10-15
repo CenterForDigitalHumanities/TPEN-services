@@ -4,7 +4,7 @@ const database = new dbDriver("mongo")
 export default class Group {
     constructor(groupId) {
         this._id = groupId
-        this.members = { roles: [] }
+        this.members = {}
     }
 
     async #loadFromDB() {
@@ -26,7 +26,7 @@ export default class Group {
                 message: "Member already exists"
             }
         }
-        this.members[memberId] = {}
+        this.members[memberId] = { roles: [] }
         this.updateMember(memberId, roles)
     }
 
