@@ -26,10 +26,6 @@ export class User {
     // returns user's public info
     const user = await this.getSelf()
     return { _id: user._id, ...user.profile }
-  }
-
-  async updateRecord(data) {
-    // updates user object. use with PUT or PATCH on authenticated route only
     if (!data) {
       throw {
         status: 400,
