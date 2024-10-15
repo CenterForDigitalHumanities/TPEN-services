@@ -26,7 +26,7 @@ export default class Group {
                 message: "Member already exists"
             }
         }
-        this.members[memberId] = true
+        this.members[memberId] = {}
         this.updateMember(memberId, roles)
     }
 
@@ -43,8 +43,8 @@ export default class Group {
                     status: 400,
                     message: "Invalid roles"
                 }
-            roles = roles.split(" ")
             }
+            roles = roles.split(" ")
         }
         this.members[memberId].roles = roles
     }
