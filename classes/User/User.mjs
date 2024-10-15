@@ -19,14 +19,13 @@ export class User {
   }
 
   async getSelf() {
-    return await (this.data ?? this.#loadFromDB()?.data)
+    return await (this.data ?? this.#loadFromDB().then(u=>u.data))
   }
 
   async getPublicInfo() {
     // returns user's public info
     const user = await this.getSelf()
-    user.profile._id = user._id
-    return user.profile
+    return { _id: user._id, ...user.profile }
   }
 
   async updateRecord(data) {
