@@ -11,7 +11,7 @@ const database = new dbDriver("mongo")
 export default class Project {
   constructor(projectId) {
     this.projectId = projectId
-    this.projectData = null
+    this.data = null
     if (projectId) {
       return (async () => {
         await this.#getById(projectId)
@@ -56,7 +56,7 @@ export default class Project {
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       let updatedProject
-      let message = `You have been invited to the TPEN project ${this.projectData?.name}. View project <a href=https://www.tpen.org/project/${this.projectData._id}>here</a>.`
+      let message = `You have been invited to the TPEN project ${this.data?.name}. View project <a href=https://www.tpen.org/project/${this.data._id}>here</a>.`
       if (user) {
         updatedProject = await this.inviteExistingTPENUser(user, roles)
       } else {
@@ -70,7 +70,7 @@ export default class Project {
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
       }
 
-      sendMail(user, `Invitation to ${this.projectData?.name}`, message)
+      sendMail(user, `Invitation to ${this.data?.name}`, message)
       return updatedProject
     } catch (error) {
       throw {
@@ -81,14 +81,14 @@ export default class Project {
   }
  
   checkUserAccess(userId, action, scope, entity) {
-    if (!this.projectData) {
+    if (!this.data) {
       return {
         hasAccess: false,
         message: "Project data is not loaded."
       }
     }
 
-    const userRoles = this.projectData.contributors[userId]?.roles
+    const userRoles = this.data.contributors[userId]?.roles
 
     if (!userRoles) {
       return {
@@ -138,8 +138,8 @@ export default class Project {
   }
 
   async inviteExistingTPENUser(user, roles) {
-    this.projectData.contributors = this.projectData.contributors || {}
-    this.projectData.contributors[user._id] = {
+    this.data.contributors = this.data.contributors || {}
+    this.data.contributors[user._id] = {
       displayName: user.displayName ?? user.nickname,
       email: user?.email,
       agent:
@@ -150,7 +150,7 @@ export default class Project {
       permissions: this.getCombinedPermissions(roles)
     }
 
-    return await database.update(this.projectData)
+    return await database.update(this.data)
   }
 
   async inviteNewTPENUser(email, roles) {
@@ -173,16 +173,16 @@ export default class Project {
 
   async removeMember(userId) {
     try {
-      if (!this.projectData.contributors || !this.projectData.contributors[userId]) {
+      if (!this.data.contributors || !this.data.contributors[userId]) {
         throw {
           status: 404,
           message: "User not found in the project's contributor list."
         }
       }
 
-      delete this.projectData.contributors[userId]
+      delete this.data.contributors[userId]
 
-      return database.update(this.projectData)
+      return database.update(this.data)
     } catch (error) {
       throw {
         status: error.status || 500,
@@ -209,7 +209,7 @@ export default class Project {
 
   async #getById(projectId) {
     return database.getById(projectId, "Project").then((resp) => {
-      this.projectData = resp
+      this.data = resp
     })
   }
 
