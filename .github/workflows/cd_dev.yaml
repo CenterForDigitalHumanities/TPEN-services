@@ -13,8 +13,8 @@ jobs:
           envkey_DOWN: ${{ secrets.DOWN }}
           envkey_READONLY: ${{ secrets.READONLY }}
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
-          envkey_MONGODBNAME: ${{ secrets.MONGODBNAMEDEV }}
-          envkey_MONGODB: ${{ secrets.MONGODBDEV }}
+          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
+          envkey_MONGODB: ${{ secrets.MONGODB }}
           envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
           envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
           envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
