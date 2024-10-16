@@ -191,10 +191,10 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
 
 describe("Mongo Database Utilities. #mongo_unit #db", () => {
   it("Assigns a new id for an Object", async () => {
-    const noSeedResult = await database.reserveId()
-    const badSeedResult = await database.reserveId("🕵️‍♀️🍤")
-    const goodSeedResult = await database.reserveId(500)
-    const exactSeedResult = await database.reserveId("662bceca0b2fbab1bb0c6d4f")
+    const noSeedResult = database.reserveId()
+    const badSeedResult = database.reserveId("🕵️‍♀️🍤")
+    const goodSeedResult = database.reserveId(500)
+    const exactSeedResult = database.reserveId("662bceca0b2fbab1bb0c6d4f")
     expect(typeof noSeedResult).toEqual("string")
     expect(noSeedResult).toHaveLength(24)
     expect(typeof badSeedResult).toEqual("string")

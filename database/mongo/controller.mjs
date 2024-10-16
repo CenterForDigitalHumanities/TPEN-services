@@ -123,11 +123,11 @@ class DatabaseController {
    * @return A hex string or error
    * */
 
-  async reserveId(seed) {
+  reserveId(seed) {
     try {
-      return Promise.resolve(new ObjectId(seed).toHexString())
+      return new ObjectId(seed).toHexString()
     } catch (err) {
-      return Promise.resolve(new ObjectId().toHexString())
+      return new ObjectId().toHexString()
     }
   }
 
@@ -210,26 +210,25 @@ class DatabaseController {
    * @param data JSON from an HTTP POST request
    * @return The inserted document JSON or error JSON
    */
-  async save(data) {
+  async save(data, collection) {
     err_out._dbaction = "insertOne"
     try {
-      //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const data_type = this.determineDataType(data)
-      const collection = discernCollectionFromType(data_type)
+      //need to determine what collection (projects, groups, users) this goes into.
+      const data_type = this.determineDataType(data, collection)
+      collection ??= discernCollectionFromType(data_type)
       if (!collection) {
         err_out.message = `Cannot figure which collection for object of type '${data_type}'`
         err_out.status = 400
         throw err_out
       }
-      data["_id"] = await this.reserveId(data?._id)
+      data._id ??= this.reserveId()
       const result = await this.db.collection(collection).insertOne(data)
       if (result.insertedId) {
         return data
-      } else {
-        err_out.message = `Document was not inserted into the database.`
-        err_out.status = 500
-        throw err_out
       }
+      err_out.message = `Document was not inserted into the database.`
+      err_out.status = 500
+      throw err_out
     } catch (err) {
       // Specifically account for unexpected mongo things.
       if (!err?.message) err.message = err.toString()
@@ -319,8 +318,8 @@ class DatabaseController {
     return await this.findOne({_id: id, "@type": type})
   }
 
-  determineDataType(data) {
-    const data_type = data["@type"] ?? data.type
+  determineDataType(data,override) {
+    const data_type = data["@type"] ?? data.type ?? override
     if (!data_type) {
       const err_out = {
         message: `Cannot find 'type' on this data, and so cannot figure out a collection for it.`,
