@@ -36,7 +36,7 @@ export function authenticateUser() {
 function auth0Middleware() {
   const verifier = auth({
     audience: process.env.AUDIENCE,
-    issuerBaseURL: `https://${process.env.DOMAIN}/`
+    issuerBaseURL: `https://${process.env.DOMAIN}/`,
   })
 
   // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sib, roles, etc.
@@ -52,16 +52,28 @@ function auth0Middleware() {
     }
 
     try {
-      const userObj = new User(payload._id)
-      const user = await userObj.getByAgent(agent)
-      req.user =
-        user ??
-        (await userObj.create({...payload, _id: agent.split("id/")[1], agent}))
+      const uid = agent.split("id/")[1]
+      const user = new User(uid)
+      user.getSelf().then(async (u) => {
+        if(u?.profile) {
+          req.user = u
+          next()
+          return
+        }
+        const dbUser = {
+          _id: uid,
+          agent,
+          _sub : payload.sub,
+          email: payload.name,
+          profile: { displayName: payload.nickname },
+        }
+        user.create(dbUser)
+        req.user = dbUser
+        next()
+      })
     } catch (error) {
       next(error)
     }
-
-    next()
   }
 
   return [verifier, setUser]

@@ -9,7 +9,9 @@ describe("user Class appears and behaves as expected #user_exists_test #user_cla
 
   it("Has required methods", () => {
     expect(user.getSelf).toBeInstanceOf(Function)
-    expect(user.updateRecord).toBeInstanceOf(Function) 
     expect(user.getProjects).toBeInstanceOf(Function) 
+    expect(user.getPublicInfo).toBeInstanceOf(Function)
+    expect(user.getByEmail).toBeInstanceOf(Function)
+    expect(user.create).toBeInstanceOf(Function)
   }) 
 })

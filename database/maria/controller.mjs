@@ -52,28 +52,28 @@ class DatabaseController {
 
     async create(table, document) {
         // TODO insert statement
-        //const result = await this.conn.query(`INSERT INTO ${table} value (${document})`);
+        //const result = await this.conn.query(`INSERT INTO ${table} value (${document})`)
         const result = {"hello" : "Bryan"}
         return result
     }
 
     async read(table, params) {
         // TODOD select statement
-        //const result = await this.conn.query(`SELECT * FROM ${table} WHERE ${params}`);
+        //const result = await this.conn.query(`SELECT * FROM ${table} WHERE ${params}`)
         const result = {"hello" : "Bryan"}
         return result
     }
 
     async update(table, document, matchParams) {
         // TODO update statement
-        //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`);
+        //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`)
         const result = {"hello" : "Bryan"}
         return result
     }
 
     async remove(table, matchParams) {
         // TODO update statement
-        //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`);
+        //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`)
         const result = {"ok" : "deleted"}
         return result
     }

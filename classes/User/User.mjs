@@ -1,67 +1,40 @@
 import dbDriver from "../../database/driver.mjs"
-import {includeOnly} from "../../utilities/removeProperties.mjs"
 
 const database = new dbDriver("mongo")
 export class User {
-  constructor(userId) {
-    this.id = userId
-    this.userData = null
-    if (userId) {
-      return (async () => {
-        await this.getById()
-        return this
-      })()
-    }
+  constructor(userId = database.reserveId()) {
+    this._id = userId
   }
 
-  async getById() { 
+  /**
+   * Load user from database driver.
+   * @returns user object
+   * @throws {Error} any database error
+   */
+  async #loadFromDB() {
+    // load user from database
+    // TODO: possibly delete anything reserved for TPEN only
+    this.data = await database.getById(this._id, "User")
+    return this
+  }
+
+  async getSelf() {
+    return await (this.data ?? this.#loadFromDB().then(u=>u.data))
+  }
+
+  async getPublicInfo() {
     // returns user's public info
-    try {
-     await this.getSelf(this.id).then((user) => { 
-        let publicUserInfo = includeOnly(user, "profile", "_id")
-        this.userData = publicUserInfo  
-        return publicUserInfo
-      })
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async getSelf(id) {
-    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
-
-    if (!id) {
-      throw {
-        status: 400,
-        message:
-          "No user ID found. Instantiate User class with a proper ID as follows new User(UserId)"
-      }
-    }
-
-    return database
-      .getById(id, "User")
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
-  }
-
-  async updateRecord(data) {
-    // updates user object. use with PUT or PATCH on authenticated route only
+    const user = await this.getSelf()
+    return { _id: user._id, ...user.profile }
     if (!data) {
       throw {
         status: 400,
         message: "No payload provided"
       }
     }
-
+    this.id = data._id
     const previousUser = await this.getSelf()
-    const newRecord = {...previousUser, ...data}
+    const newRecord = { ...previousUser, ...data }
 
     return database
       .update(newRecord)
@@ -71,22 +44,18 @@ export class User {
         }
         return resp
       })
-      .catch((err) => {
-        throw err
-      })
   }
-
-  async getByAgent(agent) {
-    if (!agent) {
+  async getByEmail(email) {
+    if (!email) {
       throw {
         status: 400,
-        message: "No agent provided"
+        message: "No email provided"
       }
     }
 
     return database
       .findOne({
-        agent,
+        email,
         "@type": "User"
       })
       .then((resp) => {
@@ -99,7 +68,6 @@ export class User {
         throw err
       })
   }
-
   async create(data) {
     // POST requests
     if (!data) {
@@ -108,13 +76,8 @@ export class User {
         message: "No data provided"
       }
     }
-
-    try {
-      const user = await database.save({...data, "@type": "User"})
-      return user
-    } catch (error) {
-      throw error
-    }
+    const user = await database.save({...data, "@type": "User"})
+    return user
   }
 
   /**
@@ -130,15 +93,9 @@ export class User {
    */
   async getProjects() {
     const user = await this.getSelf()
-    if (!user) {
-      throw {
-        status: 404,
-        message: "User account not found"
-      }
-    }
 
     return database
-      .find({"@type": "Project"})
+      .find({ "@type": "Project" })
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -159,15 +116,12 @@ export class User {
 
         return userProjects
       })
-      .catch((error) => {
-        throw error
-      })
   }
   async addPublicInfo(data) {
     // add or modify public info
     if (!data) return
     const previousUser = this.user
-    const publicProfile = {...previousUser.profile, ...data}
+    const publicProfile = { ...previousUser.profile, ...data }
     const updatedUser = await database.update({
       ...previousUser,
       profile: publicProfile
