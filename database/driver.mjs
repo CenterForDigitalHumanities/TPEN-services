@@ -85,8 +85,8 @@ class dbDriver {
      * @param data JSON from an HTTP POST request
      * @return The inserted document JSON or error JSON
      */
-    async save(data) {
-        return this.controller.save(data).catch(err => err)
+    async save(data,collection) {
+        return this.controller.save(data,collection).catch(err => err)
     }
 
     /**
@@ -136,8 +136,8 @@ class dbDriver {
      * @param seed A seed to base the ID on, depending on the driver.
      * @return The reserved ID or error JSON
      */
-    async reserveId(seed) {
-        return this.controller.reserveId(seed).catch(err => err)
+    reserveId(seed) {
+        return this.controller.reserveId(seed)
     }
 
     /**

@@ -1,4 +1,5 @@
 import Project from "./Project.mjs"
+import Group from "../Group/Group.mjs" 
 
 export default class ProjectFactory {
   constructor(data) {
@@ -74,7 +75,8 @@ export default class ProjectFactory {
       })
       .then(async (project) => {
         const projectObj = new Project()
-        return await projectObj.create({...project, creator})
+        const group = await Group.createNewGroup(creator, { label: project.title ?? project.label ?? `Project ${new Date().toLocaleDateString()}` }).then((group) => group._id)
+        return await projectObj.create({...project, creator, group})
       })
       .catch((err) => {
         throw {
