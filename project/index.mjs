@@ -159,7 +159,6 @@ router
       const project = await new Project(projectId)
 
       const accessInfo = project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
-console.log(project)
       if (accessInfo.hasAccess) {
         const response = await project.addMember(email, roles)
         res.status(200).json(response)
