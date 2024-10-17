@@ -19,7 +19,7 @@ export class User {
   }
 
   async getSelf() {
-    return await (this.data ?? this.#loadFromDB().then(u=>u.data))
+    return await (this.data ?? this.#loadFromDB().then(u => u.data))
   }
 
   async getPublicInfo() {
@@ -68,7 +68,7 @@ export class User {
         throw err
       })
   }
-  async create(data) {
+  static async create(data) {
     // POST requests
     if (!data) {
       throw {
@@ -76,8 +76,40 @@ export class User {
         message: "No data provided"
       }
     }
-    const user = await database.save({...data, "@type": "User"})
-    return user
+    if (data._id) {
+      const existingUser = await database.getById(data._id, "users")
+      if (existingUser) {
+        const err = new Error("User already exists")
+        err.status = 400
+        throw err
+      }
+    }
+    if (!data.profile || !data.profile.displayName) {
+      data.profile = data.profile || {}
+      data.profile.displayName = data.email?.split("@")[0]
+        ?? data.name
+        ?? data.displayName
+        ?? data.fullName
+        ?? `User ${new Date().toLocaleDateString()}`
+    }
+    const user = new User()
+    Object.assign(user, data)
+    return user.save()
+  }
+
+  async save() {
+    // validate before save
+    if (!this._id) {
+      throw new Error("User must have an _id")
+    }
+    if (!this.email) {
+      throw new Error("User must have an email")
+    }
+    if (!this.profile || !this.profile.displayName) {
+      throw new Error("User must have a profile with a displayName")
+    }
+    // save user to database
+    return database.save(this, "users")
   }
 
   /**

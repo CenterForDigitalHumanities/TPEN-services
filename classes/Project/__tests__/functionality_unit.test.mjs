@@ -75,7 +75,7 @@ describe("ProjectFactory.DBObjectFromManifest/processLayerFromCanvas #importTest
     ])
 
     const expectedProject = {
-      title: "Example Manifest",
+      label: "Example Manifest",
       "@type":"Project",
       metadata: [{label: "Author", name: "Voo Onoja"}],
       "@context": "http://t-pen.org/3/context.json",

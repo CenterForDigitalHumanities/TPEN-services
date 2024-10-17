@@ -32,7 +32,7 @@ export default class ProjectFactory {
     }
     let newProject = {}
     newProject["@type"] = "Project"
-    newProject.title = manifest.label
+    newProject.label = manifest.label
     newProject.metadata = manifest.metadata 
     newProject["@context"] = "http://t-pen.org/3/context.json"
     newProject.manifest = manifest["@id"] ?? manifest.id
@@ -75,7 +75,7 @@ export default class ProjectFactory {
       })
       .then(async (project) => {
         const projectObj = new Project()
-        const group = await Group.createNewGroup(creator, { label: project.title ?? project.label ?? `Project ${new Date().toLocaleDateString()}` }).then((group) => group._id)
+        const group = await Group.createNewGroup(creator, { label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}` }).then((group) => group._id)
         return await projectObj.create({...project, creator, group})
       })
       .catch((err) => {
@@ -84,5 +84,48 @@ export default class ProjectFactory {
           message: err.message ?? "Internal Server Error"
         }
       })
+  }
+
+  /**
+   * Convert the Project.data into an Object ready for consumption by a TPEN interface,
+   * especially the GET /project/:id endpoint.
+   * @param {Object} projectData The loaded Project.data from the database.
+   */
+  static async forInterface(projectData) {
+    if (!projectData) {
+      const err = new Error("No project data found")
+      err.status = 400
+      throw err
+    }
+    const project = {
+      _id: projectData._id,
+      label: projectData.label,
+      metadata: projectData.metadata ?? [],
+      layers: projectData.layers ?? [],
+      manifest: projectData.manifest,
+      creator: projectData.creator,
+      contributors: {},
+      license: projectData.license,
+      tools: projectData.tools,
+      options: projectData.options,
+      roles: Object.assign(Group.defaultRoles, projectData.customRoles)
+    }
+
+    const group = new Group(projectData.group)
+    await group.getMembers()
+      .then(members => {
+        const loadMembers = []
+        Object.keys(members).forEach(memberId => {
+          project.contributors[memberId] = {
+            roles: members[memberId]
+          }
+          loadMembers.push(new User(memberId).getPublicProfile().then(profile => {
+            project.contributors[memberId].profile = profile
+          }))
+        })
+        return Promise.all(loadMembers)
+      })
+
+    return project
   }
 }
