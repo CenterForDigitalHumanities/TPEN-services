@@ -68,7 +68,7 @@ export class User {
         throw err
       })
   }
-  async create(data) {
+  static async create(data) {
     // POST requests
     if (!data) {
       throw {
@@ -78,6 +78,11 @@ export class User {
     }
     const user = await database.save({...data, "@type": "User"})
     return user
+  }
+
+  async save() {
+    // save user to database
+    return database.save(this)
   }
 
   /**

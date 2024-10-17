@@ -5,19 +5,14 @@ import { sendMail } from "../../utilities/mailer/index.mjs"
 import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
 import { User } from "../User/User.mjs"
 import crypto from "crypto"
+import Group from "../Group/Group.mjs"
 
 const database = new dbDriver("mongo")
 
 export default class Project {
-  constructor(projectId) {
-    this.projectId = projectId
+  constructor(_id) {
+    this._id = _id
     this.data = null
-    if (projectId) {
-      return (async () => {
-        await this.#getById(projectId)
-        return this
-      })()
-    }
   }
 
   /**
@@ -80,15 +75,13 @@ export default class Project {
     }
   }
  
-  checkUserAccess(userId, action, scope, entity) {
+  async checkUserAccess(userId, action, scope, entity) {
     if (!this.data) {
-      return {
-        hasAccess: false,
-        message: "Project data is not loaded."
-      }
+      await this.#load()
     }
 
-    const userRoles = this.data.contributors[userId]?.roles
+    const groupMembers = new Group(this.data.group).getMembers()
+    const userRoles = groupMembers[userId]?.roles
 
     if (!userRoles) {
       return {
@@ -123,10 +116,10 @@ export default class Project {
 
   getCombinedPermissions(roles) {
     const combinedPermissions = []
-
-    roles.forEach((role) => {
-      const rolePermissions = Permissions[role] || []
-      combinedPermissions.push(...rolePermissions)
+    const group = new Group(this.data.group)
+    const groupRoles = group.getPermissions()
+    roles.forEach(role => {
+      combinedPermissions.push(groupRoles[role])
     })
 
     return combinedPermissions
@@ -137,35 +130,21 @@ export default class Project {
     return roles
   }
 
-  async inviteExistingTPENUser(user, roles) {
-    this.data.contributors = this.data.contributors || {}
-    this.data.contributors[user._id] = {
-      displayName: user.displayName ?? user.nickname,
-      email: user?.email,
-      agent:
-        user.agent ??
-        user["http://store.rerum.io/agent"] ??
-        `https://store.rerum.io/v1/id/${user._id}`,
-      roles: roles,
-      permissions: this.getCombinedPermissions(roles)
-    }
-
-    return await database.update(this.data)
+  async inviteExistingTPENUser(userId, roles) {
+    const group = new Group(this.data.group)
+    group.addMember(userId, roles)
+    await group.save()
+    return this
   }
 
   async inviteNewTPENUser(email, roles) {
-    const userPayload = {
-      inviteCode: Date.now(),
-      email
-    }
-    const userObj = new User()
-    const newUser = await userObj.create(userPayload)
-    newUser.agent = `https://store.rerum.io/v1/id/${newUser._id}`
-    newUser.inviteCode = this.#encryptInviteCode(newUser._id)
-
-
-    await userObj.updateRecord(newUser)
-
+    const user = new User()
+    Object.assign(user, { 
+      email,
+      inviteCode: this.#encryptInviteCode(user._id),
+      agent: `https://store.rerum.io/v1/id/${user._id}`
+     })
+    await user.save()
     const projectData = await this.inviteExistingTPENUser(newUser, roles)
 
     return { newUser, projectData }
@@ -173,16 +152,10 @@ export default class Project {
 
   async removeMember(userId) {
     try {
-      if (!this.data.contributors || !this.data.contributors[userId]) {
-        throw {
-          status: 404,
-          message: "User not found in the project's contributor list."
-        }
-      }
-
-      delete this.data.contributors[userId]
-
-      return database.update(this.data)
+      const group = new Group(this.data.group)
+      group.removeMember(userId)
+      await group.save()
+      return this
     } catch (error) {
       throw {
         status: error.status || 500,
@@ -207,8 +180,8 @@ export default class Project {
     return iv.toString("hex") + ":" + encrypted.toString("hex")
   }
 
-  async #getById(projectId) {
-    return database.getById(projectId, "Project").then((resp) => {
+  async #load() {
+    return database.getById(this._id, "Project").then((resp) => {
       this.data = resp
     })
   }

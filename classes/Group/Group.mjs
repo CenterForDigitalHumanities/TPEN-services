@@ -19,6 +19,29 @@ export default class Group {
         return this.members
     }
 
+    /**
+     * Generate a ROLE:PERMISSIONS map for the indicated member.
+     * @param {String} memberId hexstring id of the member
+     * @returns Object
+     */
+    async getMemberRoles(memberId) {
+        if (!this.members) {
+            await this.#loadFromDB()
+        }
+        if (!this.members[memberId]) {
+            const err = new Error("Member not found")
+            err.status = 404
+            throw err
+        }
+        const roles = this.members[memberId]?.roles
+        const allRoles = Object.assign(Group.defaultRoles, this.customRoles)
+        return Object.fromEntries(roles.map(role => [role, allRoles[role]]))
+    }
+
+    getPermissions(role) {
+        return Object.assign(Group.defaultRoles, this.customRoles)[role] ?? "x_x_x"
+    }
+
     addMember(memberId, roles) {
         if (this.members[memberId]) {
             const err = new Error("Member already exists")
@@ -36,8 +59,8 @@ export default class Group {
                 message: "Member not found"
             }
         }
-        if(!Array.isArray(roles)) {
-            if(typeof roles !== "string") {
+        if (!Array.isArray(roles)) {
+            if (typeof roles !== "string") {
                 throw {
                     status: 400,
                     message: "Invalid roles"
@@ -55,8 +78,8 @@ export default class Group {
                 message: "Member not found"
             }
         }
-        if(!Array.isArray(roles)) {
-            if(typeof roles !== "string") {
+        if (!Array.isArray(roles)) {
+            if (typeof roles !== "string") {
                 throw {
                     status: 400,
                     message: "Invalid roles"
@@ -64,7 +87,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        this.members[memberId].roles = [...new Set([...this.members[memberId].roles, ...roles])]      
+        this.members[memberId].roles = [...new Set([...this.members[memberId].roles, ...roles])]
     }
 
     removeMemberRoles(memberId, roles) {
@@ -74,13 +97,13 @@ export default class Group {
                 message: "Member not found"
             }
         }
-        if(!Array.isArray(roles)) {
-            if(typeof roles !== "string") {
+        if (!Array.isArray(roles)) {
+            if (typeof roles !== "string") {
                 throw {
                     status: 400,
                     message: "Invalid roles"
                 }
-            roles = roles.split(" ")
+                roles = roles.split(" ")
             }
         }
         this.members[memberId].roles = this.members[memberId].roles.filter(role => !roles.includes(role))
@@ -95,7 +118,7 @@ export default class Group {
     }
 
     async save() {
-        return database.save(this,process.env.TPENGROUPS)
+        return database.save(this, process.env.TPENGROUPS)
     }
 
     static async createNewGroup(creator, payload) {
@@ -110,12 +133,19 @@ export default class Group {
         Object.assign(newGroup, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
-        if(!newGroup.getByRole("OWNER")?.length) {
+        if (!newGroup.getByRole("OWNER")?.length) {
             newGroup[newGroup.members[creator] ? "addMemberRoles" : "addMember"](creator, "OWNER")
         }
-        if(!newGroup.getByRole("LEADER")?.length) {
+        if (!newGroup.getByRole("LEADER")?.length) {
             newGroup[newGroup.members[creator] ? "addMemberRoles" : "addMember"](creator, "LEADER")
         }
         return newGroup.save()
+    }
+
+    static defaultRoles = {
+        OWNER: ["*_*_*"],
+        LEADER: ["UPDATE_*_PROJECT", "*_*_MEMBER", "*_*_ROLE", "*_*_PERMISSION", "*_*_LAYER", "*_*_PAGE"],
+        CONTRIBUTOR: ["READ_*_MEMBER", "UPDATE_TEXT_*", "UPDATE_ORDER_*", "UPDATE_SELECTOR_*", "CREATE_SELECTOR_*", "DELETE_*_LINE", "UPDATE_DESCRIPTION_LAYER", "CREATE_*_LAYER"],
+        VIEWER: ["READ_*_PROJECT", "READ_*_MEMBER", "READ_*_LAYER", "READ_*_PAGE", "READ_*_LINE"]
     }
 }
