@@ -1,18 +1,18 @@
-import Project from "./Project.mjs"
-import dbDriver from "../../database/driver.mjs"
-import { sendMail } from "../../utilities/mailer/index.mjs"
-import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
-import { User } from "../User/User.mjs"
-import Group from "../Group/Group.mjs"
+import Project from "../Project.mjs"
+import dbDriver from "../../../database/driver.mjs"
+import { sendMail } from "../../../utilities/mailer/index.mjs"
+import { validateProjectPayload } from "../../../utilities/validatePayload.mjs"
+import { User } from "../../User/User.mjs"
+import Group from "../../Group/Group.mjs"
 import { jest } from "@jest/globals"
 
-jest.mock("../../database/driver.mjs")
-jest.mock("../../utilities/mailer/index.mjs")
-jest.mock("../../utilities/validatePayload.mjs")
-jest.mock("../User/User.mjs")
-jest.mock("../Group/Group.mjs")
+jest.mock("../../../database/driver.mjs")
+jest.mock("../../../utilities/mailer/index.mjs")
+jest.mock("../../../utilities/validatePayload.mjs")
+jest.mock("../../User/User.mjs")
+jest.mock("../../Group/Group.mjs")
 
-describe("Project Class", () => {
+describe("Project Class unit tests #project_class", () => {
   let project
   let databaseMock
 
