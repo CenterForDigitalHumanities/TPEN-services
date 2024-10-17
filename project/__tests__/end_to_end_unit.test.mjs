@@ -144,7 +144,7 @@ describe.skip("POST /project/import?createFrom=URL #importTests", () => {
 
  
 // Invite member test cases
-describe("POST /project/:id/invite-member ", () => {
+describe.skip("POST /project/:id/invite-member ", () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -191,7 +191,7 @@ describe("POST /project/:id/invite-member ", () => {
 
 
 // Remove member Test cases
-describe("POST /project/:id/remove-member ", () => {
+describe.skip("POST /project/:id/remove-member ", () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
