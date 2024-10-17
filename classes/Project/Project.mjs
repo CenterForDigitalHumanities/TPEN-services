@@ -1,6 +1,4 @@
 import dbDriver from "../../database/driver.mjs"
-import Permissions from "../../project/groups/permissions.mjs"
-import Roles from "../../project/groups/roles.mjs"
 import { sendMail } from "../../utilities/mailer/index.mjs"
 import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
 import { User } from "../User/User.mjs"
@@ -74,7 +72,7 @@ export default class Project {
       }
     }
   }
- 
+
   async checkUserAccess(userId, action, scope, entity) {
     if (!this.data) {
       await this.#load()
@@ -90,12 +88,12 @@ export default class Project {
       }
     }
 
-    const combinedPermissions = this.getCombinedPermissions(userRoles) 
+    const combinedPermissions = this.getCombinedPermissions(userRoles)
 
     const hasAccess = combinedPermissions.some(permission => {
       const [permAction, permScope, permEntity] = permission.split("_")
 
-       return (
+      return (
         (permAction === action || permAction === "*") &&
         (permScope === scope || permScope === "*") &&
         (permEntity === entity || permEntity === "*")
@@ -110,7 +108,7 @@ export default class Project {
       }
       : {
         hasAccess: false,
-        message:`User does not have ${action} access to ${scope=="*"?"ALL":scope} on ${entity}.`
+        message: `User does not have ${action} access to ${scope == "*" ? "ALL" : scope} on ${entity}.`
       }
   }
 
@@ -139,11 +137,11 @@ export default class Project {
 
   async inviteNewTPENUser(email, roles) {
     const user = new User()
-    Object.assign(user, { 
+    Object.assign(user, {
       email,
       inviteCode: this.#encryptInviteCode(user._id),
       agent: `https://store.rerum.io/v1/id/${user._id}`
-     })
+    })
     await user.save()
     const projectData = await this.inviteExistingTPENUser(newUser, roles)
 
