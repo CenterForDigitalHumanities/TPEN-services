@@ -6,11 +6,38 @@ import { User } from "../../User/User.mjs"
 import Group from "../../Group/Group.mjs"
 import { jest } from "@jest/globals"
 
-jest.mock("../../../database/driver.mjs")
+jest.mock("../../../database/driver.mjs", () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      save: jest.fn(),
+      remove: jest.fn()
+    }
+  })
+})
 jest.mock("../../../utilities/mailer/index.mjs")
 jest.mock("../../../utilities/validatePayload.mjs")
-jest.mock("../../User/User.mjs")
-jest.mock("../../Group/Group.mjs")
+jest.mock("../../User/User.mjs", () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      getByEmail: jest.fn(),
+      save: jest.fn()
+    }
+  })
+})
+jest.mock("../../Group/Group.mjs", () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      addMember: jest.fn(),
+      save: jest.fn(),
+      getMembers: jest.fn(),
+      getPermissions: jest.fn(),
+      removeMember: jest.fn()
+    }
+  })
+})
+jest.mock("../../../utilities/validatePayload.mjs", () => ({
+    validateProjectPayload: jest.fn().mockImplementation(() => ({ isValid: true }))
+}))
 
 describe("Project Class unit tests #project_class", () => {
   let project
@@ -45,7 +72,7 @@ describe("Project Class unit tests #project_class", () => {
   })
 
   test("should delete a project successfully", async () => {
-    databaseMock.remove.mockResolvedValue("deletedProject")
+    databaseMock.remove = jest.fn().mockResolvedValue("deletedProject")
 
     const result = await project.delete("testProjectId")
 
