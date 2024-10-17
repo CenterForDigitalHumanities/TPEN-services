@@ -43,33 +43,29 @@ export default class Project {
     return database.remove(projectId)
   }
 
-  async addMember(email, rolesString) {
+  async sendInvite(email, rolesString) {
     try {
       let userObj = new User()
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       let updatedProject
-      let message = `You have been invited to the TPEN project ${this.data?.name}. View project <a href=https://www.tpen.org/project/${this.data._id}>here</a>.`
+      let message = `You have been invited to the TPEN project ${this.data?.label}. 
+      View project <a href=https://www.tpen.org/project/${this.data._id}>here</a>.`
       if (user) {
-        updatedProject = await this.inviteExistingTPENUser(user, roles)
+        await this.inviteExistingTPENUser(user._id, roles)
       } else {
-        let { newUser, projectData } = await this.inviteNewTPENUser(email, roles)
+        const inviteCode = await this.inviteNewTPENUser(email, roles)
         // We will replace this URL with the correct url
-        const url = `https://cubap.auth0.com/u/signup?invite-code=${newUser.inviteCode}`
-        updatedProject = projectData
-        user = newUser
+        const url = `https://cubap.auth0.com/u/signup?invite-code=${inviteCode}`
         message += `<p>Click the button below to get started with your project</p> 
         <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
       }
 
-      sendMail(user, `Invitation to ${this.data?.name}`, message)
-      return updatedProject
+      sendMail(email, `Invitation to ${this.data?.label}`, message)
+      return this
     } catch (error) {
-      throw {
-        status: error.status || 500,
-        message: error.message || "An error occurred while adding the member."
-      }
+      throw error
     }
   }
 
@@ -140,12 +136,13 @@ export default class Project {
     Object.assign(user, {
       email,
       inviteCode: this.#encryptInviteCode(user._id),
-      agent: `https://store.rerum.io/v1/id/${user._id}`
+      agent: `https://store.rerum.io/v1/id/${user._id}`,
+      profile: { displayName: email.split("@")[0] }
     })
     await user.save()
-    const projectData = await this.inviteExistingTPENUser(newUser, roles)
+    await this.inviteExistingTPENUser(user._id, roles)
 
-    return { newUser, projectData }
+    return user.inviteCode
   }
 
   async removeMember(userId) {
@@ -161,7 +158,6 @@ export default class Project {
       }
     }
   }
-
 
   #encryptInviteCode(userId) {
     const date = Date.now().toString()
@@ -183,6 +179,4 @@ export default class Project {
       this.data = resp
     })
   }
-
-
 }

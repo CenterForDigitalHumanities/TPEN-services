@@ -161,7 +161,7 @@ router
       const accessInfo = project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
 
       if (accessInfo.hasAccess) {
-        const response = await project.addMember(email, roles)
+        const response = await project.sendInvite(email, roles)
         res.status(200).json(response)
       } else {
         res

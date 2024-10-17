@@ -81,6 +81,16 @@ export class User {
   }
 
   async save() {
+    // validate before save
+    if (!this._id) {
+      throw new Error("User must have an _id")
+    }
+    if (!this.email) {
+      throw new Error("User must have an email")
+    }
+    if (!this.profile || !this.profile.displayName) {
+      throw new Error("User must have a profile with a displayName")
+    }
     // save user to database
     return database.save(this)
   }
