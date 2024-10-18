@@ -29,7 +29,8 @@
       "dbTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t db ",
       "authTest": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t auth_test ",
       "userClassTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t user_class ",
-      "importTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t importTests "
+      "importTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t importTests ",
+      "inviteMemberTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t inviteMemberTests "
    },
    "dependencies": {
       "cookie-parser": "~1.4.4",
