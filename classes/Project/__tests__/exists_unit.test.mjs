@@ -34,8 +34,8 @@ describe("Project Class ", () => {
     expect(typeof Project.prototype.create).toBe("function");
   });
 
-  it("should have an addMember method", () => {
-    expect(typeof Project.prototype.addMember).toBe("function");
+  it("should have an sendInvite method", () => {
+    expect(typeof Project.prototype.sendInvite).toBe("function");
   });
 
   it("should have a removeMember method", () => {

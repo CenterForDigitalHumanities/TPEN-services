@@ -107,7 +107,7 @@ router
     (async () => {
       try {
         const projectObj = await new Project(id)
-        const project = projectObj.projectData
+        const project = projectObj.data
         const accessInfo = projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)
  
         if (!project) {
@@ -160,7 +160,7 @@ router
 
       const accessInfo = project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
       if (accessInfo.hasAccess) {
-        const response = await project.addMember(email, roles)
+        const response = await project.sendInvite(email, roles)
         res.status(200).json(response)
       } else {
         res

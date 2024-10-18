@@ -8,6 +8,14 @@
  * */
 
 import * as logic from "../manifest.mjs"
+import { jest } from "@jest/globals"
+
+// Mock the saveManifest function
+jest.mock('../manifest.mjs', () => ({
+  ...jest.requireActual('../manifest.mjs'),
+  saveManifest: jest.fn().mockResolvedValue({ "@id": "mocked_id" }),
+  updateManifest: jest.fn().mockResolvedValue({ "@id": "updated_mocked_id" })
+}));
 let test_manifest = { "type": "Manifest", "label": {"en":["Test Manifest"]} }
 let updated_manifest = {}
 
