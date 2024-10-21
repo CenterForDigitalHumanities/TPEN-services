@@ -14,7 +14,7 @@ export default class Group {
     async getMembers() {
         // if this members is an empty object, load from db
         if (Object.keys(this.members).length === 0) {
-            return this.#loadFromDB()
+            await this.#loadFromDB()
         }
         return this.members
     }
