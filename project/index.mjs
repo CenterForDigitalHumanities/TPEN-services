@@ -25,7 +25,7 @@ router
     const projectObj = new Project()
 
     let project = req.body
-    project = { ...project, creator: user?.agent, "@type": "Project" }
+    project = { ...project, creator: user?.agent}
 
     try {
       const newProject = await projectObj.create(project)

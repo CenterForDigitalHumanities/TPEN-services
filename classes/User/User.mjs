@@ -14,7 +14,7 @@ export class User {
   async #loadFromDB() {
     // load user from database
     // TODO: possibly delete anything reserved for TPEN only
-    this.data = await database.getById(this._id, "User")
+    this.data = await database.getById(this._id, "users")
     return this
   }
 
@@ -56,7 +56,7 @@ export class User {
     return database
       .findOne({
         email,
-        "@type": "User"
+        "users"
       })
       .then((resp) => {
         if (resp instanceof Error) {

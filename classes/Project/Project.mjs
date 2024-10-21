@@ -26,7 +26,7 @@ export default class Project {
     }
 
     try {
-      return database.save(payload)
+      return database.save(payload, "projects")
     } catch (err) {
       throw {
         status: err.status || 500,
@@ -40,7 +40,7 @@ export default class Project {
       throw { status: 400, message: "Project ID is required" }
     }
 
-    return database.remove(projectId)
+    return database.remove(projectId, "projects")
   }
 
   async sendInvite(email, rolesString) {
@@ -175,7 +175,7 @@ export default class Project {
   }
 
   async #load() {
-    return database.getById(this._id, "Project").then((resp) => {
+    return database.getById(this._id, "projects").then((resp) => {
       this.data = resp
     })
   }
