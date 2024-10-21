@@ -54,10 +54,7 @@ export class User {
     }
 
     return database
-      .findOne({
-        email,
-        "users"
-      })
+      .findOne({email}, "users")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
