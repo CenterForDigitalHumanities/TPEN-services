@@ -307,8 +307,8 @@ class DatabaseController {
   /**
    * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s
    */
-  async getById(id, collection) {
-    return await this.findOne({_id: id},collection)
+  async getById(_id, collection) {
+    return await this.findOne({_id},collection)
   }
 
   determineDataType(data,override) {
