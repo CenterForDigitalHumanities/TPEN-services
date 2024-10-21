@@ -315,7 +315,7 @@ class DatabaseController {
       userPerferences: "UserPreference"
     }
     const type = typeMap[collection] ?? collection
-    return await this.findOne({_id: id})
+    return await this.findOne({_id: id},collection)
   }
 
   determineDataType(data,override) {
