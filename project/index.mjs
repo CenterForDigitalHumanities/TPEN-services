@@ -107,7 +107,7 @@ router
     (async () => {
       try {
         const projectObj = await new Project(id)
-        const project = projectObj.data
+        const project = ProjectFactory.forInterface(projectObj.data)
         const accessInfo = projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)
  
         if (!project) {
