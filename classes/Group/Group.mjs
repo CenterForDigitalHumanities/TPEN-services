@@ -8,7 +8,7 @@ export default class Group {
     }
 
     async #loadFromDB() {
-        return database.getById(this._id, "groups")
+        return Object.assign(this,database.getById(this._id, "groups"))
     }
 
     async getMembers() {
