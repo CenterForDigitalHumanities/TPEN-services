@@ -175,10 +175,10 @@ class DatabaseController {
     }
     return collection
   }
-  async find(query) {
+  async find(query, collection) {
     try {
       //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const collection = this.validateAndDetermineCollection(query)
+      collection ??= this.validateAndDetermineCollection(query)
       let result = await this.db.collection(collection).find(query).toArray()
       return result
     } catch (err) {
@@ -190,10 +190,10 @@ class DatabaseController {
     }
   }
 
-  async findOne(query) {
+  async findOne(query, collection) {
     try {
       //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const collection = this.validateAndDetermineCollection(query)
+      collection ??= this.validateAndDetermineCollection(query)
       let result = await this.db.collection(collection).findOne(query)
       return result
     } catch (err) {
