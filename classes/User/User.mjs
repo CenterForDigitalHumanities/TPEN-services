@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 
 const database = new dbDriver("mongo")
-export class User {
+export default class User {
   constructor(userId = database.reserveId()) {
     this._id = userId
   }
