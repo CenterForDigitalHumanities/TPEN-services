@@ -2,21 +2,23 @@ import dbDriver from "../../database/driver.mjs"
 const database = new dbDriver("mongo")
 
 export default class Group {
-    constructor(groupId) {
-        this._id = groupId
-        this.members = {}
+    constructor(_id = database.reserveId()) {
+        this._id = _id
+        this.data = {_id}
+        this.data.members = {}
     }
 
     async #loadFromDB() {
-        return Object.assign(this,database.getById(this._id, "groups"))
+        this.data = await database.getById(this._id, "groups")
+        return this
     }
 
     async getMembers() {
         // if this members is an empty object, load from db
-        if (Object.keys(this.members).length === 0) {
+        if (Object.keys(this.data.members).length === 0) {
             await this.#loadFromDB()
         }
-        return this.members
+        return this.data.members
     }
 
     /**
@@ -25,35 +27,35 @@ export default class Group {
      * @returns Object
      */
     async getMemberRoles(memberId) {
-        if (!this.members) {
+        if (Object.keys(this.data.members).length === 0) {
             await this.#loadFromDB()
         }
-        if (!this.members[memberId]) {
+        if (!this.data.members[memberId]) {
             const err = new Error("Member not found")
             err.status = 404
             throw err
         }
-        const roles = this.members[memberId]?.roles
-        const allRoles = Object.assign(Group.defaultRoles, this.customRoles)
+        const roles = this.data.members[memberId]?.roles
+        const allRoles = Object.assign(Group.defaultRoles, this.data.customRoles)
         return Object.fromEntries(roles.map(role => [role, allRoles[role]]))
     }
 
     getPermissions(role) {
-        return Object.assign(Group.defaultRoles, this.customRoles)[role] ?? "x_x_x"
+        return Object.assign(Group.defaultRoles, this.data.customRoles)[role] ?? "x_x_x"
     }
 
     addMember(memberId, roles) {
-        if (this.members[memberId]) {
+        if (this.data.members[memberId]) {
             const err = new Error("Member already exists")
             err.status = 400
             throw err
         }
-        this.members[memberId] = { roles: [] }
+        this.data.members[memberId] = { roles: [] }
         this.updateMember(memberId, roles)
     }
 
     updateMember(memberId, roles) {
-        if (!this.members[memberId]) {
+        if (!this.data.members[memberId]) {
             throw {
                 status: 404,
                 message: "Member not found"
@@ -68,11 +70,11 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        this.members[memberId].roles = roles
+        this.data.members[memberId].roles = roles
     }
 
     addMemberRoles(memberId, roles) {
-        if (!this.members[memberId]) {
+        if (!this.data.members[memberId]) {
             throw {
                 status: 404,
                 message: "Member not found"
@@ -87,11 +89,11 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        this.members[memberId].roles = [...new Set([...this.members[memberId].roles, ...roles])]
+        this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
     removeMemberRoles(memberId, roles) {
-        if (!this.members[memberId]) {
+        if (!this.data.members[memberId]) {
             throw {
                 status: 404,
                 message: "Member not found"
@@ -106,19 +108,19 @@ export default class Group {
                 roles = roles.split(" ")
             }
         }
-        this.members[memberId].roles = this.members[memberId].roles.filter(role => !roles.includes(role))
+        this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
     }
 
     removeMember(memberId) {
-        delete this.members[memberId]
+        delete this.data.members[memberId]
     }
 
     getByRole(role) {
-        return this.members && Object.keys(this.members).filter(memberId => this.members[memberId].roles.includes(role))
+        return this.data.members && Object.keys(this.data.members).filter(memberId => this.data.members[memberId].roles.includes(role))
     }
 
     async save() {
-        return database.save(this, process.env.TPENGROUPS)
+        return database.save(this.data, process.env.TPENGROUPS)
     }
 
     static async createNewGroup(creator, payload) {
@@ -129,15 +131,15 @@ export default class Group {
                 message: "Owner ID is required"
             }
         }
-        const newGroup = new Group(database.reserveId())
-        Object.assign(newGroup, Object.fromEntries(
+        const newGroup = new Group()
+        Object.assign(newGroup.data, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
         if (!newGroup.getByRole("OWNER")?.length) {
-            newGroup[newGroup.members[creator] ? "addMemberRoles" : "addMember"](creator, "OWNER")
+            newGroup[newGroup.data.members[creator] ? "addMemberRoles" : "addMember"](creator, "OWNER")
         }
         if (!newGroup.getByRole("LEADER")?.length) {
-            newGroup[newGroup.members[creator] ? "addMemberRoles" : "addMember"](creator, "LEADER")
+            newGroup[newGroup.data.members[creator] ? "addMemberRoles" : "addMember"](creator, "LEADER")
         }
         return newGroup.save()
     }

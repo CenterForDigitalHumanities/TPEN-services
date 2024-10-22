@@ -70,12 +70,11 @@ export default class Project {
   }
 
   async checkUserAccess(userId, action, scope, entity) {
-    if (!this.data) {
+    if (!this.data?.group) {
       await this.#load()
     }
 
-    const groupMembers = new Group(this.data.group).getMembers()
-    const userRoles = groupMembers[userId]?.roles
+    const userRoles = await new Group(this.data.group).getMembers()[userId]?.roles
 
     if (!userRoles) {
       return {
