@@ -119,7 +119,7 @@ export default class ProjectFactory {
           project.contributors[memberId] = {
             roles: members[memberId]
           }
-          loadMembers.push(new User(memberId).getPublicProfile().then(profile => {
+          loadMembers.push(new User(memberId).getPublicInfo().then(profile => {
             project.contributors[memberId].profile = profile
           }))
         })
