@@ -67,7 +67,7 @@ function auth0Middleware() {
           email: payload.name,
           profile: { displayName: payload.nickname },
         }
-        user.create(dbUser)
+        user.save(dbUser)
         req.user = dbUser
         next()
       })
