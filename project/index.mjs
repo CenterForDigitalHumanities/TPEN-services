@@ -11,9 +11,7 @@ import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 
 let router = express.Router()
-
 router.use(cors(common_cors))
-
 
 router
   .route("/create")
@@ -135,7 +133,6 @@ router
     respondWithError(res, 405, "Improper request method. Use GET instead")
   })
 
-
 router
   .route("/:id/invite-member")
   .post(auth0Middleware(), async (req, res) => {
@@ -206,8 +203,6 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
     res.status(error.status || 500).send(error.message.toString())
   }
 })
-
-
 
 router.all((req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
