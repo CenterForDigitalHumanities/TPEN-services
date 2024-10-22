@@ -60,15 +60,15 @@ function auth0Middleware() {
           next()
           return
         }
-        const dbUser = {
+        Object.assign(user, {
           _id: uid,
           agent,
           _sub : payload.sub,
           email: payload.name,
           profile: { displayName: payload.nickname },
-        }
-        user.save(dbUser)
-        req.user = dbUser
+        })
+        user.save()
+        req.user = user
         next()
       })
     } catch (error) {
