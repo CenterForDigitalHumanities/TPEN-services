@@ -74,7 +74,7 @@ export default class Project {
       await this.#load()
     }
 
-    const userRoles = await new Group(this.data.group).getMembers()[userId]?.roles
+    const userRoles = await new Group(this.data.group).getMemberRoles(userId)
 
     if (!userRoles) {
       return {
@@ -83,9 +83,9 @@ export default class Project {
       }
     }
 
-    const combinedPermissions = this.getCombinedPermissions(userRoles)
+    const userPermissions = this.getCombinedPermissions(userRoles)
 
-    const hasAccess = combinedPermissions.some(permission => {
+    const hasAccess = userPermissions.some(permission => {
       const [permAction, permScope, permEntity] = permission.split("_")
 
       return (
@@ -98,7 +98,7 @@ export default class Project {
     return hasAccess
       ? {
         hasAccess: true,
-        permissions: combinedPermissions,
+        permissions: userPermissions,
         message: "User has access to the project."
       }
       : {
@@ -108,14 +108,7 @@ export default class Project {
   }
 
   getCombinedPermissions(roles) {
-    const combinedPermissions = []
-    const group = new Group(this.data.group)
-    const groupRoles = group.getPermissions()
-    roles.forEach(role => {
-      combinedPermissions.push(groupRoles[role])
-    })
-
-    return combinedPermissions
+    return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
 
   parseRoles(rolesString) {

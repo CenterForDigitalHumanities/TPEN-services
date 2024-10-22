@@ -24,27 +24,11 @@ export default class User {
 
   async getPublicInfo() {
     // returns user's public info
-    const user = await this.getSelf()
-    return { _id: user._id, ...user.profile }
-    if (!data) {
-      throw {
-        status: 400,
-        message: "No payload provided"
-      }
-    }
-    this.id = data._id
-    const previousUser = await this.getSelf()
-    const newRecord = { ...previousUser, ...data }
-
-    return database
-      .update(newRecord)
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
+    return this.data 
+      ? { _id: this._id, ...this.data.profile }
+      : database.getById(this._id, "users").then(user=>({ _id: user._id, ...user.profile }))
   }
+
   async getByEmail(email) {
     if (!email) {
       throw {

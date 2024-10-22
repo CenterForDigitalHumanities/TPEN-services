@@ -108,7 +108,7 @@ router
       try {
         const projectObj = await new Project(id)
         const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)
-        const project = ProjectFactory.forInterface(projectObj.data)
+        const project = await ProjectFactory.forInterface(projectObj.data)
  
         if (!project) {
           return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
