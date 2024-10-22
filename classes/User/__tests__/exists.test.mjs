@@ -1,4 +1,4 @@
-import {User} from "../User.mjs"
+import User from "../User.mjs"
 
 const user = new User() 
 

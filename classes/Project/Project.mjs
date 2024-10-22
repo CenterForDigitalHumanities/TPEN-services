@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 import { sendMail } from "../../utilities/mailer/index.mjs"
 import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
-import { User } from "../User/User.mjs"
+import User from "../User/User.mjs"
 import crypto from "crypto"
 import Group from "../Group/Group.mjs"
 

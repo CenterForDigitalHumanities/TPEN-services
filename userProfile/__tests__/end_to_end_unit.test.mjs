@@ -4,7 +4,7 @@ import mainApp from "../../app.mjs"
 import express from "express"
 import request from "supertest"
 import app from '../../app.mjs';  
-import { User } from "../../classes/User/User.mjs"
+import User from "../../classes/User/User.mjs"
 
 import {jest} from "@jest/globals"
 

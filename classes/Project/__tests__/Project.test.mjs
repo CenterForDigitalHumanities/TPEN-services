@@ -2,7 +2,7 @@ import { validateProjectPayload } from "../../../utilities/validatePayload.mjs"
 import Project from "../Project.mjs";
 import dbDriver from "../../../database/driver.mjs";
 import { sendMail } from "../../../utilities/mailer/index.mjs";
-import { User } from "../../User/User.mjs";
+import User from "../../User/User.mjs";
 import Group from "../../Group/Group.mjs";
 import { jest } from "@jest/globals";
 

@@ -1,7 +1,7 @@
 import * as utils from "../utilities/shared.mjs"
 import {auth} from "express-oauth2-jwt-bearer"
 import {extractToken, extractUser, isTokenExpired} from "../utilities/token.mjs"
-import { User } from "../classes/User/User.mjs"
+import "../classes/User/User.mjs"
 
 export function authenticateUser() {
   return (req, res, next) => {
