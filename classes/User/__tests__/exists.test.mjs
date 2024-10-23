@@ -1,4 +1,4 @@
-import {User} from "../User.mjs"
+import User from "../User.mjs"
 
 const user = new User() 
 
@@ -12,6 +12,6 @@ describe("user Class appears and behaves as expected #user_exists_test #user_cla
     expect(user.getProjects).toBeInstanceOf(Function) 
     expect(user.getPublicInfo).toBeInstanceOf(Function)
     expect(user.getByEmail).toBeInstanceOf(Function)
-    expect(user.create).toBeInstanceOf(Function)
+    expect(User.create).toBeInstanceOf(Function)
   }) 
 })

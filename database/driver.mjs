@@ -59,7 +59,7 @@ class dbDriver {
             this.dbControllerName = dbControllerName
             try {
                 await this.controller.connect()
-            } catch(err){
+            } catch (err) {
                 console.error(`Controller '${dbControllerName}' had trouble connecting.`)
                 throw err
             }
@@ -85,8 +85,8 @@ class dbDriver {
      * @param data JSON from an HTTP POST request
      * @return The inserted document JSON or error JSON
      */
-    async save(data,collection) {
-        return this.controller.save(data,collection).catch(err => err)
+    async save(data, collection) {
+        return this.controller.save(data, collection).catch(err => err)
     }
 
     /**
@@ -113,11 +113,11 @@ class dbDriver {
      * @param query JSON from an HTTP POST request.  It must contain at least one property.
      * @return JSON Array of matched documents or standard error object
      */
-    async find(query) {
-        return this.controller.find(query).catch(err => err)
+    async find(query, collection) {
+        return this.controller.find(query, collection).catch(err => err)
     }
-    async findOne(query) {
-        return this.controller.findOne(query).catch(err => err)
+    async findOne(query, collection) {
+        return this.controller.findOne(query, collection).catch(err => err)
     }
 
     /**

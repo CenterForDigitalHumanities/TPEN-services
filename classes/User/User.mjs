@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 
 const database = new dbDriver("mongo")
-export class User {
+export default class User {
   constructor(userId = database.reserveId()) {
     this._id = userId
   }
@@ -14,39 +14,23 @@ export class User {
   async #loadFromDB() {
     // load user from database
     // TODO: possibly delete anything reserved for TPEN only
-    this.data = await database.getById(this._id, "User")
+    this.data = await database.getById(this._id, "users")
     return this
   }
 
   async getSelf() {
-    return await (this.data ?? this.#loadFromDB().then(u=>u.data))
+    return await (this.data ?? this.#loadFromDB().then(u => u.data))
   }
 
   async getPublicInfo() {
     // returns user's public info
-    const user = await this.getSelf()
-    return { _id: user._id, ...user.profile }
-    if (!data) {
-      throw {
-        status: 400,
-        message: "No payload provided"
-      }
-    }
-    this.id = data._id
-    const previousUser = await this.getSelf()
-    const newRecord = { ...previousUser, ...data }
-
-    return database
-      .update(newRecord)
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
+    return this.data
+      ? { _id: this._id, ...this.data.profile }
+      : database.getById(this._id, "users").then(user => ({ _id: user._id, ...user.profile }))
   }
+
   async getByEmail(email) {
-    if (!email) {
+    if (!this.data.email) {
       throw {
         status: 400,
         message: "No email provided"
@@ -54,10 +38,7 @@ export class User {
     }
 
     return database
-      .findOne({
-        email,
-        "@type": "User"
-      })
+      .findOne({ email }, "users")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -68,7 +49,8 @@ export class User {
         throw err
       })
   }
-  async create(data) {
+
+  static async create(data) {
     // POST requests
     if (!data) {
       throw {
@@ -76,8 +58,40 @@ export class User {
         message: "No data provided"
       }
     }
-    const user = await database.save({...data, "@type": "User"})
-    return user
+    if (data._id) {
+      const existingUser = await database.getById(data._id, "users")
+      if (existingUser) {
+        const err = new Error("User already exists")
+        err.status = 400
+        throw err
+      }
+    }
+    if (!data.profile || !data.profile.displayName) {
+      data.profile = data.profile || {}
+      data.profile.displayName = data.email?.split("@")[0]
+        ?? data.name
+        ?? data.displayName
+        ?? data.fullName
+        ?? `User ${new Date().toLocaleDateString()}`
+    }
+    const user = new User()
+    Object.assign(user, data)
+    return user.save()
+  }
+
+  async save() {
+    // validate before save
+    if (!this._id) {
+      throw new Error("User must have an _id")
+    }
+    if (!this.data.email) {
+      throw new Error("User must have an email")
+    }
+    if (!this.data.profile?.displayName) {
+      throw new Error("User must have a profile with a displayName")
+    }
+    // save user to database
+    return database.save({ _id: this._id, ...this.data }, "users")
   }
 
   /**
@@ -94,6 +108,7 @@ export class User {
   async getProjects() {
     const user = await this.getSelf()
 
+    // gross. I hate it.
     return database
       .find({ "@type": "Project" })
       .then((resp) => {
@@ -120,7 +135,7 @@ export class User {
   async addPublicInfo(data) {
     // add or modify public info
     if (!data) return
-    const previousUser = this.user
+    const previousUser = this.data
     const publicProfile = { ...previousUser.profile, ...data }
     const updatedUser = await database.update({
       ...previousUser,

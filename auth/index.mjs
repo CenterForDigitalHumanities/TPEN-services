@@ -1,7 +1,7 @@
 import * as utils from "../utilities/shared.mjs"
-import {auth} from "express-oauth2-jwt-bearer"
-import {extractToken, extractUser, isTokenExpired} from "../utilities/token.mjs"
-import { User } from "../classes/User/User.mjs"
+import { auth } from "express-oauth2-jwt-bearer"
+import { extractToken, extractUser, isTokenExpired } from "../utilities/token.mjs"
+import User from "../classes/User/User.mjs"
 
 export function authenticateUser() {
   return (req, res, next) => {
@@ -41,7 +41,7 @@ function auth0Middleware() {
 
   // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sib, roles, etc.
   async function setUser(req, res, next) {
-    const {payload} = req.auth
+    const { payload } = req.auth
 
     const agent = payload["http://store.rerum.io/agent"]
     if (!agent) {
@@ -55,20 +55,20 @@ function auth0Middleware() {
       const uid = agent.split("id/")[1]
       const user = new User(uid)
       user.getSelf().then(async (u) => {
-        if(u?.profile) {
+        if (u?.profile) {
           req.user = u
           next()
           return
         }
-        const dbUser = {
+        user.data = {
           _id: uid,
           agent,
-          _sub : payload.sub,
+          _sub: payload.sub,
           email: payload.name,
           profile: { displayName: payload.nickname },
         }
-        user.create(dbUser)
-        req.user = dbUser
+        user.save()
+        req.user = user
         next()
       })
     } catch (error) {
@@ -78,6 +78,6 @@ function auth0Middleware() {
 
   return [verifier, setUser]
 }
- 
+
 
 export default auth0Middleware

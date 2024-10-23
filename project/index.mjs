@@ -11,9 +11,7 @@ import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 
 let router = express.Router()
-
 router.use(cors(common_cors))
-
 
 router
   .route("/create")
@@ -25,7 +23,7 @@ router
     const projectObj = new Project()
 
     let project = req.body
-    project = { ...project, creator: user?.agent, "@type": "Project" }
+    project = { ...project, creator: user?.agent}
 
     try {
       const newProject = await projectObj.create(project)
@@ -107,8 +105,8 @@ router
     (async () => {
       try {
         const projectObj = await new Project(id)
-        const project = projectObj.projectData
-        const accessInfo = projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)
+        const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)
+        const project = await ProjectFactory.forInterface(projectObj.data)
  
         if (!project) {
           return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
@@ -135,7 +133,6 @@ router
     respondWithError(res, 405, "Improper request method. Use GET instead")
   })
 
-
 router
   .route("/:id/invite-member")
   .post(auth0Middleware(), async (req, res) => {
@@ -160,7 +157,7 @@ router
 
       const accessInfo = project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
       if (accessInfo.hasAccess) {
-        const response = await project.addMember(email, roles)
+        const response = await project.sendInvite(email, roles)
         res.status(200).json(response)
       } else {
         res
@@ -206,8 +203,6 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
     res.status(error.status || 500).send(error.message.toString())
   }
 })
-
-
 
 router.all((req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")

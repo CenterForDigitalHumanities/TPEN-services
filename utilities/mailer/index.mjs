@@ -6,8 +6,8 @@ import {fileURLToPath} from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const sendMail = async (receiver, subject, message) => {
-  if (!receiver || typeof receiver !== "object" || !receiver.email) {
+export const sendMail = async (email, subject, message) => {
+  if (!email || typeof email !== "string") {
     return {
       status: 400,
       message:
@@ -43,7 +43,7 @@ export const sendMail = async (receiver, subject, message) => {
 
     const mailOptions = {
       from: process.env.TPEN_SUPPORT_EMAIL,
-      to: receiver.email,
+      to: email,
       cc: process.env.TPEN_EMAIL_CC,
       subject,
       html: htmlTemplate
