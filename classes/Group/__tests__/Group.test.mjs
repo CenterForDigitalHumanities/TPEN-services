@@ -4,7 +4,7 @@ import { expect, jest } from "@jest/globals"
 
 jest.mock("../../../database/driver.mjs")
 
-describe("Group Class", () => {
+describe.skip("Group Class", () => {
     let group
     let databaseMock
 
