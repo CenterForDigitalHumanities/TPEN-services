@@ -24,13 +24,13 @@ export default class User {
 
   async getPublicInfo() {
     // returns user's public info
-    return this.data 
+    return this.data
       ? { _id: this._id, ...this.data.profile }
-      : database.getById(this._id, "users").then(user=>({ _id: user._id, ...user.profile }))
+      : database.getById(this._id, "users").then(user => ({ _id: user._id, ...user.profile }))
   }
 
   async getByEmail(email) {
-    if (!email) {
+    if (!this.data.email) {
       throw {
         status: 400,
         message: "No email provided"
@@ -38,7 +38,7 @@ export default class User {
     }
 
     return database
-      .findOne({email}, "users")
+      .findOne({ email }, "users")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -49,6 +49,7 @@ export default class User {
         throw err
       })
   }
+
   static async create(data) {
     // POST requests
     if (!data) {
@@ -83,14 +84,14 @@ export default class User {
     if (!this._id) {
       throw new Error("User must have an _id")
     }
-    if (!this.email) {
+    if (!this.data.email) {
       throw new Error("User must have an email")
     }
-    if (!this.profile || !this.profile.displayName) {
+    if (!this.data.profile?.displayName) {
       throw new Error("User must have a profile with a displayName")
     }
     // save user to database
-    return database.save(this, "users")
+    return database.save({ _id: this._id, ...this.data }, "users")
   }
 
   /**
@@ -107,6 +108,7 @@ export default class User {
   async getProjects() {
     const user = await this.getSelf()
 
+    // gross. I hate it.
     return database
       .find({ "@type": "Project" })
       .then((resp) => {
@@ -133,7 +135,7 @@ export default class User {
   async addPublicInfo(data) {
     // add or modify public info
     if (!data) return
-    const previousUser = this.user
+    const previousUser = this.data
     const publicProfile = { ...previousUser.profile, ...data }
     const updatedUser = await database.update({
       ...previousUser,
