@@ -4,7 +4,7 @@ const database = new dbDriver("mongo")
 export default class Group {
     constructor(_id = database.reserveId()) {
         this._id = _id
-        this.data = {_id}
+        this.data = { _id }
         this.data.members = {}
     }
 
@@ -54,7 +54,11 @@ export default class Group {
         this.updateMember(memberId, roles)
     }
 
-    updateMember(memberId, roles) {
+    async updateMember(memberId, roles) {
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
+
         if (!this.data.members[memberId]) {
             throw {
                 status: 404,
@@ -68,12 +72,18 @@ export default class Group {
                     message: "Invalid roles"
                 }
             }
-            roles = roles.split(" ")
+            roles = roles.toUpperCase().split(" ")
         }
         this.data.members[memberId].roles = roles
+        await this.update()
     }
 
-    addMemberRoles(memberId, roles) {
+    async addMemberRoles(memberId, roles) {
+
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
+
         if (!this.data.members[memberId]) {
             throw {
                 status: 404,
@@ -87,12 +97,15 @@ export default class Group {
                     message: "Invalid roles"
                 }
             }
-            roles = roles.split(" ")
+            roles = roles.toUpperCase().split(" ")
         }
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
-    removeMemberRoles(memberId, roles) {
+    async removeMemberRoles(memberId, roles) {
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
         if (!this.data.members[memberId]) {
             throw {
                 status: 404,
@@ -106,9 +119,10 @@ export default class Group {
                     message: "Invalid roles"
                 }
             }
-            roles = roles.split(" ")
+            roles = roles.toUpperCase().split(" ")
         }
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
+        await this.update()
     }
 
     removeMember(memberId) {
@@ -121,6 +135,10 @@ export default class Group {
 
     async save() {
         return database.save(this.data, process.env.TPENGROUPS)
+    }
+
+    async update() {
+        return database.update({ ...this.data, "@type": "Group" })
     }
 
     static async createNewGroup(creator, payload) {
@@ -146,7 +164,7 @@ export default class Group {
 
     static defaultRoles = {
         OWNER: ["*_*_*"],
-        LEADER: ["UPDATE_*_PROJECT",  "READ_*_PROJECT", "*_*_MEMBER", "*_*_ROLE", "*_*_PERMISSION", "*_*_LAYER", "*_*_PAGE"],
+        LEADER: ["UPDATE_*_PROJECT", "READ_*_PROJECT", "*_*_MEMBER", "*_*_ROLE", "*_*_PERMISSION", "*_*_LAYER", "*_*_PAGE"],
         COLLABORATOR: ["READ_*_MEMBER", "UPDATE_TEXT_*", "UPDATE_ORDER_*", "UPDATE_SELECTOR_*", "CREATE_SELECTOR_*", "DELETE_*_LINE", "UPDATE_DESCRIPTION_LAYER", "CREATE_*_LAYER"],
         VIEWER: ["READ_*_PROJECT", "READ_*_MEMBER", "READ_*_LAYER", "READ_*_PAGE", "READ_*_LINE"]
     }
