@@ -105,8 +105,8 @@ export default class Group {
                     status: 400,
                     message: "Invalid roles"
                 }
-                roles = roles.split(" ")
             }
+            roles = roles.split(" ")
         }
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
     }
@@ -146,8 +146,8 @@ export default class Group {
 
     static defaultRoles = {
         OWNER: ["*_*_*"],
-        LEADER: ["UPDATE_*_PROJECT", "*_*_MEMBER", "*_*_ROLE", "*_*_PERMISSION", "*_*_LAYER", "*_*_PAGE"],
-        CONTRIBUTOR: ["READ_*_MEMBER", "UPDATE_TEXT_*", "UPDATE_ORDER_*", "UPDATE_SELECTOR_*", "CREATE_SELECTOR_*", "DELETE_*_LINE", "UPDATE_DESCRIPTION_LAYER", "CREATE_*_LAYER"],
+        LEADER: ["UPDATE_*_PROJECT",  "READ_*_PROJECT", "*_*_MEMBER", "*_*_ROLE", "*_*_PERMISSION", "*_*_LAYER", "*_*_PAGE"],
+        COLLABORATOR: ["READ_*_MEMBER", "UPDATE_TEXT_*", "UPDATE_ORDER_*", "UPDATE_SELECTOR_*", "CREATE_SELECTOR_*", "DELETE_*_LINE", "UPDATE_DESCRIPTION_LAYER", "CREATE_*_LAYER"],
         VIEWER: ["READ_*_PROJECT", "READ_*_MEMBER", "READ_*_LAYER", "READ_*_PAGE", "READ_*_LINE"]
     }
 }
