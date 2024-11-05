@@ -54,7 +54,12 @@ export default class Group {
         this.setMemberRoles(memberId, roles)
     }
 
-    async setMemberRoles(memberId, roles) {
+    /**
+     * Replace all roles for a member with the provided roles.
+     * @param {String} memberId _id of the member
+     * @param {Object} roleMap { ROLE: [PERMISSIONS] }
+     */
+    async setMemberRoles(memberId, roleMap) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -65,19 +70,24 @@ export default class Group {
                 message: "Member not found"
             }
         }
-        if (!Array.isArray(roles)) {
-            if (typeof roles !== "string") {
+        if (!Array.isArray(roleMap)) {
+            if (typeof roleMap !== "string") {
                 throw {
                     status: 400,
                     message: "Invalid roles"
                 }
             }
-            roles = roles.toUpperCase().split(" ")
+            roleMap = roleMap.toUpperCase().split(" ")
         }
-        this.data.members[memberId].roles = roles
+        this.data.members[memberId].roles = roleMap
         await this.update()
     }
 
+    /**
+     * Add if not in roles for a member with the provided roles.
+     * @param {String} memberId _id of the member
+     * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
+     */
     async addMemberRoles(memberId, roles) {
 
         if (!Object.keys(this.data.members).length) {
@@ -102,6 +112,11 @@ export default class Group {
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
+    /**
+     * Remove roles if found for a member.
+     * @param {String} memberId _id of the member
+     * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
+     */
     async removeMemberRoles(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
@@ -152,14 +167,14 @@ export default class Group {
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = roles
-        return this
+        this.update()
     }
 
     addCustomRoles(roleMap) {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        return this
+        this.update()
     }
 
     removeCustomRoles(roleMap) {
@@ -168,7 +183,7 @@ export default class Group {
         for (const role in roleMap) {
             delete this.data.customRoles[role]
         }
-        return this
+        this.update()
     }
 
     async save() {
