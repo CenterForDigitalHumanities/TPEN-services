@@ -51,10 +51,10 @@ export default class Group {
             throw err
         }
         this.data.members[memberId] = { roles: [] }
-        this.updateMember(memberId, roles)
+        this.setMemberRoles(memberId, roles)
     }
 
-    async updateMember(memberId, roles) {
+    async setMemberRoles(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
