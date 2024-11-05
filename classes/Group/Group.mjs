@@ -136,6 +136,15 @@ export default class Group {
             }
             roles = roles.toUpperCase().split(" ")
         }
+
+        const currentRoles = this.data.members[memberId].roles
+        if (currentRoles.length <= 1 && roles.includes(currentRoles[0])) {
+            throw {
+                status: 400,
+                message: "Cannot remove the last role; each member must have at least one role."
+            }
+        }
+
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
         await this.update()
     }
@@ -149,10 +158,10 @@ export default class Group {
     }
 
     isValidRolesMap(roleMap) {
-        if(Array.isArray(roleMap)) {
+        if (Array.isArray(roleMap)) {
             return roleMap.every(this.isValidRolesMap)
         }
-        if(typeof roleMap !== "object") {
+        if (typeof roleMap !== "object") {
             return false
         }
         let permissions = Object.values(Group.defaultRoles).flat()
