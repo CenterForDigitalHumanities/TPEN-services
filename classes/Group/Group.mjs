@@ -172,10 +172,12 @@ export default class Group {
     }
 
     async save() {
+        this.validateGroup()
         return database.save(this.data, process.env.TPENGROUPS)
     }
 
     async update() {
+        this.validateGroup()
         return database.update({ ...this.data, "@type": "Group" })
     }
 
