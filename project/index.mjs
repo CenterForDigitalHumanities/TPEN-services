@@ -205,7 +205,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
 })
 
 // Add New Role to Member
-router.route("/:projectId/collaborator/:collaboratorId/setRole").post(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -232,8 +232,8 @@ router.route("/:projectId/collaborator/:collaboratorId/setRole").post(auth0Middl
 })
 
 
-// Change a member's Role(s): Replace roles with ---
-router.route("/:projectId/collaborator/:collaboratorId/setRole").put(auth0Middleware(), async (req, res) => {
+// Change a member's Role(s): Replace roles with new ones
+router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -264,7 +264,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRole").put(auth0Middle
 
 
 // Remove a Role from Member
-router.route("/:projectId/collaborator/:collaboratorId").delete(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -273,6 +273,9 @@ router.route("/:projectId/collaborator/:collaboratorId").delete(auth0Middleware(
   }
   if (!roles) {
     return respondWithError(res, 400, "Provide role(s) to remove")
+  }
+  if (roles.includes("OWNER")) {
+    return respondWithError(res, 400, "The OWNER role cannot be removed.")
   }
   try {
     const projectObj = await new Project(projectId)
@@ -288,6 +291,46 @@ router.route("/:projectId/collaborator/:collaboratorId").delete(auth0Middleware(
 
   } catch (error) {
     res.status(error.status || 500).json({ message: error.message || "Error removing roles from member." })
+  }
+})
+
+
+// Switch project owner
+router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  const { newOwnerId } = req.body
+  const user = req.user
+
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+  if (!newOwnerId) {
+    return respondWithError(res, 400, "Provide the ID of the new owner.")
+  }
+  
+  try {
+    const projectObj = await new Project(projectId)
+    const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL)
+    if (!accessInfo.hasAccess) return respondWithError(res, 403, "Only the current owner can transfer ownership.")
+
+    const groupId = projectObj.data.group
+    const group = new Group(groupId)
+
+    if (user._id === newOwnerId) {
+      return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
+    }
+    if (!group.data.members[newOwnerId]) { 
+      group.addMember(newOwnerId, ["OWNER"])
+    } else { 
+      group.addMemberRoles(newOwnerId, ["OWNER"])
+    }
+    group.removeMemberRoles(user._id, ["OWNER"])
+
+    await group.update()
+
+    res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Error transferring ownership." })
   }
 })
 
