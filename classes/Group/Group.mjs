@@ -179,24 +179,40 @@ export default class Group {
         return database.update({ ...this.data, "@type": "Group" })
     }
 
-    static async createNewGroup(creator, payload) {
-        const { customRoles, label, members } = payload
-        if (!creator) {
+    validateGroup() {
+        if (!this.data.creator) {
             throw {
                 status: 400,
                 message: "Owner ID is required"
             }
         }
+        //remove members with empty or invalid roles
+        for (const memberId in this.data.members) {
+            if (!this.data.members[memberId].roles || !Array.isArray(this.data.members[memberId].roles)) {
+                delete this.data.members[memberId]
+            }
+        }
+        if (this.data.customRoles && !this.isValidRolesMap(this.data.customRoles)) {
+            throw {
+                status: 400,
+                message: "Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
+            }
+        }
+        if (!this.getByRole("OWNER")?.length) {
+            this.addMemberRoles(this.data.creator, "OWNER")
+        }
+        if (!this.getByRole("LEADER")?.length) {
+            this.addMemberRoles(this.data.creator, "LEADER")
+        }
+    }
+
+    static async createNewGroup(creator, payload) {
+        const { customRoles, label, members } = payload
         const newGroup = new Group()
         Object.assign(newGroup.data, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
-        if (!newGroup.getByRole("OWNER")?.length) {
-            newGroup[newGroup.data.members[creator] ? "addMemberRoles" : "addMember"](creator, "OWNER")
-        }
-        if (!newGroup.getByRole("LEADER")?.length) {
-            newGroup[newGroup.data.members[creator] ? "addMemberRoles" : "addMember"](creator, "LEADER")
-        }
+        newGroup.validateGroup()
         return newGroup.save()
     }
 
