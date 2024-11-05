@@ -205,14 +205,16 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
 })
 
 // Add New Role to Member
-router.route("/:projectId/member/:memberId/role").post(auth0Middleware(), async (req, res) => {
-  const { projectId, memberId } = req.params
-  const { roles } = req.body
+router.route("/:projectId/collaborator/:collaboratorId/setRole").post(auth0Middleware(), async (req, res) => {
+  const { projectId, collaboratorId } = req.params
+  const roles = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
-
+  if (!roles) {
+    return respondWithError(res, 400, "Provide role(s) to add")
+  }
   try {
     const projectObj = await new Project(projectId)
     const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
@@ -221,23 +223,28 @@ router.route("/:projectId/member/:memberId/role").post(auth0Middleware(), async 
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    await group.addMemberRoles(memberId, roles)
+    await group.addMemberRoles(collaboratorId, roles)
     await group.update()
-    res.status(200).json({ message: `Roles added to member ${memberId}.` })
+    res.status(200).json({ message: `Roles added to member ${collaboratorId}.` })
   } catch (error) {
     res.status(error.status || 500).json({ message: error.message || "Error adding roles to member." })
   }
 })
 
 
-// Change a member's Role
-router.route("/:projectId/member/:memberId/role").put(auth0Middleware(), async (req, res) => {
-  const { projectId, memberId } = req.params
-  const { roles } = req.body
+// Change a member's Role(s): Replace roles with ---
+router.route("/:projectId/collaborator/:collaboratorId/setRole").put(auth0Middleware(), async (req, res) => {
+  const { projectId, collaboratorId } = req.params
+  const roles = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
+
+  if (!roles) {
+    return respondWithError(res, 400, "Provide role(s) to update")
+  }
+
 
   try {
     const projectObj = await new Project(projectId)
@@ -247,9 +254,9 @@ router.route("/:projectId/member/:memberId/role").put(auth0Middleware(), async (
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    group.updateMember(memberId, roles)
+    group.updateMember(collaboratorId, roles)
 
-    res.status(200).json({ message: `Roles [${roles}] updated for member ${memberId}.` })
+    res.status(200).json({ message: `Roles [${roles}] updated for member ${collaboratorId}.` })
   } catch (error) {
     res.status(error.status || 500).json({ message: error.message || "Error updating member roles." })
   }
@@ -257,14 +264,16 @@ router.route("/:projectId/member/:memberId/role").put(auth0Middleware(), async (
 
 
 // Remove a Role from Member
-router.route("/:projectId/member/:memberId/role").delete(auth0Middleware(), async (req, res) => {
-  const { projectId, memberId } = req.params
-  const { roles } = req.body
+router.route("/:projectId/collaborator/:collaboratorId").delete(auth0Middleware(), async (req, res) => {
+  const { projectId, collaboratorId } = req.params
+  const roles = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
-
+  if (!roles) {
+    return respondWithError(res, 400, "Provide role(s) to remove")
+  }
   try {
     const projectObj = await new Project(projectId)
     const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)
@@ -273,7 +282,7 @@ router.route("/:projectId/member/:memberId/role").delete(auth0Middleware(), asyn
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    group.removeMemberRoles(memberId, roles)
+    group.removeMemberRoles(collaboratorId, roles)
 
     res.status(204).send()
 
