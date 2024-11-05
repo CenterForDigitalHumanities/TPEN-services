@@ -133,6 +133,44 @@ export default class Group {
         return this.data.members && Object.keys(this.data.members).filter(memberId => this.data.members[memberId].roles.includes(role))
     }
 
+    isValidRolesMap(roleMap) {
+        if(Array.isArray(roleMap)) {
+            return roleMap.every(this.isValidRolesMap)
+        }
+        if(typeof roleMap !== "object") {
+            return false
+        }
+        let permissions = Object.values(Group.defaultRoles).flat()
+        permissions = permissions.map(permission => permission?.split(" "))
+        if (permissions.some(permission => !Array.isArray(permission))) {
+            return false
+        }
+        return true
+    }
+
+    setCustomRoles(roles) {
+        if (!this.isValidRolesMap(roles))
+            throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+        this.data.customRoles = roles
+        return this
+    }
+
+    addCustomRoles(roleMap) {
+        if (!this.isValidRolesMap(roleMap))
+            throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+        this.data.customRoles = { ...this.data.customRoles, ...roleMap }
+        return this
+    }
+
+    removeCustomRoles(roleMap) {
+        if (!this.isValidRolesMap(roleMap))
+            throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+        for (const role in roleMap) {
+            delete this.data.customRoles[role]
+        }
+        return this
+    }
+
     async save() {
         return database.save(this.data, process.env.TPENGROUPS)
     }
