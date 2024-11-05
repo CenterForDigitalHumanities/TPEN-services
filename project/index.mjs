@@ -285,7 +285,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    group.removeMemberRoles(collaboratorId, roles)
+    await group.removeMemberRoles(collaboratorId, roles)
 
     res.status(204).send()
 
@@ -296,6 +296,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
 
 
 // Switch project owner
+
 router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const { newOwnerId } = req.body
@@ -307,9 +308,10 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
   if (!newOwnerId) {
     return respondWithError(res, 400, "Provide the ID of the new owner.")
   }
-  
+
   try {
     const projectObj = await new Project(projectId)
+
     const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL)
     if (!accessInfo.hasAccess) return respondWithError(res, 403, "Only the current owner can transfer ownership.")
 
@@ -319,14 +321,12 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     if (user._id === newOwnerId) {
       return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
     }
-    if (!group.data.members[newOwnerId]) { 
-      group.addMember(newOwnerId, ["OWNER"])
-    } else { 
-      group.addMemberRoles(newOwnerId, ["OWNER"])
-    }
-    group.removeMemberRoles(user._id, ["OWNER"])
 
-    await group.update()
+    const currentRoles = await group.getMemberRoles(user._id)
+    // If user only has the OWNER role, we default them to CONTRIBUTOR before transferring ownership
+    Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
+    await group.addMemberRoles(newOwnerId, ["OWNER"])
+    await group.removeMemberRoles(user._id, ["OWNER"])
 
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
