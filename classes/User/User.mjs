@@ -129,7 +129,7 @@ export default class User {
           $project: {
             _id: 1,                        // Project ID
             title: 1,                      // Project title
-            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}`, 0] }  // User roles within the group
+            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
           }
         }
       ]).toArray()
