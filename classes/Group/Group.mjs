@@ -105,8 +105,8 @@ export default class Group {
                     status: 400,
                     message: "Invalid roles"
                 }
-                roles = roles.split(" ")
             }
+            roles = roles.split(" ")
         }
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
     }
