@@ -1,32 +1,30 @@
-import Group from "../classes/Group/Group.mjs";
+import Group from "../classes/Group/Group.mjs"
+/**
+ * coming in from addCustomRole, removeCustomRole, and setCustomRoles
+ * Array of RoleMaps, a single RoleMap, or a single RoleString
+ */
 
-export default function isDefaultRole(roleName) {
-  const defaultRoles = Object.keys(Group.defaultRoles);
+export default function scrubDefaultRoles(roleName) {
+  
+  const defaultRoles = Object.keys(Group.defaultRoles)
+  if(Array.isArray(roleName)) {
+    roleName = roleName.filter(roleString => {
+      if(typeof roleString !== "string") {
+        throw new Error("Expecting a RolesMap and not an Array.")
+      }
+      return !defaultRoles.includes(roleString)
+    })
+    return roleName.length !== 0 ? roleName : false
+  }
 
-  if (typeof roleName === "object" && !Array.isArray(roleName)) {
+  if (typeof roleName === "object") {
     for (const role of Object.keys(roleName)) {
       if (defaultRoles.includes(role)) {
-        return [true, role];
+        delete roleName[role]
       }
     }
-    return [false, ''];
+    return Object.keys(roleName).length !== 0 ? roleName : false
   }
 
-  if (Array.isArray(roleName)) {
-    for (const role of roleName) {
-      if (defaultRoles.includes(role)) {
-        return [true, role];
-      }
-    }
-    return [false, ''];
-  }
-
-  if (typeof roleName === "string") {
-    if (defaultRoles.includes(roleName)) {
-      return [true, roleName];
-    }
-    return [false, ''];
-  }
-
-  return [false, 'Invalid role format'];
+  return false
 }

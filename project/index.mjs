@@ -10,7 +10,7 @@ import getHash from "../utilities/getHash.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
-import isDefaultRole from "../utilities/isDefaultRole.mjs"
+import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -354,7 +354,7 @@ router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
   }
 
   // Make sure provided role is not a DEFAULT role
-  const [isDefault, defaultRole] = isDefaultRole(customRoles)
+  const [isDefault, defaultRole] = scrubDefaultRoles(customRoles)
   if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
 
 
@@ -392,7 +392,7 @@ router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
   }
 
   // Ensure none of the provided roles are default roles
-  const [isDefault, defaultRole] = isDefaultRole(newCustomRoles)
+  const [isDefault, defaultRole] = scrubDefaultRoles(newCustomRoles)
   if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
 
 
@@ -429,7 +429,7 @@ router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
   }
 
   // Ensure no default roles are being removed
-  const [isDefault, defaultRole] = isDefaultRole(rolesToRemove)
+  const [isDefault, defaultRole] = scrubDefaultRoles(rolesToRemove)
   if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
 
   try {
