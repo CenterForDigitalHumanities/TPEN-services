@@ -165,7 +165,7 @@ export default class Group {
         if (typeof roleMap !== "object") {
             return false
         }
-        let permissions = Object.values(Group.defaultRoles).flat()
+        let permissions = Object.values(roleMap).flat()
         permissions = permissions.map(permission => permission?.split(" "))
         if (permissions.some(permission => !Array.isArray(permission))) {
             return false
