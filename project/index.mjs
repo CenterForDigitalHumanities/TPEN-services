@@ -342,7 +342,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 // Add custom roles to a project
 router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const customRoles = req.body.roles ?? req.body
+  let customRoles = req.body.roles ?? req.body
   const user = req.user
 
   if (!user) {
@@ -380,7 +380,7 @@ router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
 
 router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const newCustomRoles = req.body.roles ?? req.body
+  let newCustomRoles = req.body.roles ?? req.body
   const user = req.user
 
   if (!user) {
@@ -418,7 +418,7 @@ router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
 
 router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const rolesToRemove = req.body.roles ?? req.body
+  let rolesToRemove = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
     return res.status(401).json({ message: 'Unauthenticated request' })
