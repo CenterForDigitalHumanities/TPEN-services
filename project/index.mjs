@@ -340,7 +340,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 // Manage Custom Roles Endpoints
 
 // Add custom roles to a project
-router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
+router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   let customRoles = req.body.roles ?? req.body
   const user = req.user
@@ -378,7 +378,7 @@ router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
 })
 
 
-router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
+router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   let newCustomRoles = req.body.roles ?? req.body
   const user = req.user
@@ -416,7 +416,7 @@ router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
 
 
 
-router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
+router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   let rolesToRemove = req.body.roles ?? req.body
   const user = req.user
