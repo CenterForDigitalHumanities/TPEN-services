@@ -354,8 +354,8 @@ router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
   }
 
   // Make sure provided role is not a DEFAULT role
-  const [isDefault, defaultRole] = scrubDefaultRoles(customRoles)
-  if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
+  customRoles = scrubDefaultRoles(customRoles)
+  if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
 
   try {
@@ -392,8 +392,8 @@ router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
   }
 
   // Ensure none of the provided roles are default roles
-  const [isDefault, defaultRole] = scrubDefaultRoles(newCustomRoles)
-  if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
+  newCustomRoles = scrubDefaultRoles(newCustomRoles)
+  if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
 
   try {
@@ -424,13 +424,18 @@ router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
     return res.status(401).json({ message: 'Unauthenticated request' })
   }
 
-  if (!Object.keys(rolesToRemove).length && !rolesToRemove.length) {
+  // if its an object, just pass an array of keys
+  if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
+    rolesToRemove = Object.keys(rolesToRemove)
+  }
+
+  if (!rolesToRemove.length) {
     return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
 
   // Ensure no default roles are being removed
-  const [isDefault, defaultRole] = scrubDefaultRoles(rolesToRemove)
-  if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
+  rolesToRemove = scrubDefaultRoles(rolesToRemove)
+  if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
 
   try {
     const project = await new Project(projectId)
@@ -443,7 +448,6 @@ router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
     const groupId = project.data.group
     const group = new Group(groupId)
     await group.removeCustomRoles(rolesToRemove)
-    // await group.removeCustomRoles(Object.fromEntries(rolesToRemove.map(role => [role, []])))
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
