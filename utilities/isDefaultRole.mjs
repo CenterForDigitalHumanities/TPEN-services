@@ -1,8 +1,5 @@
 import Group from "../classes/Group/Group.mjs"
-/**
- * coming in from addCustomRole, removeCustomRole, and setCustomRoles
- * Array of RoleMaps, a single RoleMap, or a single RoleString
- */
+import { respondWithError } from "../utilities/shared.mjs"
 
 export default function scrubDefaultRoles(roleName) {
   
@@ -10,7 +7,7 @@ export default function scrubDefaultRoles(roleName) {
   if(Array.isArray(roleName)) {
     roleName = roleName.filter(roleString => {
       if(typeof roleString !== "string") {
-        throw new Error("Expecting a RolesMap and not an Array.")
+        respondWithError(res, 400, "Expecting a RolesMap and not an Array.")
       }
       return !defaultRoles.includes(roleString)
     })
