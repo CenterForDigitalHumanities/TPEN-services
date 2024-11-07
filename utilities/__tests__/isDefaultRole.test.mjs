@@ -1,5 +1,5 @@
 import scrubDefaultRoles from '../isDefaultRole.mjs'
-import Group from '../classes/Group/Group.mjs'
+import Group from '../../classes/Group/Group.mjs'
 
 describe('scrubDefaultRoles function #customRole_unit', () => {
     beforeAll(() => {
