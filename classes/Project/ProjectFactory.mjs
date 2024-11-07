@@ -1,6 +1,8 @@
 import Project from "./Project.mjs"
 import Group from "../Group/Group.mjs" 
 import User from "../User/User.mjs"
+import dbDriver from "../../database/driver.mjs"
+const database = new dbDriver("mongo")
 
 export default class ProjectFactory {
   constructor(data) {
@@ -104,7 +106,7 @@ export default class ProjectFactory {
       layers: projectData.layers ?? [],
       manifest: projectData.manifest,
       creator: projectData.creator,
-      contributors: {},
+      collaborators: {},
       license: projectData.license,
       tools: projectData.tools,
       options: projectData.options,
@@ -116,16 +118,96 @@ export default class ProjectFactory {
       .then(members => {
         const loadMembers = []
         Object.keys(members).forEach(memberId => {
-          project.contributors[memberId] = {
+          project.collaborators[memberId] = {
             roles: members[memberId]
           }
           loadMembers.push(new User(memberId).getPublicInfo().then(profile => {
-            project.contributors[memberId].profile = profile
+            project.collaborators[memberId].profile = profile
           }))
         })
         return Promise.all(loadMembers)
       })
 
     return project
+  }
+  
+  static async loadAsUser(project_id,user_id) {
+    const pipeline = [
+      { $match: { _id: project_id } },
+      {
+        $lookup: {
+          from: 'groups',
+          localField: 'group',
+          foreignField: '_id',
+          as: 'groupData'
+        }
+      },
+      { $unwind: '$groupData' },
+      {
+        $addFields: {
+          userRoles: {
+            $ifNull: [`$groupData.members.${user_id}.roles`, []]
+          }
+        }
+      },
+      {
+        $match: {
+          $or: [
+            { 'userRoles': { $in: ['*_*_*', 'READ_*_*', 'READ_*_PROJECT'] } },
+            { 'creator': user_id }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'groupData.members._id',
+          foreignField: '_id',
+          as: 'membersData'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          label: 1,
+          metadata: { $ifNull: ['$metadata', []] },
+          layers: { $ifNull: ['$layers', []] },
+          manifest: 1,
+          creator: 1,
+          license: 1,
+          tools: 1,
+          options: 1,
+          roles: { $mergeObjects: [Group.defaultRoles, '$customRoles'] },
+          collaborators: {
+            $arrayToObject: {
+              $map: {
+                input: { $objectToArray: '$groupData.members' },
+                as: 'member',
+                in: {
+                  k: '$$member.k',
+                  v: {
+                    roles: '$$member.v.roles',
+                    profile: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: '$membersData',
+                            as: 'user',
+                            cond: { $eq: ['$$user._id', { $toObjectId: '$$member.k' }] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+    const project = await database.controller.db.collection('projects').aggregate(pipeline).toArray()
+    return project[0]
   }
 }

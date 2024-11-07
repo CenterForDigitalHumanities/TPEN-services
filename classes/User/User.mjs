@@ -113,29 +113,37 @@ export default class User {
    * @returns project object
    */
   async getProjects() {
-    const user = await this.getSelf()
-
-    // gross. I hate it.
-    return database
-      .find({ "@type": "Project" })
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        const allProjects = resp
-        const userProjects = []
-        allProjects?.map((project) => {
-          if (project.creator === user.agent) {
-            userProjects.push(project)
-          } else {
-            project?.groups?.members?.map(async (member) => {
-              if (member.agent === user?.agent || member._id === this.id) {
-                userProjects.push(project)
-              }
-            })
+    return database.controller
+      .db.collection('projects').aggregate([
+        // Step 1: Lookup the related group details
+        {
+          $lookup: {
+            from: "groups",
+            localField: "group",   // Field in `projects` referencing `_id` in `groups`
+            foreignField: "_id",
+            as: "groupInfo"
           }
-        })
-
+        },
+        // Step 2: Filter for projects where the user is in the group's members
+        {
+          $match: {
+            "groupInfo.members": { $exists: true },
+            [`groupInfo.members.${this._id}`]: { $exists: true }
+          }
+        },
+        // Step 3: Project the required fields including the user's roles
+        {
+          $project: {
+            _id: 1,                        // Project ID
+            title: 1,                      // Project title
+            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
+          }
+        }
+      ]).toArray()
+      .then((userProjects) => {
+        if (userProjects instanceof Error) {
+          throw userProjects
+        }
         return userProjects
       })
   }
