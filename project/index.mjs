@@ -354,9 +354,9 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
   }
 
   try {
-  // Make sure provided role is not a DEFAULT role
-  customRoles = scrubDefaultRoles(customRoles)
-  if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
+    // Make sure provided role is not a DEFAULT role
+    customRoles = scrubDefaultRoles(customRoles)
+    if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
 
     const project = await new Project(projectId)
@@ -373,7 +373,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     res.status(201).json({ message: 'Custom roles added successfully.' })
 
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message??'Error adding custom roles.')
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
   }
 })
 
@@ -392,9 +392,9 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
   }
 
   try {
-  // Ensure none of the provided roles are default roles
-  newCustomRoles = scrubDefaultRoles(newCustomRoles)
-  if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
+    // Ensure none of the provided roles are default roles
+    newCustomRoles = scrubDefaultRoles(newCustomRoles)
+    if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
 
     const project = await new Project(projectId)
@@ -410,7 +410,7 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
 
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message??'Error setting custom roles.')
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
   }
 })
 
@@ -437,9 +437,9 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 
   try {
-  // Ensure no default roles are being removed
-  rolesToRemove = scrubDefaultRoles(rolesToRemove)
-  if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
+    // Ensure no default roles are being removed
+    rolesToRemove = scrubDefaultRoles(rolesToRemove)
+    if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
 
     const project = await new Project(projectId)
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)
@@ -455,7 +455,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
     console.log(error)
-    respondWithError(res, error.status ?? 500, 'Error removing custom roles.')
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
 
