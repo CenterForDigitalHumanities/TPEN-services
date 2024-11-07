@@ -327,8 +327,8 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     const currentRoles = await group.getMemberRoles(user._id)
     // If user only has the OWNER role, we default them to CONTRIBUTOR before transferring ownership
     Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
-    await group.addMemberRoles(newOwnerId, ["OWNER"])
-    await group.removeMemberRoles(user._id, ["OWNER"])
+    await group.addMemberRoles(newOwnerId, ["OWNER"],true)
+    await group.removeMemberRoles(user._id, ["OWNER"],true)
 
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {

@@ -80,7 +80,7 @@ export default class Group {
             roles = roles.split(" ")
         }
 
-        roles = roles.map(role => role.toUpperCase())
+        washRoles(roles)
         this.data.members[memberId].roles = roles
         await this.update()
     }
@@ -90,7 +90,7 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async addMemberRoles(memberId, roles) {
+    async addMemberRoles(memberId, roles, allowOwner=false) {
 
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
@@ -111,7 +111,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        roles = roles.map(role => role.toUpperCase())
+        washRoles(roles,allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
@@ -120,7 +120,7 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async removeMemberRoles(memberId, roles) {
+    async removeMemberRoles(memberId, roles,allowOwner=false) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -139,7 +139,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        roles = roles.map(role => role.toUpperCase())
+        washRoles(roles,allowOwner)
         const currentRoles = this.data.members[memberId].roles
         if (currentRoles.length <= 1 && roles.includes(currentRoles[0])) {
             throw {
@@ -276,4 +276,22 @@ export default class Group {
         CONTRIBUTOR: ["READ_*_MEMBER", "UPDATE_TEXT_*", "UPDATE_ORDER_*", "UPDATE_SELECTOR_*", "CREATE_SELECTOR_*", "DELETE_*_LINE", "UPDATE_DESCRIPTION_LAYER", "CREATE_*_LAYER"],
         VIEWER: ["READ_*_PROJECT", "READ_*_MEMBER", "READ_*_LAYER", "READ_*_PAGE", "READ_*_LINE"]
     }
+}
+
+function washRoles(roles,allowOwner=false) {
+    return roles.map(role => {
+        if(typeof role !== "string") {
+            throw {
+                status: 400,
+                message: "Invalid role:" + role
+            }
+        }
+        role.toUpperCase()
+        if(!allowOwner && role === "OWNER") {
+            throw {
+                status: 400,
+                message: "Cannot assign OWNER role"
+            }
+        }
+    })
 }
