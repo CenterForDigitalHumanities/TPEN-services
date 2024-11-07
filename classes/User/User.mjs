@@ -21,14 +21,21 @@ export default class User {
   async getSelf() {
     return await (this.data ?? this.#loadFromDB().then(u => u.data))
   }
-
+  
   async getPublicInfo() {
-    // returns user's public info
-    return this.data
-      ? { _id: this._id, ...this.data.profile }
-      : database.getById(this._id, "users").then(user => ({ _id: user._id, ...user.profile }))
+    // returns user's public info 
+    if (this.data) {
+      return { _id: this._id, ...this.data.profile };
+    }
+  
+    const user = await database.getById(this._id, "users");
+    if (!user) {
+      throw new Error(`User with _id ${this._id} not found`);
+    }
+  
+    return { _id: user._id, ...user.profile };
   }
-
+  
   async getByEmail(email) {
     if (!this.data.email) {
       throw {
