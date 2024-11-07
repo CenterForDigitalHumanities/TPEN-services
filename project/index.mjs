@@ -373,7 +373,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     res.status(201).json({ message: 'Custom roles added successfully.' })
 
   } catch (error) {
-    respondWithError(res, error.status ?? 500, 'Error adding custom roles.')
+    respondWithError(res, error.status ?? 500, error.message??'Error adding custom roles.')
   }
 })
 
@@ -410,7 +410,7 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
 
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, 'Error setting custom roles.')
+    respondWithError(res, error.status ?? 500, error.message??'Error setting custom roles.')
   }
 })
 
