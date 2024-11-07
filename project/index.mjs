@@ -429,7 +429,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 
   if (typeof rolesToRemove === 'string') {
-    rolesToRemove = rolesToRemove.includes(' ') ? rolesToRemove.split(' ') : [rolesToRemove]
+    rolesToRemove = rolesToRemove.split(' ')
   }
 
   if (!rolesToRemove.length) {
