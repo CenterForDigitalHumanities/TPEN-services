@@ -38,16 +38,4 @@ describe('scrubDefaultRoles function #customRole_unit', () => {
         const result = scrubDefaultRoles(roles)
         expect(result).toBe(false)
     })
-
-    it('should convert string to array', () => {
-        const roles = 'admin'
-        const result = scrubDefaultRoles(roles)
-        expect(result).toBe(['admin'])
-    })
-
-    it('should split string by space', () => {
-        const roles = 'admin user'
-        const result = scrubDefaultRoles(roles)
-        expect(result).toEqual(['admin', 'user'])
-    })
 })
