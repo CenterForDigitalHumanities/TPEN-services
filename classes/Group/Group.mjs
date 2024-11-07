@@ -243,7 +243,8 @@ export default class Group {
                 delete this.data.members[memberId]
             }
         }
-        if (this.data.customRoles && !this.isValidRolesMap(this.data.customRoles)) {
+        this.data.customRoles ??= {}
+        if (!this.isValidRolesMap(this.data.customRoles)) {
             throw {
                 status: 400,
                 message: "Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
