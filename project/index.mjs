@@ -353,12 +353,12 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
 
+  try {
   // Make sure provided role is not a DEFAULT role
   customRoles = scrubDefaultRoles(customRoles)
   if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
 
-  try {
     const project = await new Project(projectId)
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)
 
@@ -391,12 +391,12 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
 
+  try {
   // Ensure none of the provided roles are default roles
   newCustomRoles = scrubDefaultRoles(newCustomRoles)
   if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
 
-  try {
     const project = await new Project(projectId)
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)
 
@@ -436,11 +436,11 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
     return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
 
+  try {
   // Ensure no default roles are being removed
   rolesToRemove = scrubDefaultRoles(rolesToRemove)
   if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
 
-  try {
     const project = await new Project(projectId)
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)
 
