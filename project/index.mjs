@@ -10,6 +10,7 @@ import getHash from "../utilities/getHash.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
+import isDefaultRole from "../utilities/isDefaultRole.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -335,5 +336,214 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
   }
 })
 
+
+// Manage Custom Roles Endpoints
+
+// Add custom roles to a project
+router.post('/:projectId/addRoles', auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  const customRoles = req.body.roles ?? req.body
+  const user = req.user
+
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthenticated request' })
+  }
+
+  if (!Object.keys(customRoles).length) {
+    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+  }
+
+  // Make sure provided role is not a DEFAULT role
+  const [isDefault, defaultRole] = isDefaultRole(customRoles)
+  if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
+
+
+  try {
+    const project = await new Project(projectId)
+    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)
+
+    if (!accessInfo.hasAccess) {
+      return res.status(403).json({ message: accessInfo.message })
+    }
+
+    const groupId = project.data.group
+    const group = new Group(groupId)
+    await group.addCustomRoles(customRoles)
+
+    res.status(201).json({ message: 'Custom roles added successfully.' })
+
+  } catch (error) {
+    respondWithError(res, error.status ?? 500, 'Error adding custom roles.')
+  }
+})
+
+
+router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  const newCustomRoles = req.body.roles ?? req.body
+  const user = req.user
+
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthenticated request' })
+  }
+
+  if (!Object.keys(newCustomRoles).length) {
+    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+  }
+
+  // Ensure none of the provided roles are default roles
+  const [isDefault, defaultRole] = isDefaultRole(newCustomRoles)
+  if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
+
+
+  try {
+    const project = await new Project(projectId)
+    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)
+
+    if (!accessInfo.hasAccess) {
+      return res.status(403).json({ message: accessInfo.message })
+    }
+
+    const groupId = project.data.group
+    const group = new Group(groupId)
+    await group.setCustomRoles(newCustomRoles)
+
+    res.status(200).json({ message: 'Custom roles set successfully.' })
+  } catch (error) {
+    respondWithError(res, error.status ?? 500, 'Error setting custom roles.')
+  }
+})
+
+
+
+router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  const rolesToRemove = req.body.roles ?? req.body
+  const user = req.user
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthenticated request' })
+  }
+
+  if (!Object.keys(rolesToRemove).length && !rolesToRemove.length) {
+    return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+  }
+
+  // Ensure no default roles are being removed
+  const [isDefault, defaultRole] = isDefaultRole(rolesToRemove)
+  if (isDefault) return respondWithError(res, 400, `Cannot remove default role: ${defaultRole} `)
+
+  try {
+    const project = await new Project(projectId)
+    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)
+
+    if (!accessInfo.hasAccess) {
+      return res.status(403).json({ message: accessInfo.message })
+    }
+
+    const groupId = project.data.group
+    const group = new Group(groupId)
+    await group.removeCustomRoles(rolesToRemove)
+    // await group.removeCustomRoles(Object.fromEntries(rolesToRemove.map(role => [role, []])))
+
+    res.status(200).json({ message: 'Custom roles removed successfully.' })
+  } catch (error) {
+    console.log(error)
+    respondWithError(res, error.status ?? 500, 'Error removing custom roles.')
+  }
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // Set or update custom roles in a project
+// router.put('/:projectId/setRoles', auth0Middleware(), async (req, res) => {
+//   const { projectId } = req.params
+//   const customRoles = req.body // Assuming the format is a complete role map
+
+//   try {
+//     const project = await new Project(projectId)
+//     const user = req.user
+
+//     if (!user) {
+//       return res.status(401).json({ message: 'Unauthenticated request' })
+//     }
+
+//     // Check user access for managing roles
+//     const accessInfo = await project.checkUserAccess(user._id, 'UPDATE', 'ALL', 'ROLE')
+//     if (!accessInfo.hasAccess) {
+//       return res.status(403).json({ message: accessInfo.message })
+//     }
+
+//     const groupId = project.data.group
+//     const group = new Group(groupId)
+
+//     // Validate and set custom roles
+//     for (const roleName of Object.keys(customRoles)) {
+//       if (isDefaultRole(roleName)) {
+//         return res.status(400).json({ message: `Cannot modify default role: ${roleName}` })
+//       }
+//     }
+
+//     await group.setCustomRoles(customRoles)
+//     res.status(200).json({ message: 'Custom roles updated successfully.' })
+
+//   } catch (error) {
+//     res.status(error.status || 500).json({ message: error.message || 'Error setting custom roles.' })
+//   }
+// })
+
+// // POST /project/:id/removeRoles - Remove custom roles from a project
+// router.post('/:projectId/removeRoles', auth0Middleware(), async (req, res) => {
+//   const { projectId } = req.params
+//   const rolesToRemove = req.body // Assuming format: { roleName: [] }
+
+//   try {
+//     const project = await new Project(projectId)
+//     const user = req.user
+
+//     if (!user) {
+//       return res.status(401).json({ message: 'Unauthenticated request' })
+//     }
+
+//     // Check user access for managing roles
+//     const accessInfo = await project.checkUserAccess(user._id, 'DELETE', 'ALL', 'ROLE')
+//     if (!accessInfo.hasAccess) {
+//       return res.status(403).json({ message: accessInfo.message })
+//     }
+
+//     const groupId = project.data.group
+//     const group = new Group(groupId)
+
+//     // Validate roles to remove
+//     for (const roleName of Object.keys(rolesToRemove)) {
+//       if (isDefaultRole(roleName)) {
+//         return res.status(400).json({ message: `Cannot remove default role: ${roleName}` })
+//       }
+//     }
+
+//     await group.removeCustomRoles(rolesToRemove)
+//     res.status(204).send()
+
+//   } catch (error) {
+//     res.status(error.status || 500).json({ message: error.message || 'Error removing custom roles.' })
+//   }
+// })
 
 export default router
