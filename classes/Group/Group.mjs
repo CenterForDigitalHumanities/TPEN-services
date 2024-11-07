@@ -279,19 +279,12 @@ export default class Group {
 }
 
 function washRoles(roles,allowOwner=false) {
-    return roles.map(role => {
+    return roles.filter(role => {
         if(typeof role !== "string") {
-            throw {
-                status: 400,
-                message: "Invalid role:" + role
-            }
+            return false
         }
-        role.toUpperCase()
-        if(!allowOwner && role === "OWNER") {
-            throw {
-                status: 400,
-                message: "Cannot assign OWNER role"
-            }
+        if(!allowOwner && role.toUpperCase() === "OWNER") {
+            return false
         }
-    })
+    }).map(role => role.toUpperCase())
 }
