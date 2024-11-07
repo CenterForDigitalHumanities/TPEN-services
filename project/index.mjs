@@ -424,9 +424,12 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
     return res.status(401).json({ message: 'Unauthenticated request' })
   }
 
-  // if its an object, just pass an array of keys
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
     rolesToRemove = Object.keys(rolesToRemove)
+  }
+
+  if (typeof rolesToRemove === 'string') {
+    rolesToRemove = rolesToRemove.includes(' ') ? rolesToRemove.split(' ') : [rolesToRemove]
   }
 
   if (!rolesToRemove.length) {
