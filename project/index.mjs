@@ -10,6 +10,7 @@ import getHash from "../utilities/getHash.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
+import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -334,6 +335,130 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     return respondWithError(res, error.status || 500, error.message || "Error transferring ownership.")
   }
 })
+
+
+// Manage Custom Roles Endpoints
+
+// Add custom roles to a project
+router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  let customRoles = req.body.roles ?? req.body
+  const user = req.user
+
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthenticated request' })
+  }
+
+  if (!Object.keys(customRoles).length) {
+    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+  }
+
+  try {
+    // Make sure provided role is not a DEFAULT role
+    customRoles = scrubDefaultRoles(customRoles)
+    if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
+
+
+    const project = await new Project(projectId)
+    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)
+
+    if (!accessInfo.hasAccess) {
+      return res.status(403).json({ message: accessInfo.message })
+    }
+
+    const groupId = project.data.group
+    const group = new Group(groupId)
+    await group.addCustomRoles(customRoles)
+
+    res.status(201).json({ message: 'Custom roles added successfully.' })
+
+  } catch (error) {
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
+  }
+})
+
+
+router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  let newCustomRoles = req.body.roles ?? req.body
+  const user = req.user
+
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthenticated request' })
+  }
+
+  if (!Object.keys(newCustomRoles).length) {
+    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+  }
+
+  try {
+    // Ensure none of the provided roles are default roles
+    newCustomRoles = scrubDefaultRoles(newCustomRoles)
+    if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
+
+
+    const project = await new Project(projectId)
+    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)
+
+    if (!accessInfo.hasAccess) {
+      return res.status(403).json({ message: accessInfo.message })
+    }
+
+    const groupId = project.data.group
+    const group = new Group(groupId)
+    await group.setCustomRoles(newCustomRoles)
+
+    res.status(200).json({ message: 'Custom roles set successfully.' })
+  } catch (error) {
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
+  }
+})
+
+
+
+router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  let rolesToRemove = req.body.roles ?? req.body
+  const user = req.user
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthenticated request' })
+  }
+
+  if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
+    rolesToRemove = Object.keys(rolesToRemove)
+  }
+
+  if (typeof rolesToRemove === 'string') {
+    rolesToRemove = rolesToRemove.split(' ')
+  }
+
+  if (!rolesToRemove.length) {
+    return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+  }
+
+  try {
+    // Ensure no default roles are being removed
+    rolesToRemove = scrubDefaultRoles(rolesToRemove)
+    if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
+
+    const project = await new Project(projectId)
+    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)
+
+    if (!accessInfo.hasAccess) {
+      return res.status(403).json({ message: accessInfo.message })
+    }
+
+    const groupId = project.data.group
+    const group = new Group(groupId)
+    await group.removeCustomRoles(rolesToRemove)
+
+    res.status(200).json({ message: 'Custom roles removed successfully.' })
+  } catch (error) {
+    console.log(error)
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
+  }
+})
+
 
 
 export default router
