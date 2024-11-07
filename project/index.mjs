@@ -256,7 +256,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    group.setMemberRoles(collaboratorId, roles)
+    await group.setMemberRoles(collaboratorId, roles)
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
