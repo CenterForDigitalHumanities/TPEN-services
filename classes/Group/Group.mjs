@@ -107,8 +107,9 @@ export default class Group {
                     message: "Invalid roles"
                 }
             }
-            roles = roles.toUpperCase().split(" ")
+            roles = roles.split(" ")
         }
+        roles = roles.map(role => role.toUpperCase())
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
@@ -134,9 +135,9 @@ export default class Group {
                     message: "Invalid roles"
                 }
             }
-            roles = roles.toUpperCase().split(" ")
+            roles = roles.split(" ")
         }
-
+        roles = roles.map(role => role.toUpperCase())
         const currentRoles = this.data.members[memberId].roles
         if (currentRoles.length <= 1 && roles.includes(currentRoles[0])) {
             throw {

@@ -225,9 +225,10 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
     const group = new Group(groupId)
     await group.addMemberRoles(collaboratorId, roles)
     await group.update()
-    res.status(200).json({ message: `Roles added to member ${collaboratorId}.` })
+
+    res.status(200).send(`Roles added to member ${collaboratorId}.`)
   } catch (error) {
-    res.status(error.status || 500).json({ message: error.message || "Error adding roles to member." })
+    return respondWithError(res, error.status || 500, error.message || "Error adding roles to member.")
   }
 })
 
@@ -256,9 +257,9 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
     const group = new Group(groupId)
     group.setMemberRoles(collaboratorId, roles)
 
-    res.status(200).json({ message: `Roles [${roles}] updated for member ${collaboratorId}.` })
+    res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
-    res.status(error.status || 500).json({ message: error.message || "Error updating member roles." })
+    return respondWithError(res, error.status || 500, error.message || "Error updating member roles.")
   }
 })
 
@@ -287,10 +288,10 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
     const group = new Group(groupId)
     await group.removeMemberRoles(collaboratorId, roles)
 
-    res.status(204).send()
+    res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
 
   } catch (error) {
-    res.status(error.status || 500).json({ message: error.message || "Error removing roles from member." })
+    return respondWithError(res, error.status || 500, error.message || "Error removing roles from member.")
   }
 })
 
@@ -330,7 +331,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
-    res.status(error.status || 500).json({ message: error.message || "Error transferring ownership." })
+    return respondWithError(res, error.status || 500, error.message || "Error transferring ownership.")
   }
 })
 
