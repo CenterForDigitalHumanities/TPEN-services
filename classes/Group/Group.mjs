@@ -57,9 +57,9 @@ export default class Group {
     /**
      * Replace all roles for a member with the provided roles.
      * @param {String} memberId _id of the member
-     * @param {Object} roleMap { ROLE: [PERMISSIONS] }
+     * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async setMemberRoles(memberId, roleMap) {
+    async setMemberRoles(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -70,16 +70,18 @@ export default class Group {
                 message: "Member not found"
             }
         }
-        if (!Array.isArray(roleMap)) {
-            if (typeof roleMap !== "string") {
+        if (!Array.isArray(roles)) {
+            if (typeof roles !== "string") {
                 throw {
                     status: 400,
                     message: "Invalid roles"
                 }
             }
-            roleMap = roleMap.toUpperCase().split(" ")
+            roles = roles.split(" ")
         }
-        this.data.members[memberId].roles = roleMap
+
+        roles = roles.map(role => role.toUpperCase())
+        this.data.members[memberId].roles = roles
         await this.update()
     }
 
