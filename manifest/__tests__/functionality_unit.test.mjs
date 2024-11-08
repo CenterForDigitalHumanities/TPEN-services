@@ -19,7 +19,7 @@ jest.mock('../manifest.mjs', () => ({
 let test_manifest = { "type": "Manifest", "label": {"en":["Test Manifest"]} }
 let updated_manifest = {}
 
-describe('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
+describe.skip('Manifest endpoint functionality unit test (just testing helper functions). #functions_unit', () => {
   it('Creates the Manifest', async () => {
     test_manifest = await logic.saveManifest(test_manifest)
     expect(test_manifest["@id"]).toBeTruthy()

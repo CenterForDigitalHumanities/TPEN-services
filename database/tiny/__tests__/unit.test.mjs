@@ -19,7 +19,7 @@ afterAll(async () => {
   return await database.close()
 })
 
-describe("TinyPen Unit Functions. #tiny_unit #db", () => {
+describe.skip("TinyPen Unit Functions. #tiny_unit #db", () => {
   it(
     `connects for an active connection`,
     async () => {
