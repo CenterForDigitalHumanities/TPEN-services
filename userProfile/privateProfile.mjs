@@ -1,6 +1,6 @@
 import express from "express"
 import {respondWithError, respondWithJSON} from "../utilities/shared.mjs"
-import {User} from "../classes/User/User.mjs"
+import User from "../classes/User/User.mjs"
 import common_cors from '../utilities/common_cors.json' assert {type: 'json'}
 import cors from "cors"
 import auth0Middleware from "../auth/index.mjs"

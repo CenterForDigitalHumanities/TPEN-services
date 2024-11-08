@@ -88,7 +88,7 @@ describe.skip("POST /project/import?createFrom=URL #importTests", () => {
   it("should import project successfully", async () => {
     const manifestURL = "https://t-pen.org/TPEN/project/4080"
     const mockProject = {
-      title: "Test Project",
+      label: "Test Project",
       "@type": "@Project",
       metadata: [{label: "title", value: "Lorem Ipsum"}],
       " @context": "http://t-pen.org/3/context.json",
@@ -143,5 +143,94 @@ describe.skip("POST /project/import?createFrom=URL #importTests", () => {
 })
 
  
+// Invite member test cases
+describe.skip("POST /project/:id/invite-member ", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("should invite a member successfully when the user has permission", async () => {
+    const projectId = "6602dd2314cd575343f513ba";
+    const mockResponse = { success: true, message: "Member invited" };
+
+    jest.spyOn(Project.prototype, "addMember").mockResolvedValue(mockResponse);
+
+    const response = await request(app)
+      .post(`/project/${projectId}/invite-member`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ email: "newuser@example.com", roles: ["CONTRIBUTOR"] });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(mockResponse);
+    expect(Project.prototype.addMember).toHaveBeenCalled();
+  });
+
+  it("should return 400 if email is missing", async () => {
+    const projectId = "6602dd2314cd575343f513ba";
+
+    const response = await request(app)
+      .post(`/project/${projectId}/invite-member`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ roles: ["CONTRIBUTOR"] });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Invitee's email is required");
+  });
+
+  it("should return 401 if the user is unauthorized", async () => {
+    const projectId = "6602dd2314cd575343f513ba";
+
+    const response = await request(app)
+      .post(`/project/${projectId}/invite-member`)
+      .send({ email: "newuser@example.com", roles: ["CONTRIBUTOR"] });
+
+    expect(response.status).toBe(401); 
+    expect(response.body).toBeTruthy();
+  });
+});
 
 
+// Remove member Test cases
+describe.skip("POST /project/:id/remove-member ", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("should remove a member successfully when the user has permission", async () => {
+    const projectId = "6602dd2314cd575343f513ba";
+    const mockResponse = { success: true, message: "Member removed" };
+
+    jest.spyOn(Project.prototype, "removeMember").mockResolvedValue(mockResponse);
+
+    const response = await request(app)
+      .post(`/project/${projectId}/remove-member`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ userId: "userIdToRemove" });
+
+    expect(response.status).toBe(204);
+    expect(Project.prototype.removeMember).toHaveBeenCalled();
+  });
+
+  it("should return 400 if userId is missing", async () => {
+    const projectId = "6602dd2314cd575343f513ba";
+
+    const response = await request(app)
+      .post(`/project/${projectId}/remove-member`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("User ID is required");
+  });
+
+  it("should return 401 if the user is unauthorized", async () => {
+    const projectId = "6602dd2314cd575343f513ba";
+
+    const response = await request(app)
+      .post(`/project/${projectId}/remove-member`)
+      .send({ userId: "userIdToRemove" });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toBeTruthy();
+  });
+});

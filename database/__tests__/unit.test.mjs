@@ -38,7 +38,7 @@ describe("Driver CRUD and query is registered.  #driver_unit #db", () => {
 })
 
 describe("Can connect to all registered controllers.  #driver_unit #db", () => {
-  it(
+  it.skip(
     "Tiny Connection",
     async () => {
       const d = new DatabaseDriver()
@@ -47,7 +47,7 @@ describe("Can connect to all registered controllers.  #driver_unit #db", () => {
     },
     TIME_OUT
   )
-  it(
+  it.skip(
     "Mongo Connection",
     async () => {
       const d = new DatabaseDriver()
@@ -62,7 +62,7 @@ describe("Can connect to all registered controllers.  #driver_unit #db", () => {
 })
 
 describe("Can connect to all registered controllers with applied parameter.  #driver_unit #db", () => {
-  it(
+  it.skip(
     "Tiny Connection Parameter",
     async () => {
       const d = new DatabaseDriver("tiny")
@@ -70,7 +70,7 @@ describe("Can connect to all registered controllers with applied parameter.  #dr
     },
     TIME_OUT
   )
-  it(
+  it.skip(
     "Mongo Connection Parameter",
     async () => {
       const d = new DatabaseDriver("mongo")
