@@ -1,5 +1,5 @@
 import Project from "./Project.mjs"
-import Group from "../Group/Group.mjs" 
+import Group from "../Group/Group.mjs"
 import User from "../User/User.mjs"
 import dbDriver from "../../database/driver.mjs"
 const database = new dbDriver("mongo")
@@ -21,11 +21,11 @@ export default class ProjectFactory {
         }
       })
   }
-/**
- * processes a manifest object into a project object that can be saved into the Project tablein the DB
- * @param {*} manifest : The manifest object to be processed
- * @returns object of project data
- */
+  /**
+   * processes a manifest object into a project object that can be saved into the Project tablein the DB
+   * @param {*} manifest : The manifest object to be processed
+   * @returns object of project data
+   */
   static async DBObjectFromManifest(manifest) {
     if (!manifest) {
       throw {
@@ -35,7 +35,7 @@ export default class ProjectFactory {
     }
     let newProject = {}
     newProject.label = manifest.label
-    newProject.metadata = manifest.metadata 
+    newProject.metadata = manifest.metadata
     newProject["@context"] = "http://t-pen.org/3/context.json"
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
@@ -78,7 +78,7 @@ export default class ProjectFactory {
       .then(async (project) => {
         const projectObj = new Project()
         const group = await Group.createNewGroup(creator, { label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}` }).then((group) => group._id)
-        return await projectObj.create({...project, creator, group})
+        return await projectObj.create({ ...project, creator, group })
       })
       .catch((err) => {
         throw {
@@ -130,8 +130,8 @@ export default class ProjectFactory {
 
     return project
   }
-  
-  static async loadAsUser(project_id,user_id) {
+
+  static async loadAsUser(project_id, user_id) {
     const pipeline = [
       { $match: { _id: project_id } },
       {
@@ -145,15 +145,29 @@ export default class ProjectFactory {
       { $unwind: '$groupData' },
       {
         $addFields: {
-          userRoles: {
-            $ifNull: [`$groupData.members.${user_id}.roles`, []]
+          rolePermissions: {
+            $mergeObjects: ['$groupData.customRoles', '$groupData.defaultRoles']
+          },
+          userPermissions: {
+            $reduce: {
+              input: { $ifNull: [`$groupData.members.${user_id}.roles`, []] },
+              initialValue: {},
+              in: {
+                $mergeObjects: [
+                  '$$value',
+                  {
+                    $$this: { $arrayElemAt: ['$rolePermissions.$$this', 0] }
+                  }
+                ]
+              }
+            }
           }
         }
       },
       {
         $match: {
           $or: [
-            { 'userRoles': { $in: ['*_*_*', 'READ_*_*', 'READ_*_PROJECT'] } },
+            { 'userPermissions': { $in: ['*_*_*', 'READ_*_*', 'READ_*_PROJECT'] } },
             { 'creator': user_id }
           ]
         }
