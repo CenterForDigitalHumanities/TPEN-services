@@ -155,9 +155,7 @@ export default class ProjectFactory {
               in: {
                 $mergeObjects: [
                   '$$value',
-                  {
-                    $$this: { $arrayElemAt: ['$rolePermissions.$$this', 0] }
-                  }
+                  { $arrayElemAt: ['$rolePermissions', { $indexOfArray: ['$rolePermissions', '$$this'] }] }
                 ]
               }
             }
