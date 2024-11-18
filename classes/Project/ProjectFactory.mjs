@@ -182,6 +182,7 @@ export default class ProjectFactory {
         $project: {
           _id: 1,
           label: 1,
+          title: 1,
           metadata: { $ifNull: ['$metadata', []] },
           layers: { $ifNull: ['$layers', []] },
           manifest: 1,

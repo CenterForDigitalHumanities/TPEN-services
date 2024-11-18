@@ -94,6 +94,10 @@ class DatabaseController {
       if (ObjectId.isValid(id.padStart(24, "0"))) {
         return true
       }
+      // possible slug string
+      if (typeof id === "string" && id.length > 5) {
+        return true
+      }
     } catch (err) {
       // just false
     }
