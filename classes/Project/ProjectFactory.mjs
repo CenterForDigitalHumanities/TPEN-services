@@ -142,40 +142,27 @@ export default class ProjectFactory {
           as: 'groupData'
         }
       },
-      { $unwind: '$groupData' },
       {
         $addFields: {
-          rolePermissions: {
-            $mergeObjects: ['$groupData.customRoles', '$groupData.defaultRoles']
-          },
-          userPermissions: {
-            $reduce: {
-              input: { $ifNull: [`$groupData.members.${user_id}.roles`, []] },
-              initialValue: {},
-              in: {
-                $mergeObjects: [
-                  '$$value',
-                  { $arrayElemAt: ['$rolePermissions', { $indexOfArray: ['$rolePermissions', '$$this'] }] }
-                ]
-              }
-            }
-          }
-        }
-      },
-      {
-        $match: {
-          $or: [
-            { 'userPermissions': { $in: ['*_*_*', 'READ_*_*', 'READ_*_PROJECT'] } },
-            { 'creator': user_id }
-          ]
+          thisGroup: { $arrayElemAt: ['$groupData', 0] }
         }
       },
       {
         $lookup: {
           from: 'users',
-          localField: 'groupData.members._id',
-          foreignField: '_id',
+          let: { memberIds: { $objectToArray: '$thisGroup.members' } },
+          pipeline: [
+            { $match: { $expr: { $in: ['$_id', '$$memberIds.k'] } } }
+          ],
           as: 'membersData'
+        }
+      },
+      
+      {
+        $addFields: {
+          members: '$membersData',
+          roles: '$thisGroup.customRoles',
+          collaborators: '$thisGroup.members'
         }
       },
       {
@@ -190,33 +177,10 @@ export default class ProjectFactory {
           license: 1,
           tools: 1,
           options: 1,
-          roles: { $mergeObjects: [Group.defaultRoles, '$customRoles'] },
-          collaborators: {
-            $arrayToObject: {
-              $map: {
-                input: { $objectToArray: '$groupData.members' },
-                as: 'member',
-                in: {
-                  k: '$$member.k',
-                  v: {
-                    roles: '$$member.v.roles',
-                    profile: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: '$membersData',
-                            as: 'user',
-                            cond: { $eq: ['$$user._id', { $toObjectId: '$$member.k' }] }
-                          }
-                        },
-                        0
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
+          roles: 1,
+          collaborators: 1,
+          thisGroup: 1,
+          members: 1
         }
       }
     ]
