@@ -150,19 +150,19 @@ export default class ProjectFactory {
       {
         $lookup: {
           from: 'users',
-          let: { memberIds: { $objectToArray: '$thisGroup.members' } },
+          let: { memberIds: { $ifNull: [{ $objectToArray: '$thisGroup.members' },[]] } },
           pipeline: [
             { $match: { $expr: { $in: ['$_id', '$$memberIds.k'] } } }
           ],
           as: 'membersData'
         }
       },
-      
+
       {
         $addFields: {
           members: '$membersData',
-          roles: '$thisGroup.customRoles',
-          collaborators: '$thisGroup.members'
+          roles: { $mergeObjects: [{ $ifNull: ['$thisGroup.customRoles', {}]}, Group.defaultRoles] },
+          collaborators: { $ifNull: ['$thisGroup.members', {}] }
         }
       },
       {
@@ -170,21 +170,25 @@ export default class ProjectFactory {
           _id: 1,
           label: 1,
           title: 1,
-          metadata: { $ifNull: ['$metadata', []] },
-          layers: { $ifNull: ['$layers', []] },
-          manifest: 1,
           creator: 1,
+          collaborators: 1,
+          members: 1,
+          roles: 1,
+          layers: { $ifNull: ['$layers', []] },
+          metadata: { $ifNull: ['$metadata', []] },
+          manifest: 1,
           license: 1,
           tools: 1,
           options: 1,
-          roles: 1,
-          collaborators: 1,
-          thisGroup: 1,
-          members: 1
         }
       }
     ]
-    const project = await database.controller.db.collection('projects').aggregate(pipeline).toArray()
-    return project[0]
+    try {
+      return (await database.controller.db.collection('projects').aggregate(pipeline).toArray())?.[0]
+    } catch (err) {
+      console.error(err)
+      err.status = 500
+      return err
+    }
   }
 }
