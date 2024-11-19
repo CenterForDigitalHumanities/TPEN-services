@@ -143,26 +143,50 @@ export default class ProjectFactory {
         }
       },
       {
-        $addFields: {
+        $set: {
           thisGroup: { $arrayElemAt: ['$groupData', 0] }
         }
       },
       {
         $lookup: {
           from: 'users',
-          let: { memberIds: { $ifNull: [{ $objectToArray: '$thisGroup.members' },[]] } },
+          let: { memberIds: { $ifNull: [{ $objectToArray: '$thisGroup.members' }, []] } },
           pipeline: [
             { $match: { $expr: { $in: ['$_id', '$$memberIds.k'] } } }
           ],
           as: 'membersData'
         }
       },
-
       {
-        $addFields: {
-          members: '$membersData',
-          roles: { $mergeObjects: [{ $ifNull: ['$thisGroup.customRoles', {}]}, Group.defaultRoles] },
-          collaborators: { $ifNull: ['$thisGroup.members', {}] }
+        $set: {
+          roles: { $mergeObjects: [{ $ifNull: ['$thisGroup.customRoles', {}] }, Group.defaultRoles] },
+        }
+      },
+      {
+        $set: {
+          collaborators: {
+            $arrayToObject: {
+              $map: {
+                input: { $objectToArray: { $ifNull: ['$thisGroup.members', {}] } },
+                as: 'collab',
+                in: {
+                  k: '$$collab.k',
+                  v: {
+                    $mergeObjects: ['$$collab.v', {profile: {$getField: {field: '$$collab.k', input: {
+                      $arrayToObject: {
+                        $map: {
+                          input: '$membersData',
+                          as: 'm',
+                          in: { k: '$$m._id', v:'$$m.profile' }
+                        }
+                      }
+                    }
+                  }}}]
+                  }
+                }
+              }
+            }
+          }
         }
       },
       {
@@ -172,7 +196,6 @@ export default class ProjectFactory {
           title: 1,
           creator: 1,
           collaborators: 1,
-          members: 1,
           roles: 1,
           layers: { $ifNull: ['$layers', []] },
           metadata: { $ifNull: ['$metadata', []] },
