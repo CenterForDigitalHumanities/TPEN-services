@@ -204,7 +204,7 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
   try {
     const projectObj = new Project(projectId)
 
-    if (!await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER))) {
       return respondWithError(res, 403, "You do not have permission to add roles to members.")
     }
 
@@ -236,7 +236,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
   try {
     const projectObj = new Project(projectId)
 
-    if (!await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER))) {
       return respondWithError(res, 403, "You do not have permission to update member roles.")
     }
 
@@ -267,7 +267,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
   try {
     const projectObj = new Project(projectId)
 
-    if (!await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)) {
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER))) {
       return respondWithError(res, 403, "You do not have permission to remove roles from members.")
     }
 
@@ -302,7 +302,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
   try {
     const projectObj = new Project(projectId)
 
-    if (!await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL)) {
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL))) {
       return respondWithError(res, 403, "You do not have permission to transfer ownership.")
     }
 
@@ -347,7 +347,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
 
     const project = new Project(projectId)
-    if (!await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)) {
+    if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE))) {
       return respondWithError(res, 403, "You do not have permission to add custom roles.")
     }
 
@@ -382,7 +382,7 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
 
     const project = new Project(projectId)
 
-    if (!await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)) {
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE))) {
       return respondWithError(res, 403, "You do not have permission to set custom roles.")
     }
 
@@ -421,7 +421,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
       return respondWithError(res, 400, `No custom roles provided.`)
     }
     const project = new Project(projectId)
-    if (!await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)) {
+    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE))) {
       return respondWithError(res, 403, "You do not have permission to remove custom roles.")
     }
 
