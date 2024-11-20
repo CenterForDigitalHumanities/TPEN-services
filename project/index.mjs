@@ -191,7 +191,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
 })
 
 // Add New Role to Member
-router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), async (req, res, next) => {
+router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
