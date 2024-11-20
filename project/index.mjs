@@ -126,7 +126,7 @@ router
 
 router
   .route("/:id/invite-member")
-  .post(auth0Middleware(), async (req, res) => {
+  .post(auth0Middleware(), async (req, res, next) => {
     const user = req.user
     const { id: projectId } = req.params
     const { email, roles } = req.body
@@ -144,24 +144,22 @@ router
     }
 
     try {
-      const project = await new Project(projectId)
+      const project = new Project(projectId)
 
-      const accessInfo = project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
-      if (accessInfo.hasAccess) {
+      if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
         const response = await project.sendInvite(email, roles)
         res.status(200).json(response)
       } else {
         res
           .status(403)
-          .send(accessInfo.message)
+          .send("You do not have permission to invite members to this project")
       }
-
     } catch (error) {
-      res.status(error.status || 500).send(error.message.toString())
+      next(error)
     }
   })
 
-router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
+router.route("/:id/remove-member").post(auth0Middleware(), async (req, res,next) => {
   const user = req.user
   const { id: projectId } = req.params
   const { userId } = req.body
@@ -177,26 +175,23 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
   }
 
   try {
-    const project = await new Project(projectId)
-    const accessInfo = project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)
-
-    if (
-      accessInfo.hasAccess
-    ) {
-      const response = await project.removeMember(userId)
-      res.sendStatus(204)
-    } else {
+    const project = new Project(projectId)
+    if (await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)) {
+      await project.removeMember(userId)
+      .then(() => res.sendStatus(204))
+    } 
+    else {
       res
         .status(403)
-        .send(accessInfo.message)
+        .send("You do not have permission to remove members from this project")
     }
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    next(error)
   }
 })
 
 // Add New Role to Member
-router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), async (req, res, next) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -207,25 +202,26 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
     return respondWithError(res, 400, "Provide role(s) to add")
   }
   try {
-    const projectObj = await new Project(projectId)
-    const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
+    const projectObj = new Project(projectId)
 
-    if (!accessInfo.hasAccess) return respondWithError(res, 403, accessInfo.message)
+    if (!await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
+      next({ status: 403, message: "You do not have permission to add roles to members." })
+      return
+    }
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    await group.addMemberRoles(collaboratorId, roles)
-    await group.update()
+    await (await group.addMemberRoles(collaboratorId, roles)).update()
 
     res.status(200).send(`Roles added to member ${collaboratorId}.`)
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error adding roles to member.")
+    next(error)
   }
 })
 
 
 // Change a member's Role(s): Replace roles with new ones
-router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res, next) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -239,24 +235,25 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
 
 
   try {
-    const projectObj = await new Project(projectId)
-    const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)
+    const projectObj = new Project(projectId)
 
-    if (!accessInfo.hasAccess) return respondWithError(res, 403, accessInfo.message)
+    if (!await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
+      next({ status: 403, message: "You do not have permission to update member roles." })
+      return
+    }
 
-    const groupId = projectObj.data.group
-    const group = new Group(groupId)
+    const group = new Group(projectObj.data.group)
     await group.setMemberRoles(collaboratorId, roles)
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error updating member roles.")
+    next(error)
   }
 })
 
 
 // Remove a Role from Member
-router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0Middleware(), async (req, res, next) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -270,13 +267,14 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
     return respondWithError(res, 400, "The OWNER role cannot be removed.")
   }
   try {
-    const projectObj = await new Project(projectId)
-    const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)
+    const projectObj = new Project(projectId)
 
-    if (!accessInfo.hasAccess) return respondWithError(res, 403, accessInfo.message)
+    if (!await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)) {
+      next({ status: 403, message: "You do not have permission to remove roles from members." })
+      return
+    }
 
-    const groupId = projectObj.data.group
-    const group = new Group(groupId)
+    const group = new Group(projectObj.data.group)
     await group.removeMemberRoles(collaboratorId, roles)
 
     res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
@@ -289,40 +287,44 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
 
 // Switch project owner
 
-router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res, next) => {
   const { projectId } = req.params
   const { newOwnerId } = req.body
   const user = req.user
 
   if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
+    next({ status: 401, message: "Unauthenticated request" })
+    return
   }
   if (!newOwnerId) {
-    return respondWithError(res, 400, "Provide the ID of the new owner.")
+    next({ status: 400, message: "Provide the ID of the new owner." })
+    return
+  }
+  if (user._id === newOwnerId) {
+    next({ status: 400, message: "Cannot transfer ownership to the current owner." })
+    return
   }
 
   try {
-    const projectObj = await new Project(projectId)
+    const projectObj = new Project(projectId)
 
-    const accessInfo = await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL)
-    if (!accessInfo.hasAccess) return respondWithError(res, 403, "Only the current owner can transfer ownership.")
-
-    const groupId = projectObj.data.group
-    const group = new Group(groupId)
-
-    if (user._id === newOwnerId) {
-      return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
+    if (!await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL)) {
+      next({ status: 403, message: "You do not have permission to transfer ownership." })
+      return
     }
+
+    const group = new Group(projectObj.data.group)
 
     const currentRoles = await group.getMemberRoles(user._id)
     // If user only has the OWNER role, we default them to CONTRIBUTOR before transferring ownership
     Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
-    await group.addMemberRoles(newOwnerId, ["OWNER"],true)
-    await group.removeMemberRoles(user._id, ["OWNER"],true)
-
+    group.addMemberRoles(newOwnerId, ["OWNER"], true)
+    group.removeMemberRoles(user._id, ["OWNER"], true)
+    await group.update()
+  
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error transferring ownership.")
+    next(error)
   }
 })
 
@@ -330,125 +332,122 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 // Manage Custom Roles Endpoints
 
 // Add custom roles to a project
-router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) => {
+router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res, next) => {
   const { projectId } = req.params
   let customRoles = req.body.roles ?? req.body
   const user = req.user
 
   if (!user) {
-    return res.status(401).json({ message: 'Unauthenticated request' })
+    next({ status: 401, message: 'Unauthenticated request' })
+    return
   }
 
   if (!Object.keys(customRoles).length) {
-    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+    next({ status: 400, message: "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings." })
+    return
   }
 
   try {
     // Make sure provided role is not a DEFAULT role
     customRoles = scrubDefaultRoles(customRoles)
-    if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
-
-
-    const project = await new Project(projectId)
-    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)
-
-    if (!accessInfo.hasAccess) {
-      return res.status(403).json({ message: accessInfo.message })
+    if (!customRoles) {
+      next({ status: 400, message: `No custom roles provided.` })
+      return
     }
 
-    const groupId = project.data.group
-    const group = new Group(groupId)
+    const project = new Project(projectId)
+    if (!await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)) {
+      next({ status: 403, message: "You do not have permission to add custom roles." })
+      return
+    }
+
+    const group = new Group(project.data.group)
     await group.addCustomRoles(customRoles)
 
     res.status(201).json({ message: 'Custom roles added successfully.' })
 
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
+    next(error)
   }
 })
 
-
-router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => {
+router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res, next) => {
   const { projectId } = req.params
   let newCustomRoles = req.body.roles ?? req.body
   const user = req.user
 
   if (!user) {
-    return res.status(401).json({ message: 'Unauthenticated request' })
+    next({ status: 401, message: 'Unauthenticated request' })
+    return
   }
 
   if (!Object.keys(newCustomRoles).length) {
-    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+    next({ status: 400, message: "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings." })
+    return  
   }
 
   try {
     // Ensure none of the provided roles are default roles
     newCustomRoles = scrubDefaultRoles(newCustomRoles)
-    if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
+    if (!newCustomRoles) {
+      next({ status: 400, message: `No custom roles provided.` })
+      return
+    }
+    const project = new Project(projectId)
 
-
-    const project = await new Project(projectId)
-    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)
-
-    if (!accessInfo.hasAccess) {
-      return res.status(403).json({ message: accessInfo.message })
+    if (!await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)) {
+      next({ status: 403, message: "You do not have permission to set custom roles." })
+      return
     }
 
-    const groupId = project.data.group
-    const group = new Group(groupId)
+    const group = new Group(project.data.group)
     await group.setCustomRoles(newCustomRoles)
 
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
+    next(error)
   }
 })
 
-
-
-router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res) => {
+router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res, next) => {
   const { projectId } = req.params
   let rolesToRemove = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
-    return res.status(401).json({ message: 'Unauthenticated request' })
+    next({ status: 401, message: 'Unauthenticated request' })
+    return
   }
-
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
     rolesToRemove = Object.keys(rolesToRemove)
   }
-
   if (typeof rolesToRemove === 'string') {
     rolesToRemove = rolesToRemove.split(' ')
   }
-
   if (!rolesToRemove.length) {
-    return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
+    next({ status: 400, message: "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings." })
+    return
   }
 
   try {
     // Ensure no default roles are being removed
     rolesToRemove = scrubDefaultRoles(rolesToRemove)
-    if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
-
-    const project = await new Project(projectId)
-    const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)
-
-    if (!accessInfo.hasAccess) {
-      return res.status(403).json({ message: accessInfo.message })
+    if (!rolesToRemove) {
+      next({ status: 400, message: `No custom roles provided.` })
+      return
+    }
+    const project = new Project(projectId)
+    if (!await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)) {
+      next({ status: 403, message: "You do not have permission to remove custom roles." })
+      return
     }
 
-    const groupId = project.data.group
-    const group = new Group(groupId)
-    await group.removeCustomRoles(rolesToRemove)
+    const group = new Group(project.data.group)
+    await (await group.removeCustomRoles(rolesToRemove)).update()
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    console.log(error)
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
+    next(error)
   }
 })
-
-
 
 export default router
