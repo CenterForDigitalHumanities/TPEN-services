@@ -41,7 +41,7 @@ router
       )
     }
   })
-  .all((req, res) => {
+  .all((_, res) => {
     respondWithError(res, 405, "Improper request method. Use POST instead")
   })
 
@@ -120,7 +120,7 @@ router
       }
     })()
   })
-  .all((req, res) => {
+  .all((_, res) => {
     respondWithError(res, 405, "Improper request method. Use GET instead")
   })
 
