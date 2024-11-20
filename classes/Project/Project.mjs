@@ -70,20 +70,41 @@ export default class Project {
   }
 
   async checkUserAccess(userId, action, scope, entity) {
-    try {
-      const userPermissions = this.getCombinedPermissions(await new Group(this.data.group).getMemberRoles(userId))
-      return userPermissions.some(permission => {
-        const [permAction, permScope, permEntity] = permission.split("_")
-  
-        return (
-          (permAction === action || permAction === "*") &&
-          (permScope  === scope  || permScope  === "*") &&
-          (permEntity === entity || permEntity === "*")
-        )
-      })
-    } catch (error) {
-      return false
+    if (!this.data?.group) {
+      await this.#load()
     }
+
+    const userRoles = await new Group(this.data.group).getMemberRoles(userId)
+
+    if (!userRoles) {
+      return {
+        hasAccess: false,
+        message: "User is not a member of this project."
+      }
+    }
+
+    const userPermissions = this.getCombinedPermissions(userRoles)
+
+    const hasAccess = userPermissions.some(permission => {
+      const [permAction, permScope, permEntity] = permission.split("_")
+
+      return (
+        (permAction === action || permAction === "*") &&
+        (permScope === scope || permScope === "*") &&
+        (permEntity === entity || permEntity === "*")
+      )
+    })
+
+    return hasAccess
+      ? {
+        hasAccess: true,
+        permissions: userPermissions,
+        message: "User has access to the project."
+      }
+      : {
+        hasAccess: false,
+        message: `User does not have ${action} access to ${scope == "*" ? "ALL" : scope} on ${entity}.`
+      }
   }
 
   getCombinedPermissions(roles) {

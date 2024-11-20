@@ -126,7 +126,7 @@ router
 
 router
   .route("/:id/invite-member")
-  .post(auth0Middleware(), async (req, res, next) => {
+  .post(auth0Middleware(), async (req, res) => {
     const user = req.user
     const { id: projectId } = req.params
     const { email, roles } = req.body
@@ -155,11 +155,11 @@ router
           .send("You do not have permission to invite members to this project")
       }
     } catch (error) {
-      next(error)
+      res.status(error.status || 500).send(error.message.toString())
     }
   })
 
-router.route("/:id/remove-member").post(auth0Middleware(), async (req, res,next) => {
+router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { id: projectId } = req.params
   const { userId } = req.body
@@ -186,7 +186,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res,next)
         .send("You do not have permission to remove members from this project")
     }
   } catch (error) {
-    next(error)
+    res.status(error.status || 500).send(error.message.toString())
   }
 })
 
@@ -215,13 +215,13 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
 
     res.status(200).send(`Roles added to member ${collaboratorId}.`)
   } catch (error) {
-    next(error)
+    return respondWithError(res, error.status || 500, error.message || "Error adding roles to member.")
   }
 })
 
 
 // Change a member's Role(s): Replace roles with new ones
-router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res, next) => {
+router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -247,13 +247,13 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
-    next(error)
+    return respondWithError(res, error.status || 500, error.message || "Error updating member roles.")
   }
 })
 
 
 // Remove a Role from Member
-router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0Middleware(), async (req, res, next) => {
+router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -287,14 +287,13 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
 
 // Switch project owner
 
-router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res, next) => {
+router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const { newOwnerId } = req.body
   const user = req.user
 
   if (!user) {
-    next({ status: 401, message: "Unauthenticated request" })
-    return
+    return respondWithError(res, 401, "Unauthenticated request")
   }
   if (!newOwnerId) {
     next({ status: 400, message: "Provide the ID of the new owner." })
@@ -314,6 +313,9 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     }
 
     const group = new Group(projectObj.data.group)
+    if (user._id === newOwnerId) {
+      return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
+    }
 
     const currentRoles = await group.getMemberRoles(user._id)
     // If user only has the OWNER role, we default them to CONTRIBUTOR before transferring ownership
@@ -350,15 +352,13 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res, ne
   try {
     // Make sure provided role is not a DEFAULT role
     customRoles = scrubDefaultRoles(customRoles)
-    if (!customRoles) {
-      next({ status: 400, message: `No custom roles provided.` })
-      return
-    }
+    if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
+
+
 
     const project = new Project(projectId)
     if (!await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)) {
-      next({ status: 403, message: "You do not have permission to add custom roles." })
-      return
+      return res.status(403).json({ message: accessInfo.message })
     }
 
     const group = new Group(project.data.group)
@@ -367,37 +367,34 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res, ne
     res.status(201).json({ message: 'Custom roles added successfully.' })
 
   } catch (error) {
-    next(error)
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
   }
 })
 
-router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res, next) => {
+
+router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   let newCustomRoles = req.body.roles ?? req.body
   const user = req.user
 
   if (!user) {
-    next({ status: 401, message: 'Unauthenticated request' })
-    return
+    return res.status(401).json({ message: 'Unauthenticated request' })
   }
 
   if (!Object.keys(newCustomRoles).length) {
-    next({ status: 400, message: "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings." })
-    return  
+    return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
 
   try {
     // Ensure none of the provided roles are default roles
     newCustomRoles = scrubDefaultRoles(newCustomRoles)
-    if (!newCustomRoles) {
-      next({ status: 400, message: `No custom roles provided.` })
-      return
-    }
-    const project = new Project(projectId)
+    if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
+
+
+    const project = await new Project(projectId)
 
     if (!await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)) {
-      next({ status: 403, message: "You do not have permission to set custom roles." })
-      return
+      return res.status(403).json({ message: accessInfo.message })
     }
 
     const group = new Group(project.data.group)
@@ -405,17 +402,18 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res, nex
 
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
-    next(error)
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
   }
 })
 
-router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res, next) => {
+
+
+router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   let rolesToRemove = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
-    next({ status: 401, message: 'Unauthenticated request' })
-    return
+    return res.status(401).json({ message: 'Unauthenticated request' })
   }
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
     rolesToRemove = Object.keys(rolesToRemove)
@@ -424,8 +422,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res,
     rolesToRemove = rolesToRemove.split(' ')
   }
   if (!rolesToRemove.length) {
-    next({ status: 400, message: "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings." })
-    return
+    return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
 
   try {
@@ -446,7 +443,8 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res,
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    next(error)
+    console.log(error)
+    respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
 

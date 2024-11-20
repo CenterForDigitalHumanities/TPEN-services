@@ -113,7 +113,6 @@ export default class Group {
         }
         washRoles(roles,allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
-        return this
     }
 
     /**
@@ -193,8 +192,7 @@ export default class Group {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        await this.update()
-        return this
+        this.update()
     }
 
     async removeCustomRoles(roleMap) {
@@ -221,8 +219,7 @@ export default class Group {
         }
         
         roleMap.map(role => delete this.data.customRoles[role])
-        await this.update()
-        return this
+        return this.update()
     }
 
     async save() {
