@@ -147,7 +147,6 @@ export default class Group {
                 status: 400,
                 message: "Cannot remove the last role; each member must have at least one role."
             }
-            roles = roles.split(" ")
         }
 
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
