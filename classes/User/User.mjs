@@ -37,12 +37,7 @@ export default class User {
   }
   
   async getByEmail(email) {
-    if (!this.data.email) {
-      throw {
-        status: 400,
-        message: "No email provided"
-      }
-    }
+    if (!email) throw new Error("No email provided")
 
     return database
       .findOne({ email }, "users")

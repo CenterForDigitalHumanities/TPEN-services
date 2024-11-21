@@ -44,7 +44,10 @@ export default class Group {
         return Object.assign(Group.defaultRoles, this.data.customRoles)[role] ?? "x_x_x"
     }
 
-    addMember(memberId, roles) {
+    async addMember(memberId, roles) {
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
         if (this.data.members[memberId]) {
             const err = new Error("Member already exists")
             err.status = 400
@@ -152,7 +155,10 @@ export default class Group {
         await this.update()
     }
 
-    removeMember(memberId) {
+    async removeMember(memberId) {
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
         delete this.data.members[memberId]
     }
 
@@ -229,7 +235,7 @@ export default class Group {
 
     async update() {
         this.validateGroup()
-        return database.update({ ...this.data, "@type": "Group" })
+        return database.update(this.data, process.env.TPENGROUPS)
     }
 
     validateGroup() {

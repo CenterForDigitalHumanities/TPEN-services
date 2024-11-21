@@ -94,7 +94,7 @@ class dbDriver {
      * @param data JSON from an HTTP POST request.  It must contain an id.
      * @return The updated document JSON or error JSON
      */
-    async update(data) {
+    async update(data, collection) {
         // Note this may just be an alias for save()
         return this.controller.update(data).catch(err => err)
     }

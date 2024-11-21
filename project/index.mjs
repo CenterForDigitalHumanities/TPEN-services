@@ -130,6 +130,7 @@ router
     const user = req.user
     const { id: projectId } = req.params
     const { email, roles } = req.body
+    // roles is set to ["CONTRIBUTOR"] if undefined within Project.sendInvite() > parseRoles()
 
     if (!user) {
       return respondWithError(res, 401, "Unauthenticated request")
@@ -142,7 +143,6 @@ router
     } else if (!isValidEmail(email)) {
       return respondWithError(res, 400, "Invitee email is invalid")
     }
-
     try {
       const project = new Project(projectId)
 
