@@ -56,7 +56,7 @@ export default class Project {
       } else {
         const inviteCode = await this.inviteNewTPENUser(email, roles)
         // We will replace this URL with the correct url
-        const url = `https://three.t-pen.org/join?invite-code=${inviteCode}`
+        const url = `https://three.t-pen.org/login?invite-code=${inviteCode}`
         message += `<p>Click the button below to get started with your project</p> 
         <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
