@@ -17,14 +17,14 @@ describe.skip("Group Class", () => {
         }
     })
 
-    test("should add a new member", () => {
-        group.addMember("member4", ["role1"])
+    test("should add a new member", async () => {
+        await group.addMember("member4", ["role1"])
         expect(group.members["member4"]).toBeTruthy()
         expect(group.members["member4"].roles).toEqual(["role1"])
     })
 
     test("should throw error when adding an existing member", () => {
-        expect(() => group.addMember("member1", ["role2"])).toThrow("Member already exists")
+        expect(async () => await group.addMember("member1", ["role2"])).toThrow("Member already exists")
     })
 
     test("should update member roles", () => {
@@ -47,8 +47,8 @@ describe.skip("Group Class", () => {
         expect(group.members["member1"].roles).toEqual(["role2"])
     })
 
-    test("should remove a member", () => {
-        group.removeMember("member1")
+    test("should remove a member", async () => {
+        await group.removeMember("member1")
         expect(group.members["member1"]).toBeUndefined()
     })
 

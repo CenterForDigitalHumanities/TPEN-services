@@ -2,7 +2,7 @@ import dbDriver from "../../database/driver.mjs"
 import { sendMail } from "../../utilities/mailer/index.mjs"
 import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
 import User from "../User/User.mjs"
-import crypto from "crypto"
+import { createHash } from "node:crypto"
 import Group from "../Group/Group.mjs"
 
 const database = new dbDriver("mongo")
@@ -48,21 +48,21 @@ export default class Project {
       let userObj = new User()
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
-      let updatedProject
-      let message = `You have been invited to the TPEN project ${this.data?.label}. 
-      View project <a href=https://www.tpen.org/project/${this.data._id}>here</a>.`
+      const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
+      let message = `You have been invited to the TPEN project ${projectTitle}. 
+      View project <a href='https://three.t-pen.org/project/${this.data._id}'>here</a>.`
       if (user) {
         await this.inviteExistingTPENUser(user._id, roles)
       } else {
         const inviteCode = await this.inviteNewTPENUser(email, roles)
         // We will replace this URL with the correct url
-        const url = `https://cubap.auth0.com/u/signup?invite-code=${inviteCode}`
+        const url = `https://three.t-pen.org/login?invite-code=${inviteCode}`
         message += `<p>Click the button below to get started with your project</p> 
         <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
       }
 
-      sendMail(email, `Invitation to ${this.data?.label}`, message)
+      await sendMail(email, `Invitation to ${projectTitle}`, message)
       return this
     } catch (error) {
       throw error
@@ -85,7 +85,7 @@ export default class Project {
 
     const userPermissions = this.getCombinedPermissions(userRoles)
 
-    const hasAccess = userPermissions.some(permission => {
+    return userPermissions.some(permission => {
       const [permAction, permScope, permEntity] = permission.split("_")
 
       return (
@@ -94,17 +94,6 @@ export default class Project {
         (permEntity === entity || permEntity === "*")
       )
     })
-
-    return hasAccess
-      ? {
-        hasAccess: true,
-        permissions: userPermissions,
-        message: "User has access to the project."
-      }
-      : {
-        hasAccess: false,
-        message: `User does not have ${action} access to ${scope == "*" ? "ALL" : scope} on ${entity}.`
-      }
   }
 
   getCombinedPermissions(roles) {
@@ -112,25 +101,26 @@ export default class Project {
   }
 
   parseRoles(rolesString) {
-    const roles = rolesString?.toUpperCase().split(" ") ?? ["CONTRIBUTOR"]
+    if(Array.isArray(rolesString)) rolesString = rolesString.join(" ")
+    rolesString ??= "VIEWER"
+    if(typeof rolesString !== "string") throw new Error("Roles must be a string or an array of strings")
+    const roles = rolesString?.toUpperCase().split(" ")
     return roles
   }
 
   async inviteExistingTPENUser(userId, roles) {
     const group = new Group(this.data.group)
-    group.addMember(userId, roles)
+    await group.addMember(userId, roles)
     await group.save()
     return this
   }
 
   async inviteNewTPENUser(email, roles) {
     const user = new User()
-    Object.assign(user, {
-      email,
-      inviteCode: this.#encryptInviteCode(user._id),
-      agent: `https://store.rerum.io/v1/id/${user._id}`,
-      profile: { displayName: email.split("@")[0] }
-    })
+    const inviteCode = this.#generateInviteCode(user._id)
+    const agent = `https://store.rerum.io/v1/id/${user._id}`
+    const profile = { displayName: email.split("@")[0] }
+    user.data = { email, profile, agent, inviteCode }
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
 
@@ -140,8 +130,8 @@ export default class Project {
   async removeMember(userId) {
     try {
       const group = new Group(this.data.group)
-      group.removeMember(userId)
-      await group.save()
+      await group.removeMember(userId)
+      await group.update()
       return this
     } catch (error) {
       throw {
@@ -151,19 +141,13 @@ export default class Project {
     }
   }
 
-  #encryptInviteCode(userId) {
+  #generateInviteCode(userId) {
     const date = Date.now().toString()
     const data = `${date}:${userId}`
 
-    const iv = Buffer.from(process.env.INVITE_CODE_IV, "hex")
-    const secretKey = Buffer.from(process.env.INVITE_CODE_SECRET, "hex")
-
-    const cipher = crypto.createCipheriv("aes-256-cbc", secretKey, iv)
-
-    let encrypted = cipher.update(data)
-    encrypted = Buffer.concat([encrypted, cipher.final()])
-
-    return iv.toString("hex") + ":" + encrypted.toString("hex")
+    const hash = createHash("sha256")
+    hash.update(data)
+    return hash.digest("hex")
   }
 
   async #load() {
