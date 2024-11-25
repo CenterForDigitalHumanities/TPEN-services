@@ -38,7 +38,8 @@ export const sendMail = async (email, subject, message) => {
 
    try {
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
     })
 
     const mailOptions = {
