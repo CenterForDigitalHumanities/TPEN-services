@@ -210,7 +210,8 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    await (await group.addMemberRoles(collaboratorId, roles)).update()
+    await group.addMemberRoles(collaboratorId, roles)
+    await group.update()
 
     res.status(200).send(`Roles added to member ${collaboratorId}.`)
   } catch (error) {
