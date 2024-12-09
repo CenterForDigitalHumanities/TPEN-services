@@ -1,7 +1,7 @@
 import express from "express"
 import { respondWithError, validateID } from "../utilities/shared.mjs"
 import cors from "cors"
-import common_cors from "../utilities/common_cors.json" assert {type: "json"}
+import common_cors from "../utilities/common_cors.json" with {type: "json"}
 import User from "../classes/User/User.mjs"
 
 let router = express.Router()
