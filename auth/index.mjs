@@ -1,7 +1,7 @@
 import * as utils from "../utilities/shared.mjs"
-import {auth} from "express-oauth2-jwt-bearer"
-import {extractToken, extractUser, isTokenExpired} from "../utilities/token.mjs"
-import { User } from "../classes/User/User.mjs"
+import { auth } from "express-oauth2-jwt-bearer"
+import { extractToken, extractUser, isTokenExpired } from "../utilities/token.mjs"
+import User from "../classes/User/User.mjs"
 
 export function authenticateUser() {
   return (req, res, next) => {
@@ -36,12 +36,12 @@ export function authenticateUser() {
 function auth0Middleware() {
   const verifier = auth({
     audience: process.env.AUDIENCE,
-    issuerBaseURL: `https://${process.env.DOMAIN}/`
+    issuerBaseURL: `https://${process.env.DOMAIN}/`,
   })
 
   // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sib, roles, etc.
   async function setUser(req, res, next) {
-    const {payload} = req.auth
+    const { payload } = req.auth
 
     const agent = payload["http://store.rerum.io/agent"]
     if (!agent) {
@@ -52,20 +52,32 @@ function auth0Middleware() {
     }
 
     try {
-      const userObj = new User(payload._id)
-      const user = await userObj.getByAgent(agent)
-      req.user =
-        user ??
-        (await userObj.create({...payload, _id: agent.split("id/")[1], agent}))
+      const uid = agent.split("id/")[1]
+      const user = new User(uid)
+      user.getSelf().then(async (u) => {
+        if (u?.profile) {
+          req.user = u
+          next()
+          return
+        }
+        user.data = {
+          _id: uid,
+          agent,
+          _sub: payload.sub,
+          email: payload.name,
+          profile: { displayName: payload.nickname },
+        }
+        user.save()
+        req.user = user
+        next()
+      })
     } catch (error) {
       next(error)
     }
-
-    next()
   }
 
   return [verifier, setUser]
 }
- 
+
 
 export default auth0Middleware

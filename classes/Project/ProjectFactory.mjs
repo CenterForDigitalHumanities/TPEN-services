@@ -1,4 +1,8 @@
 import Project from "./Project.mjs"
+import Group from "../Group/Group.mjs"
+import User from "../User/User.mjs"
+import dbDriver from "../../database/driver.mjs"
+const database = new dbDriver("mongo")
 
 export default class ProjectFactory {
   constructor(data) {
@@ -17,11 +21,11 @@ export default class ProjectFactory {
         }
       })
   }
-/**
- * processes a manifest object into a project object that can be saved into the Project tablein the DB
- * @param {*} manifest : The manifest object to be processed
- * @returns object of project data
- */
+  /**
+   * processes a manifest object into a project object that can be saved into the Project tablein the DB
+   * @param {*} manifest : The manifest object to be processed
+   * @returns object of project data
+   */
   static async DBObjectFromManifest(manifest) {
     if (!manifest) {
       throw {
@@ -30,9 +34,8 @@ export default class ProjectFactory {
       }
     }
     let newProject = {}
-    newProject["@type"] = "Project"
-    newProject.title = manifest.label
-    newProject.metadata = manifest.metadata 
+    newProject.label = manifest.label
+    newProject.metadata = manifest.metadata
     newProject["@context"] = "http://t-pen.org/3/context.json"
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
@@ -74,7 +77,8 @@ export default class ProjectFactory {
       })
       .then(async (project) => {
         const projectObj = new Project()
-        return await projectObj.create({...project, creator})
+        const group = await Group.createNewGroup(creator, { label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}` }).then((group) => group._id)
+        return await projectObj.create({ ...project, creator, group })
       })
       .catch((err) => {
         throw {
@@ -82,5 +86,132 @@ export default class ProjectFactory {
           message: err.message ?? "Internal Server Error"
         }
       })
+  }
+
+  /**
+   * Convert the Project.data into an Object ready for consumption by a TPEN interface,
+   * especially the GET /project/:id endpoint.
+   * @param {Object} projectData The loaded Project.data from the database.
+   */
+  static async forInterface(projectData) {
+    if (!projectData) {
+      const err = new Error("No project data found")
+      err.status = 400
+      throw err
+    }
+    const project = {
+      _id: projectData._id,
+      label: projectData.label,
+      metadata: projectData.metadata ?? [],
+      layers: projectData.layers ?? [],
+      manifest: projectData.manifest,
+      creator: projectData.creator,
+      collaborators: {},
+      license: projectData.license,
+      tools: projectData.tools,
+      options: projectData.options,
+      roles: Object.assign(Group.defaultRoles, projectData.customRoles)
+    }
+
+    const group = new Group(projectData.group)
+    await group.getMembers()
+      .then(members => {
+        const loadMembers = []
+        Object.keys(members).forEach(memberId => {
+          project.collaborators[memberId] = {
+            roles: members[memberId]
+          }
+          loadMembers.push(new User(memberId).getPublicInfo().then(profile => {
+            project.collaborators[memberId].profile = profile
+          }))
+        })
+        return Promise.all(loadMembers)
+      })
+
+    return project
+  }
+
+  static async loadAsUser(project_id, user_id) {
+    const pipeline = [
+      { $match: { _id: project_id } },
+      {
+        $lookup: {
+          from: 'groups',
+          localField: 'group',
+          foreignField: '_id',
+          as: 'groupData'
+        }
+      },
+      {
+        $set: {
+          thisGroup: { $arrayElemAt: ['$groupData', 0] }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { memberIds: { $ifNull: [{ $objectToArray: '$thisGroup.members' }, []] } },
+          pipeline: [
+            { $match: { $expr: { $in: ['$_id', '$$memberIds.k'] } } }
+          ],
+          as: 'membersData'
+        }
+      },
+      {
+        $set: {
+          roles: { $mergeObjects: [{ $ifNull: ['$thisGroup.customRoles', {}] }, Group.defaultRoles] },
+        }
+      },
+      {
+        $set: {
+          collaborators: {
+            $arrayToObject: {
+              $map: {
+                input: { $objectToArray: { $ifNull: ['$thisGroup.members', {}] } },
+                as: 'collab',
+                in: {
+                  k: '$$collab.k',
+                  v: {
+                    $mergeObjects: ['$$collab.v', {profile: {$getField: {field: '$$collab.k', input: {
+                      $arrayToObject: {
+                        $map: {
+                          input: '$membersData',
+                          as: 'm',
+                          in: { k: '$$m._id', v:'$$m.profile' }
+                        }
+                      }
+                    }
+                  }}}]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          label: 1,
+          title: 1,
+          creator: 1,
+          collaborators: 1,
+          roles: 1,
+          layers: { $ifNull: ['$layers', []] },
+          metadata: { $ifNull: ['$metadata', []] },
+          manifest: 1,
+          license: 1,
+          tools: 1,
+          options: 1,
+        }
+      }
+    ]
+    try {
+      return (await database.controller.db.collection('projects').aggregate(pipeline).toArray())?.[0]
+    } catch (err) {
+      console.error(err)
+      err.status = 500
+      return err
+    }
   }
 }

@@ -1,120 +1,46 @@
 import dbDriver from "../../database/driver.mjs"
-import { includeOnly } from "../../utilities/removeProperties.mjs"
-import Roles from "../../project/groups/roles.mjs"
-import Permissions from "../../project/groups/permissions.mjs"
 
 const database = new dbDriver("mongo")
-export class User {
-  constructor(userId) {
-    this.id = userId
-    this.userData = null
-    if (userId) {
-      return (async () => {
-        await this.getById()
-        return this
-      })()
-    }
+export default class User {
+  constructor(userId = database.reserveId()) {
+    this._id = userId
   }
 
-  async getById() {
-    // returns user's public info 
-    try {
-      await this.getSelf(this.id).then((user) => {
-        let publicUserInfo = includeOnly(user, "profile", "_id")
-        this.userData = publicUserInfo
-        return publicUserInfo
-      })
-    } catch (error) {
-      console.log(error)
-    }
+  /**
+   * Load user from database driver.
+   * @returns user object
+   * @throws {Error} any database error
+   */
+  async #loadFromDB() {
+    // load user from database
+    // TODO: possibly delete anything reserved for TPEN only
+    this.data = await database.getById(this._id, "users")
+    return this
   }
 
   async getSelf() {
-    const id = this.id
-    // returns full user object, only use this when the user is unauthenticated i.e, logged in and getting himself.
-
-    if (!id) {
-      throw {
-        status: 400,
-        message:
-          "No user ID found. Instantiate User class with a proper ID as follows new User(UserId)"
-      }
-    }
-
-    return database
-      .getById(id, "User")
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
+    return await (this.data ?? this.#loadFromDB().then(u => u.data))
   }
-
-  async updateRecord(data) {
-    // updates user object. use with PUT or PATCH on authenticated route only
-    if (!data) {
-      throw {
-        status: 400,
-        message: "No payload provided"
-      }
+  
+  async getPublicInfo() {
+    // returns user's public info 
+    if (this.data) {
+      return { _id: this._id, ...this.data.profile };
     }
-    this.id = data._id
-    const previousUser = await this.getSelf()
-    const newRecord = { ...previousUser, ...data }
-
-    return database
-      .update(newRecord)
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
-  }
-
-  async getByAgent(agent) {
-    if (!agent) {
-      throw {
-        status: 400,
-        message: "No agent provided"
-      }
+  
+    const user = await database.getById(this._id, "users");
+    if (!user) {
+      throw new Error(`User with _id ${this._id} not found`);
     }
-
-    return database
-      .findOne({
-        agent,
-        "@type": "User"
-      })
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        return resp
-      })
-      .catch((err) => {
-        throw err
-      })
+  
+    return { _id: user._id, ...user.profile };
   }
+  
   async getByEmail(email) {
-    if (!email) {
-      throw {
-        status: 400,
-        message: "No email provided"
-      }
-    }
+    if (!email) throw new Error("No email provided")
 
     return database
-      .findOne({
-        email,
-        "@type": "User"
-      })
+      .findOne({ email }, "users")
       .then((resp) => {
         if (resp instanceof Error) {
           throw resp
@@ -125,7 +51,8 @@ export class User {
         throw err
       })
   }
-  async create(data) {
+
+  static async create(data) {
     // POST requests
     if (!data) {
       throw {
@@ -133,13 +60,40 @@ export class User {
         message: "No data provided"
       }
     }
-
-    try {
-      const user = await database.save({ ...data, "@type": "User" })
-      return user
-    } catch (error) {
-      throw error
+    if (data._id) {
+      const existingUser = await database.getById(data._id, "users")
+      if (existingUser) {
+        const err = new Error("User already exists")
+        err.status = 400
+        throw err
+      }
     }
+    if (!data.profile || !data.profile.displayName) {
+      data.profile = data.profile || {}
+      data.profile.displayName = data.email?.split("@")[0]
+        ?? data.name
+        ?? data.displayName
+        ?? data.fullName
+        ?? `User ${new Date().toLocaleDateString()}`
+    }
+    const user = new User()
+    Object.assign(user, data)
+    return user.save()
+  }
+
+  async save() {
+    // validate before save
+    if (!this._id) {
+      throw new Error("User must have an _id")
+    }
+    if (!this.data.email) {
+      throw new Error("User must have an email")
+    }
+    if (!this.data.profile?.displayName) {
+      throw new Error("User must have a profile with a displayName")
+    }
+    // save user to database
+    return database.save({ _id: this._id, ...this.data }, "users")
   }
 
   /**
@@ -154,44 +108,44 @@ export class User {
    * @returns project object
    */
   async getProjects() {
-    const user = await this.getSelf()
-    if (!user) {
-      throw {
-        status: 404,
-        message: "User account not found"
-      }
-    }
-
-    return database
-      .find({ "@type": "Project" })
-      .then((resp) => {
-        if (resp instanceof Error) {
-          throw resp
-        }
-        const allProjects = resp
-        const userProjects = []
-        allProjects?.map((project) => {
-          if (project.creator === user.agent) {
-            userProjects.push(project)
-          } else {
-            project?.groups?.members?.map(async (member) => {
-              if (member.agent === user?.agent || member._id === this.id) {
-                userProjects.push(project)
-              }
-            })
+    return database.controller
+      .db.collection('projects').aggregate([
+        // Step 1: Lookup the related group details
+        {
+          $lookup: {
+            from: "groups",
+            localField: "group",   // Field in `projects` referencing `_id` in `groups`
+            foreignField: "_id",
+            as: "groupInfo"
           }
-        })
-
+        },
+        // Step 2: Filter for projects where the user is in the group's members
+        {
+          $match: {
+            "groupInfo.members": { $exists: true },
+            [`groupInfo.members.${this._id}`]: { $exists: true }
+          }
+        },
+        // Step 3: Project the required fields including the user's roles
+        {
+          $project: {
+            _id: 1,                        // Project ID
+            title: 1,                      // Project title
+            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
+          }
+        }
+      ]).toArray()
+      .then((userProjects) => {
+        if (userProjects instanceof Error) {
+          throw userProjects
+        }
         return userProjects
-      })
-      .catch((error) => {
-        throw error
       })
   }
   async addPublicInfo(data) {
     // add or modify public info
     if (!data) return
-    const previousUser = this.user
+    const previousUser = this.data
     const publicProfile = { ...previousUser.profile, ...data }
     const updatedUser = await database.update({
       ...previousUser,

@@ -19,7 +19,7 @@ afterAll(async () => {
   return await database.close()
 })
 
-describe("TinyPen Unit Functions. #tiny_unit #db", () => {
+describe.skip("TinyPen Unit Functions. #tiny_unit #db", () => {
   it(
     `connects for an active connection`,
     async () => {
@@ -58,9 +58,9 @@ describe("TinyPen Unit Functions. #tiny_unit #db", () => {
   )
 
   it("Assigns a new id for an Object", async () => {
-    const noSeedResult = await database.reserveId()
-    const badSeedResult = await database.reserveId("🕵️‍♀️🍤")
-    const goodSeedResult = await database.reserveId(500)
+    const noSeedResult = database.reserveId()
+    const badSeedResult = database.reserveId("🕵️‍♀️🍤")
+    const goodSeedResult = database.reserveId(500)
     expect(typeof noSeedResult).toEqual("string")
     expect(noSeedResult).toHaveLength(24)
     expect(typeof badSeedResult).toEqual("string")

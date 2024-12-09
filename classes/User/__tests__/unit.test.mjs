@@ -1,7 +1,7 @@
 import {expect, jest} from "@jest/globals"
 import request from "supertest"
 import express from "express"
-import {User} from "../User.mjs"
+import User from "../User.mjs"
 
 import privateProfileRouter from "../../../userProfile/privateProfile.mjs"
  

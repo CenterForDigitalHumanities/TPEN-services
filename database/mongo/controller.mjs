@@ -94,6 +94,10 @@ class DatabaseController {
       if (ObjectId.isValid(id.padStart(24, "0"))) {
         return true
       }
+      // possible slug string
+      if (typeof id === "string" && id.length > 5) {
+        return true
+      }
     } catch (err) {
       // just false
     }
@@ -123,11 +127,11 @@ class DatabaseController {
    * @return A hex string or error
    * */
 
-  async reserveId(seed) {
+  reserveId(seed) {
     try {
-      return Promise.resolve(new ObjectId(seed).toHexString())
+      return new ObjectId(seed).toHexString()
     } catch (err) {
-      return Promise.resolve(new ObjectId().toHexString())
+      return new ObjectId().toHexString()
     }
   }
 
@@ -175,10 +179,10 @@ class DatabaseController {
     }
     return collection
   }
-  async find(query) {
+  async find(query, collection) {
     try {
       //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const collection = this.validateAndDetermineCollection(query)
+      collection ??= this.validateAndDetermineCollection(query)
       let result = await this.db.collection(collection).find(query).toArray()
       return result
     } catch (err) {
@@ -190,10 +194,10 @@ class DatabaseController {
     }
   }
 
-  async findOne(query) {
+  async findOne(query, collection) {
     try {
       //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const collection = this.validateAndDetermineCollection(query)
+      collection ??= this.validateAndDetermineCollection(query)
       let result = await this.db.collection(collection).findOne(query)
       return result
     } catch (err) {
@@ -210,26 +214,25 @@ class DatabaseController {
    * @param data JSON from an HTTP POST request
    * @return The inserted document JSON or error JSON
    */
-  async save(data) {
+  async save(data, collection) {
     err_out._dbaction = "insertOne"
     try {
-      //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const data_type = this.determineDataType(data)
-      const collection = discernCollectionFromType(data_type)
+      //need to determine what collection (projects, groups, users) this goes into.
+      const data_type = this.determineDataType(data, collection)
+      collection ??= discernCollectionFromType(data_type)
       if (!collection) {
         err_out.message = `Cannot figure which collection for object of type '${data_type}'`
         err_out.status = 400
         throw err_out
       }
-      data["_id"] = await this.reserveId(data?._id)
+      data._id ??= this.reserveId()
       const result = await this.db.collection(collection).insertOne(data)
       if (result.insertedId) {
         return data
-      } else {
-        err_out.message = `Document was not inserted into the database.`
-        err_out.status = 500
-        throw err_out
       }
+      err_out.message = `Document was not inserted into the database.`
+      err_out.status = 500
+      throw err_out
     } catch (err) {
       // Specifically account for unexpected mongo things.
       if (!err?.message) err.message = err.toString()
@@ -308,19 +311,12 @@ class DatabaseController {
   /**
    * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s
    */
-  async getById(id, collection) {
-    const typeMap = {
-      projects: "Project",
-      groups: "Group",
-      users: "User",
-      userPerferences: "UserPreference"
-    }
-    const type = typeMap[collection] ?? collection
-    return await this.findOne({_id: id, "@type": type})
+  async getById(_id, collection) {
+    return this.findOne({_id}, collection)
   }
 
-  determineDataType(data) {
-    const data_type = data["@type"] ?? data.type
+  determineDataType(data,override) {
+    const data_type = data["@type"] ?? data.type ?? override
     if (!data_type) {
       const err_out = {
         message: `Cannot find 'type' on this data, and so cannot figure out a collection for it.`,

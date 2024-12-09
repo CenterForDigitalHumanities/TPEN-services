@@ -1,5 +1,5 @@
 {
-  "methods": "GET",
+  "methods": "GET,POST,PUT,PATCH,OPTIONS,DELETE",
   "allowedHeaders": [
     "Content-Type",
     "Content-Length",

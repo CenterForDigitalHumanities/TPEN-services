@@ -6,8 +6,8 @@ import {fileURLToPath} from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const sendMail = async (receiver, subject, message) => {
-  if (!receiver || typeof receiver !== "object" || !receiver.email) {
+export const sendMail = async (email, subject, message) => {
+  if (!email || typeof email !== "string") {
     return {
       status: 400,
       message:
@@ -32,18 +32,19 @@ export const sendMail = async (receiver, subject, message) => {
   const templatepath = path.join(__dirname, "template.html")
   let htmlTemplate = fs.readFileSync(templatepath, "utf-8")
 
-  htmlTemplate = htmlTemplate.replace("{{userName}}", receiver?.name ?? "TPEN User")
+  htmlTemplate = htmlTemplate.replace("{{userName}}", "TPEN User")
   htmlTemplate = htmlTemplate.replace("{{subject}}", subject)
   htmlTemplate = htmlTemplate.replace("{{messageBody}}", message)
 
    try {
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
     })
 
     const mailOptions = {
       from: process.env.TPEN_SUPPORT_EMAIL,
-      to: receiver.email,
+      to: email,
       cc: process.env.TPEN_EMAIL_CC,
       subject,
       html: htmlTemplate
