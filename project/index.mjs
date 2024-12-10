@@ -51,7 +51,6 @@ router
     let { createFrom } = req.query
     let user = req.user
     createFrom = createFrom?.toLowerCase()
-
     if (!createFrom)
       return res.status(400).json({
         message:
@@ -72,7 +71,7 @@ router
       try {
         const result = await ProjectFactory.fromManifestURL(
           manifestURL,
-          getHash(user?.agent)
+          user._id
         )
         res.status(201).json(result)
       } catch (error) {
