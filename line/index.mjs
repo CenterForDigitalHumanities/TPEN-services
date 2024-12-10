@@ -2,7 +2,7 @@ import express from 'express'
 import * as utils from '../utilities/shared.mjs'
 import cors from 'cors'
 import { findLineById } from './line.mjs'
-import common_cors from '../utilities/common_cors.json' assert {type: 'json'}
+import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
 const router = express.Router()
 
