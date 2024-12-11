@@ -36,8 +36,6 @@ export default class ProjectFactory {
     let newProject = {}
     newProject.label = manifest.label
     newProject.metadata = manifest.metadata
-    newProject["@context"] = "http://t-pen.org/3/context.json"
-    newProject["@type"] = "Project"
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
     newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
