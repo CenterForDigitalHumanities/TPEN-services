@@ -93,12 +93,11 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async addMemberRoles(memberId, roles, allowOwner=false) {
+    async addMemberRoles(memberId, roles, allowOwner = false) {
 
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
-
         if (!this.data.members[memberId]) {
             throw {
                 status: 404,
@@ -114,7 +113,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        washRoles(roles,allowOwner)
+        washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
@@ -123,7 +122,7 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async removeMemberRoles(memberId, roles,allowOwner=false) {
+    async removeMemberRoles(memberId, roles, allowOwner = false) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -142,7 +141,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        washRoles(roles,allowOwner)
+        washRoles(roles, allowOwner)
         const currentRoles = this.data.members[memberId].roles
         if (currentRoles.length <= 1 && roles.includes(currentRoles[0])) {
             throw {
@@ -223,7 +222,7 @@ export default class Group {
             roleMap = roleMap.toUpperCase().split(" ")
 
         }
-        
+
         roleMap.map(role => delete this.data.customRoles[role])
         return this.update()
     }
@@ -238,7 +237,7 @@ export default class Group {
         return database.update(this.data, process.env.TPENGROUPS)
     }
 
-    validateGroup() {
+    async validateGroup() {
         if (!this.data.creator) {
             throw {
                 status: 400,
@@ -258,11 +257,12 @@ export default class Group {
                 message: "Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
             }
         }
+
         if (!this.getByRole("OWNER")?.length) {
-            this.addMemberRoles(this.data.creator, "OWNER")
+            await this.addMemberRoles(this.data.creator, "OWNER", true)
         }
         if (!this.getByRole("LEADER")?.length) {
-            this.addMemberRoles(this.data.creator, "LEADER")
+            await this.addMemberRoles(this.data.creator, "LEADER")
         }
     }
 
@@ -272,8 +272,8 @@ export default class Group {
         Object.assign(newGroup.data, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
-        newGroup.validateGroup()
-        return newGroup.save()
+        await newGroup.validateGroup()
+        return await newGroup.save()
     }
 
     static defaultRoles = {
@@ -284,16 +284,16 @@ export default class Group {
     }
 }
 
-function washRoles(roles,allowOwner=false) {
+function washRoles(roles, allowOwner = false) {
     return roles.map(role => {
-        if(typeof role !== "string") {
+        if (typeof role !== "string") {
             throw {
                 status: 400,
                 message: "Invalid role:" + role
             }
         }
         role.toUpperCase()
-        if(!allowOwner && role === "OWNER") {
+        if (!allowOwner && role === "OWNER") {
             throw {
                 status: 400,
                 message: "Cannot assign OWNER role"

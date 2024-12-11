@@ -36,7 +36,6 @@ export default class ProjectFactory {
     let newProject = {}
     newProject.label = manifest.label
     newProject.metadata = manifest.metadata
-    newProject["@context"] = "http://t-pen.org/3/context.json"
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
     newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
@@ -77,7 +76,13 @@ export default class ProjectFactory {
       })
       .then(async (project) => {
         const projectObj = new Project()
-        const group = await Group.createNewGroup(creator, { label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}` }).then((group) => group._id)
+        const group = await Group.createNewGroup(
+          creator,
+          {
+            label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
+            members: { [creator]: { roles: [] } }
+          })
+          .then((group) => group._id)
         return await projectObj.create({ ...project, creator, group })
       })
       .catch((err) => {
@@ -172,16 +177,21 @@ export default class ProjectFactory {
                 in: {
                   k: '$$collab.k',
                   v: {
-                    $mergeObjects: ['$$collab.v', {profile: {$getField: {field: '$$collab.k', input: {
-                      $arrayToObject: {
-                        $map: {
-                          input: '$membersData',
-                          as: 'm',
-                          in: { k: '$$m._id', v:'$$m.profile' }
+                    $mergeObjects: ['$$collab.v', {
+                      profile: {
+                        $getField: {
+                          field: '$$collab.k', input: {
+                            $arrayToObject: {
+                              $map: {
+                                input: '$membersData',
+                                as: 'm',
+                                in: { k: '$$m._id', v: '$$m.profile' }
+                              }
+                            }
+                          }
                         }
                       }
-                    }
-                  }}}]
+                    }]
                   }
                 }
               }
