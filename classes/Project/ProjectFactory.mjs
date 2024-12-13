@@ -27,7 +27,7 @@ export default class ProjectFactory {
    * @returns object of project data
    */
   static async DBObjectFromManifest(manifest) {
-    if (!manifest) {
+     if (!manifest) {
       throw {
         status: 404,
         message: err.message ?? "No manifest found. Cannot process empty object"
@@ -39,8 +39,7 @@ export default class ProjectFactory {
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
     newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
-
-    return newProject
+     return newProject
   }
 
   static async processLayerFromCanvas(canvases) {
@@ -71,8 +70,8 @@ export default class ProjectFactory {
 
   static async fromManifestURL(manifestId, creator) {
     return ProjectFactory.loadManifest(manifestId)
-      .then((manifest) => {
-        return ProjectFactory.DBObjectFromManifest(manifest)
+      .then(async(manifest) => {
+        return await ProjectFactory.DBObjectFromManifest(manifest)
       })
       .then(async (project) => {
         const projectObj = new Project()

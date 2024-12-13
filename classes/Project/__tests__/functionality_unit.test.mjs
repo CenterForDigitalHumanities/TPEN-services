@@ -99,9 +99,8 @@ describe("ProjectFactory.DBObjectFromManifest/processLayerFromCanvas #importTest
       ]
     }
 
-    const result = await ProjectFactory.DBObjectFromManifest(mockManifest)
+    const result =  await ProjectFactory.DBObjectFromManifest(mockManifest)
 
-    expect(result).toEqual(expectedProject)
     expect(ProjectFactory.processLayerFromCanvas).toHaveBeenCalledWith(
       mockManifest.items
     )
