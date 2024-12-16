@@ -34,7 +34,7 @@ export default class ProjectFactory {
       }
     }
     let newProject = {}
-    newProject.label = manifest.label
+    newProject.label = ProjectFactory.processLabel(manifest.label)
     newProject.metadata = manifest.metadata
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
@@ -42,6 +42,21 @@ export default class ProjectFactory {
      return newProject
   }
 
+   static processLabel(label){
+    let processedLabel = null
+    if (typeof(label)=="string"){
+      processedLabel = label
+    }
+    
+    else if (typeof(label)=="object" && label != null){
+      //for language maps
+      let firstKey = Object.keys(label)[0]
+      processedLabel = label[firstKey]
+      if(Array.isArray(processedLabel)) processedLabel = processedLabel[0]
+    }
+    
+    return processedLabel
+  }
   static async processLayerFromCanvas(canvases) {
     if (!canvases.length) return []
 
