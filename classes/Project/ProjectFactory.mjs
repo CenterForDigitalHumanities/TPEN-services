@@ -67,12 +67,13 @@ export default class ProjectFactory {
         let layer = {}
         layer["@id"] = Date.now()
         layer["@type"] = "Layer"
-        layer.pages = canvas?.otherContent ?? []
+        layer.pages = canvas?.otherContent ?? canvas?.annotations?? []
         layer?.pages?.map((page) => {
-          page.canvas = page.on
-          page.lines = page.resources ?? []
+          page.canvas = page.on??canvas.id
+          page.lines = page.resources ?? page.items?? []
           delete page.resources
           delete page.on
+          delete page.items
         })
 
         layers.push(layer)
