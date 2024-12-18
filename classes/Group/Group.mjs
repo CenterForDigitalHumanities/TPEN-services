@@ -233,8 +233,8 @@ export default class Group {
     }
 
     async update() {
-        this.validateGroup()
-        return database.update(this.data, process.env.TPENGROUPS)
+        await this.validateGroup()
+        return database.update({...this.data, type:"Group"}, )
     }
 
     async validateGroup() {
