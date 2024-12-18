@@ -234,7 +234,7 @@ export default class Group {
 
     async update() {
         await this.validateGroup()
-        return database.update({...this.data, type:"Group"}, )
+        return database.update({ ...this.data, type: "Group" },)
     }
 
     async validateGroup() {

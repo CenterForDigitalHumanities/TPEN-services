@@ -27,7 +27,7 @@ export default class ProjectFactory {
    * @returns object of project data
    */
   static async DBObjectFromManifest(manifest) {
-     if (!manifest) {
+    if (!manifest) {
       throw {
         status: 404,
         message: err.message ?? "No manifest found. Cannot process empty object"
@@ -39,22 +39,22 @@ export default class ProjectFactory {
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
     newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
-     return newProject
+    return newProject
   }
 
-   static processLabel(label){
+  static processLabel(label) {
     let processedLabel = null
-    if (typeof(label)=="string"){
+    if (typeof (label) == "string") {
       processedLabel = label
     }
-    
-    else if (typeof(label)=="object" && label != null){
+
+    else if (typeof (label) == "object" && label != null) {
       //for language maps
       let firstKey = Object.keys(label)[0]
       processedLabel = label[firstKey]
-      if(Array.isArray(processedLabel)) processedLabel = processedLabel[0]
+      if (Array.isArray(processedLabel)) processedLabel = processedLabel[0]
     }
-    
+
     return processedLabel
   }
   static async processLayerFromCanvas(canvases) {
@@ -67,10 +67,10 @@ export default class ProjectFactory {
         let layer = {}
         layer["@id"] = Date.now()
         layer["@type"] = "Layer"
-        layer.pages = canvas?.otherContent ?? canvas?.annotations?? []
+        layer.pages = canvas?.otherContent ?? canvas?.annotations ?? []
         layer?.pages?.map((page) => {
-          page.canvas = page.on??canvas.id
-          page.lines = page.resources ?? page.items?? []
+          page.canvas = page.on ?? canvas.id
+          page.lines = page.resources ?? page.items ?? []
           delete page.resources
           delete page.on
           delete page.items
@@ -86,7 +86,7 @@ export default class ProjectFactory {
 
   static async fromManifestURL(manifestId, creator) {
     return ProjectFactory.loadManifest(manifestId)
-      .then(async(manifest) => {
+      .then(async (manifest) => {
         return await ProjectFactory.DBObjectFromManifest(manifest)
       })
       .then(async (project) => {
