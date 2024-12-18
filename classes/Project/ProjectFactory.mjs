@@ -34,14 +34,29 @@ export default class ProjectFactory {
       }
     }
     let newProject = {}
-    newProject.label = manifest.label
+    newProject.label = ProjectFactory.processLabel(manifest.label)
     newProject.metadata = manifest.metadata
     newProject.manifest = manifest["@id"] ?? manifest.id
     let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
     newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
-     return newProject
+    return newProject
   }
 
+  static processLabel(label) {
+    let processedLabel = null
+    if (typeof (label) == "string") {
+      processedLabel = label
+    }
+
+    else if (typeof (label) == "object" && label != null) {
+      //for language maps
+      let firstKey = Object.keys(label)[0]
+      processedLabel = label[firstKey]
+      if (Array.isArray(processedLabel)) processedLabel = processedLabel[0]
+    }
+
+    return processedLabel
+  }
   static async processLayerFromCanvas(canvases) {
     if (!canvases.length) return []
 
@@ -52,12 +67,13 @@ export default class ProjectFactory {
         let layer = {}
         layer["@id"] = Date.now()
         layer["@type"] = "Layer"
-        layer.pages = canvas?.otherContent ?? []
+        layer.pages = canvas?.otherContent ?? canvas?.annotations ?? []
         layer?.pages?.map((page) => {
-          page.canvas = page.on
-          page.lines = page.resources ?? []
+          page.canvas = page.on ?? canvas.id
+          page.lines = page.resources ?? page.items ?? []
           delete page.resources
           delete page.on
+          delete page.items
         })
 
         layers.push(layer)
@@ -70,7 +86,7 @@ export default class ProjectFactory {
 
   static async fromManifestURL(manifestId, creator) {
     return ProjectFactory.loadManifest(manifestId)
-      .then(async(manifest) => {
+      .then(async (manifest) => {
         return await ProjectFactory.DBObjectFromManifest(manifest)
       })
       .then(async (project) => {

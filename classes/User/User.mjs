@@ -131,6 +131,7 @@ export default class User {
           $project: {
             _id: 1,                        // Project ID
             title: 1,                      // Project title
+            label: 1,                      // Project label
             roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
           }
         }

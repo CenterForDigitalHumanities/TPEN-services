@@ -101,9 +101,9 @@ export default class Project {
   }
 
   parseRoles(rolesString) {
-    if(Array.isArray(rolesString)) rolesString = rolesString.join(" ")
+    if (Array.isArray(rolesString)) rolesString = rolesString.join(" ")
     rolesString ??= "VIEWER"
-    if(typeof rolesString !== "string") throw new Error("Roles must be a string or an array of strings")
+    if (typeof rolesString !== "string") throw new Error("Roles must be a string or an array of strings")
     const roles = rolesString?.toUpperCase().split(" ")
     return roles
   }
@@ -111,7 +111,6 @@ export default class Project {
   async inviteExistingTPENUser(userId, roles) {
     const group = new Group(this.data.group)
     await group.addMember(userId, roles)
-    await group.save()
     return this
   }
 
