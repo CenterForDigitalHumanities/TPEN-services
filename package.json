@@ -32,9 +32,6 @@
       "importTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t importTests ",
       "inviteMemberTests": "node --experimental-vm-modules node_modules/jest/bin/jest.js -t inviteMemberTests "
    },
-   "engines": {
-      "node": ">=22.12.0"
-   },
    "dependencies": {
       "cookie-parser": "^1.4.7",
       "cors": "^2.8.5",
@@ -58,5 +55,8 @@
       "jest-esm-transformer": "^1.0.0",
       "nodemon": "^3.1.9",
       "supertest": "^7.0.0"
+   },
+   "engines": {
+      "node": ">=22.12.0"
    }
 }
