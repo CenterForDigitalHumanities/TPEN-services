@@ -17,7 +17,8 @@ export function respondWithHTML(res){
 }
 
 router
-  .get('/', function(req, res, next) {
+  .route("/")
+  .get(function(req, res, next) {
     respondWithHTML(res)
   }) 
   .all((req, res, next) => {
