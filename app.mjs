@@ -55,16 +55,16 @@ app.all('*', (req, res, next) => {
   }
 })
 
-app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project', projectRouter)
 app.use('/line', lineRouter) 
 app.use('/page', pageRouter) 
 app.use('/user', userProfileRouter)
-app.use('/my',  privateProfileRouter) 
+app.use('/my',  privateProfileRouter)
+app.use('/', indexRouter)
  
 //catch 404 because of an invalid site path
-app.use(function(req, res, next) {
+app.use('*', function(req, res, next) {
     let message = res.statusMessage ?? "This page does not exist"
     res.status(404).json({message})  
 })
