@@ -55,13 +55,13 @@ app.all('*', (req, res, next) => {
   }
 })
 
+app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project', projectRouter)
 app.use('/line', lineRouter) 
 app.use('/page', pageRouter) 
 app.use('/user', userProfileRouter)
-app.use('/my',  privateProfileRouter)
-app.use('/', indexRouter)
+app.use('/my',  privateProfileRouter) 
  
 //catch 404 because of an invalid site path
 app.use('*', function(req, res, next) {
