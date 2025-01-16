@@ -218,8 +218,6 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
   }
 })
 
-    if (!accessInfo.hasAccess) return respondWithError(res, 403, accessInfo.message)
-
 // Change a member's Role(s): Replace roles with new ones
 router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
