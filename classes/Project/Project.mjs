@@ -141,6 +141,19 @@ export default class Project {
     }
   }
 
+  async updateMetadata(newMetadata) {
+    this.data.metadata = newMetadata
+    return await this.update()
+  }
+
+  async update() {
+    return await database.update({ ...this.data, type: "Project" })
+  }
+
+  async save() {
+    return await database.save(this.data, "Project")
+  }
+
   #generateInviteCode(userId) {
     const date = Date.now().toString()
     const data = `${date}:${userId}`
