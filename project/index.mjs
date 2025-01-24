@@ -435,11 +435,10 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 })
  
 // Update Project Metadata
-router.route("/:projectId/update-metadata").put(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const metadata = req.body.metadata
+  const metadata = req.body
   const user = req.user
- 
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
@@ -447,10 +446,10 @@ router.route("/:projectId/update-metadata").put(auth0Middleware(), async (req, r
   if (!metadata || !Array.isArray(metadata)) {
     return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
   }
-
+  
   try {
     const projectObj = new Project(projectId)
-
+    
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.PROJECT))) {
       return respondWithError(res, 403, "You do not have permission to update metadata for this project.")
     }

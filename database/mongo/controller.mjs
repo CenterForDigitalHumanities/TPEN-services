@@ -247,12 +247,15 @@ class DatabaseController {
    * @param data JSON from an HTTP POST request.  It must contain an id.
    * @return The inserted document JSON or error JSON
    */
-  async update(data) {
+  async update(data, collection) {
     // Note this may be an alias for save()
     err_out._dbaction = "replaceOne"
     try {
       //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const data_type = data["@type"] ?? data.type
+
+      const data_type = this.determineDataType(data, collection)
+      collection ??= discernCollectionFromType(data_type)
+  
       let data_id = data["@id"] ?? data._id
       if (!data_id) {
         err_out.message = `An 'id' must be present to update.`
@@ -264,7 +267,7 @@ class DatabaseController {
         err_out.status = 400
         throw err_out
       }
-      const collection = discernCollectionFromType(data_type)
+
       if (!collection) {
         err_out.message = `Cannot figure which collection for object of type '${data_type}'`
         err_out.status = 400
