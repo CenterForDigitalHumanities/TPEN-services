@@ -110,7 +110,7 @@ export default class Project {
 
   async inviteExistingTPENUser(userId, roles) {
     const group = new Group(this.data.group)
-    group.addMember(userId, roles)
+    await group.addMember(userId, roles)
     await group.update()
     return this
   }
