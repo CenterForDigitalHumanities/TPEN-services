@@ -9,7 +9,7 @@ export default class Group {
     }
 
     async #loadFromDB() {
-        this.data = await database.getById(this._id, "groups")
+        this.data = await database.getById(this._id, process.env.TPENGROUPS)
         return this
     }
 
@@ -228,13 +228,13 @@ export default class Group {
     }
 
     async save() {
-        this.validateGroup()
+        await this.validateGroup()
         return database.save(this.data, process.env.TPENGROUPS)
     }
 
     async update() {
         await this.validateGroup()
-        return database.update(this.data, "Group")
+        return database.update(this.data, process.env.TPENGROUPS)
     }
 
     async validateGroup() {

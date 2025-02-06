@@ -144,7 +144,6 @@ router
     }
     try {
       const project = new Project(projectId)
-
       if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
         const response = await project.sendInvite(email, roles)
         res.status(200).json(response)
