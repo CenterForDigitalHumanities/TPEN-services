@@ -96,7 +96,7 @@ class dbDriver {
      */
     async update(data, collection) {
         // Note this may just be an alias for save()
-        return this.controller.update(data).catch(err => err)
+        return this.controller.update(data, collection).catch(err => err)
     }
 
     /**
