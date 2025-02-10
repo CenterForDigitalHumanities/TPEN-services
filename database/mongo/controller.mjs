@@ -266,7 +266,9 @@ class DatabaseController {
    * @param data JSON from an HTTP POST request.  It must contain an id.
    * @return The inserted document JSON or error JSON
    */
-  async update(data, collection) {
+  async update(payload) {
+    let data = payload?.data??payload
+    let collection = payload?.collection
     // Note this may be an alias for save()
     try {
       let data_id = data["@id"] ?? data._id
