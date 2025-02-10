@@ -47,7 +47,6 @@ export default class Project {
     try {
       let userObj = new User()
       let user = await userObj.getByEmail(email)
-     
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       let message = `You have been invited to the TPEN project ${projectTitle}. 
