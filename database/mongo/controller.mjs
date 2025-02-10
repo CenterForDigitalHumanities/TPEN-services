@@ -6,7 +6,7 @@
  * https://github.com/thehabes
  */
 
-import {MongoClient, ObjectId} from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
 import dotenv from "dotenv"
 let storedEnv = dotenv.config()
 let err_out = Object.assign(new Error(), {
@@ -49,7 +49,7 @@ function discernCollectionFromType(type) {
  * @param data A data object or query object.  The type will correspond to a mongo collection
  * @param override If no type is on 'data', consider the provided override to be the type.
  * @return a known type string, such as "Project", or null
- */ 
+ */
 function determineDataType(data, override) {
   return data["@type"] ?? data.type ?? override
 }
@@ -148,7 +148,7 @@ class DatabaseController {
   async connected() {
     // Send a ping to confirm a successful connection
     try {
-      let result = await this.db.command({ping: 1}).catch((err) => {
+      let result = await this.db.command({ ping: 1 }).catch((err) => {
         return false
       })
       result = result.ok ? true : false
@@ -267,7 +267,7 @@ class DatabaseController {
    * @return The inserted document JSON or error JSON
    */
   async update(payload) {
-    let data = payload?.data??payload
+    let data = payload?.data ?? payload
     let collection = payload?.collection
     // Note this may be an alias for save()
     try {
@@ -291,7 +291,7 @@ class DatabaseController {
         throw err_out
       }
       const obj_id = data_id.split("/").pop()
-      const filter = {_id: data_id}
+      const filter = { _id: data_id }
       const result = await this.db
         .collection(collection)
         .replaceOne(filter, data)
@@ -332,7 +332,7 @@ class DatabaseController {
    * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s
    */
   async getById(_id, collection) {
-    return this.findOne({_id}, collection)
+    return this.findOne({ _id }, collection)
   }
 
 }
