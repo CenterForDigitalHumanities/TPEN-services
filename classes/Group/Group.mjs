@@ -46,9 +46,9 @@ export default class Group {
         return Object.assign(Group.defaultRoles, this.data.customRoles)[role] ?? "x_x_x"
     }
 
-    async addMember(memberId, roles) {
+    addMember(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
+            throw new Error("No members in this group. Use get() to load from the database.")
         }
         if (this.data.members[memberId]) {
             const err = new Error("Member already exists")
@@ -57,6 +57,7 @@ export default class Group {
         }
         this.data.members[memberId] = { roles: [] }
         this.setMemberRoles(memberId, roles)
+        return this
     }
 
     /**
@@ -64,9 +65,9 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async setMemberRoles(memberId, roles) {
+    setMemberRoles(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
+            throw new Error("No members in this group. Use get() to load from the database.")
         }
 
         if (!this.data.members[memberId]) {
@@ -77,7 +78,7 @@ export default class Group {
         }
         roles = washRoles(roles)
         this.data.members[memberId].roles = roles
-        await this.update()
+        return this
     }
 
     /**
@@ -159,41 +160,31 @@ export default class Group {
         this.update()
     }
 
-    async addCustomRoles(roleMap) {
+    addCustomRoles(roleMap) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
+            throw {
+                status: 400,
+                message: "No members in this group. Use get() to load from the database."
+            }
         }
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        this.update()
+        return this
     }
 
-    async removeCustomRoles(roleMap) {
+    removeCustomRoles(roles) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
-        }
-
-        if (!Array.isArray(roleMap)) {
-
-            if (this.isValidRolesMap(roleMap)) {
-                for (const role in roleMap) {
-                    delete this.data.customRoles[role]
-                }
-                return this.update()
+           throw {
+                status: 400,
+                message: "No members in this group. Use get() to load from the database."
             }
-            if (typeof roleMap !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles. Must be an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
-                }
-            }
-            roleMap = roleMap.toUpperCase().split(" ")
-
         }
-
-        roleMap.map(role => delete this.data.customRoles[role])
-        return this.update()
+        if (this.isValidRolesMap(roles))
+            roles = Object.keys(roles)
+        roles = washRoles(roles)
+        roles.map(role => delete this.data.customRoles[role])
+        return this
     }
 
     async save() {
@@ -252,7 +243,7 @@ export default class Group {
         Object.assign(newGroup.data, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
-        await newGroup.validateGroup()
+        newGroup.validateGroup()
         return await newGroup.save()
     }
 

@@ -74,12 +74,21 @@ export default class Project {
       await this.#load()
     }
 
-    const userRoles = await new Group(this.data.group).getMemberRoles(userId)
-
-    if (!userRoles) {
+    const group = new Group(this.data.group)
+    await group.get()
+    let userRoles
+    try {
+     userRoles = group.getMemberRoles(userId)
+    } catch (error) {
+      if (error.status === 404) {
+        return {
+          hasAccess: false,
+          message: "User is not a member of this project."
+        }
+      }
       return {
         hasAccess: false,
-        message: "User is not a member of this project."
+        message: `An error occurred while checking user access: ${error.status} - ${error.message}`
       }
     }
 
@@ -110,6 +119,7 @@ export default class Project {
 
   async inviteExistingTPENUser(userId, roles) {
     const group = new Group(this.data.group)
+    await group.get()
     group.addMember(userId, roles)
     await group.update()
     return this
@@ -130,7 +140,8 @@ export default class Project {
   async removeMember(userId) {
     try {
       const group = new Group(this.data.group)
-      await group.removeMember(userId)
+      await group.get()
+      group.removeMember(userId)
       await group.update()
       return this
     } catch (error) {
