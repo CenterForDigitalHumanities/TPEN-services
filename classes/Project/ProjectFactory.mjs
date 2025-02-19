@@ -134,20 +134,18 @@ export default class ProjectFactory {
     }
 
     const group = new Group(projectData.group)
-    await group.getMembers()
-      .then(members => {
-        const loadMembers = []
-        Object.keys(members).forEach(memberId => {
-          project.collaborators[memberId] = {
-            roles: members[memberId]
-          }
-          loadMembers.push(new User(memberId).getPublicInfo().then(profile => {
-            project.collaborators[memberId].profile = profile
-          }))
-        })
-        return Promise.all(loadMembers)
-      })
-
+    await group.get()
+    const members = group.getMembers()
+    const loadMembers = []
+    Object.keys(members).forEach(memberId => {
+      project.collaborators[memberId] = {
+        roles: members[memberId]
+      }
+      loadMembers.push(new User(memberId).getPublicInfo().then(profile => {
+        project.collaborators[memberId].profile = profile
+      }))
+    })
+    await Promise.all(loadMembers)
     return project
   }
 

@@ -20,14 +20,12 @@ export default class Group {
         return this
     }
 
-    async getMembers() {
-        // if this members is an empty object, load from db
+    getMembers() {
         if (Object.keys(this.data.members).length === 0) {
-            await this.#loadFromDB()
+            throw new Error("Members object is empty")
         }
         return this.data.members
     }
-
     /**
      * Generate a ROLE:PERMISSIONS map for the indicated member.
      * @param {String} memberId hexstring id of the member
