@@ -212,7 +212,7 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
     group.addMemberRoles(collaboratorId, roles)
     await group.update()
 
-    res.status(200).send(`Roles "${roles?.join(' ') ?? roles}" added to member ${collaboratorId}.`)
+    res.status(200).send(`Roles "${roles.join?.(' ') ?? roles}" added to member ${collaboratorId}.`)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding roles to member.")
   }

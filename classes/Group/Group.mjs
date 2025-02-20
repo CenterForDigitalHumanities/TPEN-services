@@ -20,7 +20,8 @@ export default class Group {
         return this
     }
 
-    getMembers() {
+    async getMembers() {
+        // if this members is an empty object, load from db
         if (Object.keys(this.data.members).length === 0) {
             throw new Error("Members object is empty")
         }
@@ -255,8 +256,8 @@ export default class Group {
     }
 }
 
-function washRoles(roles, allowOwner = false) {
-    roles = (roles?.join(" ") ?? roles).split(" ")
+function washRoles(roles="", allowOwner = false) {
+    roles = (roles.join?.(" ") ?? roles).split(" ")
     return roles.map(role => {
         if (typeof role !== "string" || role.length === 0) {
             throw {
