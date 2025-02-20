@@ -144,7 +144,6 @@ router
     }
     try {
       const project = new Project(projectId)
-
       if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
         const response = await project.sendInvite(email, roles)
         res.status(200).json(response)
@@ -177,8 +176,8 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
     const project = new Project(projectId)
     if (await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)) {
       await project.removeMember(userId)
-      .then(() => res.sendStatus(204))
-    } 
+        .then(() => res.sendStatus(204))
+    }
     else {
       res
         .status(403)
@@ -323,7 +322,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     group.addMemberRoles(newOwnerId, ["OWNER"], true)
     group.removeMemberRoles(user._id, ["OWNER"], true)
     await group.update()
-  
+
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
     return respondWithError(res, error.status || 500, error.message || "Error transferring ownership.")
@@ -436,6 +435,33 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   } catch (error) {
     console.log(error)
     respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
+  }
+})
+ 
+// Update Project Metadata
+router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  const metadata = req.body
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+
+  if (!metadata || !Array.isArray(metadata)) {
+    return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
+  }
+  
+  try {
+    const projectObj = new Project(projectId)
+    
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.PROJECT))) {
+      return respondWithError(res, 403, "You do not have permission to update metadata for this project.")
+    }
+
+    const response = await projectObj.updateMetadata(metadata)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status || 500, error.message || "Error updating project metadata.")
   }
 })
 
