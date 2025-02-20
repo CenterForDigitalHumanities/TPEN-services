@@ -93,29 +93,6 @@ router
 
 router
   .route("/:id")
-  .put(auth0Middleware(), async (req, res) => {
-    const user = req.user
-    let id = req.params.id
-    const metadata = req.body.metadata
-
-    try {
-      const project = new Project(id)
-      if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER)) {
-        const updatedProject = await project.updateMetadata(metadata)
-        res.status(200).json(updatedProject)
-      } else {
-        res.status(403).json({
-          message: "You do not have permission to update this project"
-        })
-      }
-    } catch (error) {
-      return respondWithError(
-        res,
-        error.status || error.code || 500,
-        error.message ?? "An error occurred while updating the project."
-      )
-    }
-  })
   .get(auth0Middleware(), async (req, res) => {
     const user = req.user
     let id = req.params.id
