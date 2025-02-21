@@ -159,11 +159,11 @@ export default class Project {
   }
 
   async update() {
-    return await database.update(this.data, "Project")
+    return await database.update(this.data, process.env.TPENPROJECTS)
   }
 
   async save() {
-    return await database.save(this.data, "Project")
+    return await database.save(this.data, process.env.TPENPROJECTS)
   }
 
   #generateInviteCode(userId) {
