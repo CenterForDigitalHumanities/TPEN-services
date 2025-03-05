@@ -222,9 +222,24 @@ export default class ProjectFactory {
           foreignField: "projectId",
           as: "tools.hotkeys"
 
+        },
+
+      },
+      {
+        $set: {
+          "tools.hotkeys": {
+            $map: {
+              input: "$tools.hotkeys",
+              as: "hotkey",
+              in: {
+                _id:"$$hotkey._id",
+                symbol: "$$hotkey.symbol",
+                shortcut: "$$hotkey.shortcut"
+              }
+            }
+          }
         }
       },
-
       {
         $project: {
           _id: 1,
