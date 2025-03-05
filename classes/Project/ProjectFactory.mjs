@@ -2,6 +2,8 @@ import Project from "./Project.mjs"
 import Group from "../Group/Group.mjs"
 import User from "../User/User.mjs"
 import dbDriver from "../../database/driver.mjs"
+import fs from "fs"
+import path from "path"
 const database = new dbDriver("mongo")
 
 export default class ProjectFactory {
@@ -149,6 +151,84 @@ export default class ProjectFactory {
       })
 
     return project
+  }
+
+  static async exportManifest(projectId) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+    let manifest = {}
+    const project = await ProjectFactory.loadAsUser(projectId, null)
+    const dir = `./${project._id}`
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+      console.log(`Directory created: ${dir}`);
+   }
+
+    manifest.id = "https://static.t-pen.org/" + project._id + "/manifest.json"
+    manifest.type = "Manifest"
+    manifest.label = { en: [project.label] }
+    manifest.metadata = project.metadata
+    manifest.items = await Promise.all(
+      project.layers.map(async (layer) => {
+          try {
+              const canvasUrl = layer.pages[0].canvas
+              const canvasName = path.parse(canvasUrl.substring(canvasUrl.lastIndexOf("/") + 1)).name
+              let response = await fetch(canvasUrl)
+              if (!response.ok) throw new Error(`Failed to fetch ${canvasUrl}`)
+              response = await response.json()            
+              manifest["@context"] = response["@context"]
+              let response_items = {
+                id: response.id,
+                type: response.type,
+                label: response.label,
+                width: response.width,
+                height: response.height,
+                items: response.items
+              }
+              fs.writeFileSync(path.join(dir,`./${canvasName}.json`), JSON.stringify(response, null, 2))
+              let annotations = response.annotations.map(async (annotation, index) => {
+                const pageUrl = annotation.id
+                const pageName = path.parse(pageUrl.substring(pageUrl.lastIndexOf("/") + 1)).name
+                let response_annotations = await fetch(pageUrl)
+                if (!response_annotations.ok) throw new Error(`Failed to fetch ${response.annotations}`)
+                response_annotations = await response_annotations.json()
+                let response_page = {
+                  "@context": response_annotations["@context"],
+                  id: response_annotations.id,
+                  type: response_annotations.type,
+                  label: response_annotations.label,
+                  items: await Promise.all(response_annotations.items.map(async (item) => {
+                    const lineUrl = item.id
+                    const lineName = path.parse(lineUrl.substring(lineUrl.lastIndexOf("/") + 1)).name
+                    let response_lines = await fetch(lineUrl)
+                    if (!response_lines.ok) throw new Error(`Failed to fetch ${response_annotations.items}`)
+                    response_lines = await response_lines.json()
+                    fs.writeFileSync(path.join(dir,`./${lineName}.json`), JSON.stringify(response_lines, null, 2))
+                    return { ...response_lines }
+                  })),
+                  partOf : index < Math.floor(response.annotations.length / 2) ? "https://static.t-pen.org/" + project._id + "/transcription-layer.json" : "https://static.t-pen.org/" + project._id + "/translation-layer.json",
+                  creator: response_annotations.creator,
+                  target: response_annotations.target
+                  
+                }
+                fs.writeFileSync(path.join(dir,`./${pageName}.json`), JSON.stringify(response_page, null, 2))
+                return { ...response_page }
+              })
+              const all_annotations = await Promise.all(annotations)
+              response_items.annotations = all_annotations
+              return response_items
+          } catch (error) {
+              console.error(`Error fetching ${canvasUrl}:`, error)
+              return null
+          }
+      })
+    )
+    return manifest
   }
 
   static async loadAsUser(project_id, user_id) {

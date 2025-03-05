@@ -92,6 +92,31 @@ router
   })
 
 router
+  .route("/export/:id")
+  .get(auth0Middleware(), async (req, res) => {
+    const {id} = req.params
+    if (!id) return respondWithError(res, 400, "Project ID is required")
+
+    try {
+      const project = await ProjectFactory.exportManifest(id)
+      if (!project) {
+        return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
+      }
+
+      res.status(200).json(project)
+    } catch (error) {
+      return respondWithError(
+        res,
+        error.status || error.code || 500,
+        error.message ?? "An error occurred while fetching the project data."
+      )
+    }
+  })
+  .all((_, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+  })
+
+router
   .route("/:id")
   .get(auth0Middleware(), async (req, res) => {
     const user = req.user
