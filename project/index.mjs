@@ -92,7 +92,7 @@ router
   })
 
 router
-  .route("/export/:id")
+  .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
     const {id} = req.params
     if (!id) return respondWithError(res, 400, "Project ID is required")

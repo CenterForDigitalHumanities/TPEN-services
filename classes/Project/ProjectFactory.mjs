@@ -155,80 +155,120 @@ export default class ProjectFactory {
 
   static async exportManifest(projectId) {
     if (!projectId) {
-      throw {
-        status: 400,
-        message: "No project ID provided"
-      }
+      throw { status: 400, message: "No project ID provided" }
     }
-    let manifest = {}
+
     const project = await ProjectFactory.loadAsUser(projectId, null)
     const dir = `./${project._id}`
+    this.createDirectory(dir)
 
+    const manifest = {
+      id: `https://static.t-pen.org/${project._id}/manifest.json`,
+      type: "Manifest",
+      label: { en: [project.label] },
+      metadata: project.metadata,
+      items: await this.getManifestItems(project, dir),
+    }
+    this.saveToFile(dir, 'manifest.json', manifest)
+    return manifest
+  }
+
+  static createDirectory(dir) {
     if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-      console.log(`Directory created: ${dir}`);
-   }
+      fs.mkdirSync(dir, { recursive: true })
+      console.log(`Directory created: ${dir}`)
+    }
+  }
 
-    manifest.id = "https://static.t-pen.org/" + project._id + "/manifest.json"
-    manifest.type = "Manifest"
-    manifest.label = { en: [project.label] }
-    manifest.metadata = project.metadata
-    manifest.items = await Promise.all(
+  static async getManifestItems(project, dir) {
+    return Promise.all(
       project.layers.map(async (layer) => {
-          try {
-              const canvasUrl = layer.pages[0].canvas
-              const canvasName = path.parse(canvasUrl.substring(canvasUrl.lastIndexOf("/") + 1)).name
-              let response = await fetch(canvasUrl)
-              if (!response.ok) throw new Error(`Failed to fetch ${canvasUrl}`)
-              response = await response.json()            
-              manifest["@context"] = response["@context"]
-              let response_items = {
-                id: response.id,
-                type: response.type,
-                label: response.label,
-                width: response.width,
-                height: response.height,
-                items: response.items
-              }
-              fs.writeFileSync(path.join(dir,`./${canvasName}.json`), JSON.stringify(response, null, 2))
-              let annotations = response.annotations.map(async (annotation, index) => {
-                const pageUrl = annotation.id
-                const pageName = path.parse(pageUrl.substring(pageUrl.lastIndexOf("/") + 1)).name
-                let response_annotations = await fetch(pageUrl)
-                if (!response_annotations.ok) throw new Error(`Failed to fetch ${response.annotations}`)
-                response_annotations = await response_annotations.json()
-                let response_page = {
-                  "@context": response_annotations["@context"],
-                  id: response_annotations.id,
-                  type: response_annotations.type,
-                  label: response_annotations.label,
-                  items: await Promise.all(response_annotations.items.map(async (item) => {
-                    const lineUrl = item.id
-                    const lineName = path.parse(lineUrl.substring(lineUrl.lastIndexOf("/") + 1)).name
-                    let response_lines = await fetch(lineUrl)
-                    if (!response_lines.ok) throw new Error(`Failed to fetch ${response_annotations.items}`)
-                    response_lines = await response_lines.json()
-                    fs.writeFileSync(path.join(dir,`./${lineName}.json`), JSON.stringify(response_lines, null, 2))
-                    return { ...response_lines }
-                  })),
-                  partOf : index < Math.floor(response.annotations.length / 2) ? "https://static.t-pen.org/" + project._id + "/transcription-layer.json" : "https://static.t-pen.org/" + project._id + "/translation-layer.json",
-                  creator: response_annotations.creator,
-                  target: response_annotations.target
-                  
-                }
-                fs.writeFileSync(path.join(dir,`./${pageName}.json`), JSON.stringify(response_page, null, 2))
-                return { ...response_page }
-              })
-              const all_annotations = await Promise.all(annotations)
-              response_items.annotations = all_annotations
-              return response_items
-          } catch (error) {
-              console.error(`Error fetching ${canvasUrl}:`, error)
-              return null
+        try {
+          const canvasUrl = layer.pages[0].canvas
+          const canvasData = await this.fetchJson(canvasUrl)
+          if (!canvasData) return null
+
+          const canvasItems = {
+            id: canvasData.id,
+            type: canvasData.type,
+            label: canvasData.label,
+            width: canvasData.width,
+            height: canvasData.height,
+            items: canvasData.items,
+            annotations: await this.getAnnotations(canvasData, project._id, dir),
           }
+
+          this.saveToFile(dir, canvasUrl, canvasData)
+          return canvasItems
+        } catch (error) {
+          console.error(`Error processing layer:`, error)
+          return null
+        }
       })
     )
-    return manifest
+  }
+
+  static async getAnnotations(canvasData, projectId, dir) {
+    return Promise.all(
+      canvasData.annotations.map(async (annotation, index) => {
+        try {
+          const annotationData = await this.fetchJson(annotation.id)
+          if (!annotationData) return null
+
+          const annotationItems = {
+            "@context": annotationData["@context"],
+            id: annotationData.id,
+            type: annotationData.type,
+            label: annotationData.label,
+            items: await this.getLines(annotationData, dir),
+            partOf: index < Math.floor(canvasData.annotations.length / 2)
+              ? `https://static.t-pen.org/${projectId}/transcription-layer.json`
+              : `https://static.t-pen.org/${projectId}/translation-layer.json`,
+            creator: annotationData.creator,
+            target: annotationData.target,
+          }
+
+          this.saveToFile(dir, annotation.id, annotationItems)
+          return annotationItems
+        } catch (error) {
+          console.error(`Error processing annotation:`, error)
+          return null
+        }
+      })
+    )
+  }
+
+  static async getLines(annotationData, dir) {
+    return Promise.all(
+      annotationData.items.map(async (item) => {
+        try {
+          const lineData = await this.fetchJson(item.id)
+          if (!lineData) return null;
+
+          this.saveToFile(dir, item.id, lineData)
+          return lineData
+        } catch (error) {
+          console.error(`Error processing line item:`, error)
+          return null
+        }
+      })
+    )
+  }
+
+  static async fetchJson(url) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Failed to fetch ${url}`)
+      return response.json()
+    } catch (error) {
+      console.error(`Fetch error: ${error.message}`)
+      return null
+    }
+  }
+
+  static saveToFile(dir, url, data) {
+    const fileName = path.parse(url.substring(url.lastIndexOf("/") + 1)).name
+    fs.writeFileSync(path.join(dir, `${fileName}.json`), JSON.stringify(data, null, 2))
   }
 
   static async loadAsUser(project_id, user_id) {
