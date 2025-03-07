@@ -44,6 +44,15 @@ class Manifest {
 
     load = async () => vault.loadManifest(this.uri).then(manifest => {
         manifest.items = vault.get(manifest.items)
+        manifest.items = manifest.items.map(item => {
+            if (item.items) {
+                item.items = vault.get(item.items)
+            }
+            if (item.annotations) {
+                item.annotations = vault.get(item.annotations)
+            }
+            return item
+        })
         // other resources needed to be resolved should be added this way.
         return manifest
     })
