@@ -95,8 +95,12 @@ router
   .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
     const {id} = req.params
-    if (!id) return respondWithError(res, 400, "Project ID is required")
-
+    if (!id) {
+      return respondWithError(res, 400, "No TPEN3 ID provided")
+    } else if (!validateID(id)) {
+      return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
+    }
+    
     try {
       const project = await ProjectFactory.exportManifest(id)
       if (!project) {
