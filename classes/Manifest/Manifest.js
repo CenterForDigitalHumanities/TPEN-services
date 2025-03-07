@@ -1,4 +1,4 @@
-import { Vault } from "@hyperion-framework/vault"
+import { Vault } from '@iiif/helpers/vault'
 
 const vault = new Vault()
 
