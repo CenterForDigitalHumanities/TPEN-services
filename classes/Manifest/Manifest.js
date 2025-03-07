@@ -9,17 +9,17 @@ class Manifest {
 
     constructor(manifestOrUri) {
 
-        let id = manifestOrUri['@id'] ?? manifestOrUri.id ?? manifestOrUri
+        let id = manifestOrUri?.['@id'] ?? manifestOrUri?.id ?? manifestOrUri
 
         if (!id) {
-            throw new Error('Invalid input: manifest object must have an @id or id property')
+            throw new Error('Invalid input: Manifest object must have an @id or id property')
         }
 
         try {
             new URL(id);
             this.uri = id;
         } catch (_) {
-            throw new Error('Invalid input: must be a valid URI string');
+            throw new Error('Invalid input: must be a valid URI string')
         }
 
         const requiredProperties = [

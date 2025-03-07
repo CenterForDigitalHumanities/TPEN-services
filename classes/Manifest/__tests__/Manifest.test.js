@@ -19,16 +19,18 @@ describe('Manifest', () => {
     })
 })
 
-afterEach(() => {
-    // No equivalent for jest.clearAllMocks() in node:test, manually reset mocks if needed
-})
-
 test('should throw error for invalid input type', () => {
-    assert.throws(() => new Manifest(123), /Invalid input: manifest object must have an @id or id property/)
+    assert.throws(() => new Manifest(123), /Invalid input: must be a valid URI string/)
+})
+test('should throw error for invalid input type', () => {
+    assert.throws(() => new Manifest({}), /Invalid input: must be a valid URI string/)
+})
+test('should throw error for invalid input type', () => {
+    assert.throws(() => new Manifest(true), /Invalid input: must be a valid URI string/)
 })
 
 test('should throw error for manifest object without id', () => {
-    assert.throws(() => new Manifest({}), /Invalid input: manifest object must have an @id or id property/)
+    assert.throws(() => new Manifest(), /Invalid input: Manifest object must have an @id or id property/)
 })
 
 test('should throw error for invalid URI string', () => {
