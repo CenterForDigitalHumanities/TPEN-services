@@ -163,9 +163,10 @@ export default class ProjectFactory {
     this.createDirectory(dir)
 
     const manifest = {
-      id: `https://static.t-pen.org/${project._id}/manifest.json`,
+      "@context": "http://iiif.io/api/presentation/3/context.json",
+      "@id": "https://static.t-pen.org/" + project._id + "/manifest.json",
       type: "Manifest",
-      label: { en: [project.label] },
+      label: { none: [project.label] },
       metadata: project.metadata,
       items: await this.getManifestItems(project, dir),
     }
@@ -189,7 +190,7 @@ export default class ProjectFactory {
           if (!canvasData) return null
 
           const canvasItems = {
-            id: canvasData.id,
+            id: canvasData["@id"],
             type: canvasData.type,
             label: canvasData.label,
             width: canvasData.width,
@@ -197,8 +198,6 @@ export default class ProjectFactory {
             items: canvasData.items,
             annotations: await this.getAnnotations(canvasData, project._id, dir),
           }
-
-          this.saveToFile(dir, canvasUrl, canvasData)
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
@@ -216,19 +215,14 @@ export default class ProjectFactory {
           if (!annotationData) return null
 
           const annotationItems = {
-            "@context": annotationData["@context"],
-            id: annotationData.id,
+            id: annotationData["@id"],
             type: annotationData.type,
             label: annotationData.label,
             items: await this.getLines(annotationData, dir),
-            partOf: index < Math.floor(canvasData.annotations.length / 2)
-              ? `https://static.t-pen.org/${projectId}/transcription-layer.json`
-              : `https://static.t-pen.org/${projectId}/translation-layer.json`,
+            partOf: annotationData.partOf,
             creator: annotationData.creator,
             target: annotationData.target,
           }
-
-          this.saveToFile(dir, annotation.id, annotationItems)
           return annotationItems
         } catch (error) {
           console.error(`Error processing annotation:`, error)
@@ -243,10 +237,17 @@ export default class ProjectFactory {
       annotationData.items.map(async (item) => {
         try {
           const lineData = await this.fetchJson(item.id)
-          if (!lineData) return null;
+          if (!lineData) return null
 
-          this.saveToFile(dir, item.id, lineData)
-          return lineData
+          const lineItems = {
+            id: lineData["@id"],
+            type: lineData.type,
+            motivation: lineData.motivation,
+            body: lineData.body,
+            target: lineData.target,
+            creator: lineData.creator
+          }
+          return lineItems
         } catch (error) {
           console.error(`Error processing line item:`, error)
           return null
@@ -266,8 +267,13 @@ export default class ProjectFactory {
     }
   }
 
-  static saveToFile(dir, url, data) {
+  static getFileName(url) {
     const fileName = path.parse(url.substring(url.lastIndexOf("/") + 1)).name
+    return fileName
+  }
+
+  static saveToFile(dir, url, data) {
+    const fileName = this.getFileName(url)
     fs.writeFileSync(path.join(dir, `${fileName}.json`), JSON.stringify(data, null, 2))
   }
 
