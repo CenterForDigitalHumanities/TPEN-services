@@ -11,6 +11,7 @@ import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
+import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -739,7 +740,7 @@ router.route("/:projectId/hotkeys/:hotkeyId").put(auth0Middleware(), async (req,
   }
 })
 
-
+// Delete Hotkey
 router.route("/:projectId/hotkeys/:hotkeyId").delete(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { projectId, hotkeyId } = req.params
