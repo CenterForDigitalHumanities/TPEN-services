@@ -55,6 +55,7 @@
       "jest-cli": "^29.7.0",
       "jest-esm-transformer": "^1.0.0",
       "nodemon": "^3.1.9",
+      "sinon": "^19.0.2",
       "supertest": "^7.0.0"
    },
    "engines": {

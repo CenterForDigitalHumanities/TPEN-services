@@ -9,9 +9,6 @@ class Manifest {
 
     constructor(manifestOrUri) {
 
-        if (typeof manifestOrUri !== 'string' && typeof manifestOrUri !== 'object') {
-            throw new Error('Invalid input: must be a manifest object or a URI string')
-        }
         let id = manifestOrUri['@id'] ?? manifestOrUri.id ?? manifestOrUri
 
         if (!id) {
