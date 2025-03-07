@@ -42,7 +42,11 @@ class Manifest {
         this.manifest = manifestOrUri
     }
 
-    load = async () => vault.loadManifest(this.uri)
+    load = async () => vault.loadManifest(this.uri).then(manifest => {
+        manifest.items = vault.get(manifest.items)
+        // other resources needed to be resolved should be added this way.
+        return manifest
+    })
 }
 
 export default Manifest
