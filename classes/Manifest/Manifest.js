@@ -23,8 +23,8 @@ class Manifest {
         }
 
         const requiredProperties = [
-            ['@type', 'type'],
             ['@context', 'context'],
+            ['@type', 'type'],
             ['sequences', 'items']
         ]
 
