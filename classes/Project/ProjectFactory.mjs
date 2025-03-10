@@ -190,7 +190,7 @@ export default class ProjectFactory {
           if (!canvasData) return null
 
           const canvasItems = {
-            id: canvasData["@id"],
+            id: canvasData.id,
             type: canvasData.type,
             label: canvasData.label,
             width: canvasData.width,
@@ -215,7 +215,7 @@ export default class ProjectFactory {
           if (!annotationData) return null
 
           const annotationItems = {
-            id: annotationData["@id"],
+            id: annotationData.id,
             type: annotationData.type,
             label: annotationData.label,
             items: await this.getLines(annotationData, dir),
@@ -240,7 +240,7 @@ export default class ProjectFactory {
           if (!lineData) return null
 
           const lineItems = {
-            id: lineData["@id"],
+            id: lineData.id,
             type: lineData.type,
             motivation: lineData.motivation,
             body: lineData.body,
