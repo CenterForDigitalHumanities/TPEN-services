@@ -41,6 +41,7 @@ function successfulResponse(res, code, data=null, message=null){
    }
 }
 
+
 // Handle a post request which creates the Manifest through TinyPen and gives back the created object
 router.route('/create')
    .post(async (req, res, next) => {
@@ -56,6 +57,7 @@ router.route('/create')
    .all((req, res, next) => {
       utils.respondWithError(res, 405, 'Improper request method, please use POST.')
    })
+
 
 // Handle a put request which updates an existing Manifest through TinyPen and gives back the updated object
 // Note this may just be an alias for /save
