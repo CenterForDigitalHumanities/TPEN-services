@@ -102,12 +102,17 @@ router
     }
     
     try {
-      const project = await ProjectFactory.exportManifest(id)
-      if (!project) {
-        return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
+      const manifest = await ProjectFactory.exportManifest(id)
+      const folderPath = path.join(`./${id}`)
+      const files = fs.readdirSync(folderPath)
+      for (const file of files) {
+          const filePath = path.join(folderPath, file)
+          if (fs.lstatSync(filePath).isFile()) {
+              await ProjectFactory.uploadFileToGitHub(filePath, `${id}`)
+          }
       }
-
-      res.status(200).json(project)
+      fs.rmSync(folderPath, {recursive: true, force: true})
+      res.status(200).json(manifest)
     } catch (error) {
       return respondWithError(
         res,

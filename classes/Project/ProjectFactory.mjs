@@ -277,6 +277,31 @@ export default class ProjectFactory {
     fs.writeFileSync(path.join(dir, `${fileName}.json`), JSON.stringify(data, null, 2))
   }
 
+  static async uploadFileToGitHub(filePath, projectId) {
+    const REPO_OWNER = "CenterForDigitalHumanities"
+    const REPO_NAME = "TPEN-Static-Dev"
+    const BRANCH = "main"
+    const content = fs.readFileSync(filePath, { encoding: "base64" })
+
+    try {
+      await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${projectId}/manifest.json`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: `Added ${projectId}/manifest.json`,
+            content: content,
+            branch: BRANCH,
+        }),
+    })
+    } catch (error) {
+      console.error(`Failed to upload ${projectId}/manifest.json:`, error)
+    }
+  }
+
   static async loadAsUser(project_id, user_id) {
     const pipeline = [
       { $match: { _id: project_id } },
