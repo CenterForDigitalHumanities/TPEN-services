@@ -43,17 +43,19 @@ class Manifest {
     }
 
     load = async () => vault.loadManifest(this.uri).then(manifest => {
+        // load canvases
         manifest.items = vault.get(manifest.items)
         manifest.items = manifest.items.map(item => {
+            // Load canvas content
             if (item.items) {
                 item.items = vault.get(item.items)
             }
+            // Load Canvas AnnotationPages
             if (item.annotations) {
                 item.annotations = vault.get(item.annotations)
             }
             return item
         })
-        // other resources needed to be resolved should be added this way.
         return manifest
     })
 }
