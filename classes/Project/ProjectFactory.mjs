@@ -177,7 +177,6 @@ export default class ProjectFactory {
   static createDirectory(dir) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
-      console.log(`Directory created: ${dir}`)
     }
   }
 
