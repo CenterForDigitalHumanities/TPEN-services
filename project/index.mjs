@@ -11,6 +11,8 @@ import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
+import path from "path"
+import fs from "fs"
 
 let router = express.Router()
 router.use(cors(common_cors))
