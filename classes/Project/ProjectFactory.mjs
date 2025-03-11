@@ -220,10 +220,13 @@ export default class ProjectFactory {
           from: "hotkeys",
           localField: "_id",
           foreignField: "_id",
-          as: "options.hotkeys"
-
+          as: "hotkeys"
         },
-
+      },
+      {
+        $set: {
+          "options.hotkeys": { $arrayElemAt: ["$hotkeys.hotkeys", 0] }
+        }
       },
       {
         $project: {
