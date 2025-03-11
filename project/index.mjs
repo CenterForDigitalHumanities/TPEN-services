@@ -97,6 +97,8 @@ router
   .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
     const {id} = req.params
+    const user = req.user
+
     if (!id) {
       return respondWithError(res, 400, "No TPEN3 ID provided")
     } else if (!validateID(id)) {
@@ -104,6 +106,20 @@ router
     }
     
     try {
+      const project = await ProjectFactory.loadAsUser(id, null)
+      const project2 = new Project(id)
+      const collaboratorIdList = []
+
+      Object.entries(project.collaborators).map(([id, data]) => {
+        collaboratorIdList.push(id)
+      })
+      
+      if (!collaboratorIdList.includes(user._id)) {
+        return respondWithError(res, 403, "You do not have permission to export this project")
+      }
+      if (!await project2.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
+        return respondWithError(res, 403, "You do not have permission to export this project")
+      }
       const manifest = await ProjectFactory.exportManifest(id)
       const folderPath = path.join(`./${id}`)
       const files = fs.readdirSync(folderPath)
