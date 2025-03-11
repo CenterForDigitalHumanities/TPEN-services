@@ -277,13 +277,10 @@ export default class ProjectFactory {
   }
 
   static async uploadFileToGitHub(filePath, projectId) {
-    const REPO_OWNER = "CenterForDigitalHumanities"
-    const REPO_NAME = "TPEN-Static-Dev"
-    const BRANCH = "main"
     const content = fs.readFileSync(filePath, { encoding: "base64" })
 
     try {
-      await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${projectId}/manifest.json`, {
+      await fetch(`https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`, {
         method: 'PUT',
         headers: {
             'Authorization': `token ${process.env.GITHUB_TOKEN}`,
@@ -293,7 +290,7 @@ export default class ProjectFactory {
         body: JSON.stringify({
             message: `Added ${projectId}/manifest.json`,
             content: content,
-            branch: BRANCH,
+            branch: process.env.BRANCH,
         }),
     })
     } catch (error) {
