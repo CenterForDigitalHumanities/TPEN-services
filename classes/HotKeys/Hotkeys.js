@@ -16,6 +16,35 @@ export default class Hotkeys {
         this.data = { _id, symbols }
     }
 
+    assign(symbols) {
+        if (!Array.isArray(symbols) || symbols.some(symbol => typeof symbol !== 'string')) {
+            throw { status: 400, message: "All symbols must be strings" }
+        }
+        if (!Array.isArray(symbols) || symbols.some(symbol => typeof symbol !== 'string')) {
+            throw { status: 400, message: "All symbols must be strings" }
+        }
+        this.data.symbols = symbols
+        return this
+    }
+
+    add(symbol) {
+        if (typeof symbol !== 'string') {
+            throw { status: 400, message: "Symbol must be a string" }
+        }
+        if (!this.data.symbols.includes(symbol)) {
+            this.data.symbols.push(symbol)
+        }
+        return this
+    }
+
+    remove(symbol) {
+        if (typeof symbol !== 'string') {
+            throw { status: 400, message: "Symbol must be a string" }
+        }
+        this.data.symbols = this.data.symbols.filter(s => s !== symbol)
+        return this
+    }
+
     /**
      * Load hotkey data from the database.
      */
