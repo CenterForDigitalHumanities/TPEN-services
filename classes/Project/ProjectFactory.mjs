@@ -219,26 +219,11 @@ export default class ProjectFactory {
         $lookup: {
           from: "hotkeys",
           localField: "_id",
-          foreignField: "projectId",
-          as: "tools.hotkeys"
+          foreignField: "_id",
+          as: "options.hotkeys"
 
         },
 
-      },
-      {
-        $set: {
-          "tools.hotkeys": {
-            $map: {
-              input: "$tools.hotkeys",
-              as: "hotkey",
-              in: {
-                _id:"$$hotkey._id",
-                symbol: "$$hotkey.symbol",
-                shortcut: "$$hotkey.shortcut"
-              }
-            }
-          }
-        }
       },
       {
         $project: {
