@@ -159,12 +159,12 @@ export default class ProjectFactory {
     }
 
     const project = await ProjectFactory.loadAsUser(projectId, null)
-    const dir = `./${project._id}`
+    const dir = `./${projectId}`
     this.createDirectory(dir)
 
     const manifest = {
       "@context": "http://iiif.io/api/presentation/3/context.json",
-      "id": "https://static.t-pen.org/" + project._id + "/manifest.json",
+      "id": `${process.env.TPENSTATIC}/${projectId}/manifest.json`,
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
