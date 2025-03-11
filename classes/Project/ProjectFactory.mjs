@@ -278,19 +278,36 @@ export default class ProjectFactory {
 
   static async uploadFileToGitHub(filePath, projectId) {
     const content = fs.readFileSync(filePath, { encoding: "base64" })
+    const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`
+    const token = process.env.GITHUB_TOKEN
 
     try {
-      await fetch(`https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`, {
+      let sha = null
+
+      const getResponse = await fetch(manifestUrl, {
+          headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+          },
+      })
+
+      if (getResponse.ok) {
+          const fileData = await getResponse.json()
+          sha = fileData.sha
+      }
+
+      await fetch(manifestUrl, {
         method: 'PUT',
         headers: {
-            'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+            'Authorization': `token ${token}`,
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            message: `Added ${projectId}/manifest.json`,
+            message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
             content: content,
             branch: process.env.BRANCH,
+            ...(sha && { sha }),
         }),
     })
     } catch (error) {
