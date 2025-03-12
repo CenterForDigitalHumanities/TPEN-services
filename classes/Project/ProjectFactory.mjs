@@ -153,6 +153,19 @@ export default class ProjectFactory {
     return project
   }
 
+  /**
+   * Exporting the IIIF manifest for a given project in its current state, ensuring the directory structure is created,
+   * manifest data is assembled, and the final JSON is saved to the filesystem.
+   * 
+   * @param {string} projectId - Project ID for a specific project.
+   * @returns {Object} - Returns the assembled IIIF manifest object.
+   * 
+   * The manifest follows the IIIF Presentation API 3.0 specification and includes:
+   * - Context, ID, Type, Label, Metadata, Items and Annotations
+   * - A dynamically fetched list of manifest items, including canvases and their annotations.
+   * - All elements are embedded in the manifest object.
+   * - Saved output to the file system as 'manifest.json' within the project directory.
+   */
   static async exportManifest(projectId) {
     if (!projectId) {
       throw { status: 400, message: "No project ID provided" }
@@ -276,6 +289,17 @@ export default class ProjectFactory {
     fs.writeFileSync(path.join(dir, `${fileName}.json`), JSON.stringify(data, null, 2))
   }
 
+  /**
+   * Uploads or updates the `manifest.json` file for a given project to a GitHub repository.
+   * 
+   * @param {string} filePath - The local path to the `manifest.json` file to be uploaded.
+   * @param {string} projectId - Project ID for a specific project.
+   * 
+   * The method performs the following steps:
+   * - Reads and encodes the file content in Base64.
+   * - Checks if the `manifest.json` already exists in the GitHub repository to determine if it's a create or update action.
+   * - Uploads the file using the GitHub API, including the correct commit message and SHA for updates.
+   */
   static async uploadFileToGitHub(filePath, projectId) {
     const content = fs.readFileSync(filePath, { encoding: "base64" })
     const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`
