@@ -703,9 +703,10 @@ router.route("/:projectId/hotkeys").post(auth0Middleware(), async (req, res) => 
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.CONTENT, ENTITIES.PROJECT)) {
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
       const hotkeys = new Hotkeys(projectId, symbols)
       const hotkey = await hotkeys.create()
+      console.dir(hotkey)
       res.status(201).json(hotkey)
       return
     } 
@@ -730,9 +731,9 @@ router.route("/:projectId/hotkeys").put(auth0Middleware(), async (req, res) => {
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.CONTENT, ENTITIES.TOOLS)) {
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
       const hotkeys = new Hotkeys(projectId, symbols)
-      const hotkey = await hotkeys.update()
+      const hotkey = await hotkeys.setSymbols()
       res.status(200).json(hotkey)
       return
     }
@@ -753,7 +754,7 @@ router.route("/:projectId/hotkeys").delete(auth0Middleware(), async (req, res) =
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.CONTENT, ENTITIES.TOOLS)) {
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
       const hotkeys = new Hotkeys(projectId)
       const isDeleted = await hotkeys.delete()
       res.status(200).json(isDeleted)
@@ -776,7 +777,7 @@ router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.CONTENT, ENTITIES.PROJECT)) {
+    if (await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
       const H = await Hotkeys.getByProjectId(projectId)
       res.status(200).json(H.hotkeys)
       return
