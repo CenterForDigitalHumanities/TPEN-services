@@ -246,9 +246,7 @@ class DatabaseController {
       }
       data._id ??= this.reserveId()
       const result = await this.db.collection(collection).insertOne(data)
-      console.dir(result)
       if (result.insertedId) {
-        console.log(`Document inserted with _id: ${result.insertedId}`)
         return data
       }
       err_out.message = `Document was not inserted into the database.`

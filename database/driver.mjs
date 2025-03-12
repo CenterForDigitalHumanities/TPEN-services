@@ -86,6 +86,7 @@ class dbDriver {
      * @return The inserted document JSON or error JSON
      */
     async save(data, collection) {
+        console.warn("dbDriver.save() is problematic. https://github.com/CenterForDigitalHumanities/TPEN-services/issues/193")
         return this.controller.save(data, collection).catch(err => err)
     }
 
