@@ -4,7 +4,7 @@ import assert from 'node:assert'
 
 const app = { _router: { stack: projectRouter.stack } }
 
-test("Project endpoint availability unit test (via a check on the app routes). #exists_unit", (t) => {
+test("Project endpoint availability unit test (via a check on the app routes).", (t) => {
   t.test("responds to /project/id", () => {
     const stack = app._router.stack
     assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.get && middleware.regexp.toString().includes("/")), true)
@@ -13,7 +13,7 @@ test("Project endpoint availability unit test (via a check on the app routes). #
   })
 })
 
-test("Hotkeys endpoint availability unit test (via a check on the app routes). #exists_unit #options", (t) => {
+test("Hotkeys endpoint availability unit test (via a check on the app routes). #options", (t) => {
   t.test("responds to /project/id/hotkeys", () => {
     const stack = app._router.stack
     assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.get && middleware.regexp.toString().includes("/hotkeys")), true)
