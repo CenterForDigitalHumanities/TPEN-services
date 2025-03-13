@@ -46,7 +46,8 @@
       "mariadb": "^3.4.0",
       "mongodb": "^6.12.0",
       "morgan": "^1.10.0",
-      "nodemailer": "^6.9.16"
+      "nodemailer": "^6.9.16",
+      "tpen3-services": "file:"
    },
    "devDependencies": {
       "@jest-mock/express": "^2.1.0",
@@ -54,6 +55,7 @@
       "jest-cli": "^29.7.0",
       "jest-esm-transformer": "^1.0.0",
       "nodemon": "^3.1.9",
+      "sinon": "^19.0.2",
       "supertest": "^7.0.0"
    },
    "engines": {
