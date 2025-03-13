@@ -686,6 +686,34 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 })
 
+// Create Hotkey
+router.route("/:projectId/hotkeys").post(auth0Middleware(), async (req, res) => {
+  const user = req.user
+  const { projectId } = req.params
+  const { symbols } = req.body
+
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+  if (!symbols || symbols.length === 0) {
+    return respondWithError(res, 400, "At least one symbol is required")
+  }
+
+  try {
+    const project = new Project(projectId)
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
+      const hotkeys = new Hotkeys(projectId, symbols)
+      const hotkey = await hotkeys.create()
+      console.dir(hotkey)
+      res.status(201).json(hotkey)
+      return
+    } 
+    return respondWithError(res, 403, "You do not have permission to create hotkeys for this project")
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message.toString())
+  }
+})
+
 // Update Hotkeys
 router.route("/:projectId/hotkeys").put(auth0Middleware(), async (req, res) => {
   const user = req.user
