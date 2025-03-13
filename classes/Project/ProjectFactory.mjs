@@ -29,7 +29,7 @@ export default class ProjectFactory {
    * @returns object of project data
    */
   static async DBObjectFromManifest(manifest) {
-     if (!manifest) {
+    if (!manifest) {
       throw {
         status: 404,
         message: err.message ?? "No manifest found. Cannot process empty object"
@@ -400,6 +400,20 @@ export default class ProjectFactory {
               }
             }
           }
+        }
+      },
+
+      {
+        $lookup: {
+          from: "hotkeys",
+          localField: "_id",
+          foreignField: "_id",
+          as: "hotkeys"
+        },
+      },
+      {
+        $set: {
+          "options.hotkeys": { $arrayElemAt: ["$hotkeys.hotkeys", 0] }
         }
       },
       {
