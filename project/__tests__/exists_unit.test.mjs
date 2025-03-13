@@ -1,23 +1,23 @@
 import projectRouter from '../index.mjs'
-import { test } from 'node:test'
+import { jest } from '@jest/globals'
 import assert from 'node:assert'
 
 const app = { _router: { stack: projectRouter.stack } }
 
-test("Project endpoint availability unit test (via a check on the app routes).", (t) => {
-  t.test("responds to /project/id", () => {
+describe("Project endpoint availability unit test (via a check on the app routes)", () => {
+  test("responds to /project/id", () => {
     const stack = app._router.stack
-    assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.get && middleware.regexp.toString().includes("/")), true)
-    assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes("/create")), true)
-    assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes("/import")), true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.get && middleware.regexp.toString().includes("/"))).toBe(true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes("/create"))).toBe(true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes("/import"))).toBe(true)
   })
 })
 
-test("Hotkeys endpoint availability unit test (via a check on the app routes). #options", (t) => {
-  t.test("responds to /project/id/hotkeys", () => {
+describe("Hotkeys endpoint availability unit test (via a check on the app routes)", () => {
+  test("responds to /project/id/hotkeys", () => {
     const stack = app._router.stack
-    assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.get && middleware.regexp.toString().includes("/hotkeys")), true)
-    assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.put && middleware.regexp.toString().includes("/hotkeys")), true)
-    assert.strictEqual(stack.some(middleware => middleware.route && middleware.route.methods.delete && middleware.regexp.toString().includes("/hotkeys")), true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.get && middleware.regexp.toString().includes("/hotkeys"))).toBe(true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.put && middleware.regexp.toString().includes("/hotkeys"))).toBe(true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.delete && middleware.regexp.toString().includes("/hotkeys"))).toBe(true)
   })
 })
