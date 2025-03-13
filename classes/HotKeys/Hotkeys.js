@@ -97,12 +97,39 @@ export default class Hotkeys {
      * Sets hotkey symbols.
      * @returns {Object} - The updated hotkey.
      */
+    async upsert() {
+        if (!this.data._id || (this.data.symbols?.length < 1)) {
+            throw { status: 400, message: "Cannot create a detached or empty set of hotkeys. Consider DELETE." }
+        }
+        try {
+            // until upsert is in the driver
+            const action = await database.findOne({ _id: this.data._id }, process.env.TPENHOTKEYS) ? 'update' : 'save'
+            await database[action](this.data, process.env.TPENHOTKEYS)
+        } catch (err) {
+            // server or driver/mongo error
+            throw {
+                status: err.status || 500,
+                message: err.message || "An error occurred while updating the hotkey"
+            }
+        }
+        return this.data
+    }
+
+    /**
+     * Sets hotkey symbols.
+     * @returns {Object} - The updated hotkey.
+     */
     async setSymbols() {
         if (!this.data._id || (this.data.symbols?.length < 1)) {
             throw { status: 400, message: "Cannot create a detached or empty set of hotkeys. Consider DELETE." }
         }
         try {
             await database.update(this.data, process.env.TPENHOTKEYS)
+            // update isn't working as expected, so we need to manually check for success
+            const existing = await database.findOne({ _id: this.data._id }, process.env.TPENHOTKEYS)
+            if (!existing) {
+                throw { status: 404, message: "Hotkey not found" }
+            }
         } catch (err) {
             // server or driver/mongo error
             throw {
