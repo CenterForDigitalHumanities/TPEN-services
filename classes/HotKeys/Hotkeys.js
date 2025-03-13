@@ -67,6 +67,33 @@ export default class Hotkeys {
     }
 
     /**
+     * Create a new hotkey.
+     * @param {String} projectId - The ID of the project this hotkey belongs to.
+     * @param {Array} symbols - Ordered list of UTF-8 symbols (e.g., ["♠","❤","ϡ"]).
+     * @returns {Object} - The created hotkey.
+     */
+    async create() {
+        if (!this.data._id || (this.data.symbols?.length < 1)) {
+            throw { status: 400, message: "Cannot create a detached or empty set of hotkeys." }
+        }
+        try {
+            // save isn't working as expected, so we need to manually check for collisions
+            const existing = await database.findOne({ _id: this.data._id }, process.env.TPENHOTKEYS)
+            if (existing) {
+                throw { status: 409, message: "Hotkey already exists" }
+            }
+            await database.save(this.data, process.env.TPENHOTKEYS)
+        } catch (err) {
+            // possible collision with existing hotkey or other error
+            throw {
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while creating the hotkey"
+            }
+        }
+        return this.data
+    }
+
+    /**
      * Sets hotkey symbols.
      * @returns {Object} - The updated hotkey.
      */
