@@ -1,10 +1,48 @@
 import dbDriver from "../../database/driver.mjs"
 const database = new dbDriver("mongo")
 
+
+/**
+ * Class representing a hotkey.
+ * @class Hotkeys
+ * @param {String} _id - The ID of the hotkey matches the id of the Project it belongs to.
+ */
 export default class Hotkeys {
-    constructor(_id = database.reserveId()) {
+    constructor(_id, symbols = []) {
+        if (!_id) {
+            throw { status: 400, message: "_id is required" }
+        }
         this._id = _id
-        this.data = { _id }
+        this.data = { _id, symbols }
+    }
+
+    assign(symbols) {
+        if (!Array.isArray(symbols) || symbols.some(symbol => typeof symbol !== 'string')) {
+            throw { status: 400, message: "All symbols must be strings" }
+        }
+        if (!Array.isArray(symbols) || symbols.some(symbol => typeof symbol !== 'string')) {
+            throw { status: 400, message: "All symbols must be strings" }
+        }
+        this.data.symbols = symbols
+        return this
+    }
+
+    add(symbol) {
+        if (typeof symbol !== 'string') {
+            throw { status: 400, message: "Symbol must be a string" }
+        }
+        if (!this.data.symbols.includes(symbol)) {
+            this.data.symbols.push(symbol)
+        }
+        return this
+    }
+
+    remove(symbol) {
+        if (typeof symbol !== 'string') {
+            throw { status: 400, message: "Symbol must be a string" }
+        }
+        this.data.symbols = this.data.symbols.filter(s => s !== symbol)
+        return this
     }
 
     /**
@@ -16,92 +54,100 @@ export default class Hotkeys {
     }
 
     /**
+     * Fetch all hotkeys for a project.
+     * @param {String} _id - The ID of the project.
+     * @returns {Array} - Array of hotkey objects.
+     */
+    static async getByProjectId(_id) {
+        if (!_id) {
+            throw { status: 400, message: "projectId is required" }
+        }
+
+        return database.findOne({ _id }, process.env.TPENHOTKEYS)
+    }
+
+    /**
      * Create a new hotkey.
      * @param {String} projectId - The ID of the project this hotkey belongs to.
-     * @param {String} symbol - The UTF-8 symbol (e.g., "♠").
-     * @param {String} shortcut - The shortcut assigned to the symbol (e.g., "Ctrl + 1").
+     * @param {Array} symbols - Ordered list of UTF-8 symbols (e.g., ["♠","❤","ϡ"]).
      * @returns {Object} - The created hotkey.
      */
-    async createHotkey(projectId, symbol, shortcut) {
-        if (!projectId || !symbol || !shortcut) {
-            throw { status: 400, message: "projectId, symbol, and shortcut are required" }
+    async create() {
+        if (!this.data._id || (this.data.symbols?.length < 1)) {
+            throw { status: 400, message: "Cannot create a detached or empty set of hotkeys." }
         }
-
-        this.data = {
-            _id: this._id,
-            projectId,
-            symbol,
-            shortcut,
+        try {
+            await database.save(this.data, process.env.TPENHOTKEYS)
+        } catch (err) {
+            // possible collision with existing hotkey or other error
+            throw {
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while creating the hotkey"
+            }
         }
-
-        await this.save()
         return this.data
     }
 
     /**
-     * Fetch all hotkeys for a project.
-     * @param {String} projectId - The ID of the project.
-     * @returns {Array} - Array of hotkey objects.
+     * Sets hotkey symbols.
+     * @returns {Object} - The updated hotkey.
      */
-    async getHotkeysByProjectId(projectId) {
-        if (!projectId) {
-            throw { status: 400, message: "projectId is required" }
+    async upsert() {
+        if (!this.data._id || (this.data.symbols?.length < 1)) {
+            throw { status: 400, message: "Cannot create a detached or empty set of hotkeys. Consider DELETE." }
         }
-
-        return database.find({ projectId }, process.env.TPENHOTKEYS)
+        try {
+            // until upsert is in the driver
+            const action = await database.findOne({ _id: this.data._id }, process.env.TPENHOTKEYS) ? 'update' : 'save'
+            await database[action](this.data, process.env.TPENHOTKEYS)
+        } catch (err) {
+            // server or driver/mongo error
+            throw {
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while updating the hotkey"
+            }
+        }
+        return this.data
     }
 
     /**
-     * Update a hotkey.
-     * @param {String} hotkeyId - The ID of the hotkey to update.
-     * @param {Object} updates - An object containing the fields to update (e.g., { symbol: "♥", shortcut: "Ctrl + 2" }).
+     * Sets hotkey symbols.
      * @returns {Object} - The updated hotkey.
      */
-    async updateHotkey(hotkeyId, updates) {
-        if (!hotkeyId) {
-            throw { status: 400, message: "hotkeyId is required" }
+    async setSymbols() {
+        if (!this.data._id || (this.data.symbols?.length < 1)) {
+            throw { status: 400, message: "Cannot create a detached or empty set of hotkeys. Consider DELETE." }
         }
-
-        const hotkey = await database.getById(hotkeyId, process.env.TPENHOTKEYS)
-        if (!hotkey) {
-            throw { status: 404, message: "Hotkey not found" }
+        try {
+            await database.update(this.data, process.env.TPENHOTKEYS)
+        } catch (err) {
+            // server or driver/mongo error
+            throw {
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while updating the hotkey"
+            }
         }
-
-        Object.assign(hotkey, updates)
-        await database.update(hotkey, process.env.TPENHOTKEYS)
-        return hotkey
+        return this.data
     }
 
     /**
      * Delete a hotkey.
-     * @param {String} hotkeyId - The ID of the hotkey to delete.
-     * @returns {Object} - The deleted hotkey.
+     * @returns {Boolean} Succeeded.
      */
-    async deleteHotkey(hotkeyId) {
-        if (!hotkeyId) {
-            throw { status: 400, message: "hotkeyId is required" }
+    async delete() {
+        if (!this.data._id) {
+            throw { status: 400, message: "Id is required" }
         }
 
-        const hotkey = await database.getById(hotkeyId, process.env.TPENHOTKEYS)
-        if (!hotkey) {
-            throw { status: 404, message: "Hotkey not found" }
+        try {
+            await database.delete(this.data._id, process.env.TPENHOTKEYS)
+        } catch (err) {
+            // server or driver/mongo error
+            throw {
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while deleting the hotkey"
+            }
         }
-
-        await database.remove(hotkeyId, process.env.TPENHOTKEYS)
-        return hotkey
-    }
-
-    /**
-     * Save the hotkey to the database.
-     */
-    async save() {
-        return database.save(this.data, process.env.TPENHOTKEYS)
-    }
-
-    /**
-     * Update the hotkey in the database.
-     */
-    async update() {
-        return database.update(this.data, process.env.TPENHOTKEYS)
+        return true
     }
 }

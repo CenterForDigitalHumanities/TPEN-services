@@ -6,7 +6,6 @@ import auth0Middleware from "../auth/index.mjs"
 import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
 import validateURL from "../utilities/validateURL.mjs"
 import Project from "../classes/Project/Project.mjs"
-import getHash from "../utilities/getHash.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
@@ -185,7 +184,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
         .send("You do not have permission to remove members from this project")
     }
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error removing member from project.")
   }
 })
 
@@ -214,7 +213,7 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
 
     res.status(200).send(`Roles added to member ${collaboratorId}.`)
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error adding roles to member.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding roles to member.")
   }
 })
 
@@ -244,7 +243,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error updating member roles.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating member roles.")
   }
 })
 
@@ -276,7 +275,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
     res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
 
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error removing roles from member.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error removing roles from member.")
   }
 })
 
@@ -319,7 +318,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error transferring ownership.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error transferring ownership.")
   }
 })
 
@@ -457,7 +456,7 @@ router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => 
     const response = await projectObj.updateMetadata(metadata)
     res.status(200).json(response)
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error updating project metadata.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating project metadata.")
   }
 })
 
@@ -488,7 +487,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error updating member roles.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating member roles.")
   }
 })
 
@@ -520,7 +519,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
     res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
 
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error removing roles from member.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error removing roles from member.")
   }
 })
 
@@ -560,7 +559,7 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
-    return respondWithError(res, error.status || 500, error.message || "Error transferring ownership.")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error transferring ownership.")
   }
 })
 
@@ -574,7 +573,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
   const user = req.user
 
   if (!user) {
-    return res.status(401).json({ message: 'Unauthenticated request' })
+    return respondWithError(res, 401, "Unauthenticated request")
   }
 
   if (!Object.keys(customRoles).length) {
@@ -591,7 +590,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE)
 
     if (!accessInfo.hasAccess) {
-      return res.status(403).json({ message: accessInfo.message })
+      return respondWithError(res, 403, accessInfo.message)
     }
 
     const groupId = project.data.group
@@ -612,7 +611,7 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
   const user = req.user
 
   if (!user) {
-    return res.status(401).json({ message: 'Unauthenticated request' })
+    return respondWithError(res, 401, "Unauthenticated request")
   }
 
   if (!Object.keys(newCustomRoles).length) {
@@ -629,7 +628,7 @@ router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => 
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE)
 
     if (!accessInfo.hasAccess) {
-      return res.status(403).json({ message: accessInfo.message })
+      return respondWithError(res, 403, accessInfo.message)
     }
 
     const groupId = project.data.group
@@ -649,7 +648,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   let rolesToRemove = req.body.roles ?? req.body
   const user = req.user
   if (!user) {
-    return res.status(401).json({ message: 'Unauthenticated request' })
+    return respondWithError(res, 401, "Unauthenticated request")
   }
 
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
@@ -673,7 +672,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)
 
     if (!accessInfo.hasAccess) {
-      return res.status(403).json({ message: accessInfo.message })
+      return respondWithError(res, 403, accessInfo.message)
     }
 
     const groupId = project.data.group
@@ -687,63 +686,68 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 })
 
-
 // Create Hotkey
 router.route("/:projectId/hotkeys").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { projectId } = req.params
-  const { symbol, shortcut } = req.body
+  const { symbols } = req.body
 
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
-  } else if (!symbol || !shortcut) {
-    return respondWithError(res, 400, "Symbol and shortcut are required")
+  }
+  if (!symbols || symbols.length === 0) {
+    return respondWithError(res, 400, "At least one symbol is required")
   }
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.TOOLS)) {
-      const hotkeys = new Hotkeys()
-      const hotkey = await hotkeys.createHotkey(projectId, symbol, shortcut)
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
+      const hotkeys = new Hotkeys(projectId, symbols)
+      const hotkey = await hotkeys.create()
+      console.dir(hotkey)
       res.status(201).json(hotkey)
-    } else {
-      res.status(403).send("You do not have permission to create hotkeys for this project")
-    }
+      return
+    } 
+    return respondWithError(res, 403, "You do not have permission to create hotkeys for this project")
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message.toString())
   }
 })
 
-// Update a Hotkey
-router.route("/:projectId/hotkeys/:hotkeyId").put(auth0Middleware(), async (req, res) => {
+// Update Hotkeys
+router.route("/:projectId/hotkeys").put(auth0Middleware(), async (req, res) => {
   const user = req.user
-  const { projectId, hotkeyId } = req.params
-  const { symbol, shortcut } = req.body
+  const { projectId } = req.params
+  const { symbols } = req.body
 
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
-  } else if (!symbol && !shortcut) {
-    return respondWithError(res, 400, "At least one field (symbol or shortcut) is required")
+  }
+  if (!symbols || symbols.length === 0) {
+    return respondWithError(res, 400, "At least one symbol is required")
+  }
+  if (!Array.isArray(symbols) || symbols.some(symbol => typeof symbol !== 'string')) {
+    return respondWithError(res, 400, "All symbols must be strings")
   }
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.TOOLS)) {
-      const hotkeys = new Hotkeys()
-      const hotkey = await hotkeys.updateHotkey(hotkeyId, { symbol, shortcut })
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
+      const hotkeys = new Hotkeys(projectId, symbols)
+      const hotkey = await hotkeys.setSymbols()
       res.status(200).json(hotkey)
-    } else {
-      res.status(403).send("You do not have permission to update hotkeys for this project")
+      return
     }
+    return respondWithError(res, 403, "You do not have permission to update hotkeys for this project")
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message.toString())
   }
 })
 
-// Delete Hotkey
-router.route("/:projectId/hotkeys/:hotkeyId").delete(auth0Middleware(), async (req, res) => {
+// Delete Hotkeys
+router.route("/:projectId/hotkeys").delete(auth0Middleware(), async (req, res) => {
   const user = req.user
-  const { projectId, hotkeyId } = req.params
+  const { projectId } = req.params
 
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
@@ -751,18 +755,17 @@ router.route("/:projectId/hotkeys/:hotkeyId").delete(auth0Middleware(), async (r
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.TOOLS)) {
-      const hotkeys = new Hotkeys()
-      const deletedHotkey = await hotkeys.deleteHotkey(hotkeyId)
-      res.status(200).json(deletedHotkey)
-    } else {
-      res.status(403).send("You do not have permission to delete hotkeys for this project")
+    if (await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
+      const hotkeys = new Hotkeys(projectId)
+      const isDeleted = await hotkeys.delete()
+      res.status(200).json(isDeleted)
+      return
     }
+    return respondWithError(res, 403, "You do not have permission to delete hotkeys for this project")
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message.toString())
   }
 })
-
 
 // Get Hotkeys for a project
 router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
@@ -775,16 +778,19 @@ router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
 
   try {
     const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.TOOLS)) {
-      const hotkeys = new Hotkeys()
-      const hotkeysList = await hotkeys.getHotkeysByProjectId(projectId)
-      res.status(200).json(hotkeysList)
-    } else {
-      res.status(403).send("You do not have permission to view hotkeys for this project")
+    if (await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
+      const H = await Hotkeys.getByProjectId(projectId)
+      res.status(200).json(H.hotkeys)
+      return
     }
+    return respondWithError(res, 403, "You do not have permission to view hotkeys for this project")
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message.toString())
   }
+})
+
+router.route("/:projectId/hotkeys").all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use GET, PUT, or DELETE instead")
 })
 
 export default router
