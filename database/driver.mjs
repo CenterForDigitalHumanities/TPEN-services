@@ -87,7 +87,7 @@ class dbDriver {
      */
     async save(data, collection) {
         console.warn("dbDriver.save() is problematic. https://github.com/CenterForDigitalHumanities/TPEN-services/issues/193")
-        return this.controller.save(data, collection).catch(err => err)
+        return this.controller.save(data, collection)
     }
 
     /**
@@ -97,7 +97,7 @@ class dbDriver {
      */
     async update(data, collection) {
         // Note this may just be an alias for save()
-        return this.controller.update(data, collection).catch(err => err)
+        return this.controller.update(data, collection)
     }
 
     /**
@@ -106,7 +106,7 @@ class dbDriver {
      * @return The delete result JSON or error JSON
      */
     async delete(data) {
-        return this.controller.remove(data).catch(err => err)
+        return this.controller.remove(data)
     }
 
     /**
@@ -115,10 +115,10 @@ class dbDriver {
      * @return JSON Array of matched documents or standard error object
      */
     async find(query, collection) {
-        return this.controller.find(query, collection).catch(err => err)
+        return this.controller.find(query, collection)
     }
     async findOne(query, collection) {
-        return this.controller.findOne(query, collection).catch(err => err)
+        return this.controller.findOne(query, collection)
     }
 
     /**
@@ -128,7 +128,7 @@ class dbDriver {
      * @return JSON of the matched document or standard error object
      */
     async getById(id, collection) {
-        return this.controller.getById(id, collection).catch(err => err)
+        return this.controller.getById(id, collection)
     }
 
     /**
