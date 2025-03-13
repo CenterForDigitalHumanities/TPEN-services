@@ -2,6 +2,8 @@ import Project from "./Project.mjs"
 import Group from "../Group/Group.mjs"
 import User from "../User/User.mjs"
 import dbDriver from "../../database/driver.mjs"
+import fs from "fs"
+import path from "path"
 const database = new dbDriver("mongo")
 
 export default class ProjectFactory {
@@ -147,6 +149,192 @@ export default class ProjectFactory {
     })
     await Promise.all(loadMembers)
     return project
+  }
+
+  /**
+   * Exporting the IIIF manifest for a given project in its current state, ensuring the directory structure is created,
+   * manifest data is assembled, and the final JSON is saved to the filesystem.
+   * 
+   * @param {string} projectId - Project ID for a specific project.
+   * @returns {Object} - Returns the assembled IIIF manifest object.
+   * 
+   * The manifest follows the IIIF Presentation API 3.0 specification and includes:
+   * - Context, ID, Type, Label, Metadata, Items and Annotations
+   * - A dynamically fetched list of manifest items, including canvases and their annotations.
+   * - All elements are embedded in the manifest object.
+   * - Saved output to the file system as 'manifest.json' within the project directory.
+   */
+  static async exportManifest(projectId) {
+    if (!projectId) {
+      throw { status: 400, message: "No project ID provided" }
+    }
+
+    const project = await ProjectFactory.loadAsUser(projectId, null)
+    const dir = `./${projectId}`
+    this.createDirectory(dir)
+
+    const manifest = {
+      "@context": "http://iiif.io/api/presentation/3/context.json",
+      "id": `${process.env.TPENSTATIC}/${projectId}/manifest.json`,
+      type: "Manifest",
+      label: { none: [project.label] },
+      metadata: project.metadata,
+      items: await this.getManifestItems(project, dir),
+    }
+    this.saveToFile(dir, 'manifest.json', manifest)
+    return manifest
+  }
+
+  static createDirectory(dir) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+  }
+
+  static async getManifestItems(project, dir) {
+    return Promise.all(
+      project.layers.map(async (layer) => {
+        try {
+          const canvasUrl = layer.pages[0].canvas
+          const canvasData = await this.fetchJson(canvasUrl)
+          if (!canvasData) return null
+
+          const canvasItems = {
+            id: canvasData.id ?? canvasData["@id"],
+            type: canvasData.type,
+            label: canvasData.label,
+            width: canvasData.width,
+            height: canvasData.height,
+            items: canvasData.items,
+            annotations: await this.getAnnotations(canvasData, project._id, dir),
+          }
+          return canvasItems
+        } catch (error) {
+          console.error(`Error processing layer:`, error)
+          return null
+        }
+      })
+    )
+  }
+
+  static async getAnnotations(canvasData, projectId, dir) {
+    return Promise.all(
+      canvasData.annotations.map(async (annotation, index) => {
+        try {
+          const annotationData = await this.fetchJson(annotation.id)
+          if (!annotationData) return null
+
+          const annotationItems = {
+            id: annotationData.id ?? annotationData["@id"],
+            type: annotationData.type,
+            label: annotationData.label,
+            items: await this.getLines(annotationData, dir),
+            partOf: annotationData.partOf,
+            creator: annotationData.creator,
+            target: annotationData.target,
+          }
+          return annotationItems
+        } catch (error) {
+          console.error(`Error processing annotation:`, error)
+          return null
+        }
+      })
+    )
+  }
+
+  static async getLines(annotationData, dir) {
+    return Promise.all(
+      annotationData.items.map(async (item) => {
+        try {
+          const lineData = await this.fetchJson(item.id)
+          if (!lineData) return null
+
+          const lineItems = {
+            id: lineData.id ?? lineData["@id"],
+            type: lineData.type,
+            motivation: lineData.motivation,
+            body: lineData.body,
+            target: lineData.target,
+            creator: lineData.creator
+          }
+          return lineItems
+        } catch (error) {
+          console.error(`Error processing line item:`, error)
+          return null
+        }
+      })
+    )
+  }
+
+  static async fetchJson(url) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Failed to fetch ${url}`)
+      return response.json()
+    } catch (error) {
+      console.error(`Fetch error: ${error.message}`)
+      return null
+    }
+  }
+
+  static getFileName(url) {
+    const fileName = path.parse(url.substring(url.lastIndexOf("/") + 1)).name
+    return fileName
+  }
+
+  static saveToFile(dir, url, data) {
+    const fileName = this.getFileName(url)
+    fs.writeFileSync(path.join(dir, `${fileName}.json`), JSON.stringify(data, null, 2))
+  }
+
+  /**
+   * Uploads or updates the `manifest.json` file for a given project to a GitHub repository.
+   * 
+   * @param {string} filePath - The local path to the `manifest.json` file to be uploaded.
+   * @param {string} projectId - Project ID for a specific project.
+   * 
+   * The method performs the following steps:
+   * - Reads and encodes the file content in Base64.
+   * - Checks if the `manifest.json` already exists in the GitHub repository to determine if it's a create or update action.
+   * - Uploads the file using the GitHub API, including the correct commit message and SHA for updates.
+   */
+  static async uploadFileToGitHub(filePath, projectId) {
+    const content = fs.readFileSync(filePath, { encoding: "base64" })
+    const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`
+    const token = process.env.GITHUB_TOKEN
+
+    try {
+      let sha = null
+
+      const getResponse = await fetch(manifestUrl, {
+          headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+          },
+      })
+
+      if (getResponse.ok) {
+          const fileData = await getResponse.json()
+          sha = fileData.sha
+      }
+
+      await fetch(manifestUrl, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
+            content: content,
+            branch: process.env.BRANCH,
+            ...(sha && { sha }),
+        }),
+    })
+    } catch (error) {
+      console.error(`Failed to upload ${projectId}/manifest.json:`, error)
+    }
   }
 
   static async loadAsUser(project_id, user_id) {
