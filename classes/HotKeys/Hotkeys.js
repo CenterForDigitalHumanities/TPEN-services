@@ -77,11 +77,6 @@ export default class Hotkeys {
             throw { status: 400, message: "Cannot create a detached or empty set of hotkeys." }
         }
         try {
-            // save isn't working as expected, so we need to manually check for collisions
-            const existing = await database.findOne({ _id: this.data._id }, process.env.TPENHOTKEYS)
-            if (existing) {
-                throw { status: 409, message: "Hotkey already exists" }
-            }
             await database.save(this.data, process.env.TPENHOTKEYS)
         } catch (err) {
             // possible collision with existing hotkey or other error
@@ -125,11 +120,6 @@ export default class Hotkeys {
         }
         try {
             await database.update(this.data, process.env.TPENHOTKEYS)
-            // update isn't working as expected, so we need to manually check for success
-            const existing = await database.findOne({ _id: this.data._id }, process.env.TPENHOTKEYS)
-            if (!existing) {
-                throw { status: 404, message: "Hotkey not found" }
-            }
         } catch (err) {
             // server or driver/mongo error
             throw {
