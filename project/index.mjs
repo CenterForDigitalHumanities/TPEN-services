@@ -11,6 +11,8 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
+import path from "path"
+import fs from "fs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -89,6 +91,55 @@ router
   })
   .all((req, res) => {
     respondWithError(res, 405, "Improper request method. Use POST instead")
+  })
+
+router
+  .route("/:id/manifest")
+  .get(auth0Middleware(), async (req, res) => {
+    const {id} = req.params
+    const user = req.user
+
+    if (!id) {
+      return respondWithError(res, 400, "No TPEN3 ID provided")
+    } else if (!validateID(id)) {
+      return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
+    }
+    
+    try {
+      const project = await ProjectFactory.loadAsUser(id, null)
+      const collaboratorIdList = []
+
+      Object.entries(project.collaborators).map(([id, data]) => {
+        collaboratorIdList.push(id)
+      })
+      
+      if (!collaboratorIdList.includes(user._id)) {
+        return respondWithError(res, 403, "You do not have permission to export this project")
+      }
+      if (!await new Project(id).checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
+        return respondWithError(res, 403, "You do not have permission to export this project")
+      }
+      const manifest = await ProjectFactory.exportManifest(id)
+      const folderPath = path.join(`./${id}`)
+      const files = fs.readdirSync(folderPath)
+      for (const file of files) {
+          const filePath = path.join(folderPath, file)
+          if (fs.lstatSync(filePath).isFile()) {
+              await ProjectFactory.uploadFileToGitHub(filePath, `${id}`)
+          }
+      }
+      fs.rmSync(folderPath, {recursive: true, force: true})
+      res.status(200).json(manifest)
+    } catch (error) {
+      return respondWithError(
+        res,
+        error.status || error.code || 500,
+        error.message ?? "An error occurred while fetching the project data."
+      )
+    }
+  })
+  .all((_, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
   })
 
 router
