@@ -108,8 +108,8 @@ export default class Hotkeys {
         } catch (err) {
             // server or driver/mongo error
             throw {
-                status: err.status || 500,
-                message: err.message || "An error occurred while updating the hotkey"
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while updating the hotkey"
             }
         }
         return this.data
@@ -133,8 +133,8 @@ export default class Hotkeys {
         } catch (err) {
             // server or driver/mongo error
             throw {
-                status: err.status || 500,
-                message: err.message || "An error occurred while updating the hotkey"
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while updating the hotkey"
             }
         }
         return this.data
@@ -154,8 +154,8 @@ export default class Hotkeys {
         } catch (err) {
             // server or driver/mongo error
             throw {
-                status: err.status || 500,
-                message: err.message || "An error occurred while deleting the hotkey"
+                status: err.status ?? 500,
+                message: err.message ?? "An error occurred while deleting the hotkey"
             }
         }
         return true
