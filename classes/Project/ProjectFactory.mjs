@@ -413,7 +413,7 @@ export default class ProjectFactory {
       },
       {
         $set: {
-          "options.hotkeys": { $arrayElemAt: ["$hotkeys.hotkeys", 0] }
+          "options.hotkeys": { $arrayElemAt: ["$hotkeys.symbols", 0] }
         }
       },
       {
