@@ -109,9 +109,9 @@ export default class Project {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
 
-  parseRoles(rolesString) {
+  parseRoles(rolesString = "") {
     if (Array.isArray(rolesString)) rolesString = rolesString.join(" ")
-    rolesString ??= "VIEWER"
+    if (rolesString.length === 0) rolesString = "VIEWER"
     if (typeof rolesString !== "string") throw new Error("Roles must be a string or an array of strings")
     const roles = rolesString?.toUpperCase().split(" ")
     return roles

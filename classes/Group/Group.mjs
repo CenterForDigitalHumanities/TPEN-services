@@ -77,6 +77,9 @@ export default class Group {
                 message: "Member not found"
             }
         }
+        if (!roles || roles.length === 0) {
+            throw new Error("Roles must be provided and cannot be empty")
+        }
         roles = washRoles(roles)
         this.data.members[memberId].roles = roles
         return this

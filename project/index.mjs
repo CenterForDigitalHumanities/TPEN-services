@@ -180,7 +180,7 @@ router
     const user = req.user
     const { id: projectId } = req.params
     const { email, roles } = req.body
-    // roles is set to ["CONTRIBUTOR"] if undefined within Project.sendInvite() > parseRoles()
+    // roles is set to ["VIEWER"] if undefined within parseRoles()
 
     if (!user) {
       return respondWithError(res, 401, "Unauthenticated request")
