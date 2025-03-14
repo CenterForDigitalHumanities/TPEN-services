@@ -26,7 +26,7 @@ export default class Project {
     }
 
     try {
-      return database.save(payload, "projects")
+      return database.save(payload, "projects").then((resp) => this.data = resp )
     } catch (err) {
       throw {
         status: err.status || 500,
