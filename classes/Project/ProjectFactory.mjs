@@ -87,27 +87,23 @@ export default class ProjectFactory {
   }
 
   static async fromManifestURL(manifestId, creator) {
-    return ProjectFactory.loadManifest(manifestId)
-      .then(async (manifest) => {
-        return await ProjectFactory.DBObjectFromManifest(manifest)
-      })
-      .then(async (project) => {
-        const projectObj = new Project()
-        const group = await Group.createNewGroup(
-          creator,
-          {
-            label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
-            members: { [creator]: { roles: [] } }
-          })
-          .then((group) => group._id)
-        return await projectObj.create({ ...project, creator, group })
-      })
-      .catch((err) => {
-        throw {
-          status: err.status ?? 500,
-          message: err.message ?? "Internal Server Error"
-        }
-      })
+    try {
+      const manifest = await ProjectFactory.loadManifest(manifestId)
+      const project = await ProjectFactory.DBObjectFromManifest(manifest)
+      const newGroup = Group.createNewGroup(
+        creator,
+        {
+          label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
+          members: { [creator]: { roles: ["OWNER", "LEADER"] } }
+        })
+      const group = await newGroup.save().then((g) => g._id)
+      const newProject = new Project()
+      await newProject.create({ ...project, creator, group })
+      return ProjectFactory.forInterface(newProject.data)
+    } catch (error) {
+      console.error("Error in fromManifestURL:", error)
+      throw { status: 500, message: "Failed to create project from manifest URL" }
+    }
   }
 
   /**
@@ -307,31 +303,31 @@ export default class ProjectFactory {
       let sha = null
 
       const getResponse = await fetch(manifestUrl, {
-          headers: {
-              'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-          },
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
       })
 
       if (getResponse.ok) {
-          const fileData = await getResponse.json()
-          sha = fileData.sha
+        const fileData = await getResponse.json()
+        sha = fileData.sha
       }
 
       await fetch(manifestUrl, {
         method: 'PUT',
         headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
-            content: content,
-            branch: process.env.BRANCH,
-            ...(sha && { sha }),
+          message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
+          content: content,
+          branch: process.env.BRANCH,
+          ...(sha && { sha }),
         }),
-    })
+      })
     } catch (error) {
       console.error(`Failed to upload ${projectId}/manifest.json:`, error)
     }

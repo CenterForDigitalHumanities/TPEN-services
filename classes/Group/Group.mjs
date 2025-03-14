@@ -199,6 +199,8 @@ export default class Group {
     }
 
     async validateGroup() {
+        console.log("Validating group")
+        console.log(this.data)
         if (!this.data.creator) {
             throw {
                 status: 400,
@@ -208,7 +210,9 @@ export default class Group {
 
         //remove members with empty or invalid roles
         for (const memberId in this.data.members) {
-            if (!this.data.members[memberId].roles || !Array.isArray(this.data.members[memberId].roles)) {
+            if (!this.data.members[memberId].roles 
+                || !Array.isArray(this.data.members[memberId].roles)
+                || (this.data.members[memberId].roles.length === 0)) {
                 delete this.data.members[memberId]
             }
         }
@@ -238,14 +242,14 @@ export default class Group {
         }
     }
 
-    static async createNewGroup(creator, payload) {
+    static createNewGroup(creator, payload) {
         const { customRoles, label, members } = payload
         const newGroup = new Group()
         Object.assign(newGroup.data, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
         newGroup.validateGroup()
-        return await newGroup.save()
+        return newGroup
     }
 
     static defaultRoles = {
