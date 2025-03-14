@@ -842,7 +842,7 @@ router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
     const project = new Project(projectId)
     if (await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
       const H = await Hotkeys.getByProjectId(projectId)
-      res.status(200).json(H.hotkeys)
+      res.status(200).json(H.symbols)
       return
     }
     return respondWithError(res, 403, "You do not have permission to view hotkeys for this project")
