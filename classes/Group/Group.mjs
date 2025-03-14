@@ -199,8 +199,6 @@ export default class Group {
     }
 
     async validateGroup() {
-        console.log("Validating group")
-        console.log(this.data)
         if (!this.data.creator) {
             throw {
                 status: 400,
