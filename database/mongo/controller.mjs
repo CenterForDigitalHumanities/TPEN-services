@@ -319,11 +319,29 @@ class DatabaseController {
    * @param data JSON from an HTTP DELETE request.  It must contain an id.
    * @return The delete result JSON or error JSON
    */
-  async remove(id) {
-    err_out._dbaction = "deleteOne"
-    err_out.message = "Not yet implemented.  Stay tuned."
-    err_out.status = 501
-    throw err_out
+  async remove(id, collection) {
+    try {
+      if (!collection) {
+        err_out.message = `Cannot figure which collection for object'${id}'`
+        err_out.status = 400
+        throw err_out
+      }
+      const obj_id = id.split("/").pop()
+      const filter = {_id: obj_id}
+      const result = await this.db.collection(collection).deleteOne(filter)
+      if (result?.deletedCount === 0) {
+        err_out.message = `id '${obj_id}' Not Found`
+        err_out.status = 404
+        throw err_out
+      }
+      return result
+    } catch (err) {
+      // Specifically account for unexpected mongo things.
+      if (!err?.message) err.message = err.toString()
+      if (!err?.status) err.status = 500
+      if (!err?._dbaction) err._dbaction = "deleteOne"
+      throw err
+    }
   }
 
   /**

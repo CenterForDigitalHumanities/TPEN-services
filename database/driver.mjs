@@ -105,8 +105,8 @@ class dbDriver {
      * @param data JSON from an HTTP DELETE request.  It must contain an id.
      * @return The delete result JSON or error JSON
      */
-    async delete(data) {
-        return this.controller.remove(data)
+    async delete(data, collection) {
+        return this.controller.remove(data, collection)
     }
 
     /**
