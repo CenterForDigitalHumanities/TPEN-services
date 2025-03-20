@@ -158,6 +158,11 @@ export default class Project {
     return await this.update()
   }
 
+  async updateLayers(layers) {
+    this.data.layers = layers
+    return await this.update()
+  }
+
   async update() {
     return await database.update(this.data, process.env.TPENPROJECTS)
   }
