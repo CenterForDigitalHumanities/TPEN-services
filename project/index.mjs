@@ -484,32 +484,6 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 })
 
-// Update Project Layers
-router.route("/:projectId/layers").put(auth0Middleware(), async (req, res) => {
-  const { projectId } = req.params
-  const layers = req.body
-  const user = req.user
-  if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
-  }
-
-  if (!layers || !Array.isArray(layers)) {
-    return respondWithError(res, 400, "Invalid layers provided. Expected an array of layer objects.")
-  }
-
-  try {
-    const projectObj = new Project(projectId)
-
-    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ORDER, ENTITIES.LAYER))) {
-  }
-
-    const response = await projectObj.updateLayers(layers)
-    res.status(200).json(response)
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating project layers.")
-  }
-})
-
 // Add a New Layer
 router.route("/:projectId/layers").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
