@@ -150,7 +150,7 @@ export default class Project {
         const layerAnnotationCollection = {
             "@id": Date.now(),
             "@type": "Layer",
-            label: layerLabel,
+            label: layerLabel ?? `${this.data.label} Layer ${this.data.layers.length + 1}`,
             pages: await Promise.all(data.map(async (canvas) => {
                 const annotationsItems = await Promise.all(canvas.annotations.map(async (annotation) => {
                     const response = await fetch(annotation.id)
@@ -159,7 +159,7 @@ export default class Project {
                         id: annotationData.id ?? annotationData["@id"],
                         type: annotationData.type,
                         label: annotationData.label,
-                        items: annotationData.items,
+                        items: [],
                         creator: annotationData.creator,
                         target: annotationData.target,
                         partOf: [{
