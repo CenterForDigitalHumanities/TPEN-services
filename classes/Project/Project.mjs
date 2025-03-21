@@ -140,6 +140,51 @@ export default class Project {
     }
   }
 
+  async addLayer(layer) {
+    const layerLabel = layer.label
+    const canvases = layer.canvases
+
+    try {
+        const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
+        const data = await Promise.all(responses.map(response => response.json()))
+        const layerAnnotationCollection = {
+            "@id": Date.now(),
+            "@type": "Layer",
+            label: layerLabel,
+            pages: await Promise.all(data.map(async (canvas) => {
+                const annotationsItems = await Promise.all(canvas.annotations.map(async (annotation) => {
+                    const response = await fetch(annotation.id)
+                    const annotationData = await response.json()
+                    const annotationItems = {
+                        id: annotationData.id ?? annotationData["@id"],
+                        type: annotationData.type,
+                        label: annotationData.label,
+                        items: annotationData.items,
+                        creator: annotationData.creator,
+                        target: annotationData.target,
+                        partOf: [{
+                            id: Date.now(),
+                            type: "AnnotationCollection",
+                            label: annotationData.label,
+                            total: annotationData.items.length,
+                            first: annotationData.items[0].id,
+                            last: annotationData.items[annotationData.items.length - 1].id,
+                            creator: annotationData.creator
+                        }],
+                        next: annotationData.next,
+                        prev: annotationData.prev
+                    }
+                    return annotationItems
+                }))
+                return annotationsItems
+            }))
+        }
+        return layerAnnotationCollection
+    } catch (error) {
+        console.error('Error fetching data:', error)
+    }
+}
+
 /**
  * Asynchronously updates the metadata of the current object and persists the changes.
  *

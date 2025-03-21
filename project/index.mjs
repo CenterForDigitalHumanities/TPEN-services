@@ -510,6 +510,33 @@ router.route("/:projectId/layers").put(auth0Middleware(), async (req, res) => {
   }
 })
 
+// Add a New Layer
+router.route("/:projectId/layers").post(auth0Middleware(), async (req, res) => {
+  const { projectId } = req.params
+  const layer = req.body
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+
+  if (!layer) {
+    return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
+  }
+
+  try {
+    const project = new Project(projectId)
+
+    if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
+      return respondWithError(res, 403, "You do not have permission to add layers to this project.")
+    }
+
+    const response = await project.addLayer(layer)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
+  }
+})
+
 // Update Project Metadata
 router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
