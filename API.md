@@ -208,11 +208,11 @@ The User requesting this action must be the current owner of the project. The <k
 
 - **Responses**:
 
-        - **200**: Custom roles set successfully
-        - **400**: Invalid request, validation errors
-        - **401**: Unauthenticated request
-        - **403**: Permission denied
-        - **500**: Server error
+    - **200**: Custom roles set successfully
+    - **400**: Invalid request, validation errors
+    - **401**: Unauthenticated request
+    - **403**: Permission denied
+    - **500**: Server error
 
 The User requesting this action must have permissions to update roles. Default roles cannot be modified using this endpoint. Custom roles can be complicated and there is more detailed description of their use in the [Cookbook](#).
 
