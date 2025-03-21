@@ -179,6 +179,8 @@ export default class Project {
                 return annotationsItems
             }))
         }
+        this.data.layers.push(layerAnnotationCollection)
+        this.updateLayers(this.data.layers)
         return layerAnnotationCollection
     } catch (error) {
         console.error('Error fetching data:', error)
