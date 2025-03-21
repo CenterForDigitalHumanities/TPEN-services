@@ -4,6 +4,7 @@ import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
 import User from "../User/User.mjs"
 import { createHash } from "node:crypto"
 import Group from "../Group/Group.mjs"
+import path from "path"
 
 const database = new dbDriver("mongo")
 
@@ -166,6 +167,15 @@ export default class Project {
                             id: Date.now(),
                             type: "AnnotationCollection",
                             label: annotationData.label,
+                            items: canvas.annotations.map(item => {
+                                return {
+                                    id: item.id,
+                                    type: "AnnotationPage",
+                                    label: path.parse(item.id.substring(item.id.lastIndexOf("/") + 1)).name,
+                                    target: annotationData.target
+                                  }
+                                }
+                            ),
                             total: annotationData.items.length,
                             first: annotationData.items[0].id,
                             last: annotationData.items[annotationData.items.length - 1].id,
