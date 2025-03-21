@@ -4,11 +4,8 @@ This document provides an overview of the available routes in the TPEN Services 
 
 ## Base URL
 
-```
-https://api.t-pen.org
-
-<development> https://dev.api.t-pen.org
-```
+- **Production**: [https://api.t-pen.org](https://api.t-pen.org)
+- **Development**: [https://dev.api.t-pen.org](https://dev.api.t-pen.org)
 
 ## Endpoints
 
