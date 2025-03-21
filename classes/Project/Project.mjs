@@ -164,7 +164,7 @@ export default class Project {
                         creator: annotationData.creator,
                         target: annotationData.target,
                         partOf: [{
-                            id: Date.now(),
+                            id: `Temp-${Date.now()}`,
                             type: "AnnotationCollection",
                             label: annotationData.label,
                             items: canvas.annotations.map(item => {
