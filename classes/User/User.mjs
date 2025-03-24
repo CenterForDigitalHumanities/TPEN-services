@@ -151,7 +151,7 @@ export default class User {
     const updatedUser = await database.update({
       ...previousUser,
       profile: publicProfile
-    })
+    }, "User")
     return updatedUser
   }
 }

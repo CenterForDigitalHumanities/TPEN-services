@@ -9,7 +9,7 @@ import DatabaseController from "../controller.mjs"
 const database = new DatabaseController()
 const TIME_OUT = process.env.DB_TEST_TIMEOUT ?? 6500
 
-let test_proj = {"@type": "Project", name: "Test Project"}
+let test_proj = { name: "Test Project"}
 let test_group = {"@type": "Group", name: "Test Group"}
 let test_user = {"@type": "User", name: "Test User"}
 
@@ -21,7 +21,7 @@ afterAll(async () => {
   return await database.close()
 }, 10000)
 
-describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
+describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "connects for an active connection",
     async () => {
@@ -34,7 +34,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "creates a new project",
     async () => {
-      const result = await database.save(test_proj)
+      const result = await database.save(test_proj, "Project")
       test_proj["_id"] = result["_id"]
       expect(result["_id"]).toBeTruthy()
     },
@@ -63,7 +63,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
     "updates an existing project",
     async () => {
       test_proj.name = "Test Project -- Updated"
-      const result = await database.update(test_proj)
+      const result = await database.update(test_proj, "Project")
       expect(result["_id"]).toBeTruthy()
     },
     TIME_OUT
@@ -90,7 +90,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "Finds matching projects by query",
     async () => {
-      const result = await database.find(test_proj)
+      const result = await database.find(test_proj, "Project")
       expect(result[0]["_id"]).toBe(test_proj["_id"])
     },
     TIME_OUT
@@ -116,7 +116,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it("Deletes an object with the provided id", async () => {
     expect(true).toBeTruthy()
   })
-  it("Validates a possible id string", () => {
+  it.skip("Validates a possible id string", () => {
     expect(database.isValidId(123)).toBeTruthy()
     expect(database.isValidId(-123)).toBeTruthy()
     expect(database.isValidId("123")).toBeTruthy()
@@ -139,7 +139,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
     expect(result).toBe(true)
   })
   it("creates a new project", async () => {
-    const result = await database.save(test_proj)
+    const result = await database.save(test_proj, "Project")
     test_proj["_id"] = result["_id"]
     expect(result["_id"]).toBeTruthy()
   })
@@ -156,7 +156,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
 
   it("updates an existing project", async () => {
     test_proj.name = "Test Project -- Updated"
-    const result = await database.update(test_proj)
+    const result = await database.update(test_proj, "Project")
     expect(result["_id"]).toBeTruthy()
   })
   it("updates an existing group", async () => {
@@ -171,7 +171,7 @@ describe.skip("Mongo Database Unit Functions. #mongo_unit #db", () => {
   })
 
   it("Finds matching projects by query", async () => {
-    const result = await database.find(test_proj)
+    const result = await database.find(test_proj, "Project")
     expect(result[0]["_id"]).toBe(test_proj["_id"])
   })
   it("Finds matching groups by query", async () => {
