@@ -142,16 +142,17 @@ export default class Project {
   }
 
   async addLayer(layer) {
-    const layerLabel = layer.label
+    const label = asLanguageMap(layer.label ?? `${this.data.label} Layer ${this.data.layers.length + 1}`)
     const canvases = layer.canvases
 
     try {
       const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
       const data = await Promise.all(responses.map(response => response.json()))
       const layerAnnotationCollection = {
-        "@id": Date.now(),
-        "@type": "Layer",
-        label: layerLabel ?? `${this.data.label} Layer ${this.data.layers.length + 1}`,
+        "@context": "http://www.w3.org/ns/anno.jsonld",
+        "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+        type: "AnnotationCollection",
+        label,
         pages: await Promise.all(data.map(async (canvas) => {
           const annotationsItems = await Promise.all(canvas.annotations.map(async (annotation) => {
           const response = await fetch(annotation.id)
@@ -247,4 +248,12 @@ export default class Project {
       this.data = resp
     })
   }
+}
+
+function asLanguageMap(value) {
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value
+  }
+
+  return Array.isArray(value) ? { none: value } : { none: [value] }
 }
