@@ -176,9 +176,9 @@ export default class Project {
                                   }
                                 }
                             ),
-                            total: annotationData.items.length,
-                            first: annotationData.items[0].id,
-                            last: annotationData.items[annotationData.items.length - 1].id,
+                            total: canvas.annotations.length,
+                            first: canvas.annotations[0].id,
+                            last: canvas.annotations[canvas.annotations.length - 1].id,
                             creator: annotationData.creator
                         }],
                         next: annotationData.next,
