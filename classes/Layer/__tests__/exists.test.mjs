@@ -1,4 +1,4 @@
-import { Layer } from "../Layer.mjs"
+import Layer from "../Layer.mjs"
 
 describe('Layer Class looks how we expect it to. #Layer_exists_unit', () => {
   it('Imports Layer', () => {
