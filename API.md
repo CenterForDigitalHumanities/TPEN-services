@@ -35,7 +35,7 @@ Endpoints marked with a 🔐 requiring authentication expect a valid JWT token i
 
 - **Responses**:
 
-    - **200**: Project created successfully
+    - **201**: Project created successfully
     - **400**: Project creation failed, validation errors
     - **401**: Unauthorized
     - **500**: Server error
@@ -55,7 +55,7 @@ Endpoints marked with a 🔐 requiring authentication expect a valid JWT token i
 
 - **Responses**:
 
-    - **200**: Project created successfully
+    - **201**: Project created successfully
     - **400**: Project creation failed, validation errors
     - **401**: Unauthorized
     - **500**: Server error
