@@ -19,7 +19,10 @@ export default class Layer {
     }
 
     async addLayer(layer) {
-        const layerLabel = layer.label
+        const label = asLanguageMap(
+            layer?.label ?? 
+            `${this.data?.label ?? "Default"} Layer ${(this.data?.layers?.length ?? 0) + 1}`
+        )
         const canvases = layer.canvases
 
         await this.#load()
@@ -28,9 +31,12 @@ export default class Layer {
           const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
           const data = await Promise.all(responses.map(response => response.json()))
           const layerAnnotationCollection = {
-            "@id": Date.now(),
-            label: { none : [ layerLabel ?? `New Layer - ${this.layer.length + 1}` ] },
-            pages: await Promise.all(data.map(async (canvas) => {
+
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+            type: "AnnotationCollection",
+            label,
+            items: await Promise.all(data.map(async (canvas) => {
               const annotationsItems = await Promise.all(canvas.annotations.map(async (annotation) => {
               const response = await fetch(annotation.id)
               const annotationData = await response.json()
@@ -82,7 +88,7 @@ export default class Layer {
     
     async deleteLayer(layerId) {
         await this.#load()
-        this.layer = this.layer.filter(layer => layer["@id"] !== parseInt(layerId))
+        this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
         this.data.layers = this.layer
         return await this.update()
     }
@@ -97,4 +103,11 @@ export default class Layer {
             this.layer = resp.layers
         })
     }
+}
+
+function asLanguageMap(value) {
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      return value
+    }
+    return Array.isArray(value) ? { none: value } : { none: [value] }
 }
