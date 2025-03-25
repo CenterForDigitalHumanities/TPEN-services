@@ -19,14 +19,10 @@ export default class Layer {
     }
 
     async addLayer(layer) {
-        const label = asLanguageMap(
-            layer?.label ?? 
-            `${this.data?.label ?? "Default"} Layer ${(this.data?.layers?.length ?? 0) + 1}`
-        )
+        await this.#load()
+        const label = asLanguageMap(layer?.label ?? `${this.data.label ?? "Default"} - Layer ${(this.data.layers.length ?? 0) + 1}`)
         const canvases = layer.canvases
 
-        await this.#load()
-    
         try {
           const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
           const data = await Promise.all(responses.map(response => response.json()))
