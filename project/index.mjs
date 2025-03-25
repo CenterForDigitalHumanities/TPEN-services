@@ -6,6 +6,7 @@ import auth0Middleware from "../auth/index.mjs"
 import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
 import validateURL from "../utilities/validateURL.mjs"
 import Project from "../classes/Project/Project.mjs"
+import Layer from "../classes/Layer/Layer.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
@@ -504,7 +505,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
       return respondWithError(res, 403, "You do not have permission to add layers to this project.")
     }
 
-    const response = await project.addLayer(layer)
+    const response = await new Layer(projectId).addLayer(layer)
     res.status(200).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
@@ -526,7 +527,7 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
     }
 
-    const response = await project.deleteLayer(layerId)
+    const response = await new Layer(projectId).deleteLayer(layerId)
     res.status(200).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
