@@ -20,7 +20,7 @@ export default class Layer {
 
     async addLayer(layer) {
         await this.#load()
-        const label = asLanguageMap(layer?.label ?? `${this.data.label ?? "Default"} - Layer ${(this.data.layers.length ?? 0) + 1}`)
+        const label = asLanguageMap(layer?.label ?? `${this.data.label ?? "Default"} - Layer ${Date.now()}`)
         const canvases = layer.canvases
 
         try {
@@ -76,6 +76,24 @@ export default class Layer {
     async deleteLayer(layerId) {
         await this.#load()
         this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
+        this.data.layers = this.layer
+        return await this.update()
+    }
+
+    async updatePages(layerId, pages) {
+        await this.#load()
+        this.layer = this.layer.map(layer => {
+            if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
+            {
+                layer.items = pages.map((page) => {
+                    return layer.items.find((item) => page === (item.id ?? item["@id"]))
+                }).filter(Boolean)
+                layer.total = pages.length
+                layer.first = pages[0]
+                layer.last = pages[pages.length - 1]
+            }
+            return layer
+        })
         this.data.layers = this.layer
         return await this.update()
     }
