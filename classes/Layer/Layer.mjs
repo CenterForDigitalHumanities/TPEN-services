@@ -24,15 +24,18 @@ export default class Layer {
         const canvases = layer.canvases
 
         try {
-          const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
-          const data = await Promise.all(responses.map(response => response.json()))
-          const layerAnnotationCollection = {
+            const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
+            const data = await Promise.all(responses.map(response => response.json()))
+            
+            const layerAnnotationCollection = {
+              "@context": "http://www.w3.org/ns/anno.jsonld",
+              "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+              type: "AnnotationCollection",
+              label,
+              items: []
+            }
 
-            "@context": "http://www.w3.org/ns/anno.jsonld",
-            "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
-            type: "AnnotationCollection",
-            label,
-            items: await Promise.all(data.map(async (canvas) => {
+            await Promise.all(data.map(async (canvas) => {
               const annotationsItems = await Promise.all(canvas.annotations.map(async (annotation) => {
               const response = await fetch(annotation.id)
               const annotationData = await response.json()
@@ -41,40 +44,28 @@ export default class Layer {
                 type: annotationData.type,
                 label: annotationData.label,
                 items: [],
-                creator: annotationData.creator,
                 target: annotationData.target,
                 partOf: [{
-                  id: `Temp-${Date.now()}`,
-                  type: "AnnotationCollection",
+                  id: `${database.reserveId()}`,
                   label: annotationData.label,
-                  items: canvas.annotations.map(item => {
-                    return {
-                      id: item.id,
-                      type: "AnnotationPage",
-                      label: path.parse(item.id.substring(item.id.lastIndexOf("/") + 1)).name,
-                      target: annotationData.target
-                      }
-                    }
-                  ),
-                  total: canvas.annotations.length,
-                  first: canvas.annotations[0].id,
-                  last: canvas.annotations[canvas.annotations.length - 1].id,
-                  creator: annotationData.creator
                 }],
                 next: annotationData.next,
                 prev: annotationData.prev
               }
+              layerAnnotationCollection.creator = annotationData.creator
               return annotationItems
+              }))
+              layerAnnotationCollection.items.push(...annotationsItems)
             }))
-            return annotationsItems
-          }))
+            layerAnnotationCollection.total = layerAnnotationCollection.items.length
+            layerAnnotationCollection.first = layerAnnotationCollection.items[0].id
+            layerAnnotationCollection.last = layerAnnotationCollection.items[layerAnnotationCollection.items.length - 1].id          
+            this.layer.push(layerAnnotationCollection)
+            this.updateLayer(this.layer)
+            return layerAnnotationCollection
+        } catch (error) {
+            console.error('Error fetching data:', error)
         }
-        this.layer.push(layerAnnotationCollection)
-        this.updateLayer(this.layer)
-        return layerAnnotationCollection
-      } catch (error) {
-          console.error('Error fetching data:', error)
-      }
     }
 
     async updateLayer(layer) {
