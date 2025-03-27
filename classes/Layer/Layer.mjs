@@ -118,6 +118,19 @@ export default class Layer {
         this.data.layers = this.layer
         return await this.update()
     }
+
+    async updateLayerMetadata(layerId, label) {
+        await this.#load()
+        this.layer = this.layer.map(layer => {
+            if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
+            {
+                layer.label = label.label
+            }
+            return layer
+        })
+        this.data.layers = this.layer
+        return await this.update()
+    }
     
     async update() {
         return await database.update(this.data, process.env.TPENPROJECTS)
