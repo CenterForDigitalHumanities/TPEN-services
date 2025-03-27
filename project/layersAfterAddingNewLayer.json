@@ -1,0 +1,162 @@
+[
+   {
+      "@id":1743099227843,
+      "@type":"Layer",
+      "pages":[
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-1.json",
+            "type":"AnnotationPage",
+            "canvas":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+            "lines":[
+               
+            ]
+         },
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-3.json",
+            "type":"AnnotationPage",
+            "canvas":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+            "lines":[
+               
+            ]
+         }
+      ]
+   },
+   {
+      "@id":1743099227843,
+      "@type":"Layer",
+      "pages":[
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-2.json",
+            "type":"AnnotationPage",
+            "canvas":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-2.json",
+            "lines":[
+               
+            ]
+         },
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-4.json",
+            "type":"AnnotationPage",
+            "canvas":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-2.json",
+            "lines":[
+               
+            ]
+         }
+      ]
+   },
+   {
+      "@context":"http://www.w3.org/ns/anno.jsonld",
+      "id":"https://devstore.rerum.io/v1/id/67e595f1dbc0d76c277ff6fd",
+      "type":"AnnotationCollection",
+      "label":{
+         "none":[
+            "Bryan's New Layer"
+         ]
+      },
+      "items":[
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-1.json",
+            "type":"AnnotationPage",
+            "label":{
+               "en":[
+                  "Page 1 Lines Transcribed"
+               ]
+            },
+            "items":[
+               
+            ],
+            "target":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+            "partOf":[
+               {
+                  "id":"67e595f1dbc0d76c277ff6ff",
+                  "label":{
+                     "en":[
+                        "Page 1 Lines Transcribed"
+                     ]
+                  }
+               }
+            ],
+            "next":"https://tpen-project-examples.habesoftware.app/transcription-project/page-2.json",
+            "prev":null
+         },
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-3.json",
+            "type":"AnnotationPage",
+            "label":{
+               "en":[
+                  "Page 1 Lines Translated"
+               ]
+            },
+            "items":[
+               
+            ],
+            "target":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+            "partOf":[
+               {
+                  "id":"67e595f1dbc0d76c277ff6fe",
+                  "label":{
+                     "en":[
+                        "Page 1 Lines Translated"
+                     ]
+                  }
+               }
+            ],
+            "next":"https://tpen-project-examples.habesoftware.app/transcription-project/page-4.json",
+            "prev":null
+         },
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-2.json",
+            "type":"AnnotationPage",
+            "label":{
+               "en":[
+                  "Page 2 Lines Transcribed"
+               ]
+            },
+            "items":[
+               
+            ],
+            "target":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-2.json",
+            "partOf":[
+               {
+                  "id":"67e595f1dbc0d76c277ff700",
+                  "label":{
+                     "en":[
+                        "Page 2 Lines Transcribed"
+                     ]
+                  }
+               }
+            ],
+            "next":null,
+            "prev":"https://tpen-project-examples.habesoftware.app/transcription-project/page-1.json"
+         },
+         {
+            "id":"https://tpen-project-examples.habesoftware.app/transcription-project/page-4.json",
+            "type":"AnnotationPage",
+            "label":{
+               "en":[
+                  "Page 2 Lines Translated"
+               ]
+            },
+            "items":[
+               
+            ],
+            "target":"https://tpen-project-examples.habesoftware.app/transcription-project/canvas-2.json",
+            "partOf":[
+               {
+                  "id":"67e595f1dbc0d76c277ff701",
+                  "label":{
+                     "en":[
+                        "Page 2 Lines Translated"
+                     ]
+                  }
+               }
+            ],
+            "next":null,
+            "prev":"https://tpen-project-examples.habesoftware.app/transcription-project/page-3.json"
+         }
+      ],
+      "creator":"thehabes@habesoftware.rocks",
+      "total":4,
+      "first":"https://tpen-project-examples.habesoftware.app/transcription-project/page-1.json",
+      "last":"https://tpen-project-examples.habesoftware.app/transcription-project/page-4.json"
+   }
+]
