@@ -85,9 +85,30 @@ export default class Layer {
         this.layer = this.layer.map(layer => {
             if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
             {
-                layer.items = pages.map((page) => {
-                    return layer.items.find((item) => page === (item.id ?? item["@id"]))
-                }).filter(Boolean)
+                layer.items = pages
+                .map((page, index) => {
+                    const itemIndex = layer.items.findIndex((item) => page === (item.id ?? item["@id"]))
+                    if (itemIndex !== -1 && itemIndex !== index) {
+                    const item = layer.items[itemIndex]
+                        return {
+                            id: item.id ?? item["@id"],
+                            type: item.type,
+                            label: item.label,
+                            items: item.items,
+                            target: item.target,
+                            partOf: [{
+                            id: `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+                            label: item.label,
+                            }],
+                            next: item.next,
+                            prev: item.prev
+                        }
+                    }
+                    else {
+                        return layer.items[itemIndex]
+                    }
+                })
+                .filter(Boolean)
                 layer.total = pages.length
                 layer.first = pages[0]
                 layer.last = pages[pages.length - 1]
