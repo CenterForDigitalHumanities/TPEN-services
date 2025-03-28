@@ -1,5 +1,4 @@
 import dbDriver from "../../database/driver.mjs"
-import path from "path"
 
 const database = new dbDriver("mongo")
 
@@ -20,7 +19,7 @@ export default class Layer {
 
     async addLayer(layer) {
         await this.#load()
-        const label = asLanguageMap(layer?.label ?? `${this.data.label ?? "Default"} - Layer ${Date.now()}`)
+        const label = layer?.label ?? `${this.data.label ?? "Default"} - Layer ${Date.now()}`
         const canvases = layer.canvases
 
         try {
@@ -28,11 +27,9 @@ export default class Layer {
             const data = await Promise.all(responses.map(response => response.json()))
             
             const layerAnnotationCollection = {
-              "@context": "http://www.w3.org/ns/anno.jsonld",
               "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
-              type: "AnnotationCollection",
               label,
-              items: []
+              pages: []
             }
 
             await Promise.all(data.map(async (canvas) => {
@@ -40,26 +37,15 @@ export default class Layer {
               const response = await fetch(annotation.id)
               const annotationData = await response.json()
               const annotationItems = {
-                id: annotationData.id ?? annotationData["@id"],
-                type: annotationData.type,
-                label: annotationData.label,
+                id: `temp${database.reserveId()}`,
+                label: Object.values(annotationData.label)[0][0],
                 items: [],
                 target: annotationData.target,
-                partOf: [{
-                  id: `${database.reserveId()}`,
-                  label: annotationData.label,
-                }],
-                next: annotationData.next,
-                prev: annotationData.prev
               }
-              layerAnnotationCollection.creator = annotationData.creator
               return annotationItems
               }))
-              layerAnnotationCollection.items.push(...annotationsItems)
-            }))
-            layerAnnotationCollection.total = layerAnnotationCollection.items.length
-            layerAnnotationCollection.first = layerAnnotationCollection.items[0].id
-            layerAnnotationCollection.last = layerAnnotationCollection.items[layerAnnotationCollection.items.length - 1].id          
+              layerAnnotationCollection.pages.push(...annotationsItems)
+            }))        
             this.layer.push(layerAnnotationCollection)
             this.updateLayer(this.layer)
             return layerAnnotationCollection
@@ -73,64 +59,61 @@ export default class Layer {
         return await this.update()
     }
     
-    async deleteLayer(layerId) {
-        await this.#load()
-        this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
-        this.data.layers = this.layer
-        return await this.update()
-    }
+    // async deleteLayer(layerId) {
+    //     await this.#load()
+    //     this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
+    //     this.data.layers = this.layer
+    //     return await this.update()
+    // }
 
-    async updatePages(layerId, pages) {
-        await this.#load()
-        this.layer = this.layer.map(layer => {
-            if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
-            {
-                layer.items = pages
-                .map((page, index) => {
-                    const itemIndex = layer.items.findIndex((item) => page === (item.id ?? item["@id"]))
-                    if (itemIndex !== -1 && itemIndex !== index) {
-                    const item = layer.items[itemIndex]
-                        return {
-                            id: item.id ?? item["@id"],
-                            type: item.type,
-                            label: item.label,
-                            items: item.items,
-                            target: item.target,
-                            partOf: [{
-                            id: `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
-                            label: item.label,
-                            }],
-                            next: item.next,
-                            prev: item.prev
-                        }
-                    }
-                    else {
-                        return layer.items[itemIndex]
-                    }
-                })
-                .filter(Boolean)
-                layer.total = pages.length
-                layer.first = pages[0]
-                layer.last = pages[pages.length - 1]
-            }
-            return layer
-        })
-        this.data.layers = this.layer
-        return await this.update()
-    }
+    // async updatePages(layerId, pages) {
+    //     await this.#load()
+    //     this.layer = this.layer.map(layer => {
+    //         if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
+    //         {
+    //             layer.items = pages
+    //             .map((page, index) => {
+    //                 const itemIndex = layer.items.findIndex((item) => page === (item.id ?? item["@id"]))
+    //                 if (itemIndex !== -1 && itemIndex !== index) {
+    //                 const item = layer.items[itemIndex]
+    //                     return {
+    //                         id: `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+    //                         type: item.type,
+    //                         label: item.label,
+    //                         items: item.items,
+    //                         target: item.target,
+    //                         partOf: item.partOf,
+    //                         next: item.next,
+    //                         prev: item.prev
+    //                     }
+    //                 }
+    //                 else {
+    //                     return layer.items[itemIndex]
+    //                 }
+    //             })
+    //             .filter(Boolean)
+    //             layer.total = pages.length
+    //             layer.first = pages[0]
+    //             layer.last = pages[pages.length - 1]
+    //         }
+    //         return layer
+    //     })
+    //     this.data.layers = this.layer
+    //     return await this.update()
+    // }
 
-    async updateLayerMetadata(layerId, label) {
-        await this.#load()
-        this.layer = this.layer.map(layer => {
-            if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
-            {
-                layer.label = label.label
-            }
-            return layer
-        })
-        this.data.layers = this.layer
-        return await this.update()
-    }
+    // async updateLayerMetadata(layerId, label) {
+    //     await this.#load()
+    //     this.layer = this.layer.map(layer => {
+    //         if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
+    //         {
+    //             layer.label = label.label
+    //         }
+    //         return layer
+    //     })
+    //     this.data.layers = this.layer
+    //     return await this.update()
+    // }
     
     async update() {
         return await database.update(this.data, process.env.TPENPROJECTS)
@@ -142,11 +125,4 @@ export default class Layer {
             this.layer = resp.layers
         })
     }
-}
-
-function asLanguageMap(value) {
-    if (typeof value === 'object' && !Array.isArray(value)) {
-      return value
-    }
-    return Array.isArray(value) ? { none: value } : { none: [value] }
 }
