@@ -512,27 +512,27 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   }
 })
 
-// // Delete a Layer
-// router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req, res) => {
-//   const { projectId, layerId } = req.params
-//   const user = req.user
-//   if (!user) {
-//     return respondWithError(res, 401, "Unauthenticated request")
-//   }
+// Delete a Layer
+router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req, res) => {
+  const { projectId, layerId } = req.params
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
 
-//   try {
-//     const project = new Project(projectId)
+  try {
+    const project = new Project(projectId)
 
-//     if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
-//       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
-//     }
+    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
+      return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
+    }
 
-//     const response = await new Layer(projectId).deleteLayer(layerId)
-//     res.status(200).json(response)
-//   } catch (error) {
-//     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
-//   }
-// })
+    const response = await new Layer(projectId).deleteLayer(layerId)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
+  }
+})
 
 // // Update the Pages in the Layer
 // router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (req, res) => {

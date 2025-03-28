@@ -59,12 +59,12 @@ export default class Layer {
         return await this.update()
     }
     
-    // async deleteLayer(layerId) {
-    //     await this.#load()
-    //     this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
-    //     this.data.layers = this.layer
-    //     return await this.update()
-    // }
+    async deleteLayer(layerId) {
+        await this.#load()
+        this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
+        this.data.layers = this.layer
+        return await this.update()
+    }
 
     // async updatePages(layerId, pages) {
     //     await this.#load()
