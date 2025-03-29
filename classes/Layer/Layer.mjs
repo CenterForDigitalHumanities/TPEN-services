@@ -3,8 +3,8 @@ import dbDriver from "../../database/driver.mjs"
 const database = new dbDriver("mongo")
 
 export default class Layer {
-    constructor() {
-        this.data = null
+    constructor(data) {
+        this.data = data
         this.projectId = null
     }
     
@@ -16,11 +16,10 @@ export default class Layer {
         this.data.id = id
     }
 
-    async addLayer(layer, projectId, projectLabel) {
+    async addLayer(projectId, labelAndCanvases, projectLabel) {
         this.projectId = projectId
-        await this.#load()
-        const label = layer?.label ?? `${projectLabel ?? "Default"} - Layer ${Date.now()}`
-        const canvases = layer.canvases
+        const label = labelAndCanvases?.label ?? `${projectLabel ?? "Default"} - Layer ${Date.now()}`
+        const canvases = labelAndCanvases.canvases
 
         try {
             const layerAnnotationCollection = {
@@ -40,9 +39,8 @@ export default class Layer {
         }
     }
     
-    async deleteLayer(layerId, projectId) {
+    async deleteLayer(projectId, layerId) {
         this.projectId = projectId
-        await this.#load()
         this.data = this.data.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
         return await this.update()
     }
@@ -98,11 +96,5 @@ export default class Layer {
 
     async update() {
         return await database.updateOne("layers", this.data, process.env.TPENPROJECTS, this.projectId)
-    }
-
-    async #load() {
-        return database.getById(this.projectId, process.env.TPENPROJECTS).then((resp) => {
-            this.data = resp.layers
-        })
     }
 }

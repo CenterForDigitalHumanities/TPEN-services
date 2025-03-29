@@ -488,25 +488,26 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 // Add a New Layer
 router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const layers = req.body
+  const labelAndCanvases = req.body
   const user = req.user
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
 
-  if (!layers) {
+  if (!labelAndCanvases || !labelAndCanvases.canvases) {
     return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
   }
 
   try {
-
     const project = new Project(projectId)
+    const layers = (await project.loadProject()).layers
+
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to add layers to this project.")
     }
 
-    const layer = new Layer()
-    const response = await layer.addLayer(layers, projectId, project.getLabel())
+    const layer = new Layer(layers)
+    const response = await layer.addLayer(projectId, labelAndCanvases, project.getLabel())
     res.status(200).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
@@ -522,12 +523,15 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
   }
 
   try {
-    if (!(await new Project(projectId).checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
+    const project = new Project(projectId)
+    const layers = (await project.loadProject()).layers
+    
+    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
     }
 
-    const layer = new Layer()
-    const response = await layer.deleteLayer(layerId, projectId)
+    const layer = new Layer(layers)
+    const response = await layer.deleteLayer(projectId, layerId)
     res.status(200).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")

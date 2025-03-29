@@ -184,4 +184,9 @@ export default class Project {
       this.data = resp
     })
   }
+
+  async loadProject() {
+    await this.#load()
+    return this.data
+  }
 }
