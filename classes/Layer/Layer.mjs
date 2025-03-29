@@ -22,7 +22,7 @@ export default class Layer {
         const canvases = labelAndCanvases.canvases
 
         try {
-            const layerAnnotationCollection = {
+            const newLayer = {
                 "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
                 label,
                 pages: canvases.map(element => ({
@@ -32,7 +32,7 @@ export default class Layer {
                 }))
             }
                       
-            this.data.push(layerAnnotationCollection)
+            this.data.push(newLayer)
             return await this.update()
         } catch (error) {
             console.error('Error fetching data:', error)
