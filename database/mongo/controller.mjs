@@ -351,6 +351,31 @@ class DatabaseController {
     return this.findOne({_id}, collection)
   }
 
+  async updateOne(field, value, collection, id) {
+
+    try {
+      if (!collection) {
+        err_out.message = `Cannot figure which collection for object'${id}'`
+        err_out.status = 400
+        throw err_out
+      }
+      const query = { _id: id }
+      const update = { $set: { [field]: value } }
+      const result = await this.db.collection(collection).updateOne(query, update, { upsert: true, returnDocument: 'after' })
+      if (result?.matchedCount === 0) {
+        err_out.message = `id '${id}' Not Found`
+        err_out.status = 404
+        throw err_out
+      }
+      return result
+    } catch (err) {
+      // Specifically account for unexpected mongo things.
+      if (!err?.message) err.message = err.toString()
+      if (!err?.status) err.status = 500
+      if (!err?._dbaction) err._dbaction = "findOneAndUpdate"
+      throw err
+    }
+  }
 }
 
 export default DatabaseController

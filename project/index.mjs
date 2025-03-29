@@ -488,24 +488,25 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 // Add a New Layer
 router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const layer = req.body
+  const layers = req.body
   const user = req.user
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
 
-  if (!layer) {
+  if (!layers) {
     return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
   }
 
   try {
-    const project = new Project(projectId)
 
+    const project = new Project(projectId)
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to add layers to this project.")
     }
 
-    const response = await new Layer(projectId).addLayer(layer)
+    const layer = new Layer()
+    const response = await layer.addLayer(layers, projectId, project.getLabel())
     res.status(200).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
@@ -521,13 +522,12 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
   }
 
   try {
-    const project = new Project(projectId)
-
-    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
+    if (!(await new Project(projectId).checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
     }
 
-    const response = await new Layer(projectId).deleteLayer(layerId)
+    const layer = new Layer()
+    const response = await layer.deleteLayer(layerId, projectId)
     res.status(200).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")

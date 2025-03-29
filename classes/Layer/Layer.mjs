@@ -3,66 +3,47 @@ import dbDriver from "../../database/driver.mjs"
 const database = new dbDriver("mongo")
 
 export default class Layer {
-    constructor(_id) {
-        this._id = _id
+    constructor() {
         this.data = null
-        this.layer = null
+        this.projectId = null
     }
     
     get id() {
-        return this.layer.id
+        return this.data.id
     }
 
     set id(id) {
-        this.layer.id = id
+        this.data.id = id
     }
 
-    async addLayer(layer) {
+    async addLayer(layer, projectId, projectLabel) {
+        this.projectId = projectId
         await this.#load()
-        const label = layer?.label ?? `${this.data.label ?? "Default"} - Layer ${Date.now()}`
+        const label = layer?.label ?? `${projectLabel ?? "Default"} - Layer ${Date.now()}`
         const canvases = layer.canvases
 
         try {
-            const responses = await Promise.all(canvases.map(canvas => fetch(canvas)))
-            const data = await Promise.all(responses.map(response => response.json()))
-            
             const layerAnnotationCollection = {
-              "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
-              label,
-              pages: []
+                "id": `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+                label,
+                pages: canvases.map(element => ({
+                    id: `temp${database.reserveId()}`,
+                    label: `Default - ${element.split("/").pop().split(".")[0]}`,
+                    target: element
+                }))
             }
-
-            await Promise.all(data.map(async (canvas) => {
-              const annotationsItems = await Promise.all(canvas.annotations.map(async (annotation) => {
-              const response = await fetch(annotation.id)
-              const annotationData = await response.json()
-              const annotationItems = {
-                id: `temp${database.reserveId()}`,
-                label: Object.values(annotationData.label)[0][0],
-                items: [],
-                target: annotationData.target,
-              }
-              return annotationItems
-              }))
-              layerAnnotationCollection.pages.push(...annotationsItems)
-            }))        
-            this.layer.push(layerAnnotationCollection)
-            this.updateLayer(this.layer)
-            return layerAnnotationCollection
+                      
+            this.data.push(layerAnnotationCollection)
+            return await this.update()
         } catch (error) {
             console.error('Error fetching data:', error)
         }
     }
-
-    async updateLayer(layer) {
-        this.data.layers = layer
-        return await this.update()
-    }
     
-    async deleteLayer(layerId) {
+    async deleteLayer(layerId, projectId) {
+        this.projectId = projectId
         await this.#load()
-        this.layer = this.layer.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
-        this.data.layers = this.layer
+        this.data = this.data.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
         return await this.update()
     }
 
@@ -114,15 +95,14 @@ export default class Layer {
     //     this.data.layers = this.layer
     //     return await this.update()
     // }
-    
+
     async update() {
-        return await database.update(this.data, process.env.TPENPROJECTS)
+        return await database.updateOne("layers", this.data, process.env.TPENPROJECTS, this.projectId)
     }
 
     async #load() {
-        return database.getById(this._id, process.env.TPENPROJECTS).then((resp) => {
-            this.data = resp
-            this.layer = resp.layers
+        return database.getById(this.projectId, process.env.TPENPROJECTS).then((resp) => {
+            this.data = resp.layers
         })
     }
 }

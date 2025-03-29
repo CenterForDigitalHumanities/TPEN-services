@@ -96,6 +96,10 @@ export default class Project {
     })
   }
 
+  getLabel() {
+    return this.data?.label ?? `No Label`
+  }
+
   getCombinedPermissions(roles) {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
