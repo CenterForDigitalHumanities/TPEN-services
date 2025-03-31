@@ -494,13 +494,26 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
     return respondWithError(res, 401, "Unauthenticated request")
   }
 
+  if (!projectId) {
+    return respondWithError(res, 400, "Project ID is required")
+  }
+
+  if(!validateID(projectId)){
+    return respondWithError(res, 400, "Invalid project ID provided.")
+  }
+
   if (!labelAndCanvases || !labelAndCanvases.canvases) {
     return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
   }
 
   try {
     const project = new Project(projectId)
-    const layers = (await project.loadProject()).layers
+
+    if(!project || await project.loadProject() === null) {
+      return respondWithError(res, 404, "Project does not exist.")
+    }
+
+    const layers = (await project.loadProject())
 
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to add layers to this project.")
@@ -508,7 +521,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
 
     const layer = new Layer(layers)
     const response = await layer.addLayer(projectId, labelAndCanvases, project.getLabel())
-    res.status(200).json(response)
+    res.status(201).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
   }
@@ -522,17 +535,38 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
     return respondWithError(res, 401, "Unauthenticated request")
   }
 
+  if (!projectId) {
+    return respondWithError(res, 400, "Project ID is required")
+  }
+
+  if(!validateID(projectId)){
+    return respondWithError(res, 400, "Invalid project ID provided.")
+  }
+
+  if (!layerId) {
+    return respondWithError(res, 400, "Layer ID is required")
+  }
+
   try {
     const project = new Project(projectId)
-    const layers = (await project.loadProject()).layers
+
+    if(!project || await project.loadProject() === null) {
+      return respondWithError(res, 404, "Project does not exist.")
+    }
+
+    const layers = (await project.loadProject())
     
     if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
     }
 
     const layer = new Layer(layers)
+    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
+      return respondWithError(res, 400, "Layer not found in project.")
+    }
+    
     const response = await layer.deleteLayer(projectId, layerId)
-    res.status(200).json(response)
+    res.status(204).json(response)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
   }

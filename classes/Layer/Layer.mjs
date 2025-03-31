@@ -32,8 +32,9 @@ export default class Layer {
                 }))
             }
                       
-            this.data.push(newLayer)
-            return await this.update()
+            this.data.layers.push(newLayer)
+            await this.update()
+            return newLayer
         } catch (error) {
             console.error('Error fetching data:', error)
         }
@@ -41,8 +42,9 @@ export default class Layer {
     
     async deleteLayer(projectId, layerId) {
         this.projectId = projectId
-        this.data = this.data.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
-        return await this.update()
+        this.data.layers = this.data.layers.filter(layer => (layer.id ?? layer["@id"]) !== `${process.env.RERUMIDPREFIX}${layerId}`)
+        await this.update()
+        return this.data.layers
     }
 
     // async updatePages(layerId, pages) {
@@ -95,6 +97,6 @@ export default class Layer {
     // }
 
     async update() {
-        return await database.updateOne("layers", this.data, process.env.TPENPROJECTS, this.projectId)
+        return await database.update(this.data, process.env.TPENPROJECTS)
     }
 }
