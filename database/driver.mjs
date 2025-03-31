@@ -109,10 +109,6 @@ class dbDriver {
         return this.controller.remove(data, collection)
     }
 
-    async updateOne(field, value, collection, id) {
-        return this.controller.updateOne(field, value, collection, id)
-    }
-
     /**
      * Get data from the database that have matching property values.
      * @param query JSON from an HTTP POST request.  It must contain at least one property.
