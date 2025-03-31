@@ -572,60 +572,6 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
   }
 })
 
-// // Update the Pages in the Layer
-// router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (req, res) => {
-//   const { projectId, layerId } = req.params
-//   const pages = req.body.pages
-//   const user = req.user
-//   if (!user) {
-//     return respondWithError(res, 401, "Unauthenticated request")
-//   }
-
-//   if (!pages || !Array.isArray(pages)) {
-//     return respondWithError(res, 400, "Invalid pages provided. Expected an array of page objects.")
-//   }
-
-//   try {
-//     const project = new Project(projectId)
-
-//     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
-//       return respondWithError(res, 403, "You do not have permission to update pages in this layer.")
-//     }
-
-//     const response = await new Layer(projectId).updatePages(layerId, pages)
-//     res.status(200).json(response)
-//   } catch (error) {
-//     return respondWithError(res, error.status ?? 500, error.message ?? "Error updating layer pages.")
-//   }
-// })
-
-// // Update Layer Metadata
-// router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, res) => {
-//   const { projectId, layerId } = req.params
-//   const label = req.body
-//   const user = req.user
-//   if (!user) {
-//     return respondWithError(res, 401, "Unauthenticated request")
-//   }
-
-//   if (!label || !Object(label)) {
-//     return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
-//   }
-
-//   try {
-//     const project = new Project(projectId)
-
-//     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.LAYER))) {
-//       return respondWithError(res, 403, "You do not have permission to update metadata for this layer.")
-//     }
-
-//     const response = await new Layer(projectId).updateLayerMetadata(layerId, label)
-//     res.status(200).json(response)
-//   } catch (error) {
-//     return respondWithError(res, error.status ?? 500, error.message ?? "Error updating layer metadata.")
-//   }
-// })
-
 // Update Project Metadata
 router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
