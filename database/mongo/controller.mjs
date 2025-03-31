@@ -350,6 +350,7 @@ class DatabaseController {
   async getById(_id, collection) {
     return this.findOne({_id}, collection)
   }
+  
 }
 
 export default DatabaseController
