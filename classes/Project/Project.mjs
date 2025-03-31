@@ -96,6 +96,10 @@ export default class Project {
     })
   }
 
+  getLabel() {
+    return this.data?.label ?? `No Label`
+  }
+
   getCombinedPermissions(roles) {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
@@ -179,5 +183,10 @@ export default class Project {
     return database.getById(this._id, "projects").then((resp) => {
       this.data = resp
     })
+  }
+
+  async loadProject() {
+    await this.#load()
+    return this.data
   }
 }
