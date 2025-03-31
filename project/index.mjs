@@ -566,7 +566,7 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
     }
     
     const response = await layer.deleteLayer(projectId, layerId)
-    res.status(204).json(response)
+    res.status(204).send()
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
   }
