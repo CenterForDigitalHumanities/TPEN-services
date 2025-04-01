@@ -12,6 +12,7 @@ export const ACTIONS = {
     METADATA: "METADATA",
     TEXT: "TEXT",
     CONTENT: "CONTENT",
+    OPTIONS: "OPTIONS",
     ORDER: "ORDER",
     SELECTOR: "SELECTOR",
     DESCRIPTION: "DESCRIPTION",
@@ -27,6 +28,7 @@ export const ACTIONS = {
     LINE: "LINE",
     ROLE: "ROLE",
     PERMISSION: "PERMISSION",
+    TOOLS: "TOOLS",
     ALL: "*"
   }
   

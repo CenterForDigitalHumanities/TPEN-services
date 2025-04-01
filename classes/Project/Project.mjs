@@ -96,6 +96,10 @@ export default class Project {
     })
   }
 
+  getLabel() {
+    return this.data?.label ?? `No Label`
+  }
+
   getCombinedPermissions(roles) {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
@@ -110,8 +114,7 @@ export default class Project {
 
   async inviteExistingTPENUser(userId, roles) {
     const group = new Group(this.data.group)
-    group.addMember(userId, roles)
-    await group.update()
+    await group.addMember(userId, roles)
     return this
   }
 
@@ -141,6 +144,32 @@ export default class Project {
     }
   }
 
+/**
+ * Asynchronously updates the metadata of the current object and persists the changes.
+ *
+ * @param {Object} newMetadata - An object containing the new metadata properties to be assigned.
+ * @returns {Promise<Object>} - A promise that resolves to the updated object after the changes have been saved.
+ *
+ * @example
+ * const newMetadata = [{ label: 'Description'}{value: 'Updated description' }];
+ * await instance.updateMetadata(newMetadata);
+ * console.log(instance.data.metadata); // Outputs: { title: 'New Title', description: 'Updated description' }
+ *
+ * @throws {Error} Throws an error if the update operation fails.
+ */
+  async updateMetadata(newMetadata) {
+    this.data.metadata = newMetadata
+    return await this.update()
+  }
+
+  async update() {
+    return await database.update(this.data, process.env.TPENPROJECTS)
+  }
+
+  async save() {
+    return await database.save(this.data, process.env.TPENPROJECTS)
+  }
+
   #generateInviteCode(userId) {
     const date = Date.now().toString()
     const data = `${date}:${userId}`
@@ -154,5 +183,10 @@ export default class Project {
     return database.getById(this._id, "projects").then((resp) => {
       this.data = resp
     })
+  }
+
+  async loadProject() {
+    await this.#load()
+    return this.data
   }
 }

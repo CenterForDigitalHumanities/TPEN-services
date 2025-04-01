@@ -17,16 +17,10 @@ let err_out = Object.assign(new Error(), {
 
 /**
  * This mongo controller oversees multiple collections.
- * Requests have to determine which collection they go to based on the user input.
- * User input does not specifically designate a collection as part of the request.
- * A collection is programatically chosen based on the 'type' of the input JSON.
- * Expected types
- *    - Project
- *    - Page
- *    - Group
- *    - User
- *    - UserPreferences
- * All other object types result in a "Bad Request"
+ * The collection to interact with is programatically chosen based on the 'type' of the input.
+ * 
+ * @param type A type string, such as "Project", or null
+ * @return the corresponding mongo collection, such as "projects", or null
  */
 function discernCollectionFromType(type) {
   let collection = null
@@ -34,18 +28,30 @@ function discernCollectionFromType(type) {
   switch (type) {
     case "Project":
     case "Page":
+    case "Line":
       collection = process.env.TPENPROJECTS
       break
     case "Group":
       collection = process.env.TPENGROUPS
       break
     case "User":
-    case "UserPreferences":
       collection = process.env.TPENUSERS
       break
     default:
   }
   return collection
+}
+
+/**
+ * Data belongs to or goes into different collections.  The data 'type' usually tells us which one.
+ * If no type is found on the data, use the provided override, if any.
+ * 
+ * @param data A data object or query object.  The type will correspond to a mongo collection
+ * @param override If no type is on 'data', consider the provided override to be the type.
+ * @return a known type string, such as "Project", or null
+ */ 
+function determineDataType(data, override) {
+  return data["@type"] ?? data.type ?? override
 }
 
 class DatabaseController {
@@ -153,36 +159,27 @@ class DatabaseController {
     }
   }
 
-  /**
-   * Get by property matches and return all objects that match
-   * @param query JSON from an HTTP POST request.  It must contain at least one property.
-   * @return JSON Array of matched documents or standard error object
-   */
-  validateAndDetermineCollection(query) {
-    err_out._dbaction = "find"
-    const data_type = query["@type"] ?? query.type
-    if (!data_type) {
-      err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
-      err_out.status = 400
-      throw err_out
-    }
-    const collection = discernCollectionFromType(data_type)
-    if (!collection) {
-      err_out.message = `Cannot figure which collection for object of type '${data_type}'`
-      err_out.status = 400
-      throw err_out
-    }
-    if (Object.keys(query).length === 0) {
-      err_out.message = `Empty or null query detected.  You must provide a query object.`
-      err_out.status = 400
-      throw err_out
-    }
-    return collection
-  }
   async find(query, collection) {
     try {
-      //need to determine what collection (projects, groups, userPerferences) this goes into.
-      collection ??= this.validateAndDetermineCollection(query)
+      // Not allowed to find null or {}
+      if (!query || Object.keys(query).length === 0) {
+        err_out.message = `Empty or null query detected.  You must provide a query object.`
+        err_out.status = 400
+        throw err_out
+      }
+      // need to determine what collection (projects, groups, users) this goes into.
+      const data_type = determineDataType(query, collection)
+      if (!data_type) {
+        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
+        err_out.status = 400
+        throw err_out
+      }
+      collection ??= discernCollectionFromType(data_type)
+      if (!collection) {
+        err_out.message = `Cannot figure which collection for object of type '${data_type}'`
+        err_out.status = 400
+        throw err_out
+      }
       let result = await this.db.collection(collection).find(query).toArray()
       return result
     } catch (err) {
@@ -196,8 +193,26 @@ class DatabaseController {
 
   async findOne(query, collection) {
     try {
-      //need to determine what collection (projects, groups, userPerferences) this goes into.
-      collection ??= this.validateAndDetermineCollection(query)
+      // Not allowed to find null or {}
+      if (!query || Object.keys(query).length === 0) {
+        err_out.message = `Empty or null query detected.  You must provide a query object.`
+        err_out.status = 400
+        throw err_out
+      }
+      // need to determine what collection (projects, groups, users) this goes into.
+
+      const data_type = determineDataType(query, collection)
+      if (!data_type) {
+        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
+        err_out.status = 400
+        throw err_out
+      }
+      collection ??= discernCollectionFromType(data_type)
+      if (!collection) {
+        err_out.message = `Cannot figure which collection for object of type '${data_type}'`
+        err_out.status = 400
+        throw err_out
+      }
       let result = await this.db.collection(collection).findOne(query)
       return result
     } catch (err) {
@@ -215,10 +230,14 @@ class DatabaseController {
    * @return The inserted document JSON or error JSON
    */
   async save(data, collection) {
-    err_out._dbaction = "insertOne"
     try {
-      //need to determine what collection (projects, groups, users) this goes into.
-      const data_type = this.determineDataType(data, collection)
+      // need to determine what collection (projects, groups, users) this goes into.
+      const data_type = determineDataType(data, collection)
+      if (!data_type) {
+        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
+        err_out.status = 400
+        throw err_out
+      }
       collection ??= discernCollectionFromType(data_type)
       if (!collection) {
         err_out.message = `Cannot figure which collection for object of type '${data_type}'`
@@ -247,24 +266,23 @@ class DatabaseController {
    * @param data JSON from an HTTP POST request.  It must contain an id.
    * @return The inserted document JSON or error JSON
    */
-  async update(data) {
+  async update(data, collection) {
     // Note this may be an alias for save()
-    err_out._dbaction = "replaceOne"
     try {
-      //need to determine what collection (projects, groups, userPerferences) this goes into.
-      const data_type = data["@type"] ?? data.type
       let data_id = data["@id"] ?? data._id
       if (!data_id) {
         err_out.message = `An 'id' must be present to update.`
         err_out.status = 400
         throw err_out
       }
+      // need to determine what collection (projects, groups, users) this goes into.
+      const data_type = determineDataType(data, collection)
       if (!data_type) {
         err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
         err_out.status = 400
         throw err_out
       }
-      const collection = discernCollectionFromType(data_type)
+      collection ??= discernCollectionFromType(data_type)
       if (!collection) {
         err_out.message = `Cannot figure which collection for object of type '${data_type}'`
         err_out.status = 400
@@ -301,11 +319,29 @@ class DatabaseController {
    * @param data JSON from an HTTP DELETE request.  It must contain an id.
    * @return The delete result JSON or error JSON
    */
-  async remove(id) {
-    err_out._dbaction = "deleteOne"
-    err_out.message = "Not yet implemented.  Stay tuned."
-    err_out.status = 501
-    throw err_out
+  async remove(id, collection) {
+    try {
+      if (!collection) {
+        err_out.message = `Cannot figure which collection for object'${id}'`
+        err_out.status = 400
+        throw err_out
+      }
+      const obj_id = id.split("/").pop()
+      const filter = {_id: obj_id}
+      const result = await this.db.collection(collection).deleteOne(filter)
+      if (result?.deletedCount === 0) {
+        err_out.message = `id '${obj_id}' Not Found`
+        err_out.status = 404
+        throw err_out
+      }
+      return result
+    } catch (err) {
+      // Specifically account for unexpected mongo things.
+      if (!err?.message) err.message = err.toString()
+      if (!err?.status) err.status = 500
+      if (!err?._dbaction) err._dbaction = "deleteOne"
+      throw err
+    }
   }
 
   /**
@@ -315,18 +351,6 @@ class DatabaseController {
     return this.findOne({_id}, collection)
   }
 
-  determineDataType(data,override) {
-    const data_type = data["@type"] ?? data.type ?? override
-    if (!data_type) {
-      const err_out = {
-        message: `Cannot find 'type' on this data, and so cannot figure out a collection for it.`,
-        status: 400,
-        _dbaction: "insertOne"
-      }
-      throw err_out
-    }
-     return data_type
-  }
 }
 
 export default DatabaseController
