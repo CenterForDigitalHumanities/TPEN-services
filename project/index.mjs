@@ -485,7 +485,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 })
 
-// Add a New Layer
+// Route to add a new layer to a project
 router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const labelAndCanvases = req.body
@@ -502,21 +502,21 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
     return respondWithError(res, 400, "Invalid project ID provided.")
   }
 
-  if (!labelAndCanvases || !labelAndCanvases.canvases) {
-    return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
+  if (!labelAndCanvases || !labelAndCanvases.canvases || !Array.isArray(labelAndCanvases.canvases) || labelAndCanvases.canvases.some(canvas => typeof canvas !== "string")) {
+    return respondWithError(res, 400, "Invalid layer provided. Expected an array of canvas IDs.")
   }
 
   try {
     const project = new Project(projectId)
 
-    if(!project || await project.loadProject() === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layers = (await project.loadProject())
-
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to add layers to this project.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
     }
 
     const layer = new Layer(layers)
@@ -527,7 +527,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   }
 })
 
-// Delete a Layer
+// Route to delete a specific layer within a project
 router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req, res) => {
   const { projectId, layerId } = req.params
   const user = req.user
@@ -550,14 +550,14 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
   try {
     const project = new Project(projectId)
 
-    if(!project || await project.loadProject() === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layers = (await project.loadProject())
-    
     if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
+    }
+
+    const layers = await project.loadProject()
+    
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
     }
 
     const layer = new Layer(layers)
@@ -565,10 +565,92 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
       return respondWithError(res, 400, "Layer not found in project.")
     }
     
-    const response = await layer.deleteLayer(projectId, layerId)
+    await layer.deleteLayer(projectId, layerId)
     res.status(204).send()
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
+  }
+})
+
+// Route to update the ordering of pages/deleting of pages of a specific layer within a project
+router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (req, res) => {
+  const { projectId, layerId } = req.params
+  const pages = req.body.pages
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+
+  if (!pages || !Array.isArray(pages) || pages.some(page => typeof page !== "string")) {
+    return respondWithError(res, 400, "Invalid pages provided. Expected an array of page IDs.")
+  }
+
+  try {
+    const project = new Project(projectId)
+
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
+      return respondWithError(res, 403, "You do not have permission to update pages in this layer.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
+    }
+
+    const layer = new Layer(layers)
+    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
+      return respondWithError(res, 400, "Layer not found in project.")
+    }
+
+    const existingPages = layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.map(page => page.id)
+
+    if (!existingPages.some(page => pages.includes(page))) {
+      return respondWithError(res, 400, "Page not found in layer.")
+    }
+
+    const response = await layer.updatePages(layerId, pages)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating layer pages.")
+  }
+})
+
+// Route to update the label only of a specific layer within a project
+router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, res) => {
+  const { projectId, layerId } = req.params
+  const label = req.body
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+
+  if (!label || !Object(label)) {
+    return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
+  }
+
+  try {
+    const project = new Project(projectId)
+
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.LAYER))) {
+      return respondWithError(res, 403, "You do not have permission to update metadata for this layer.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
+    }
+
+    const layer = new Layer(layers)
+    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
+      return respondWithError(res, 400, "Layer not found in project.")
+    }
+
+    const response = await layer.updateLayerMetadata(layerId, label)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating layer metadata.")
   }
 })
 
