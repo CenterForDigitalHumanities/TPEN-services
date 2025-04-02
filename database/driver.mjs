@@ -86,7 +86,7 @@ class dbDriver {
      * @return The inserted document JSON or error JSON
      */
     async save(data, collection) {
-        console.warn("dbDriver.save() is problematic. https://github.com/CenterForDigitalHumanities/TPEN-services/issues/193")
+        data._createdAt = new Date()
         return this.controller.save(data, collection)
     }
 
@@ -97,6 +97,7 @@ class dbDriver {
      */
     async update(data, collection) {
         // Note this may just be an alias for save()
+        data._modifiedAt = new Date()
         return this.controller.update(data, collection)
     }
 
