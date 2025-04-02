@@ -485,7 +485,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   }
 })
 
-// Add a New Layer
+// Route to add a new layer to a project
 router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const labelAndCanvases = req.body
@@ -527,7 +527,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   }
 })
 
-// Delete a Layer
+// Route to delete a specific layer within a project
 router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req, res) => {
   const { projectId, layerId } = req.params
   const user = req.user
@@ -572,7 +572,7 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
   }
 })
 
-// Update the Pages in the Layer
+// Route to update the ordering of pages/deleting of pages of a specific layer within a project
 router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (req, res) => {
   const { projectId, layerId } = req.params
   const pages = req.body.pages
@@ -616,7 +616,7 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
   }
 })
 
-// Update Layer Metadata
+// Route to update the label of a specific layer within a project
 router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, res) => {
   const { projectId, layerId } = req.params
   const label = req.body
