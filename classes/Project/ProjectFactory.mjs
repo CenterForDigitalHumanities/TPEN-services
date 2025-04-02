@@ -4,9 +4,8 @@ import User from "../User/User.mjs"
 import dbDriver from "../../database/driver.mjs"
 import fs from "fs"
 import path from "path"
-import { Vault } from '@iiif/helpers/vault'
+import vault from "../../utilities/vault.mjs"
 
-const vault = new Vault()
 const database = new dbDriver("mongo")
 
 export default class ProjectFactory {
