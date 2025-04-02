@@ -581,7 +581,7 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
     return respondWithError(res, 401, "Unauthenticated request")
   }
 
-  if (!pages || !Array.isArray(pages)) {
+  if (!pages || !Array.isArray(pages) || pages.some(page => typeof page !== "string")) {
     return respondWithError(res, 400, "Invalid pages provided. Expected an array of page objects.")
   }
 
@@ -601,6 +601,12 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
     const layer = new Layer(layers)
     if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
       return respondWithError(res, 400, "Layer not found in project.")
+    }
+
+    const existingPages = layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.map(page => page.id)
+
+    if (!pages.includes(...existingPages)) {
+      return respondWithError(res, 400, "Page not found in layer.")
     }
 
     const response = await layer.updatePages(layerId, pages)
