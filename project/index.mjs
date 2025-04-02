@@ -605,7 +605,7 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
 
     const existingPages = layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.map(page => page.id)
 
-    if (!pages.includes(...existingPages)) {
+    if (!existingPages.some(page => pages.includes(page))) {
       return respondWithError(res, 400, "Page not found in layer.")
     }
 
