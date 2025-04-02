@@ -62,7 +62,7 @@ describe.skip("Group Class", () => {
         databaseMock.reserveId = jest.fn().mockReturnValue("01234567890123456789abcd")
         databaseMock.save = jest.fn().mockResolvedValue("newGroup")
         const payload = { label: "Test Group" }
-        const result = await Group.createNewGroup("01234567890123456789abcd", payload)
+        const result = Group.createNewGroup("01234567890123456789abcd", payload)
         expect(result.creator).toBe("01234567890123456789abcd")
         expect(result.label).toBe("Test Group")
         expect(result.members['01234567890123456789abcd']).toBeDefined()

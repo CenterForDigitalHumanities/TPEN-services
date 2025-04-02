@@ -53,13 +53,13 @@ router
   .post(auth0Middleware(), async (req, res) => {
     let { createFrom } = req.query
     let user = req.user
-    createFrom = createFrom?.toLowerCase()
     if (!createFrom)
       return res.status(400).json({
         message:
           "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC' "
       })
 
+    createFrom = createFrom?.toLowerCase()
     if (createFrom === "url") {
       const manifestURL = req?.body?.url
 
@@ -97,7 +97,7 @@ router
 router
   .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
-    const {id} = req.params
+    const { id } = req.params
     const user = req.user
 
     if (!id) {
@@ -105,7 +105,7 @@ router
     } else if (!validateID(id)) {
       return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
     }
-    
+
     try {
       const project = await ProjectFactory.loadAsUser(id, null)
       const collaboratorIdList = []
@@ -113,7 +113,7 @@ router
       Object.entries(project.collaborators).map(([id, data]) => {
         collaboratorIdList.push(id)
       })
-      
+
       if (!collaboratorIdList.includes(user._id)) {
         return respondWithError(res, 403, "You do not have permission to export this project")
       }
@@ -124,12 +124,12 @@ router
       const folderPath = path.join(`./${id}`)
       const files = fs.readdirSync(folderPath)
       for (const file of files) {
-          const filePath = path.join(folderPath, file)
-          if (fs.lstatSync(filePath).isFile()) {
-              await ProjectFactory.uploadFileToGitHub(filePath, `${id}`)
-          }
+        const filePath = path.join(folderPath, file)
+        if (fs.lstatSync(filePath).isFile()) {
+          await ProjectFactory.uploadFileToGitHub(filePath, `${id}`)
+        }
       }
-      fs.rmSync(folderPath, {recursive: true, force: true})
+      fs.rmSync(folderPath, { recursive: true, force: true })
       res.status(200).json(manifest)
     } catch (error) {
       return respondWithError(
@@ -181,7 +181,7 @@ router
     const user = req.user
     const { id: projectId } = req.params
     const { email, roles } = req.body
-    // roles is set to ["CONTRIBUTOR"] if undefined within Project.sendInvite() > parseRoles()
+    // roles is set to ["VIEWER"] if undefined within parseRoles()
 
     if (!user) {
       return respondWithError(res, 401, "Unauthenticated request")
@@ -260,10 +260,11 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    await group.addMemberRoles(collaboratorId, roles)
+    await group.get()
+    group.addMemberRoles(collaboratorId, roles)
     await group.update()
 
-    res.status(200).send(`Roles added to member ${collaboratorId}.`)
+    res.status(200).send(`Roles "${roles.join?.(' ') ?? roles}" added to member ${collaboratorId}.`)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding roles to member.")
   }
@@ -291,7 +292,9 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
     }
 
     const group = new Group(projectObj.data.group)
-    await group.setMemberRoles(collaboratorId, roles)
+    await group.get()
+    group.setMemberRoles(collaboratorId, roles)
+    await group.update()
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
@@ -322,7 +325,9 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
     }
 
     const group = new Group(projectObj.data.group)
-    await group.removeMemberRoles(collaboratorId, roles)
+    await group.get()
+    group.removeMemberRoles(collaboratorId, roles)
+    await group.update()
 
     res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
 
@@ -357,13 +362,15 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     }
 
     const group = new Group(projectObj.data.group)
+    await group.get()
+
     if (user._id === newOwnerId) {
       return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
     }
 
-    const currentRoles = await group.getMemberRoles(user._id)
+    const currentRoles = group.getMemberRoles(user._id)
     // If user only has the OWNER role, we default them to CONTRIBUTOR before transferring ownership
-    Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
+    Object.keys(currentRoles).length === 1 && group.addMemberRoles(user._id, ["CONTRIBUTOR"])
     group.addMemberRoles(newOwnerId, ["OWNER"], true)
     group.removeMemberRoles(user._id, ["OWNER"], true)
     await group.update()
@@ -402,7 +409,9 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     }
 
     const group = new Group(project.data.group)
-    await group.addCustomRoles(customRoles)
+    await group.get()
+    group.addCustomRoles(customRoles)
+    await group.update()
 
     res.status(201).json({ message: 'Custom roles added successfully.' })
 
@@ -454,12 +463,6 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
-  if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
-    rolesToRemove = Object.keys(rolesToRemove)
-  }
-  if (typeof rolesToRemove === 'string') {
-    rolesToRemove = rolesToRemove.split(' ')
-  }
   if (!rolesToRemove.length) {
     return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
@@ -476,7 +479,9 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
     }
 
     const group = new Group(project.data.group)
-    await (await group.removeCustomRoles(rolesToRemove)).update()
+    await group.get()
+    group.removeCustomRoles(rolesToRemove)
+    await group.update()
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
@@ -704,7 +709,9 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
-    await group.setMemberRoles(collaboratorId, roles)
+    await group.get()
+    group.setMemberRoles(collaboratorId, roles)
+    await group.update()
 
     res.status(200).send(`Roles [${roles}] updated for member ${collaboratorId}.`)
   } catch (error) {
@@ -767,16 +774,19 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
 
     const groupId = projectObj.data.group
     const group = new Group(groupId)
+    await group.get()
 
     if (user._id === newOwnerId) {
       return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
     }
 
-    const currentRoles = await group.getMemberRoles(user._id)
+    const currentRoles = group.getMemberRoles(user._id)
     // If user only has the OWNER role, we default them to CONTRIBUTOR before transferring ownership
-    Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
-    await group.addMemberRoles(newOwnerId, ["OWNER"], true)
-    await group.removeMemberRoles(user._id, ["OWNER"], true)
+    Object.keys(currentRoles).length === 1 && group.addMemberRoles(user._id, ["CONTRIBUTOR"])
+    group.addMemberRoles(newOwnerId, ["OWNER"], true)
+    group.removeMemberRoles(user._id, ["OWNER"], true)
+
+    await group.update()
 
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
@@ -898,8 +908,9 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 
     const groupId = project.data.group
     const group = new Group(groupId)
-    await group.removeCustomRoles(rolesToRemove)
-
+    await group.get()
+    group.removeCustomRoles(rolesToRemove)
+    await group.update()
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
     console.log(error)
@@ -928,7 +939,7 @@ router.route("/:projectId/hotkeys").post(auth0Middleware(), async (req, res) => 
       console.dir(hotkey)
       res.status(201).json(hotkey)
       return
-    } 
+    }
     return respondWithError(res, 403, "You do not have permission to create hotkeys for this project")
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message.toString())

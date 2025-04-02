@@ -26,7 +26,7 @@ export default class Project {
     }
 
     try {
-      return database.save(payload, "projects")
+      return database.save(payload, "projects").then((resp) => this.data = resp )
     } catch (err) {
       throw {
         status: err.status || 500,
@@ -74,12 +74,21 @@ export default class Project {
       await this.#load()
     }
 
-    const userRoles = await new Group(this.data.group).getMemberRoles(userId)
-
-    if (!userRoles) {
+    const group = new Group(this.data.group)
+    await group.get()
+    let userRoles
+    try {
+     userRoles = group.getMemberRoles(userId)
+    } catch (error) {
+      if (error.status === 404) {
+        return {
+          hasAccess: false,
+          message: "User is not a member of this project."
+        }
+      }
       return {
         hasAccess: false,
-        message: "User is not a member of this project."
+        message: `An error occurred while checking user access: ${error.status} - ${error.message}`
       }
     }
 
@@ -104,9 +113,9 @@ export default class Project {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
 
-  parseRoles(rolesString) {
+  parseRoles(rolesString = "") {
     if (Array.isArray(rolesString)) rolesString = rolesString.join(" ")
-    rolesString ??= "VIEWER"
+    if (rolesString.length === 0) rolesString = "VIEWER"
     if (typeof rolesString !== "string") throw new Error("Roles must be a string or an array of strings")
     const roles = rolesString?.toUpperCase().split(" ")
     return roles
@@ -114,7 +123,9 @@ export default class Project {
 
   async inviteExistingTPENUser(userId, roles) {
     const group = new Group(this.data.group)
-    await group.addMember(userId, roles)
+    await group.get()
+    group.addMember(userId, roles)
+    await group.update()
     return this
   }
 
@@ -133,7 +144,8 @@ export default class Project {
   async removeMember(userId) {
     try {
       const group = new Group(this.data.group)
-      await group.removeMember(userId)
+      await group.get()
+      group.removeMember(userId)
       await group.update()
       return this
     } catch (error) {

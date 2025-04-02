@@ -13,23 +13,26 @@ export default class Group {
         return this
     }
 
+    async get() {
+        if (Object.keys(this.data.members).length === 0) {
+            return this.#loadFromDB()
+        }
+        return this
+    }
+
     async getMembers() {
         // if this members is an empty object, load from db
         if (Object.keys(this.data.members).length === 0) {
-            await this.#loadFromDB()
+            throw new Error("Members object is empty")
         }
         return this.data.members
     }
-
     /**
      * Generate a ROLE:PERMISSIONS map for the indicated member.
      * @param {String} memberId hexstring id of the member
      * @returns Object
      */
-    async getMemberRoles(memberId) {
-        if (Object.keys(this.data.members).length === 0) {
-            await this.#loadFromDB()
-        }
+    getMemberRoles(memberId) {
         if (!this.data.members[memberId]) {
             const err = new Error("Member not found")
             err.status = 404
@@ -44,9 +47,9 @@ export default class Group {
         return Object.assign(Group.defaultRoles, this.data.customRoles)[role] ?? "x_x_x"
     }
 
-    async addMember(memberId, roles) {
+    addMember(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
+            throw new Error("No members in this group. Use get() to load from the database.")
         }
         if (this.data.members[memberId]) {
             const err = new Error("Member already exists")
@@ -55,6 +58,7 @@ export default class Group {
         }
         this.data.members[memberId] = { roles: [] }
         this.setMemberRoles(memberId, roles)
+        return this
     }
 
     /**
@@ -62,9 +66,9 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async setMemberRoles(memberId, roles) {
+    setMemberRoles(memberId, roles) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
+            throw new Error("No members in this group. Use get() to load from the database.")
         }
 
         if (!this.data.members[memberId]) {
@@ -73,47 +77,29 @@ export default class Group {
                 message: "Member not found"
             }
         }
-        if (!Array.isArray(roles)) {
-            if (typeof roles !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles"
-                }
-            }
-            roles = roles.split(" ")
+        if (!roles || roles.length === 0) {
+            throw new Error("Roles must be provided and cannot be empty")
         }
-
-        washRoles(roles)
+        roles = washRoles(roles)
         this.data.members[memberId].roles = roles
-        await this.update()
+        return this
     }
 
     /**
      * Add if not in roles for a member with the provided roles.
+     * Use get() if you must be sure it has been loaded from the db already.
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async addMemberRoles(memberId, roles, allowOwner = false) {
+    addMemberRoles(memberId, roles, allowOwner = false) {
 
-        if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
-        }
         if (!this.data.members[memberId]) {
             throw {
                 status: 404,
                 message: "Member not found"
             }
         }
-        if (!Array.isArray(roles)) {
-            if (typeof roles !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles"
-                }
-            }
-            roles = roles.split(" ")
-        }
-        washRoles(roles, allowOwner)
+        roles = washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
@@ -122,26 +108,14 @@ export default class Group {
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
      */
-    async removeMemberRoles(memberId, roles, allowOwner = false) {
-        if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
-        }
+    removeMemberRoles(memberId, roles, allowOwner = false) {
         if (!this.data.members[memberId]) {
             throw {
                 status: 404,
                 message: "Member not found"
             }
         }
-        if (!Array.isArray(roles)) {
-            if (typeof roles !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles"
-                }
-            }
-            roles = roles.split(" ")
-        }
-        washRoles(roles, allowOwner)
+        roles = washRoles(roles, allowOwner)
         const currentRoles = this.data.members[memberId].roles
         if (currentRoles.length <= 1 && roles.includes(currentRoles[0])) {
             throw {
@@ -151,7 +125,7 @@ export default class Group {
         }
 
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
-        await this.update()
+        return this
     }
 
     async removeMember(memberId) {
@@ -190,41 +164,31 @@ export default class Group {
         this.update()
     }
 
-    async addCustomRoles(roleMap) {
+    addCustomRoles(roleMap) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
+            throw {
+                status: 400,
+                message: "No members in this group. Use get() to load from the database."
+            }
         }
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        this.update()
+        return this
     }
 
-    async removeCustomRoles(roleMap) {
+    removeCustomRoles(roles) {
         if (!Object.keys(this.data.members).length) {
-            await this.#loadFromDB()
-        }
-
-        if (!Array.isArray(roleMap)) {
-
-            if (this.isValidRolesMap(roleMap)) {
-                for (const role in roleMap) {
-                    delete this.data.customRoles[role]
-                }
-                return this.update()
+           throw {
+                status: 400,
+                message: "No members in this group. Use get() to load from the database."
             }
-            if (typeof roleMap !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles. Must be an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
-                }
-            }
-            roleMap = roleMap.toUpperCase().split(" ")
-
         }
-
-        roleMap.map(role => delete this.data.customRoles[role])
-        return this.update()
+        if (this.isValidRolesMap(roles))
+            roles = Object.keys(roles)
+        roles = washRoles(roles)
+        roles.map(role => delete this.data.customRoles[role])
+        return this
     }
 
     async save() {
@@ -233,7 +197,7 @@ export default class Group {
     }
 
     async update() {
-        await this.validateGroup()
+        this.validateGroup()
         return database.update(this.data, process.env.TPENGROUPS)
     }
 
@@ -241,15 +205,27 @@ export default class Group {
         if (!this.data.creator) {
             throw {
                 status: 400,
-                message: "Owner ID is required"
+                message: "Creator/Owner ID is required"
             }
         }
+
         //remove members with empty or invalid roles
         for (const memberId in this.data.members) {
-            if (!this.data.members[memberId].roles || !Array.isArray(this.data.members[memberId].roles)) {
+            if (!this.data.members[memberId].roles 
+                || !Array.isArray(this.data.members[memberId].roles)
+                || (this.data.members[memberId].roles.length === 0)) {
                 delete this.data.members[memberId]
             }
         }
+
+        // Throw an error if there are no members
+        if (Object.keys(this.data.members).length === 0) {
+            throw {
+                status: 400,
+                message: "Group must have at least one member"
+            }
+        }
+
         this.data.customRoles ??= {}
         if (!this.isValidRolesMap(this.data.customRoles)) {
             throw {
@@ -258,22 +234,23 @@ export default class Group {
             }
         }
 
+        // Valid Group always has an OWNER and a LEADER
         if (!this.getByRole("OWNER")?.length) {
-            await this.addMemberRoles(this.data.creator, "OWNER", true)
+            this.addMemberRoles(this.data.creator, "OWNER", true)
         }
         if (!this.getByRole("LEADER")?.length) {
-            await this.addMemberRoles(this.data.creator, "LEADER")
+            this.addMemberRoles(this.data.creator, "LEADER")
         }
     }
 
-    static async createNewGroup(creator, payload) {
+    static createNewGroup(creator, payload) {
         const { customRoles, label, members } = payload
         const newGroup = new Group()
         Object.assign(newGroup.data, Object.fromEntries(
             Object.entries({ creator, customRoles, label, members }).filter(([_, v]) => v != null)
         ))
-        await newGroup.validateGroup()
-        return await newGroup.save()
+        newGroup.validateGroup()
+        return newGroup
     }
 
     static defaultRoles = {
@@ -284,16 +261,16 @@ export default class Group {
     }
 }
 
-function washRoles(roles, allowOwner = false) {
+function washRoles(roles="", allowOwner = false) {
+    roles = (roles.join?.(" ") ?? roles).split(" ")
     return roles.map(role => {
-        if (typeof role !== "string") {
+        if (typeof role !== "string" || role.length === 0) {
             throw {
                 status: 400,
-                message: "Invalid role:" + role
+                message: "Invalid role: " + role
             }
         }
-        role.toUpperCase()
-        if (!allowOwner && role === "OWNER") {
+        if (!allowOwner && role.toUpperCase() === "OWNER") {
             throw {
                 status: 400,
                 message: "Cannot assign OWNER role"
