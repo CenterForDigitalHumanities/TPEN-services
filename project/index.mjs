@@ -509,14 +509,14 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   try {
     const project = new Project(projectId)
 
-    if(!project || await project.loadProject() === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layers = (await project.loadProject())
-
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to add layers to this project.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
     }
 
     const layer = new Layer(layers)
@@ -550,14 +550,14 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
   try {
     const project = new Project(projectId)
 
-    if(!project || await project.loadProject() === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layers = (await project.loadProject())
-    
     if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
+    }
+
+    const layers = await project.loadProject()
+    
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
     }
 
     const layer = new Layer(layers)
@@ -588,14 +588,14 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
   try {
     const project = new Project(projectId)
 
-    if(!project || await project.loadProject() === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layers = (await project.loadProject())
-
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to update pages in this layer.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
     }
 
     const layer = new Layer(layers)
@@ -632,14 +632,14 @@ router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, re
   try {
     const project = new Project(projectId)
 
-    if(!project || await project.loadProject() === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layers = (await project.loadProject())
-
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.LAYER))) {
       return respondWithError(res, 403, "You do not have permission to update metadata for this layer.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
     }
 
     const layer = new Layer(layers)
