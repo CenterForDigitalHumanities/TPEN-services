@@ -502,7 +502,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
     return respondWithError(res, 400, "Invalid project ID provided.")
   }
 
-  if (!labelAndCanvases || !labelAndCanvases.canvases) {
+  if (!labelAndCanvases || !labelAndCanvases.canvases || !Array.isArray(labelAndCanvases.canvases) || labelAndCanvases.some(canvas => typeof canvas !== "string")) {
     return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
   }
 
