@@ -30,7 +30,6 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const metadata = manifest.metadata ?? []
     const pages = await ProjectFactory.buildPagesFromCanvases(manifest.items)
-    console.log("Pages: ", pages)
 
     // required properties: id, label, metadata, manifest, layers
     return {
@@ -64,7 +63,7 @@ export default class ProjectFactory {
       })
       return await Promise.all(pages)
     } catch (error) {
-      console.log(error)
+      console.error(error)
       throw error
     }
   }
