@@ -616,7 +616,7 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
   }
 })
 
-// Route to update the label of a specific layer within a project
+// Route to update the label only of a specific layer within a project
 router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, res) => {
   const { projectId, layerId } = req.params
   const label = req.body
