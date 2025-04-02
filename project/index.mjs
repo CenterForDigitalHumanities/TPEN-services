@@ -503,7 +503,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
   }
 
   if (!labelAndCanvases || !labelAndCanvases.canvases || !Array.isArray(labelAndCanvases.canvases) || labelAndCanvases.canvases.some(canvas => typeof canvas !== "string")) {
-    return respondWithError(res, 400, "Invalid layer provided. Expected a layer object.")
+    return respondWithError(res, 400, "Invalid layer provided. Expected an array of canvas IDs.")
   }
 
   try {
@@ -582,7 +582,7 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
   }
 
   if (!pages || !Array.isArray(pages) || pages.some(page => typeof page !== "string")) {
-    return respondWithError(res, 400, "Invalid pages provided. Expected an array of page objects.")
+    return respondWithError(res, 400, "Invalid pages provided. Expected an array of page IDs.")
   }
 
   try {
