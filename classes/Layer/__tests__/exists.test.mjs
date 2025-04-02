@@ -11,5 +11,7 @@ describe('Layer Class looks how we expect it to. #Layer_exists_unit', () => {
     expect(layer.addLayer).toBeInstanceOf(Function)
     expect(layer.deleteLayer).toBeInstanceOf(Function)
     expect(layer.update).toBeInstanceOf(Function)
+    expect(layer.updatePages).toBeInstanceOf(Function)
+    expect(layer.updateLayerMetadata).toBeInstanceOf(Function)
   })
 })

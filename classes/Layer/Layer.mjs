@@ -47,6 +47,37 @@ export default class Layer {
         return this.data.layers
     }
 
+    async updatePages(layerId, pages) {
+        this.data.layers = this.data.layers.map(layer => {
+            if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
+            {
+                layer.pages = pages
+                .map((page) => {
+                    const itemIndex = layer.pages.findIndex((item) => page === (item.id ?? item["@id"]))
+                    if (itemIndex !== -1) {
+                        return layer.pages[itemIndex]
+                    }
+                })
+                .filter(Boolean)
+            }
+            return layer
+        })
+        await this.update()
+        return this.data.layers
+    }
+
+    async updateLayerMetadata(layerId, label) {
+        this.data.layers = this.data.layers.map(layer => {
+            if((layer.id ?? layer["@id"]) === `${process.env.RERUMIDPREFIX}${layerId}`)
+            {
+                layer.label = label.label
+            }
+            return layer
+        })
+        await this.update()
+        return this.data.layers
+    }
+
     async update() {
         return await database.update(this.data, process.env.TPENPROJECTS)
     }
