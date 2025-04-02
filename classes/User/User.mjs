@@ -99,7 +99,6 @@ export default class User {
   /**
    *  this assumes that the project object includes the following properties
     {
-      "@type":"Project"
       creator:"user.agent",
       groups:{
         members:[{agent:"user.agent", _id:"user._id"}]

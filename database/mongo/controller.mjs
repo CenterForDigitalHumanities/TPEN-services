@@ -51,7 +51,12 @@ function discernCollectionFromType(type) {
  * @return a known type string, such as "Project", or null
  */ 
 function determineDataType(data, override) {
-  return data["@type"] ?? data.type ?? override
+  if (data._sub) return "User"
+  if (data.members) return "Group"
+  if (data.group) return "Project"
+  if (data.target && data.items) return "Page"
+  if (data.target && data.body) return "Line"
+  return override ?? data["@type"] ?? data.type
 }
 
 class DatabaseController {
