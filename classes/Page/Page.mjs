@@ -1,6 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 
-const database = new dbDriver("mongo")
+const databaseMongo = new dbDriver("mongo")
+const databaseTiny = new dbDriver("tiny")
 
 export default class Page {
 
@@ -23,7 +24,7 @@ export default class Page {
         this.layerId = layerId
         const layer = this.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`)
         const pageItems = layer.pages.map(page => ({
-            id : `${process.env.RERUMIDPREFIX}${database.reserveId()}`,
+            id : `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`,
             type : "AnnotationPage",
             label : page.label,
             partOf : {
@@ -48,11 +49,15 @@ export default class Page {
             first : pageItems[0].id,
             last : pageItems[pageItems.length - 1].id
         }
-        console.log(addCollection.items)
+        this.save(addCollection)
         return addCollection
     }
 
+    async save(savePages) {
+        return await databaseTiny.save(savePages)
+    }
+
     async update() {
-        return await database.update(this.data, process.env.TPENPROJECTS)
+        return await databaseMongo.update(this.data, process.env.TPENPROJECTS)
     }
 }
