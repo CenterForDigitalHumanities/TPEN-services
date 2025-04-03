@@ -1,4 +1,4 @@
-import { Page } from "../Page.mjs"
+import Page from "../Page.mjs"
 
 describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
   it('Imports Page', () => {
