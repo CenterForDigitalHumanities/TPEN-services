@@ -187,7 +187,7 @@ export default class ProjectFactory {
     return Promise.all(
       project.layers.map(async (layer) => {
         try {
-          const canvasUrl = layer.pages[0].canvas
+          const canvasUrl = layer.pages[0].target
           const canvasData = await this.fetchJson(canvasUrl)
           if (!canvasData) return null
 
