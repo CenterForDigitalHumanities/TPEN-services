@@ -27,30 +27,29 @@ export default class Page {
             id : `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`,
             type : "AnnotationPage",
             label : page.label,
-            partOf : {
-                id : `${process.env.RERUMIDPREFIX}${layerId}`,
-                label : layer.label
-            },
             target : page.target
         }))
-
-        pageItems.forEach((pageItem, index) => {
-            pageItem.next = pageItems[index + 1]?.id ?? null
-            pageItem.prev = pageItems[index - 1]?.id ?? null
-        })
 
         const addCollection = {
             "@context": "http://www.w3.org/ns/anno.jsonld",
             id : `${process.env.RERUMIDPREFIX}${layerId}`,
             type : "AnnotationCollection",
-            label : layer.label,
+            label : layer.label.split(" - ")[0],
             items : pageItems,
             total : pageItems.length,
             first : pageItems[0].id,
             last : pageItems[pageItems.length - 1].id
         }
-        this.save(addCollection)
-        return addCollection
+
+        pageItems.forEach((pageItem, index) => {
+            pageItem.partOf = {
+                id : addCollection.id,
+                label : addCollection.label
+            },
+            pageItems[index + 1]?.id ? pageItem.next = pageItems[index + 1].id : null
+            pageItems[index - 1]?.id ? pageItem.prev = pageItems[index - 1].id : null
+        })
+        return this.save(addCollection)
     }
 
     async save(savePages) {
