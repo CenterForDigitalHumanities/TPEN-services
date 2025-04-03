@@ -154,7 +154,7 @@ export default class ProjectFactory {
   }
 
   /**
-   * Exporting the IIIF manifest for a given project in its current state, ensuring the directory structure is created,
+   * Exporting the IIIF manifest for a given project in its current state,
    * manifest data is assembled, and the final JSON is saved to the filesystem.
    * 
    * @param {string} projectId - Project ID for a specific project.
@@ -164,7 +164,6 @@ export default class ProjectFactory {
    * - Context, ID, Type, Label, Metadata, Items and Annotations
    * - A dynamically fetched list of manifest items, including canvases and their annotations.
    * - All elements are embedded in the manifest object.
-   * - Saved output to the file system as 'manifest.json' within the project directory.
    */
   static async exportManifest(projectId) {
     if (!projectId) {
@@ -172,8 +171,6 @@ export default class ProjectFactory {
     }
 
     const project = await ProjectFactory.loadAsUser(projectId, null)
-    const dir = `./${projectId}`
-    this.createDirectory(dir)
 
     const manifest = {
       "@context": "http://iiif.io/api/presentation/3/context.json",
@@ -181,19 +178,12 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getManifestItems(project, dir),
+      items: await this.getManifestItems(project),
     }
-    this.saveToFile(dir, 'manifest.json', manifest)
     return manifest
   }
 
-  static createDirectory(dir) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-  }
-
-  static async getManifestItems(project, dir) {
+  static async getManifestItems(project) {
     return Promise.all(
       project.layers.map(async (layer) => {
         try {
@@ -208,7 +198,7 @@ export default class ProjectFactory {
             width: canvasData.width,
             height: canvasData.height,
             items: canvasData.items,
-            annotations: await this.getAnnotations(canvasData, project._id, dir),
+            annotations: await this.getAnnotations(canvasData),
           }
           return canvasItems
         } catch (error) {
@@ -219,9 +209,9 @@ export default class ProjectFactory {
     )
   }
 
-  static async getAnnotations(canvasData, projectId, dir) {
+  static async getAnnotations(canvasData) {
     return Promise.all(
-      canvasData.annotations.map(async (annotation, index) => {
+      canvasData.annotations.map(async (annotation) => {
         try {
           const annotationData = await this.fetchJson(annotation.id)
           if (!annotationData) return null
@@ -230,7 +220,7 @@ export default class ProjectFactory {
             id: annotationData.id ?? annotationData["@id"],
             type: annotationData.type,
             label: annotationData.label,
-            items: await this.getLines(annotationData, dir),
+            items: await this.getLines(annotationData),
             partOf: annotationData.partOf,
             creator: annotationData.creator,
             target: annotationData.target,
@@ -244,7 +234,7 @@ export default class ProjectFactory {
     )
   }
 
-  static async getLines(annotationData, dir) {
+  static async getLines(annotationData) {
     return Promise.all(
       annotationData.items.map(async (item) => {
         try {
@@ -279,29 +269,18 @@ export default class ProjectFactory {
     }
   }
 
-  static getFileName(url) {
-    const fileName = path.parse(url.substring(url.lastIndexOf("/") + 1)).name
-    return fileName
-  }
-
-  static saveToFile(dir, url, data) {
-    const fileName = this.getFileName(url)
-    fs.writeFileSync(path.join(dir, `${fileName}.json`), JSON.stringify(data, null, 2))
-  }
-
   /**
    * Uploads or updates the `manifest.json` file for a given project to a GitHub repository.
    * 
-   * @param {string} filePath - The local path to the `manifest.json` file to be uploaded.
+   * @param {string} manifest - JSON Object representing the IIIF manifest.
    * @param {string} projectId - Project ID for a specific project.
    * 
    * The method performs the following steps:
-   * - Reads and encodes the file content in Base64.
+   * - Creates a GitHub API URL for the `manifest.json` file in the GitHub repository.
    * - Checks if the `manifest.json` already exists in the GitHub repository to determine if it's a create or update action.
    * - Uploads the file using the GitHub API, including the correct commit message and SHA for updates.
    */
-  static async uploadFileToGitHub(filePath, projectId) {
-    const content = fs.readFileSync(filePath, { encoding: "base64" })
+  static async uploadFileToGitHub(manifest, projectId) {
     const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`
     const token = process.env.GITHUB_TOKEN
 
@@ -329,10 +308,10 @@ export default class ProjectFactory {
         },
         body: JSON.stringify({
             message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
-            content: content,
+            content: Buffer.from(JSON.stringify(manifest)).toString('base64'),
             branch: process.env.BRANCH,
             ...(sha && { sha }),
-        }),
+        })
     })
     } catch (error) {
       console.error(`Failed to upload ${projectId}/manifest.json:`, error)
