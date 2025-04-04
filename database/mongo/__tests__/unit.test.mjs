@@ -9,9 +9,17 @@ import DatabaseController from "../controller.mjs"
 const database = new DatabaseController()
 const TIME_OUT = process.env.DB_TEST_TIMEOUT ?? 6500
 
-let test_proj = { name: "Test Project"}
-let test_group = {"@type": "Group", name: "Test Group"}
-let test_user = {"@type": "User", name: "Test User"}
+let test_proj = {
+  name: "Test Project",
+  group: "Test Group",
+  metadata: [],
+  layers: [],
+  label: "Test Label",
+  manifest: ["Test Manifest"],
+  creator: "Test Creator"
+}
+let test_group = {"@type": "Group", name: "Test Group", members: []}
+let test_user = {"@type": "User", name: "Test User", _sub: "auth0|321"}
 
 beforeAll(async () => {
   return await database.connect()
