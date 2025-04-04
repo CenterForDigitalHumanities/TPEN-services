@@ -12,8 +12,6 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
-import path from "path"
-import fs from "fs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -121,15 +119,7 @@ router
         return respondWithError(res, 403, "You do not have permission to export this project")
       }
       const manifest = await ProjectFactory.exportManifest(id)
-      const folderPath = path.join(`./${id}`)
-      const files = fs.readdirSync(folderPath)
-      for (const file of files) {
-          const filePath = path.join(folderPath, file)
-          if (fs.lstatSync(filePath).isFile()) {
-              await ProjectFactory.uploadFileToGitHub(filePath, `${id}`)
-          }
-      }
-      fs.rmSync(folderPath, {recursive: true, force: true})
+      await ProjectFactory.uploadFileToGitHub(manifest, `${id}`)
       res.status(200).json(manifest)
     } catch (error) {
       return respondWithError(
