@@ -1,5 +1,5 @@
 /**
- * A MongoDB Controller.  Actions here specifically interact with the set MongoDB Database.
+ * A MongoDB Controller. Actions here specifically interact with the set MongoDB Database.
  * @see env.MONGODB
  *
  * @author Bryan Haberberger
@@ -8,6 +8,7 @@
 
 import {MongoClient, ObjectId} from "mongodb"
 import dotenv from "dotenv"
+
 let storedEnv = dotenv.config()
 let err_out = Object.assign(new Error(), {
   status: 123,
@@ -15,44 +16,6 @@ let err_out = Object.assign(new Error(), {
   _dbaction: "N/A"
 })
 
-/**
- * This mongo controller oversees multiple collections.
- * The collection to interact with is programatically chosen based on the 'type' of the input.
- * 
- * @param type A type string, such as "Project", or null
- * @return the corresponding mongo collection, such as "projects", or null
- */
-function discernCollectionFromType(type) {
-  let collection = null
-  if (!type) return collection
-  switch (type) {
-    case "Project":
-    case "Page":
-    case "Line":
-      collection = process.env.TPENPROJECTS
-      break
-    case "Group":
-      collection = process.env.TPENGROUPS
-      break
-    case "User":
-      collection = process.env.TPENUSERS
-      break
-    default:
-  }
-  return collection
-}
-
-/**
- * Data belongs to or goes into different collections.  The data 'type' usually tells us which one.
- * If no type is found on the data, use the provided override, if any.
- * 
- * @param data A data object or query object.  The type will correspond to a mongo collection
- * @param override If no type is on 'data', consider the provided override to be the type.
- * @return a known type string, such as "Project", or null
- */ 
-function determineDataType(data, override) {
-  return data["@type"] ?? data.type ?? override
-}
 
 class DatabaseController {
   /**
@@ -132,7 +95,6 @@ class DatabaseController {
    * Generate an new mongo _id as a hex string (as opposed _id object, for example)
    * @return A hex string or error
    * */
-
   reserveId(seed) {
     try {
       return new ObjectId(seed).toHexString()
@@ -148,7 +110,7 @@ class DatabaseController {
   async connected() {
     // Send a ping to confirm a successful connection
     try {
-      let result = await this.db.command({ping: 1}).catch((err) => {
+      let result = await this.db.command({ping: 1}).catch((_err) => {
         return false
       })
       result = result.ok ? true : false
@@ -163,23 +125,17 @@ class DatabaseController {
     try {
       // Not allowed to find null or {}
       if (!query || Object.keys(query).length === 0) {
-        err_out.message = `Empty or null query detected.  You must provide a query object.`
+        err_out.message = `Empty or null query detected. You must provide a query object.`
         err_out.status = 400
         throw err_out
       }
-      // need to determine what collection (projects, groups, users) this goes into.
-      const data_type = determineDataType(query, collection)
-      if (!data_type) {
-        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
-        err_out.status = 400
-        throw err_out
-      }
-      collection ??= discernCollectionFromType(data_type)
+      
       if (!collection) {
-        err_out.message = `Cannot figure which collection for object of type '${data_type}'`
+        err_out.message = `Collection is required for find operation`
         err_out.status = 400
         throw err_out
       }
+      
       let result = await this.db.collection(collection).find(query).toArray()
       return result
     } catch (err) {
@@ -195,24 +151,17 @@ class DatabaseController {
     try {
       // Not allowed to find null or {}
       if (!query || Object.keys(query).length === 0) {
-        err_out.message = `Empty or null query detected.  You must provide a query object.`
+        err_out.message = `Empty or null query detected. You must provide a query object.`
         err_out.status = 400
         throw err_out
       }
-      // need to determine what collection (projects, groups, users) this goes into.
-
-      const data_type = determineDataType(query, collection)
-      if (!data_type) {
-        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
-        err_out.status = 400
-        throw err_out
-      }
-      collection ??= discernCollectionFromType(data_type)
+      
       if (!collection) {
-        err_out.message = `Cannot figure which collection for object of type '${data_type}'`
+        err_out.message = `Collection is required for findOne operation`
         err_out.status = 400
         throw err_out
       }
+      
       let result = await this.db.collection(collection).findOne(query)
       return result
     } catch (err) {
@@ -231,29 +180,24 @@ class DatabaseController {
    */
   async save(data, collection) {
     try {
-      // need to determine what collection (projects, groups, users) this goes into.
-      const data_type = determineDataType(data, collection)
-      if (!data_type) {
-        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
-        err_out.status = 400
-        throw err_out
-      }
-      collection ??= discernCollectionFromType(data_type)
       if (!collection) {
-        err_out.message = `Cannot figure which collection for object of type '${data_type}'`
+        err_out.message = `Collection is required for save operation`
         err_out.status = 400
         throw err_out
       }
+      
       data._id ??= this.reserveId()
       const result = await this.db.collection(collection).insertOne(data)
+      
       if (result.insertedId) {
         return data
       }
-      err_out.message = `Document was not inserted into the database.`
+      
+      err_out.message = `Document was not inserted into the database`
       err_out.status = 500
       throw err_out
     } catch (err) {
-      // Specifically account for unexpected mongo things.
+      // Specifically account for unexpected mongo things
       if (!err?.message) err.message = err.toString()
       if (!err?.status) err.status = 500
       if (!err?._dbaction) err._dbaction = "insertOne"
@@ -263,41 +207,36 @@ class DatabaseController {
 
   /**
    * Update an existing object in the database (mongo)
-   * @param data JSON from an HTTP POST request.  It must contain an id.
+   * @param data JSON from an HTTP POST request. It must contain an id.
    * @return The inserted document JSON or error JSON
    */
   async update(data, collection) {
-    // Note this may be an alias for save()
     try {
       let data_id = data["@id"] ?? data._id
       if (!data_id) {
-        err_out.message = `An 'id' must be present to update.`
+        err_out.message = `An 'id' must be present to update`
         err_out.status = 400
         throw err_out
       }
-      // need to determine what collection (projects, groups, users) this goes into.
-      const data_type = determineDataType(data, collection)
-      if (!data_type) {
-        err_out.message = `Cannot find 'type' on this data, and so cannot figure out a collection for it.`
-        err_out.status = 400
-        throw err_out
-      }
-      collection ??= discernCollectionFromType(data_type)
+      
       if (!collection) {
-        err_out.message = `Cannot figure which collection for object of type '${data_type}'`
+        err_out.message = `Collection is required for update operation.`
         err_out.status = 400
         throw err_out
       }
+      
       const obj_id = data_id.split("/").pop()
       const filter = {_id: data_id}
       const result = await this.db
         .collection(collection)
         .replaceOne(filter, data)
+        
       if (result?.matchedCount === 0) {
         err_out.message = `id '${obj_id}' Not Found`
         err_out.status = 404
         throw err_out
       }
+      
       if (result?.modifiedCount >= 0) {
         return data
       } else {
@@ -316,24 +255,27 @@ class DatabaseController {
 
   /**
    * Make an existing object in the database be gone from the normal flow of things (mongo)
-   * @param data JSON from an HTTP DELETE request.  It must contain an id.
+   * @param data JSON from an HTTP DELETE request. It must contain an id.
    * @return The delete result JSON or error JSON
    */
   async remove(id, collection) {
     try {
       if (!collection) {
-        err_out.message = `Cannot figure which collection for object'${id}'`
+        err_out.message = `Collection is required for remove operation.`
         err_out.status = 400
         throw err_out
       }
+      
       const obj_id = id.split("/").pop()
       const filter = {_id: obj_id}
       const result = await this.db.collection(collection).deleteOne(filter)
+      
       if (result?.deletedCount === 0) {
         err_out.message = `id '${obj_id}' Not Found`
         err_out.status = 404
         throw err_out
       }
+      
       return result
     } catch (err) {
       // Specifically account for unexpected mongo things.
@@ -345,12 +287,11 @@ class DatabaseController {
   }
 
   /**
-   * Get by ID.  We need to decide about '@id', 'id', '_id', and http/s
+   * Get by ID. We need to decide about '@id', 'id', '_id', and http/s
    */
   async getById(_id, collection) {
     return this.findOne({_id}, collection)
   }
-
 }
 
 export default DatabaseController
