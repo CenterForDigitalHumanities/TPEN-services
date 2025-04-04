@@ -5,7 +5,7 @@
  * No matter which controller they choose, they have access to regularized unit functionality.
  * Additional controllers can be included in the /database directory as necessary.
  * 
- * @author Bryan Haberberger
+ * @author Bryan Haberberger, cubap
  * https://github.com/thehabes 
  * 
  */
@@ -83,52 +83,74 @@ class dbDriver {
     /**
      * Create a new object in the database
      * @param data JSON from an HTTP POST request
+     * @param collection Optional collection override
      * @return The inserted document JSON or error JSON
      */
     async save(data, collection) {
         data._createdAt = new Date()
+        collection ??= resolveCollection(data)
+        if (!collection) throw new Error("Cannot determine collection for save operation")
         return this.controller.save(data, collection)
     }
 
     /**
      * Update an existing object in the database
-     * @param data JSON from an HTTP POST request.  It must contain an id.
+     * @param data JSON from an HTTP POST request. It must contain an id.
+     * @param collection Optional collection override
      * @return The updated document JSON or error JSON
      */
     async update(data, collection) {
-        // Note this may just be an alias for save()
         data._modifiedAt = new Date()
+        collection ??= resolveCollection(data)
+        if (!collection) throw new Error("Cannot determine collection for update operation")
         return this.controller.update(data, collection)
     }
 
     /**
      * Remove an existing object from the database
-     * @param data JSON from an HTTP DELETE request.  It must contain an id.
+     * @param data JSON from an HTTP DELETE request. It must contain an id.
+     * @param collection Optional collection override
      * @return The delete result JSON or error JSON
      */
     async delete(data, collection) {
+        collection ??= resolveCollection(data)
+        if (!collection) throw new Error("Cannot determine collection for delete operation")
         return this.controller.remove(data, collection)
     }
 
     /**
      * Get data from the database that have matching property values.
-     * @param query JSON from an HTTP POST request.  It must contain at least one property.
+     * @param query JSON from an HTTP POST request. It must contain at least one property.
+     * @param collection Optional collection override
      * @return JSON Array of matched documents or standard error object
      */
     async find(query, collection) {
+        collection ??= resolveCollection(query)
+        if (!collection) throw new Error("Cannot determine collection for find operation")
         return this.controller.find(query, collection)
     }
+
+    /**
+     * Find a single document matching the query
+     * @param query JSON from an HTTP POST request. It must contain at least one property.
+     * @param collection Optional collection override
+     * @return Single document JSON or error
+     */
     async findOne(query, collection) {
+        collection ??= resolveCollection(query)
+        if (!collection) throw new Error("Cannot determine collection for findOne operation")
         return this.controller.findOne(query, collection)
     }
 
     /**
      * Get a database record by its ID.
      * @param id The ID of the record to retrieve.
-     * @collection collection The collection or table to search.
+     * @param collection Optional collection override
      * @return JSON of the matched document or standard error object
      */
     async getById(id, collection) {
+        // Note: Can't determine collection from just an ID
+        if (!collection) throw new Error("Collection required for getById operation")
         return this.controller.getById(id, collection)
     }
 
@@ -162,3 +184,59 @@ class dbDriver {
 }
 
 export default dbDriver
+
+/**
+* Data belongs to or goes into different collections. The data 'type' usually tells us which one.
+* If no type is found on the data, use the provided override, if any.
+* 
+* @param data A data object or query object. The type will correspond to a collection
+* @param override If no type is on 'data', consider the provided override to be the type.
+* @return a known type string, such as "Project", or null
+*/ 
+function determineDataType(data, override) {
+ if (data._sub) return "User"
+ if (data.members) return "Group"
+ if (data.group) return "Project"
+ if (data.target && data.items) return "Page"
+ if (data.target && data.body) return "Line"
+ return override ?? data["@type"] ?? data.type
+}
+
+/**
+ * Determine the collection name based on data type.
+ * 
+ * @param type A type string, such as "Project", or null
+ * @return the corresponding collection name from environment variables
+ */
+function discernCollectionFromType(type) {
+  if (!type) return null
+  
+  switch (type) {
+    case "Project":
+    case "Page":
+    case "Line":
+      return process.env.TPENPROJECTS
+    case "Group":
+      return process.env.TPENGROUPS
+    case "User":
+      return process.env.TPENUSERS
+    default:
+      return null
+  }
+}
+
+/**
+ * Determine the appropriate collection based on data and/or override.
+ * 
+ * @param data The data object to analyze
+ * @param collectionOverride Optional collection override
+ * @return Appropriate collection name
+ */
+function resolveCollection(data, collectionOverride) {
+  if (collectionOverride) return collectionOverride
+  
+  const type = determineDataType(data)
+  if (!type) return null
+  
+  return discernCollectionFromType(type)
+}
