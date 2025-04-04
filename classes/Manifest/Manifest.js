@@ -1,6 +1,4 @@
-import { Vault } from '@iiif/helpers/vault'
-
-const vault = new Vault()
+import vault from "../../utilities/vault.mjs"
 
 class Manifest {
 

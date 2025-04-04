@@ -4,6 +4,8 @@ import User from "../User/User.mjs"
 import dbDriver from "../../database/driver.mjs"
 import fs from "fs"
 import path from "path"
+import vault from "../../utilities/vault.mjs"
+
 const database = new dbDriver("mongo")
 
 export default class ProjectFactory {
@@ -11,18 +13,8 @@ export default class ProjectFactory {
     this.data = data
   }
 
-  static async loadManifest(url) {
-    return fetch(url)
-      .then((response) => {
-        return response.json()
-      })
-      .catch((err) => {
-        throw {
-          status: err.status ?? 404,
-          message: err.message ?? "Manifest not found. Please check URL"
-        }
-      })
-  }
+  static loadManifest = vault.loadManifest
+
   /**
    * processes a manifest object into a project object that can be saved into the Project tablein the DB
    * @param {*} manifest : The manifest object to be processed
@@ -35,59 +27,49 @@ export default class ProjectFactory {
         message: err.message ?? "No manifest found. Cannot process empty object"
       }
     }
-    let newProject = {}
-    newProject.label = ProjectFactory.processLabel(manifest.label)
-    newProject.metadata = manifest.metadata
-    newProject.manifest = manifest["@id"] ?? manifest.id
-    let canvas = manifest.items ?? manifest?.sequences[0]?.canvases
-    newProject.layers = await ProjectFactory.processLayerFromCanvas(canvas)
-    return newProject
+    const now = Date.now().toString().slice(-6)
+    const metadata = manifest.metadata ?? []
+    const pages = await ProjectFactory.buildPagesFromCanvases(manifest.items)
+
+    // required properties: id, label, metadata, manifest, layers
+    return {
+      label: ProjectFactory.getLabelAsString(manifest.label) ?? `Project ${now}`,
+      metadata,
+      manifest: [ manifest.id ],
+      layers: [ {
+          id: `${process.env.SERVERURL}layer/${database.reserveId()}`,
+          label: `First Layer - ${ProjectFactory.getLabelAsString(manifest.label) ?? now}`,
+          pages,
+      } ]
+    }
   }
 
-  static processLabel(label) {
-    let processedLabel = null
-    if (typeof (label) == "string") {
-      processedLabel = label
-    }
-
-    else if (typeof (label) == "object" && label != null) {
-      //for language maps
-      let firstKey = Object.keys(label)[0]
-      processedLabel = label[firstKey]
-      if (Array.isArray(processedLabel)) processedLabel = processedLabel[0]
-    }
-
-    return processedLabel
+  static getLabelAsString(label) {
+    const defaultLanguage = typeof label === 'object' ? Object.keys(label)[0] : 'en'
+    return label[defaultLanguage]?.join(", ") ?? label.none?.join(",")
   }
-  static async processLayerFromCanvas(canvases) {
-    if (!canvases.length) return []
 
-    let layers = []
-
+  static async buildPagesFromCanvases(canvases) {
     try {
-      canvases.map(async (canvas) => {
-        let layer = {}
-        layer["@id"] = Date.now()
-        layer["@type"] = "Layer"
-        layer.pages = canvas?.otherContent ?? canvas?.annotations ?? []
-        layer?.pages?.map((page) => {
-          page.canvas = page.on ?? canvas.id
-          page.lines = page.resources ?? page.items ?? []
-          delete page.resources
-          delete page.on
-          delete page.items
-        })
+      if (!canvases.length || !Array.isArray(canvases)) throw new Error("No canvases found in the manifest")
 
-        layers.push(layer)
+      const pages = canvases.map(async (c, index) => {
+        const canvas = await vault.get(c)
+        return {
+          id: `${process.env.SERVERURL}page/${canvas.id?.split('/').pop()}`,
+          label: ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${index + 1}`,
+          target: canvas.id
+        }
       })
+      return await Promise.all(pages)
     } catch (error) {
-      console.log(error)
+      console.error(error)
+      throw error
     }
-    return layers
   }
 
   static async fromManifestURL(manifestId, creator) {
-    return ProjectFactory.loadManifest(manifestId)
+    return vault.loadManifest(manifestId)
       .then(async (manifest) => {
         return await ProjectFactory.DBObjectFromManifest(manifest)
       })
@@ -288,23 +270,23 @@ export default class ProjectFactory {
       let sha = null
 
       const getResponse = await fetch(manifestUrl, {
-          headers: {
-              'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-          },
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
       })
 
       if (getResponse.ok) {
-          const fileData = await getResponse.json()
-          sha = fileData.sha
+        const fileData = await getResponse.json()
+        sha = fileData.sha
       }
 
       await fetch(manifestUrl, {
         method: 'PUT',
         headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
             message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
@@ -313,6 +295,7 @@ export default class ProjectFactory {
             ...(sha && { sha }),
         })
     })
+
     } catch (error) {
       console.error(`Failed to upload ${projectId}/manifest.json:`, error)
     }

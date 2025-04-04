@@ -43,7 +43,7 @@ describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "creates a new group",
     async () => {
-      const result = await database.save(test_group)
+      const result = await database.save(test_group, "groups")
       test_group["_id"] = result["_id"]
       expect(result["_id"]).toBeTruthy()
     },
@@ -52,7 +52,7 @@ describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "creates a new User",
     async () => {
-      const result = await database.save(test_user)
+      const result = await database.save(test_user, "users")
       test_user["_id"] = result["_id"]
       expect(result["_id"]).toBeTruthy()
     },
@@ -72,7 +72,8 @@ describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
     "updates an existing group",
     async () => {
       test_group.name = "Test Group -- Updated"
-      const result = await database.update(test_group)
+      await database.save(test_group, "groups")
+      const result = await database.update(test_group, "groups")
       expect(result["_id"]).toBeTruthy()
     },
     TIME_OUT
@@ -81,7 +82,8 @@ describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
     "updates an existing User",
     async () => {
       test_user.name = "Test User -- Updated"
-      const result = await database.update(test_user)
+      await database.save(test_user, "users")
+      const result = await database.update(test_user, "users")
       expect(result["_id"]).toBeTruthy()
     },
     TIME_OUT
@@ -98,7 +100,7 @@ describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "Finds matching groups by query",
     async () => {
-      const result = await database.find(test_group)
+      const result = await database.find(test_group, "groups")
       expect(result[0]["_id"]).toBe(test_group["_id"])
     },
     TIME_OUT
@@ -106,7 +108,7 @@ describe("Mongo Database Unit Functions. #mongo_unit #db", () => {
   it(
     "Finds matching User by query",
     async () => {
-      const result = await database.find(test_user)
+      const result = await database.find(test_user, "users")
       expect(result[0]["_id"]).toBe(test_user["_id"])
     },
     TIME_OUT
