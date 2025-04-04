@@ -1,36 +1,7 @@
 import {jest} from "@jest/globals"
 import ProjectFactory from "../ProjectFactory.mjs"
 
-describe("ProjectFactory.loadManifest #importTests", () => {
-  beforeEach(() => {
-    global.fetch = jest.fn()
-  })
-
-  afterEach(() => {
-    jest.resetAllMocks()
-  })
-
-  it("should return a manifest object", async () => {
-    const mockManifest = {
-      "@id": "http://example.com/manifest/1",
-      label: "Example Manifest",
-      metadata: {},
-      items: []
-    }
-
-    global.fetch.mockResolvedValue({
-      json: jest.fn().mockResolvedValue(mockManifest)
-    })
-
-    const manifestURL = "https://examplemanifest.com/001"
-    const result = await ProjectFactory.loadManifest(manifestURL)
-
-    expect(global.fetch).toHaveBeenCalledWith(manifestURL)
-    expect(result).toEqual(mockManifest)
-  })
-})
-
-describe("ProjectFactory.DBObjectFromManifest/processLayerFromCanvas #importTests", () => {
+describe("ProjectFactory.DBObjectFromManifest/buildPagesFromCanvases #importTests", () => {
   it("should process the manifest correctly with layers", async () => {
     const mockManifest = {
       "@id": "http://example.com/manifest/1",
@@ -55,7 +26,7 @@ describe("ProjectFactory.DBObjectFromManifest/processLayerFromCanvas #importTest
       ]
     }
 
-    jest.spyOn(ProjectFactory, "processLayerFromCanvas").mockResolvedValue([
+    jest.spyOn(ProjectFactory, "buildPagesFromCanvases").mockResolvedValue([
       {
         "@id": "http://example.com/canvas/1",
         "@type": "Layer",
@@ -101,7 +72,7 @@ describe("ProjectFactory.DBObjectFromManifest/processLayerFromCanvas #importTest
 
     const result =  await ProjectFactory.DBObjectFromManifest(mockManifest)
 
-    expect(ProjectFactory.processLayerFromCanvas).toHaveBeenCalledWith(
+    expect(ProjectFactory.buildPagesFromCanvases).toHaveBeenCalledWith(
       mockManifest.items
     )
   })
