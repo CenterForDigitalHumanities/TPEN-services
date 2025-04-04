@@ -97,7 +97,7 @@ class DatabaseController {
    * */
   reserveId(seed) {
     try {
-      return new ObjectId(seed).toHexString()
+      return ObjectId.generate(seed).toHexString()
     } catch (err) {
       return new ObjectId().toHexString()
     }
