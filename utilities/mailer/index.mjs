@@ -59,6 +59,14 @@ export const sendMail = async (email, subject, message) => {
       port: process.env.SMTP_PORT,
     })
 
+    transporter.verify((error, success) => {
+      if (error) {
+        console.log("Error in SMTP configuration: ", error)
+        return {status: 500, message: error.toString()}
+      }
+      console.log("Server is ready to take our messages")
+    })
+
     const mailOptions = {
       from: process.env.TPEN_SUPPORT_EMAIL,
       to: email,
