@@ -124,7 +124,7 @@ export default class Project {
     const agent = `https://store.rerum.io/v1/id/${user._id}`
     const profile = { displayName: email.split("@")[0] }
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
-    user.data = { email, profile, agent, inviteCode }
+    user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
 
