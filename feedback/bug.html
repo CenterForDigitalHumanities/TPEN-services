@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bug Report Form</title>
+</head>
+<body>
+  <h1>Bug Report Form</h1>
+  <form id="bugReportForm">
+    <input type="hidden" id="user" value="test-user">
+    <input type="hidden" id="page" value="current-page-url">
+    <textarea id="bugDescription" placeholder="Describe the bug"></textarea>
+    <button type="submit">Submit Bug</button>
+  </form>
+  <script>
+    document.getElementById('bugReportForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const user = document.getElementById('user').value
+      const page = document.getElementById('page').value
+      const bugDescription = document.getElementById('bugDescription').value
+
+      const response = await fetch('/submit-bug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, page, bugDescription })
+      })
+
+      const result = await response.json()
+      alert(result.message || result.error)
+    })
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Feedback Form</title>
+</head>
+<body>
+  <h1>Feedback Form</h1>
+  <form id="feedbackForm">
+    <input type="hidden" id="user" value="test-user">
+    <input type="hidden" id="page" value="current-page-url">
+    <textarea id="feedback" placeholder="Enter your feedback"></textarea>
+    <button type="submit">Submit Feedback</button>
+  </form>
+  <script>
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const user = document.getElementById('user').value
+      const page = document.getElementById('page').value
+      const feedback = document.getElementById('feedback').value
+
+      const response = await fetch('/submit-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, page, feedback })
+      })
+
+      const result = await response.json()
+      alert(result.message || result.error)
+    })
+  </script>
+</body>
+</html>
