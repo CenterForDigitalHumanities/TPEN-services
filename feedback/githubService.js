@@ -1,22 +1,23 @@
-const axios = require('axios')
-
-const GITHUB_REPO = 'your-username/your-repo'
-const GITHUB_TOKEN = 'your-github-token'
-
-async function createGitHubIssue(label, title, body) {
-  const url = `https://api.github.com/repos/${GITHUB_REPO}/issues`
+export async function createGitHubIssue(label, title, body) {
+  const url = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues`
   const headers = {
-    Authorization: `token ${GITHUB_TOKEN}`,
-    Accept: 'application/vnd.github.v3+json'
+    Authorization: `token ${process.env.GITHUB_TOKEN}`,
+    Accept: 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
   }
 
-  const data = {
-    title,
-    body,
-    labels: [label]
-  }
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      title,
+      body,
+      labels: [label]
+    })
+  })
 
-  await axios.post(url, data, { headers })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(`GitHub API error: ${error.message}`)
+  }
 }
-
-module.exports = { createGitHubIssue }
