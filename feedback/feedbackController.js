@@ -2,7 +2,7 @@ import { createGitHubIssue } from './githubService.js'
 import { respondWithError } from "../utilities/shared.mjs"
 
 export async function submitFeedback(req, res) {
-  const user = req.user ? req.user.username : 'Anonymous'
+  const user = req.user ? `${req.user.profile.displayName} (${req.user._id})` : 'Anonymous'
   const { page, feedback } = req.body
 
   if (!feedback) {
@@ -13,12 +13,12 @@ export async function submitFeedback(req, res) {
     await createGitHubIssue('Feedback', `Feedback from ${user}`, `Page: ${page}\n\nFeedback: ${feedback}`)
     res.status(200).json({ message: 'Feedback submitted successfully' })
   } catch (error) {
-    respondWithError(res, 500, 'Failed to submit feedback')
+    respondWithError(res, error.status ?? 500, error.message ?? 'Failed to submit feedback')
   }
 }
 
 export async function submitBug(req, res) {
-  const user = req.user ? req.user.username : 'Anonymous'
+  const user = req.user ? `${req.user.profile.displayName} (${req.user._id})` : 'Anonymous'
   const { page, bugDescription } = req.body
 
   if (!bugDescription) {
@@ -29,6 +29,6 @@ export async function submitBug(req, res) {
     await createGitHubIssue('Bug Report', `Bug reported by ${user}`, `Page: ${page}\n\nBug: ${bugDescription}`)
     res.status(200).json({ message: 'Bug report submitted successfully' })
   } catch (error) {
-    respondWithError(res, 500, 'Failed to submit bug report')
+    respondWithError(res, error.status ?? 500, error.message ??'Failed to submit bug report')
   }
 }
