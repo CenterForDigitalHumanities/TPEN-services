@@ -69,7 +69,7 @@ app.use('/my',  privateProfileRouter)
 app.use('/proxy', proxyRouter)
  
 // Beta Feedback routes
-app.use('/feedback', feedbackRouter)
+app.use('/beta', feedbackRouter)
 
 //catch 404 because of an invalid site path
 app.use('*', function(req, res, next) {
