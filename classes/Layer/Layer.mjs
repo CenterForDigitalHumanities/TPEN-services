@@ -1,6 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 
 const database = new dbDriver("mongo")
+const databaseTiny = new dbDriver("tiny")
 
 export default class Layer {
     constructor(data) {
@@ -80,5 +81,39 @@ export default class Layer {
 
     async update() {
         return await database.update(this.data, process.env.TPENPROJECTS)
+    }
+
+    async saveCollectionToRerum() {
+        const pageItems = this.pages.map(page => ({
+            id: `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`,
+            type: "AnnotationPage",
+            label: page.label,
+            target: page.target
+        }))
+
+        const addCollection = {
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            id: `${process.env.RERUMIDPREFIX}${this.layerId}`,
+            type: "AnnotationCollection",
+            label: layer.label.split(" - ")[0],
+            items: pageItems,
+            total: pageItems.length,
+            first: pageItems[0].id,
+            last: pageItems[pageItems.length - 1].id
+        }
+
+        pageItems.forEach((pageItem, index) => {
+            pageItem.partOf = {
+                id: addCollection.id,
+                label: addCollection.label
+            }
+            if (pageItems[index + 1]?.id) pageItem.next = pageItems[index + 1].id
+            if (pageItems[index - 1]?.id) pageItem.prev = pageItems[index - 1].id
+        })
+        return this.save(addCollection)
+    }
+
+    async save(data) {
+        // Implement save logic for Layer
     }
 }

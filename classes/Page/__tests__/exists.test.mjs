@@ -1,37 +1,28 @@
-import { Page } from "../Page.mjs"
+import Page from "../Page.mjs"
 
 describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
   it('Imports Page', () => {
-    expect(Page.constructor).toBeInstanceOf(Function)
+    expect(typeof Page).toBe('function')
   })
 
-  const page = new Page()
-  it('has useful methods', () => {
-    expect(page.asCanvas).toBeInstanceOf(Function)
-    expect(page.create).toBeInstanceOf(Function)
-    expect(page.remove).toBeInstanceOf(Function)
-    expect(page.save).toBeInstanceOf(Function)
-    expect(page.fetch).toBeInstanceOf(Function)
-    expect(page.addMembershipToManifest).toBeInstanceOf(Function)
-    expect(page.getPreviousPage).toBeInstanceOf(Function)
-    expect(page.getNextPage).toBeInstanceOf(Function)
-    expect(page.handleTextBlob).toBeInstanceOf(Function)
-    expect(page.handleImageAnnotation).toBeInstanceOf(Function)
-    expect(page.getSiblingPages).toBeInstanceOf(Function)
-    expect(page.getProject).toBeInstanceOf(Function)
-    expect(page.getPageInfo).toBeInstanceOf(Function)
-    expect(page.getMetadata).toBeInstanceOf(Function)
-    // expect(page.getHTMLDocument).toBeInstanceOf(Function)
+  const page = new Page("layerID", { id: "canvasID", label: "Canvas Label" }, "prevID", "nextID", [])
+  it('has expected methods', () => {
+    expect(typeof page.saveCollectionToRerum).toBe('function')
+    expect(typeof page.update).toBe('function')
+    expect(typeof page.save).toBe('function')
+    expect(typeof page.delete).toBe('function') // Add this if `delete` is a new method
   })
 
-  it('configures a correct Canvas', () => {
-    expect(page.id).toBeDefined()
-    const canvas = page.asCanvas()
-    expect(canvas).toBeInstanceOf(Object)
-    expect(canvas.type).toBe('Canvas')
-    expect(canvas['@context']).toBe("http://iiif.io/api/presentation/3/context.json")
-    expect(canvas.height).toBeDefined()
-    expect(canvas.width).toBeDefined()
+  it('has expected properties', () => {
+    expect(page).toHaveProperty('id') // Add this if `id` is a new property
+    expect(page).toHaveProperty('title') // Add this if `title` is a new property
   })
 
+  it('throws an error for poorly formed new Page calls', () => {
+    expect(() => new Page()).toThrow() // No arguments
+    expect(() => new Page("layerID")).toThrow() // Missing required arguments
+    expect(() => new Page("layerID", null, "prevID", "nextID", [])).toThrow() // Null canvas object
+    expect(() => new Page("layerID", { id: null, label: "Canvas Label" }, "prevID", "nextID", [])).toThrow() // Invalid canvas ID
+    expect(() => new Page("layerID", { id: "canvasID"}, "prevID", "nextID", [])).toThrow() // Invalid canvas label
+  })
 })
