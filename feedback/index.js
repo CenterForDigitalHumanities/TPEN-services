@@ -1,6 +1,6 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const { createGitHubIssue } = require('./githubService')
+import express from 'express'
+import bodyParser from 'body-parser'
+import { createGitHubIssue } from './githubService.js'
 
 const feedbackRouter = express.Router()
 feedbackRouter.use(bodyParser.json())
@@ -37,4 +37,4 @@ feedbackRouter.post('/submit-bug', async (req, res) => {
   }
 })
 
-module.exports = feedbackRouter
+export default feedbackRouter
