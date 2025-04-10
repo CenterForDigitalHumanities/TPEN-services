@@ -1,11 +1,10 @@
 import { createGitHubIssue } from './githubService.js'
 import { respondWithError } from "../utilities/shared.mjs"
-import { PassThrough } from 'supertest/lib/test.js'
 
 /**
  * 
  * @param {user, body: page, feedback } req auth offers user and API is used with body: page:URL, feedback:String 
- * @param {PassThrough} res Express response object
+ * @param {Response} res Express response object
  * @description This function handles the submission of feedback from the user. It creates a GitHub issue with the feedback details.
  * @returns 200 if feedback is submitted successfully, 204 if no feedback is provided, or an error response if the submission fails.
  */
@@ -27,7 +26,7 @@ export async function submitFeedback(req, res) {
 /**
  * 
  * @param {user, body: page, bugDescription } req auth offers user and API is used with body: page:URL, bugDescription:String 
- * @param {PassThrough} res Express response object
+ * @param {Response} res Express response object
  * @description This function handles the submission of bug reports from the user. It creates a GitHub issue with the bug details.
  * @returns 200 if the bug report is submitted successfully, 204 if no bug description is provided, or an error response if the submission fails.
  */
