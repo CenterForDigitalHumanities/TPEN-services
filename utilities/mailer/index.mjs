@@ -36,10 +36,35 @@ export const sendMail = async (email, subject, message) => {
   htmlTemplate = htmlTemplate.replace("{{subject}}", subject)
   htmlTemplate = htmlTemplate.replace("{{messageBody}}", message)
 
+  // Stop execution if any of the required environment variables are not set
+  const requiredEnvVars = [
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "TPEN_SUPPORT_EMAIL",
+    "TPEN_EMAIL_CC"
+  ]
+
+  requiredEnvVars.forEach(varName => {
+    if (!process.env[varName]) {
+      return {
+        status: 500,
+        message: `${varName} environment variable is not set.`
+      }
+    }
+  })
+
    try {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
+    })
+
+    transporter.verify((error, success) => {
+      if (error) {
+        console.log("Error in SMTP configuration: ", error)
+        return {status: 500, message: error.toString()}
+      }
+      console.log("Server is ready to take our messages")
     })
 
     const mailOptions = {
