@@ -1,62 +1,64 @@
 import dbDriver from "../../database/driver.mjs"
 
-const databaseMongo = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
 
 export default class Page {
 
-    constructor(data) {
-        this.data = data
-        this.projectId = null
-        this.layerId = null
+    #setRerumId() {
+        if (!this.data.id.startsWith(process.env.RERUMIDPREFIX)) {
+            this.data.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+        }
+        return this
+    }
+
+    constructor(layerId, canvas, prev, next, lines = []) {
+        if(!layerId) {
+            throw new Error("Layer ID is required to create a Page instance.")
+        }
+        if(!canvas || !canvas.id) {
+            throw new Error("Canvas with id is required to create a Page instance.")
+        }
+        
+        const canvasId = canvas.id
+        const id = lines.length 
+            ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
+            : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
+        this.data = {
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            id,
+            type : "AnnotationPage",
+            label : canvas.label,
+            target : canvas.id,
+            partOf: layerId,
+            items: lines,
+            prev,
+            next
+        }
+        return this
     }
     
     get id() {
         return this.data.id
     }
 
-    set id(id) {
-        this.data.id = id
+    upsertRequest() {
+        const action = this.data.id.startsWith(process.env.RERUMIDPREFIX) ? "update" : "save"
+        return databaseTiny[action](this.data, process.env.TPENPROJECTS)
     }
 
-    async saveCollectionToRerum(projectId, layerId) {
-        this.projectId = projectId
-        this.layerId = layerId
-        const layer = this.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`)
-        const pageItems = layer.pages.map(page => ({
-            id : `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`,
-            type : "AnnotationPage",
-            label : page.label,
-            target : page.target
-        }))
-
-        const addCollection = {
-            "@context": "http://www.w3.org/ns/anno.jsonld",
-            id : `${process.env.RERUMIDPREFIX}${layerId}`,
-            type : "AnnotationCollection",
-            label : layer.label.split(" - ")[0],
-            items : pageItems,
-            total : pageItems.length,
-            first : pageItems[0].id,
-            last : pageItems[pageItems.length - 1].id
-        }
-
-        pageItems.forEach((pageItem, index) => {
-            pageItem.partOf = {
-                id : addCollection.id,
-                label : addCollection.label
-            },
-            pageItems[index + 1]?.id ? pageItem.next = pageItems[index + 1].id : null
-            pageItems[index - 1]?.id ? pageItem.prev = pageItems[index - 1].id : null
-        })
-        return this.save(addCollection)
+    async save() {
+        return await this.upsertRequest()
     }
 
-    async save(savePages) {
-        return await databaseTiny.save(savePages)
+    update(data) {
+        this.data = data
+        this.#setRerumId()
+        return this
     }
 
-    async update() {
-        return await databaseMongo.update(this.data, process.env.TPENPROJECTS)
+    patch(data) {
+        Object.assign(this.data, data)
+        this.#setRerumId()
+        return this
     }
 }
