@@ -14,8 +14,8 @@ describe("ProjectFactory Class #importTests", () => {
     expect(typeof ProjectFactory.DBObjectFromManifest).toBe("function")
   })
 
-  it("should have a static processLayerFromCanvas method", () => {
-    expect(typeof ProjectFactory.processLayerFromCanvas).toBe("function")
+  it("should have a static buildPagesFromCanvases method", () => {
+    expect(typeof ProjectFactory.buildPagesFromCanvases).toBe("function")
   })
 
   it("should have a static fromManifest method", () => {
