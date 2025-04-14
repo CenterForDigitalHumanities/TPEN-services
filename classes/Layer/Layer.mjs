@@ -3,6 +3,8 @@ import dbDriver from "../../database/driver.mjs"
 const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
 
+import Page from "../Page/Page.mjs"
+
 export default class Layer {
     #tinyAction = 'create'
 /**
@@ -47,7 +49,7 @@ export default class Layer {
         }
 
         this.id = `${process.env.SERVERURL}layer/${databaseTiny.reserveId()}`
-        const pages = canvases.map(c => new Page(id, c))
+        const pages = canvases.map(c => Page.build(id, c))
         
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
@@ -96,11 +98,11 @@ export default class Layer {
         }
     }
 
-    #getPageReference({ id, label }) {
-        return { id, label }
+    #getPageReference({ id, label, target }) {
+        return { id, label, target }
     }
 
-    #saveCollectionToRerum() {
+    async #saveCollectionToRerum() {
         // Layer in Rerum is an AnnotationCollection and looks like:
         // {
         //   "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -129,7 +131,16 @@ export default class Layer {
                 console.error(err,layerAsCollection)
                 throw new Error(`Failed to save Layer to RERUM: ${err.message}`)
             })
-
-        return this.save(layerAsCollection)
+            this.#tinyAction = 'update'
+            return this
+        }
+        // ...else Update the existing collection in RERUM
+        const existingLayer = await fetch(this.id).then(res => res.json())
+        if (!existingLayer) {
+            throw new Error(`Layer not found in RERUM: ${this.id}`)
+        }
+        updatedLayer = { ...existingLayer, ...layerAsCollection }
+        await databaseTiny.overwrite(updatedLayer)
+        return this
     }
 }
