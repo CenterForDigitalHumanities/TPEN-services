@@ -18,6 +18,16 @@ export default class User {
     return this
   }
 
+  async updateProfile(data) {
+    if (!data) throw new Error("No data provided")
+    
+    this.data = await (this.data ?? this.#loadFromDB().then(u => u.data))
+    this.data.email = data.email
+    this.data.profile.displayName= data.name
+    await this.update()
+    return this.data
+  }
+
   async getSelf() {
     return await (this.data ?? this.#loadFromDB().then(u => u.data))
   }
@@ -106,6 +116,11 @@ export default class User {
     }
    * @returns project object
    */
+
+  async update(){
+    return database.update(this.data, "users")
+  }
+
   async getProjects() {
     return database.controller
       .db.collection('projects').aggregate([

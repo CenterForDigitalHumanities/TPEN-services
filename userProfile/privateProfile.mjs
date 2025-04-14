@@ -20,6 +20,18 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   }
 }).all((req, res)=>    respondWithError(res, 405, "Improper request method. Use GET instead"))
 
+router.route("/profile/:id/update").put(auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthorized user")
+  try {
+    const userObj = new User(user._id)
+    const userProfile = await userObj.updateProfile(req.body)
+    res.status(200).json(userProfile)
+  } catch (error) {
+    respondWithError(res, error?.status??500, error?.message??error.toString())
+  }
+}).all((req, res)=>    respondWithError(res, 405, "Improper request method. Use PUT instead"))
+
 router.route("/projects").get(auth0Middleware(), async (req, res) => {
   const user = await req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
