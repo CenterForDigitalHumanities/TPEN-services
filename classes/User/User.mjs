@@ -19,7 +19,17 @@ export default class User {
   }
 
   async updateProfile(data) {
-    if (!data) throw new Error("No data provided")
+    if(!data) throw new Error("No data provided")
+
+    const existingUser = await database.findOne({ email: data.email }, "users")
+    if (existingUser && existingUser.email === data.email) {
+      throw new Error(`User with email ${data.email} already exists`)
+    }
+
+    const existingDisplayName = await database.findOne({ profile: { displayName: data.name } }, "users")
+    if (existingDisplayName && existingDisplayName.profile.displayName === data.name) {
+      throw new Error(`User with name ${data.name} already exists`)
+    }
     
     this.data = await (this.data ?? this.#loadFromDB().then(u => u.data))
     this.data.email = data.email
