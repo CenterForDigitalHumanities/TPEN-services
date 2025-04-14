@@ -5,24 +5,25 @@ describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
     expect(typeof Page).toBe('function')
   })
 
-  const page = new Page("layerID", { id: "canvasID", label: "Canvas Label" }, "prevID", "nextID", [])
+  const page = new Page("layerID", { id: "canvasID", label: "Canvas Label", target: "https://example.com/canvas" })
+  
   it('has expected methods', () => {
-    expect(typeof page.saveCollectionToRerum).toBe('function')
     expect(typeof page.update).toBe('function')
-    expect(typeof page.save).toBe('function')
-    expect(typeof page.delete).toBe('function') // Add this if `delete` is a new method
+    expect(typeof page.delete).toBe('function')
   })
 
   it('has expected properties', () => {
-    expect(page).toHaveProperty('id') // Add this if `id` is a new property
-    expect(page).toHaveProperty('title') // Add this if `title` is a new property
+    expect(page).toHaveProperty('id')
+    expect(page).toHaveProperty('label')
+    expect(page).toHaveProperty('target')
   })
 
   it('throws an error for poorly formed new Page calls', () => {
     expect(() => new Page()).toThrow() // No arguments
     expect(() => new Page("layerID")).toThrow() // Missing required arguments
-    expect(() => new Page("layerID", null, "prevID", "nextID", [])).toThrow() // Null canvas object
-    expect(() => new Page("layerID", { id: null, label: "Canvas Label" }, "prevID", "nextID", [])).toThrow() // Invalid canvas ID
-    expect(() => new Page("layerID", { id: "canvasID"}, "prevID", "nextID", [])).toThrow() // Invalid canvas label
+    expect(() => new Page("layerID", null)).toThrow() // Null canvas object
+    expect(() => new Page("layerID", { id: null, label: "Canvas Label", target: "https://example.com/canvas" })).toThrow() // Invalid canvas ID
+    expect(() => new Page("layerID", { id: "canvasID", label: null, target: "https://example.com/canvas" })).toThrow() // Invalid canvas label
+    expect(() => new Page("layerID", { id: "canvasID", label: "Canvas Label", target: null })).toThrow() // Invalid canvas target
   })
 })
