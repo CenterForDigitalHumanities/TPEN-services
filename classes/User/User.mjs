@@ -19,14 +19,8 @@ export default class User {
   }
 
   async updateProfile(data) {
-    const existingUser = await database.findOne({ email: data.email }, "users")
-    if (existingUser && existingUser.email !== data.email) {
-      throw new Error(`User with email ${data.email} already exists`)
-    }
-    
     this.data = await this.getSelf()
-    this.data.email = data.email
-    this.data.profile.displayName = data.name
+    this.data.profile = data
     return await this.update()
   }
 
