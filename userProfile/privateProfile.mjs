@@ -18,9 +18,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   } catch(error) {
       respondWithError(res, error.status || error.code || 500, error.message?? "An error occurred while fetching the user data.")
   }
-}).all((req, res)=>    respondWithError(res, 405, "Improper request method. Use GET instead"))
-
-router.route("/profile/:id/update").put(auth0Middleware(), async (req, res) => {
+}).put(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
   try {
@@ -28,7 +26,7 @@ router.route("/profile/:id/update").put(auth0Middleware(), async (req, res) => {
     const userProfile = await userObj.updateProfile(req.body)
     res.status(200).json(userProfile)
   } catch (error) {
-    respondWithError(res, error?.status??500, error?.message??error.toString())
+    respondWithError(res, error.status || error.code || 500, error.message?? "An error occurred while fetching the user data.")
   }
 }).all((req, res)=>    respondWithError(res, 405, "Improper request method. Use PUT instead"))
 
