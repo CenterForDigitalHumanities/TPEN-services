@@ -67,6 +67,11 @@ export default class Layer {
 
     async delete() {
         if(this.#tinyAction === 'update') {
+            // delete the associated pages in RERUM
+            await Promise.all(this.pages.map(page => {
+                const p = new Page(this.id, page)
+                return p.delete()
+            }))
             await databaseTiny.remove(this.id)
             .catch(err => false)
         }

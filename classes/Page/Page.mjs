@@ -113,4 +113,13 @@ export default class Page {
             target: this.target
         }
     }
+
+    async delete() {
+        if(this.#tinyAction === 'update') {
+            // associated Annotations in RERUM will be left intact
+            await databaseTiny.remove(this.id)
+            .catch(err => false)
+        }
+        return true
+    }
 }
