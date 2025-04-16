@@ -34,7 +34,7 @@ export default class Layer {
         return this
     }
     
-    static build(projectId, label, canvases, projectLabel = "Default") {
+    static build(projectId = database.reserveId(), label, canvases, projectLabel = "Default") {
         if (!projectId) {
             throw new Error("Project ID is required to create a Layer instance.")
         }
