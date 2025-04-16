@@ -1,6 +1,7 @@
 import Project from "./Project.mjs"
 import Group from "../Group/Group.mjs"
 import User from "../User/User.mjs"
+import Layer from "../Layer/Layer.mjs"
 import dbDriver from "../../database/driver.mjs"
 import fs from "fs"
 import path from "path"
@@ -28,44 +29,24 @@ export default class ProjectFactory {
       }
     }
     const now = Date.now().toString().slice(-6)
+    const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
     const pages = await ProjectFactory.buildPagesFromCanvases(manifest.items)
 
+    const layer = Layer.build( null, `First Layer - ${label}`, manifest.items )
+
     // required properties: id, label, metadata, manifest, layers
     return {
-      label: ProjectFactory.getLabelAsString(manifest.label) ?? `Project ${now}`,
+      label,
       metadata,
       manifest: [ manifest.id ],
-      layers: [ {
-          id: `${process.env.SERVERURL}layer/${database.reserveId()}`,
-          label: `First Layer - ${ProjectFactory.getLabelAsString(manifest.label) ?? now}`,
-          pages,
-      } ]
+      layers: [ layer ]
     }
   }
 
   static getLabelAsString(label) {
     const defaultLanguage = typeof label === 'object' ? Object.keys(label)[0] : 'en'
     return label[defaultLanguage]?.join(", ") ?? label.none?.join(",")
-  }
-
-  static async buildPagesFromCanvases(canvases) {
-    try {
-      if (!canvases.length || !Array.isArray(canvases)) throw new Error("No canvases found in the manifest")
-
-      const pages = canvases.map(async (c, index) => {
-        const canvas = await vault.get(c)
-        return {
-          id: `${process.env.SERVERURL}page/${canvas.id?.split('/').pop()}`,
-          label: ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${index + 1}`,
-          target: canvas.id
-        }
-      })
-      return await Promise.all(pages)
-    } catch (error) {
-      console.error(error)
-      throw error
-    }
   }
 
   static async fromManifestURL(manifestId, creator) {
