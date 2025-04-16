@@ -15,6 +15,7 @@ import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import path from "path"
 import fs from "fs"
+import layerRouter from "../layer/index.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -1052,5 +1053,8 @@ router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
 router.route("/:projectId/hotkeys").all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use GET, PUT, or DELETE instead")
 })
+
+// Nested route for layers within a project
+router.use('/:projectId/layer', layerRouter)
 
 export default router

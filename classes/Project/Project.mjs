@@ -199,4 +199,10 @@ export default class Project {
     await this.#load()
     return this.data
   }
+
+  static async getById(projectId) {
+    const project = new Project(projectId)
+    await project.#load()
+    return project
+  }
 }
