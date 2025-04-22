@@ -13,8 +13,6 @@ import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import ProjectStats from "../classes/Project/ProjectStats.mjs"
-import User from "../classes/User/User.mjs"
-import dbDriver from "../database/driver.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -51,54 +49,20 @@ router
 
 
 // dashboard endpoint: newest, last modified, last opened projects
-
-router.route("/dashboard").get(auth0Middleware(), async (req, res) => {
-  const userId = req.user._id
-  const database = new dbDriver("mongo")
-  try {
-
-    const ids = (await new User(userId).getProjects()).map(p => p._id)
-    const coll = database.controller.db.collection(process.env.TPENPROJECTS)
-
-
-    const [newestProj] = await coll
-      .find({ _id: { $in: ids } })
-      .project({ _id: 1, label: 1 })
-      .sort({ _createdAt: -1 })
-      .limit(1)
-      .toArray()
-
-    const [modifiedProj] = await coll
-      .find({ _id: { $in: ids } })
-      .project({ _id: 1, label: 1 })
-      .sort({ _modifiedAt: -1 })
-      .limit(1)
-      .toArray()
-
-    let lastOpenedProj = null
-    const stats = await ProjectStats.getLastOpened(userId, 1)
-    if (stats.length) {
-      const doc = await coll
-        .find({ _id: stats[0].projectId })
-        .project({ _id: 1, label: 1 })
-        .limit(1)
-        .toArray()
-      lastOpenedProj = doc[0] ?? null
+router
+  .route("/dashboard")
+  .get(auth0Middleware(), async (req, res) => {
+    try {
+      const userId = req.user._id
+      const dashboard = await ProjectStats.getDashboard(userId)
+      res.status(200).json(dashboard)
+    } catch (error) {
+      respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Error getting dashboard report")
     }
-
-    res.status(200).json({
-      newest: newestProj ?? null,
-      lastModified: modifiedProj ?? null,
-      lastOpened: lastOpenedProj ?? null
-    })
-  } catch (err) {
-    respondWithError(res, err.status || 500, err.message)
-  }
-})
+  })
   .all((_, res) => {
     respondWithError(res, 405, "Improper request method. Use GET instead")
   })
-
 
 router
   .route("/import")
