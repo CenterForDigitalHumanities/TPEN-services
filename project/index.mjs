@@ -12,6 +12,9 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
+import ProjectStats from "../classes/Project/ProjectStats.mjs"
+import User from "../classes/User/User.mjs"
+import dbDriver from "../database/driver.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -45,6 +48,57 @@ router
   .all((_, res) => {
     respondWithError(res, 405, "Improper request method. Use POST instead")
   })
+
+
+// dashboard endpoint: newest, last modified, last opened projects
+
+router.route("/dashboard").get(auth0Middleware(), async (req, res) => {
+  const userId = req.user._id
+  const database = new dbDriver("mongo")
+  try {
+
+    const ids = (await new User(userId).getProjects()).map(p => p._id)
+    const coll = database.controller.db.collection(process.env.TPENPROJECTS)
+
+
+    const [newestProj] = await coll
+      .find({ _id: { $in: ids } })
+      .project({ _id: 1, label: 1 })
+      .sort({ _createdAt: -1 })
+      .limit(1)
+      .toArray()
+
+    const [modifiedProj] = await coll
+      .find({ _id: { $in: ids } })
+      .project({ _id: 1, label: 1 })
+      .sort({ _modifiedAt: -1 })
+      .limit(1)
+      .toArray()
+
+    let lastOpenedProj = null
+    const stats = await ProjectStats.getLastOpened(userId, 1)
+    if (stats.length) {
+      const doc = await coll
+        .find({ _id: stats[0].projectId })
+        .project({ _id: 1, label: 1 })
+        .limit(1)
+        .toArray()
+      lastOpenedProj = doc[0] ?? null
+    }
+
+    res.status(200).json({
+      newest: newestProj ?? null,
+      lastModified: modifiedProj ?? null,
+      lastOpened: lastOpenedProj ?? null
+    })
+  } catch (err) {
+    respondWithError(res, err.status || 500, err.message)
+  }
+})
+  .all((_, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+  })
+
 
 router
   .route("/import")
@@ -95,7 +149,7 @@ router
 router
   .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
-    const {id} = req.params
+    const { id } = req.params
     const user = req.user
 
     if (!id) {
@@ -103,7 +157,7 @@ router
     } else if (!validateID(id)) {
       return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
     }
-    
+
     try {
       const project = await ProjectFactory.loadAsUser(id, null)
       const collaboratorIdList = []
@@ -111,7 +165,7 @@ router
       Object.entries(project.collaborators).map(([id, data]) => {
         collaboratorIdList.push(id)
       })
-      
+
       if (!collaboratorIdList.includes(user._id)) {
         return respondWithError(res, 403, "You do not have permission to export this project")
       }
@@ -148,6 +202,7 @@ router
     (async () => {
       try {
         const project = await ProjectFactory.loadAsUser(id, user._id)
+        await ProjectStats.recordOpen(user._id, id)
         if (!project) {
           return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
         }
@@ -488,7 +543,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
     return respondWithError(res, 400, "Project ID is required")
   }
 
-  if(!validateID(projectId)){
+  if (!validateID(projectId)) {
     return respondWithError(res, 400, "Invalid project ID provided.")
   }
 
@@ -505,7 +560,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
 
     const layers = await project.loadProject()
 
-    if(!project || layers === null) {
+    if (!project || layers === null) {
       return respondWithError(res, 404, "Project does not exist.")
     }
 
@@ -513,7 +568,7 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
     const response = await layer.addLayer(projectId, labelAndCanvases, project.getLabel())
     res.status(201).json(response)
   } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")
   }
 })
 
@@ -529,7 +584,7 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
     return respondWithError(res, 400, "Project ID is required")
   }
 
-  if(!validateID(projectId)){
+  if (!validateID(projectId)) {
     return respondWithError(res, 400, "Invalid project ID provided.")
   }
 
@@ -545,8 +600,8 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
     }
 
     const layers = await project.loadProject()
-    
-    if(!project || layers === null) {
+
+    if (!project || layers === null) {
       return respondWithError(res, 404, "Project does not exist.")
     }
 
@@ -554,7 +609,7 @@ router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req,
     if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
       return respondWithError(res, 400, "Layer not found in project.")
     }
-    
+
     await layer.deleteLayer(projectId, layerId)
     res.status(204).send()
   } catch (error) {
@@ -584,7 +639,7 @@ router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (r
 
     const layers = await project.loadProject()
 
-    if(!project || layers === null) {
+    if (!project || layers === null) {
       return respondWithError(res, 404, "Project does not exist.")
     }
 
@@ -628,7 +683,7 @@ router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, re
 
     const layers = await project.loadProject()
 
-    if(!project || layers === null) {
+    if (!project || layers === null) {
       return respondWithError(res, 404, "Project does not exist.")
     }
 
@@ -918,7 +973,7 @@ router.route("/:projectId/hotkeys").post(auth0Middleware(), async (req, res) => 
       console.dir(hotkey)
       res.status(201).json(hotkey)
       return
-    } 
+    }
     return respondWithError(res, 403, "You do not have permission to create hotkeys for this project")
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message.toString())
