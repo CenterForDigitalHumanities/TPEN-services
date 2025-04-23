@@ -12,31 +12,53 @@ router.use(
 
 router.route('/:id?')
   .get(async (req, res, next) => {
-    let id = req.params.id
-
-    if (id) {
-      if (!utils.validateID(id)) {
-        utils.respondWithError(res, 400, 'The TPEN3 page ID must be a number')
+    const { projectId, layerId, pageId } = req.params
+      const pageObject = await findPageById(pageId, layerId, projectId)
+      if (!pageObject) {
+        utils.respondWithError(res, 404, 'No page found with that ID.')
         return
       }
-      id = parseInt(id)
-      const pageObject = await service.findPageById(id)
-      if (pageObject) {
-        respondWithPage(res, pageObject)
-      } else {
-        utils.respondWithError(res, 404, `TPEN3 page "${id}" does not exist.`)
+      // build as AnnotationPage
+      const pageAsAnnotationPage = {
+        '@context': 'http://www.w3.org/ns/anno.jsonld',
+        id: pageObject.id,
+        type: 'AnnotationPage',
+        label: { none: [pageObject.label] },
+        target: pageObject.target,
+        partOf: pageObject.partOf,
+        items: pageObject.items ?? [],
+        prev: pageObject.prev ?? null,
+        next: pageObject.next ?? null
       }
-    } else {
-      utils.respondWithError(res, 400, 'No page ID provided')
-    }
+      res.status(200).json(pageAsAnnotationPage)
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 
-function respondWithPage(res, pageObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.status(200).json(pageObject)
-}
-
 export default router
+
+async function findPageById(pageId, layerId, projectId) {
+  if (pageId.startsWith(process.env.RERUMIDPREFIX)) {
+    return fetch(pageId).then(res => res.json())
+  }
+  const p = await Project.getById(projectId)
+  if (!p) {
+      const error = new Error(`Project with ID '${projectId}' not found`)
+      error.status = 404
+      throw error
+  }
+  const layer = p.layers.find(layer => layer.id === layerId)
+  if (!layer) {
+      const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
+      error.status = 404
+      throw error
+  }
+  const page = layer.pages.find(page => page.id === pageId)
+  if (!page) {
+      const error = new Error(`Page with ID '${pageId}' not found in layer '${layerId}'`)
+      error.status = 404
+      throw error
+  }
+  return page
+}

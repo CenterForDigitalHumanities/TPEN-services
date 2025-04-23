@@ -35,10 +35,19 @@ export default class Project {
     }
   }
 
-  async delete(projectId) {
+  async delete(projectId = this._id) {
     if (!projectId) {
       throw { status: 400, message: "Project ID is required" }
     }
+
+    if (!this.data?.layers ?? this.data?.layers.length) {
+      await this.#load()
+    }
+
+    this.data.layers.forEach(async (layer) => {
+      const layerObj = new Layer(projectId, layer)
+      await layerObj.delete()
+    })
 
     return database.remove(projectId, "projects")
   }
@@ -189,5 +198,11 @@ export default class Project {
   async loadProject() {
     await this.#load()
     return this.data
+  }
+
+  static async getById(projectId) {
+    const project = new Project(projectId)
+    await project.#load()
+    return project
   }
 }

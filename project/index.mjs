@@ -7,11 +7,15 @@ import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
 import validateURL from "../utilities/validateURL.mjs"
 import Project from "../classes/Project/Project.mjs"
 import Layer from "../classes/Layer/Layer.mjs"
+import Page from "../classes/Page/Page.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
 import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
+import path from "path"
+import fs from "fs"
+import layerRouter from "../layer/index.mjs"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -644,6 +648,44 @@ router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, re
   }
 })
 
+// Adding annotations to pages within a specific layer within a project
+router.route("/:projectId/layer/:layerId/page/:pageId/save").post(auth0Middleware(), async (req, res) => {
+  const { projectId, layerId, pageId } = req.params
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+
+  try {
+    const project = new Project(projectId)
+
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+      return respondWithError(res, 403, "You do not have permission to add annotations to this page.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
+    }
+
+    const layer = new Layer(layers)
+    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
+      return respondWithError(res, 400, "Layer not found in project.")
+    }
+
+    const pages = new Page(layers)
+    if (pages.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.find(page => String(page.id).split("/").pop() === `${pageId}`) === undefined) {
+      return respondWithError(res, 400, "Page not found in layer.")
+    }
+
+    const response = await pages.saveCollectionToRerum(projectId, layerId)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding annotations to page.")
+  }
+})
+
 // Update Project Metadata
 router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
@@ -1003,5 +1045,8 @@ router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
 router.route("/:projectId/hotkeys").all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use GET, PUT, or DELETE instead")
 })
+
+// Nested route for layers within a project
+router.use('/:projectId/layer', layerRouter)
 
 export default router
