@@ -98,8 +98,8 @@ router
   })
 
   function patchTokenFromQuery(req, res, next) {
-    if (!req.headers.authorization && req.query.token) {
-      req.headers.authorization = `Bearer ${req.query.token}`
+    if (!req.headers.authorization && req.cookies.userToken) {
+      req.headers.authorization = `Bearer ${req.cookies.userToken}`
     }
     next()
   }
