@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.mjs"
 
 const databaseTiny = new dbDriver("tiny")
-
+const databaseMongo = new dbDriver("mongo")
 export default class Page {
 
     #tinyAction = 'create'
@@ -22,18 +22,18 @@ export default class Page {
      * @param {String} target The uri of the targeted Canvas.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target }) {
+    constructor(projectId, layerId, { id, label, target }) {
         if (!id || !label || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId })
-        if(this.id.startsWith(process.env.RERUMIDPREFIX)) {
+        Object.assign(this, { projectId, id, label, target, partOf: layerId })
+        if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, lines = []) {
         if (!layerId) {
             throw new Error("Layer ID is required to create a Page instance.")
         }
@@ -44,7 +44,7 @@ export default class Page {
         const id = lines.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
-        this.data = {
+        const pageDoc = {
             "@context": "http://www.w3.org/ns/anno.jsonld",
             id,
             type: "AnnotationPage",
@@ -55,7 +55,9 @@ export default class Page {
             prev,
             next
         }
-        return this
+        const page = new Page(projectId, layerId, pageDoc)
+        page.data = pageDoc
+        return page
     }
 
     async #savePageToRerum() {
@@ -72,10 +74,10 @@ export default class Page {
         }
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(pageAsAnnotationPage)
-            .catch(err => {
-                console.error(err,pageAsAnnotationPage)
-                throw new Error(`Failed to save Page to RERUM: ${err.message}`)
-            })
+                .catch(err => {
+                    console.error(err, pageAsAnnotationPage)
+                    throw new Error(`Failed to save Page to RERUM: ${err.message}`)
+                })
             this.#tinyAction = 'update'
             return this
         }
@@ -93,9 +95,12 @@ export default class Page {
      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
      */
-    async update() {
-        if (this.#tinyAction === 'update' || this.items.length) {
-            await this.#setRerumId().#savePageToRerum()
+    async update(userId) {
+        const hasItems = Array.isArray(this.data?.items) && this.data.items.length > 0
+        if (this.#tinyAction === 'update' || hasItems) {
+            this.#setRerumId()
+            await this.#savePageToRerum()
+            await this.#recordModification(userId)
         }
         return this.#updatePageForProject()
     }
@@ -115,11 +120,45 @@ export default class Page {
     }
 
     async delete() {
-        if(this.#tinyAction === 'update') {
+        if (this.#tinyAction === 'update') {
             // associated Annotations in RERUM will be left intact
             await databaseTiny.remove(this.id)
-            .catch(err => false)
+                .catch(err => false)
         }
         return true
+    }
+    async #recordModification(userId) {
+        try {
+            const { projectId, id } = this
+
+            await databaseMongo.controller.db
+                .collection(process.env.TPENPROJECTS)
+                .updateOne(
+                    { _id: projectId },
+                    {
+                        $set: {
+                            _lastModified: id,
+                            _modifiedAt: new Date()
+                        }
+                    }
+                )
+
+
+            if (userId) {
+                await databaseMongo.controller.db
+                    .collection(process.env.TPENUSERS)
+                    .updateOne(
+                        { _id: userId },
+                        {
+                            $set: {
+                                _lastModified: id,
+                                _modifiedAt: new Date()
+                            }
+                        }
+                    )
+            }
+        } catch (err) {
+            console.error("recordModification failed", err)
+        }
     }
 }

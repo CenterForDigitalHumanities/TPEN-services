@@ -373,6 +373,9 @@ export default class ProjectFactory {
           license: 1,
           tools: 1,
           options: 1,
+          _createdAt:1,
+          _modifiedAt:1,
+          _lastModified:1
         }
       }
     ]
