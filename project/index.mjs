@@ -16,6 +16,7 @@ import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import path from "path"
 import fs from "fs"
 import layerRouter from "../layer/index.mjs"
+import cookieParser from "cookie-parser"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -96,6 +97,73 @@ router
     respondWithError(res, 405, "Improper request method. Use POST instead")
   })
 
+  function patchTokenFromQuery(req, res, next) {
+    if (!req.headers.authorization && req.query.token) {
+      req.headers.authorization = `Bearer ${req.query.token}`
+    }
+    next()
+  }
+ 
+router
+  .route("/import28")
+  .get(patchTokenFromQuery, auth0Middleware(), cookieParser(), async (req, res) => {
+    const user = req.user
+    const jsessionid = req.cookies.JSESSIONID
+ 
+    if (!user) {
+      return respondWithError(res, 401, "Unauthenticated request")
+    }
+ 
+    if (!jsessionid) {
+      return respondWithError(res, 400, "Missing jsessionid in query")
+    }
+ 
+    try {
+      const response = await fetch(
+        "http://localhost:8080/TPEN/getProjectTPENServlet?projectID=9183",
+        {
+          method: "GET",
+          headers: {
+            Cookie: `JSESSIONID=${jsessionid}`,
+          },
+          credentials: "include",
+        }
+      )
+ 
+      const rawText = await response.text()
+      let parsedData
+ 
+      try {
+        const firstLevel = JSON.parse(rawText)
+        parsedData = {}
+ 
+        for (const [key, value] of Object.entries(firstLevel)) {
+          try {
+            parsedData[key] = JSON.parse(value)
+          } catch {
+            parsedData[key] = value
+          }
+        }
+ 
+      } catch (err) {
+        console.error("Failed to parse project response:", err)
+        return respondWithError(res, 500, "Invalid project response format")
+      }
+ 
+      return res.status(200).json({
+        message: "Project 9183 Dummy",
+        data: parsedData,
+      })
+ 
+    } catch (error) {
+      console.error("Error fetching project data:", error)
+      return respondWithError(res, 500, "Error fetching project data")
+    }
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+  })
+
 router
   .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
@@ -166,73 +234,6 @@ router
     })()
   })
   .all((_, res) => {
-    respondWithError(res, 405, "Improper request method. Use GET instead")
-  })
-
-  function patchTokenFromQuery(req, res, next) {
-    if (!req.headers.authorization && req.query.token) {
-      req.headers.authorization = `Bearer ${req.query.token}`
-    }
-    next()
-  }
- 
-router
-  .route("/import28")
-  .get(patchTokenFromQuery, auth0Middleware(), async (req, res) => {
-    const user = req.user
-    const jsessionid = req.query.jsessionid
- 
-    if (!user) {
-      return respondWithError(res, 401, "Unauthenticated request")
-    }
- 
-    if (!jsessionid) {
-      return respondWithError(res, 400, "Missing jsessionid in query")
-    }
- 
-    try {
-      const response = await fetch(
-        "http://localhost:8080/TPEN/getProjectTPENServlet?projectID=9183",
-        {
-          method: "GET",
-          headers: {
-            Cookie: `JSESSIONID=${jsessionid}`,
-          },
-          credentials: "include",
-        }
-      )
- 
-      const rawText = await response.text()
-      let parsedData
- 
-      try {
-        const firstLevel = JSON.parse(rawText)
-        parsedData = {}
- 
-        for (const [key, value] of Object.entries(firstLevel)) {
-          try {
-            parsedData[key] = JSON.parse(value)
-          } catch {
-            parsedData[key] = value
-          }
-        }
- 
-      } catch (err) {
-        console.error("Failed to parse project response:", err)
-        return respondWithError(res, 500, "Invalid project response format")
-      }
- 
-      return res.status(200).json({
-        message: "Project 9183 Dummy",
-        data: parsedData,
-      })
- 
-    } catch (error) {
-      console.error("Error fetching project data:", error)
-      return respondWithError(res, 500, "Error fetching project data")
-    }
-  })
-  .all((req, res) => {
     respondWithError(res, 405, "Improper request method. Use GET instead")
   })
 
