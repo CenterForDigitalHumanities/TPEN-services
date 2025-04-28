@@ -31,8 +31,6 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const pages = await ProjectFactory.buildPagesFromCanvases(manifest.items)
-
     const layer = Layer.build( null, `First Layer - ${label}`, manifest.items )
 
     // required properties: id, label, metadata, manifest, layers
