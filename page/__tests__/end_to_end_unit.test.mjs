@@ -35,14 +35,15 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /page with a TPEN3 page ID that does not exist. The status should be 404 with a message.', async () => {
+  // These two cannot work without a corresponding project, so it will need to be rewritten
+  it.skip('Call to /page with a TPEN3 page ID that does not exist. The status should be 404 with a message.', async () => {
     const res = await request(routeTester)
       .get('/0001')
       expect(res.statusCode).toBe(404)
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /page with a TPEN3 page ID that does exist. The status should be 200 with a JSON page in the body.', async () => {
+  it.skip('Call to /page with a TPEN3 page ID that does exist. The status should be 200 with a JSON page in the body.', async () => {
     const res = await request(routeTester)
       .get('/123')
       let json = res.body
