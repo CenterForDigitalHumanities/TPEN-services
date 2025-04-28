@@ -22,12 +22,14 @@ import cors from 'cors'
 import indexRouter from './index.js'
 import manifestRouter from './manifest/index.js'
 import projectRouter from './project/index.js'
-import pageRouter from './page/index.js'
 import lineRouter from './line/index.js'
 import userProfileRouter from './userProfile/index.js'
 import privateProfileRouter from './userProfile/privateProfile.js'
 import proxyRouter from './utilities/proxy.js'
-  
+
+// Beta Feedback routes
+import feedbackRouter from './feedback/feedbackRoutes.js'
+
 let app = express()
 
 //Middleware to use
@@ -60,11 +62,13 @@ app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project', projectRouter)
 app.use('/line', lineRouter) 
-app.use('/page', pageRouter) 
 app.use('/user', userProfileRouter)
 app.use('/my',  privateProfileRouter) 
 app.use('/proxy', proxyRouter)
  
+// Beta Feedback routes
+app.use('/beta', feedbackRouter)
+
 //catch 404 because of an invalid site path
 app.use('*', function(req, res, next) {
     let message = res.statusMessage ?? "This page does not exist"
