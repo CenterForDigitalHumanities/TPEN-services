@@ -19,13 +19,13 @@ dotenvExpand.expand(storedEnv)
 
 import logger from 'morgan'
 import cors from 'cors'
-import indexRouter from './index.mjs'
-import manifestRouter from './manifest/index.mjs'
-import projectRouter from './project/index.mjs'
-import pageRouter from './page/index.mjs'
-import lineRouter from './line/index.mjs'
-import userProfileRouter from './userProfile/index.mjs'
-import privateProfileRouter from './userProfile/privateProfile.mjs'
+import indexRouter from './index.js'
+import manifestRouter from './manifest/index.js'
+import projectRouter from './project/index.js'
+import pageRouter from './page/index.js'
+import lineRouter from './line/index.js'
+import userProfileRouter from './userProfile/index.js'
+import privateProfileRouter from './userProfile/privateProfile.js'
 import proxyRouter from './utilities/proxy.js'
   
 let app = express()

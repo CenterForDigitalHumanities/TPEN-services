@@ -1,5 +1,5 @@
 import express from 'express'
-import * as utils from '../utilities/shared.mjs'
+import * as utils from '../utilities/shared.js'
 import cors from 'cors'
 import { findLineById } from './line.mjs'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
