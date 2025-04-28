@@ -18,6 +18,12 @@ export default class User {
     return this
   }
 
+  async updateProfile(data) {
+    this.data = await this.getSelf()
+    this.data.profile = data
+    return await this.update()
+  }
+
   async getSelf() {
     return await (this.data ?? this.#loadFromDB().then(u => u.data))
   }
@@ -106,6 +112,11 @@ export default class User {
     }
    * @returns project object
    */
+
+  async update(){
+    return database.update(this.data, "users")
+  }
+
   async getProjects() {
     return database.controller
       .db.collection('projects').aggregate([

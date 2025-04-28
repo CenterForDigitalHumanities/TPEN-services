@@ -7,6 +7,7 @@ import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
 import validateURL from "../utilities/validateURL.mjs"
 import Project from "../classes/Project/Project.mjs"
 import Layer from "../classes/Layer/Layer.mjs"
+import Page from "../classes/Page/Page.mjs"
 import { isValidEmail } from "../utilities/validateEmail.mjs"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
 import Group from "../classes/Group/Group.mjs"
@@ -14,6 +15,8 @@ import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import path from "path"
 import fs from "fs"
+import layerRouter from "../layer/index.mjs"
+import cookieParser from "cookie-parser"
 
 let router = express.Router()
 router.use(cors(common_cors))
@@ -94,6 +97,73 @@ router
     respondWithError(res, 405, "Improper request method. Use POST instead")
   })
 
+  function patchTokenFromQuery(req, res, next) {
+    if (!req.headers.authorization && req.cookies.userToken) {
+      req.headers.authorization = `Bearer ${req.cookies.userToken}`
+    }
+    next()
+  }
+ 
+router
+  .route("/import28")
+  .get(patchTokenFromQuery, auth0Middleware(), cookieParser(), async (req, res) => {
+    const user = req.user
+    const jsessionid = req.cookies.JSESSIONID
+ 
+    if (!user) {
+      return respondWithError(res, 401, "Unauthenticated request")
+    }
+ 
+    if (!jsessionid) {
+      return respondWithError(res, 400, "Missing jsessionid in query")
+    }
+ 
+    try {
+      const response = await fetch(
+        "https://dev.t-pen.org/TPEN/getProjectTPENServlet?projectID=9183",
+        {
+          method: "GET",
+          headers: {
+            Cookie: `JSESSIONID=${jsessionid}`,
+          },
+          credentials: "include",
+        }
+      )
+ 
+      const rawText = await response.text()
+      let parsedData
+ 
+      try {
+        const firstLevel = JSON.parse(rawText)
+        parsedData = {}
+ 
+        for (const [key, value] of Object.entries(firstLevel)) {
+          try {
+            parsedData[key] = JSON.parse(value)
+          } catch {
+            parsedData[key] = value
+          }
+        }
+ 
+      } catch (err) {
+        console.error("Failed to parse project response:", err)
+        return respondWithError(res, 500, "Invalid project response format")
+      }
+ 
+      return res.status(200).json({
+        message: "Project 9183 Dummy",
+        data: parsedData,
+      })
+ 
+    } catch (error) {
+      console.error("Error fetching project data:", error)
+      return respondWithError(res, 500, "Error fetching project data")
+    }
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+  })
+
 router
   .route("/:id/manifest")
   .get(auth0Middleware(), async (req, res) => {
@@ -121,15 +191,7 @@ router
         return respondWithError(res, 403, "You do not have permission to export this project")
       }
       const manifest = await ProjectFactory.exportManifest(id)
-      const folderPath = path.join(`./${id}`)
-      const files = fs.readdirSync(folderPath)
-      for (const file of files) {
-          const filePath = path.join(folderPath, file)
-          if (fs.lstatSync(filePath).isFile()) {
-              await ProjectFactory.uploadFileToGitHub(filePath, `${id}`)
-          }
-      }
-      fs.rmSync(folderPath, {recursive: true, force: true})
+      await ProjectFactory.uploadFileToGitHub(manifest, `${id}`)
       res.status(200).json(manifest)
     } catch (error) {
       return respondWithError(
@@ -654,6 +716,44 @@ router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, re
   }
 })
 
+// Adding annotations to pages within a specific layer within a project
+router.route("/:projectId/layer/:layerId/page/:pageId/save").post(auth0Middleware(), async (req, res) => {
+  const { projectId, layerId, pageId } = req.params
+  const user = req.user
+  if (!user) {
+    return respondWithError(res, 401, "Unauthenticated request")
+  }
+
+  try {
+    const project = new Project(projectId)
+
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+      return respondWithError(res, 403, "You do not have permission to add annotations to this page.")
+    }
+
+    const layers = await project.loadProject()
+
+    if(!project || layers === null) {
+      return respondWithError(res, 404, "Project does not exist.")
+    }
+
+    const layer = new Layer(layers)
+    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
+      return respondWithError(res, 400, "Layer not found in project.")
+    }
+
+    const pages = new Page(layers)
+    if (pages.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.find(page => String(page.id).split("/").pop() === `${pageId}`) === undefined) {
+      return respondWithError(res, 400, "Page not found in layer.")
+    }
+
+    const response = await pages.saveCollectionToRerum(projectId, layerId)
+    res.status(200).json(response)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding annotations to page.")
+  }
+})
+
 // Update Project Metadata
 router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
@@ -1013,5 +1113,8 @@ router.route("/:projectId/hotkeys").get(auth0Middleware(), async (req, res) => {
 router.route("/:projectId/hotkeys").all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use GET, PUT, or DELETE instead")
 })
+
+// Nested route for layers within a project
+router.use('/:projectId/layer', layerRouter)
 
 export default router

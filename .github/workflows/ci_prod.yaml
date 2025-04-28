@@ -27,6 +27,10 @@ jobs:
           envkey_TINYPEN: ${{ secrets.TINYPEN }}
           envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
           envkey_DOMAIN: ${{ secrets.DOMAIN }}
+          envkey_TPEN_SUPPORT_EMAIL: ${{ secrets.TPEN_SUPPORT_EMAIL }}
+          envkey_SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          envkey_SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          envkey_TPEN_EMAIL_CC: ${{ secrets.TPEN_EMAIL_CC }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
