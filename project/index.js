@@ -1,21 +1,21 @@
 import express from "express"
-import { validateID, respondWithError } from "../utilities/shared.mjs"
+import { validateID, respondWithError } from "../utilities/shared.js"
 import cors from "cors"
 import common_cors from "../utilities/common_cors.json" with {type: "json"}
-import auth0Middleware from "../auth/index.mjs"
-import ProjectFactory from "../classes/Project/ProjectFactory.mjs"
-import validateURL from "../utilities/validateURL.mjs"
-import Project from "../classes/Project/Project.mjs"
-import Layer from "../classes/Layer/Layer.mjs"
-import Page from "../classes/Page/Page.mjs"
-import { isValidEmail } from "../utilities/validateEmail.mjs"
-import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.mjs"
-import Group from "../classes/Group/Group.mjs"
-import scrubDefaultRoles from "../utilities/isDefaultRole.mjs"
+import auth0Middleware from "../auth/index.js"
+import ProjectFactory from "../classes/Project/ProjectFactory.js"
+import validateURL from "../utilities/validateURL.js"
+import Project from "../classes/Project/Project.js"
+import Layer from "../classes/Layer/Layer.js"
+import Page from "../classes/Page/Page.js"
+import { isValidEmail } from "../utilities/validateEmail.js"
+import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
+import Group from "../classes/Group/Group.js"
+import scrubDefaultRoles from "../utilities/isDefaultRole.js"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import path from "path"
 import fs from "fs"
-import layerRouter from "../layer/index.mjs"
+import layerRouter from "../layer/index.js"
 import cookieParser from "cookie-parser"
 
 let router = express.Router()
@@ -383,7 +383,8 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
       return respondWithError(res, 403, "You do not have permission to remove roles from members.")
     }
 
-    const group = new Group(projectObj.data.group)
+    const groupId = projectObj.data.group
+    const group = new Group(groupId)
     await group.removeMemberRoles(collaboratorId, roles)
 
     res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
@@ -516,6 +517,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   if (!user) {
     return respondWithError(res, 401, "Unauthenticated request")
   }
+
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
     rolesToRemove = Object.keys(rolesToRemove)
   }
@@ -858,6 +860,9 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
   if (!newOwnerId) {
     return respondWithError(res, 400, "Provide the ID of the new owner.")
   }
+  if (user._id === newOwnerId) {
+    return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
+  }
 
   try {
     const projectObj = await new Project(projectId)
@@ -975,11 +980,9 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
     rolesToRemove = Object.keys(rolesToRemove)
   }
-
   if (typeof rolesToRemove === 'string') {
     rolesToRemove = rolesToRemove.split(' ')
   }
-
   if (!rolesToRemove.length) {
     return respondWithError(res, 400, "Roles to remove must be provided as an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
@@ -987,7 +990,9 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
   try {
     // Ensure no default roles are being removed
     rolesToRemove = scrubDefaultRoles(rolesToRemove)
-    if (!rolesToRemove) return respondWithError(res, 400, `No custom roles provided.`)
+    if (!rolesToRemove) {
+      return respondWithError(res, 400, `No custom roles provided.`)
+    }
 
     const project = await new Project(projectId)
     const accessInfo = await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.ROLE)

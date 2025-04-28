@@ -1,4 +1,4 @@
-import Group from "../Group.mjs"
+import Group from "../Group.js"
 import dbDriver from "../../../database/driver.mjs"
 import { expect, jest } from "@jest/globals"
 

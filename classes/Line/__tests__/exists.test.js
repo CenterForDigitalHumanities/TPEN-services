@@ -1,4 +1,4 @@
-import { Line } from "../Line.mjs"
+import { Line } from "../Line.js"
 
 describe('Line Class looks how we expect it to. #Line_exists_unit', () => {
   it('Imports Line', () => {

@@ -5,7 +5,7 @@
  * https://github.com/thehabes
  */
 
-import DatabaseController from "../controller.mjs"
+import DatabaseController from "../controller.js"
 const database = new DatabaseController()
 const TIME_OUT = process.env.DB_TEST_TIMEOUT ?? 6500
 

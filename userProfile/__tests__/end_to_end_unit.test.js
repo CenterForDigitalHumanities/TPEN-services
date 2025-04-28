@@ -1,10 +1,10 @@
-import userProfileRouter from "../index.mjs"
-import privateUserRouter from "../privateProfile.mjs"
-import mainApp from "../../app.mjs"
+import userProfileRouter from "../index.js"
+import privateUserRouter from "../privateProfile.js"
+import mainApp from "../../app.js"
 import express from "express"
 import request from "supertest"
-import app from '../../app.mjs';  
-import User from "../../classes/User/User.mjs"
+import app from '../../app.js';  
+import User from "../../classes/User/User.js"
 
 import {jest} from "@jest/globals"
 

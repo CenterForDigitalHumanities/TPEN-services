@@ -1,4 +1,4 @@
- import {validateID} from '../../utilities/shared.mjs'
+import {validateID} from '../../utilities/shared.js'
 
 // These test the pieces of functionality in the route that make it work.
 describe('Testing /user/:id helper functions) #testThis', () => {

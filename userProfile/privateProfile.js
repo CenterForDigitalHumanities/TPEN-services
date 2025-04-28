@@ -1,9 +1,9 @@
 import express from "express"
-import {respondWithError, respondWithJSON} from "../utilities/shared.mjs"
-import User from "../classes/User/User.mjs"
+import {respondWithError, respondWithJSON} from "../utilities/shared.js"
+import User from "../classes/User/User.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import cors from "cors"
-import auth0Middleware from "../auth/index.mjs"
+import auth0Middleware from "../auth/index.js"
 
 const router = express.Router()
 router.use(

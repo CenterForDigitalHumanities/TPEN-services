@@ -1,6 +1,6 @@
-import Project from "./Project.mjs"
+import Project from "./Project.js"
 import Group from "../Group/Group.mjs"
-import User from "../User/User.mjs"
+import User from "../User/User.js"
 import Layer from "../Layer/Layer.mjs"
 import dbDriver from "../../database/driver.mjs"
 import fs from "fs"
@@ -31,8 +31,6 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const pages = await ProjectFactory.buildPagesFromCanvases(manifest.items)
-
     const layer = Layer.build( null, `First Layer - ${label}`, manifest.items )
 
     // required properties: id, label, metadata, manifest, layers

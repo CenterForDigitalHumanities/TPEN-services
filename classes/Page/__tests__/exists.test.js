@@ -1,4 +1,4 @@
-import Page from "../Page.mjs"
+import Page from "../Page.js"
 
 describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
   it('Imports Page', () => {
@@ -6,10 +6,10 @@ describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
   })
 
   const page = new Page("layerID", { id: "canvasID", label: "Canvas Label", target: "https://example.com/canvas" })
-  
   it('has expected methods', () => {
     expect(typeof page.update).toBe('function')
     expect(typeof page.delete).toBe('function')
+    expect(typeof Page.build).toBe('function')
   })
 
   it('has expected properties', () => {
