@@ -1,6 +1,5 @@
 import express from 'express'
 import * as utils from '../utilities/shared.mjs'
-import * as service from './page.mjs'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
@@ -10,7 +9,7 @@ router.use(
   cors(common_cors)
 )
 
-router.route('/:id?')
+router.route('/:id')
   .get(async (req, res, next) => {
     const { projectId, layerId, pageId } = req.params
       const pageObject = await findPageById(pageId, layerId, projectId)
@@ -39,10 +38,10 @@ router.route('/:id?')
 export default router
 
 async function findPageById(pageId, layerId, projectId) {
-  if (pageId.startsWith(process.env.RERUMIDPREFIX)) {
+  if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
     return fetch(pageId).then(res => res.json())
   }
-  const p = await Project.getById(projectId)
+  const p = await Project?.getById(projectId)
   if (!p) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
