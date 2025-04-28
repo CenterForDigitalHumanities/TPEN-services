@@ -1,4 +1,4 @@
-import vault from "../../utilities/vault.mjs"
+import vault from "../../utilities/vault.js"
 
 class Manifest {
 

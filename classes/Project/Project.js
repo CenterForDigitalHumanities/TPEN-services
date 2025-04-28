@@ -1,9 +1,9 @@
 import dbDriver from "../../database/driver.js"
 import { sendMail } from "../../utilities/mailer/index.js"
-import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
+import { validateProjectPayload } from "../../utilities/validatePayload.js"
 import User from "../User/User.js"
 import { createHash } from "node:crypto"
-import Group from "../Group/Group.mjs"
+import Group from "../Group/Group.js"
 
 const database = new dbDriver("mongo")
 

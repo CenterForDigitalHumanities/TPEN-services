@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-import app from '../app.mjs'
+import app from '../app.js'
 import debug from 'debug'
 debug('tpen3_services:server')
 import http from 'http'

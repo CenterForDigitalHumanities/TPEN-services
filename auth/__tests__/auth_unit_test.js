@@ -1,6 +1,6 @@
 import express from "express"
 import request from "supertest"
-import auth0Middleware from "../index.mjs"
+import auth0Middleware from "../index.js"
 import { ObjectId } from "mongodb"
 
 process.env.AUDIENCE = "provide audience to test"

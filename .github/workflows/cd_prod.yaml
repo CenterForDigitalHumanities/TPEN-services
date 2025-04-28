@@ -73,4 +73,4 @@ jobs:
           git checkout main
           git pull
           npm install
-          pm2 -s start -i max bin/tpen3_services.mjs
+          pm2 -s start -i max bin/tpen3_services.js
