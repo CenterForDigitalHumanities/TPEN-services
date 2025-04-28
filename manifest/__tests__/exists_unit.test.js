@@ -7,7 +7,7 @@
  * */
 
 //need to import app to check for the route
-import app from '../../app.mjs'
+import app from '../../app.js'
 
 describe('Manifest endpoint availability unit test (via a check on the app routes). #exists_unit', () => {
   it('/manifest route is registered', () => {

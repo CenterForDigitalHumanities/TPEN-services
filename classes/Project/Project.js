@@ -1,5 +1,5 @@
-import dbDriver from "../../database/driver.mjs"
-import { sendMail } from "../../utilities/mailer/index.mjs"
+import dbDriver from "../../database/driver.js"
+import { sendMail } from "../../utilities/mailer/index.js"
 import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
 import User from "../User/User.js"
 import { createHash } from "node:crypto"
@@ -154,7 +154,7 @@ export default class Project {
     }
   }
 
-/**
+  /**
  * Asynchronously updates the metadata of the current object and persists the changes.
  *
  * @param {Object} newMetadata - An object containing the new metadata properties to be assigned.

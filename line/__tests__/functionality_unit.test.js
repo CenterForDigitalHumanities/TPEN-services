@@ -1,5 +1,5 @@
-import { findLineById } from '../line.mjs'
-import { validateID } from '../../utilities/shared.mjs'
+import { findLineById } from '../line.js'
+import { validateID } from '../../utilities/shared.js'
 
 describe('Line endpoint functionality unit test', () => {
   describe('findLineById function', () => {

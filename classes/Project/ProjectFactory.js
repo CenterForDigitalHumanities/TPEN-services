@@ -1,11 +1,11 @@
 import Project from "./Project.js"
-import Group from "../Group/Group.mjs"
+import Group from "../Group/Group.js"
 import User from "../User/User.js"
-import Layer from "../Layer/Layer.mjs"
-import dbDriver from "../../database/driver.mjs"
+import Layer from "../Layer/Layer.js"
+import dbDriver from "../../database/driver.js"
 import fs from "fs"
 import path from "path"
-import vault from "../../utilities/vault.mjs"
+import vault from "../../utilities/vault.js"
 
 const database = new dbDriver("mongo")
 

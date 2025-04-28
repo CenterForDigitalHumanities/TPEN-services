@@ -1,4 +1,4 @@
-import * as utils from '../utilities/shared.mjs'
+import * as utils from '../utilities/shared.js'
 
 export async function findLineById(id = null, options = {}) {
   if (id === null || id === undefined || !utils.validateID(id)) {

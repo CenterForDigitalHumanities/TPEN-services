@@ -1,4 +1,4 @@
-import pageRouter from '../index.mjs'
+import pageRouter from '../index.js'
 import express from 'express'
 import request from 'supertest'
 

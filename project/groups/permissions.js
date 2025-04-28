@@ -1,4 +1,4 @@
-import Roles from "./roles.mjs"
+import Roles from "./roles.js"
 
 const Permissions = {
   [Roles.OWNER]: ["*_*_*"],  

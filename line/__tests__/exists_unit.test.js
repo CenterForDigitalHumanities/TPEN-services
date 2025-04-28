@@ -1,4 +1,4 @@
-import app from '../../app.mjs'
+import app from '../../app.js'
 
 describe('Line endpoint availability unit test (via a check on the app routes). #exists_unit', () => {
   it('responds to /line/id', () => {

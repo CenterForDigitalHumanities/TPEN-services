@@ -7,12 +7,12 @@
  * 
  * */
 
-import * as logic from "../manifest.mjs"
+import * as logic from "../manifest.js"
 import { jest } from "@jest/globals"
 
 // Mock the saveManifest function
-jest.mock('../manifest.mjs', () => ({
-  ...jest.requireActual('../manifest.mjs'),
+jest.mock('../manifest.js', () => ({
+  ...jest.requireActual('../manifest.js'),
   saveManifest: jest.fn().mockResolvedValue({ "@id": "mocked_id" }),
   updateManifest: jest.fn().mockResolvedValue({ "@id": "updated_mocked_id" })
 }));
@@ -37,4 +37,4 @@ describe.skip('Manifest endpoint functionality unit test (just testing helper fu
   it('Deletes the Manifest Stub', async () => {
     expect(true).toBe(true)
   })
-}) 
+})

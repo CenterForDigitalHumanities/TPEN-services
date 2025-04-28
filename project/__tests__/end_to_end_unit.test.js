@@ -1,11 +1,11 @@
-import projectRouter from "../index.mjs"
+import projectRouter from "../index.js"
 import express from "express"
 import request from "supertest"
 import app from "../../app.js"
 import {jest} from "@jest/globals"
-import ProjectFactory from "../../classes/Project/ProjectFactory.mjs"
-import Project from "../../classes/Project/Project.mjs"
-import DatabaseController from "../../database/mongo/controller.mjs"
+import ProjectFactory from "../../classes/Project/ProjectFactory.js"
+import Project from "../../classes/Project/Project.js"
+import DatabaseController from "../../database/mongo/controller.js"
 
 const routeTester = new express()
 let token = process.env.TEST_TOKEN

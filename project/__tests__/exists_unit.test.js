@@ -1,4 +1,4 @@
-import projectRouter from '../index.mjs'
+import projectRouter from '../index.js'
 import { jest } from '@jest/globals'
 import assert from 'node:assert'
 

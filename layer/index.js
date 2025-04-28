@@ -1,6 +1,6 @@
 import express from 'express'
-import * as utils from '../utilities/shared.mjs'
-import pageRouter from '../page/index.mjs'
+import * as utils from '../utilities/shared.js'
+import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
