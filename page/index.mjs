@@ -41,7 +41,7 @@ async function findPageById(pageId, layerId, projectId) {
   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
     return fetch(pageId).then(res => res.json())
   }
-  const p = await Project.getById(projectId)
+  const p = await Project?.getById(projectId)
   if (!p) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404

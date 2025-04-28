@@ -9,29 +9,29 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
 
   it('POST instead of GET. That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
-      .post('/')
+      .post('/dummyId')
       expect(res.statusCode).toBe(405)
       expect(res.body).toBeTruthy()
   })
 
   it('PUT instead of GET. That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
-      .put('/')
+      .put('/dummyId')
       expect(res.statusCode).toBe(405)
       expect(res.body).toBeTruthy()
   })
 
   it('PATCH instead of GET. That status should be 405 with a message.', async () => {
     const res = await request(routeTester)
-      .patch('/')
+      .patch('/dummyId')
       expect(res.statusCode).toBe(405)
       expect(res.body).toBeTruthy()
   })
 
-  it('Call to /page without a TPEN3 page ID. The status should be 400 with a message.', async () => {
+  it('Call to /page without a TPEN3 page ID. The status should be 404.', async () => {
     const res = await request(routeTester)
       .get('/')
-      expect(res.statusCode).toBe(400)
+      expect(res.statusCode).toBe(404)
       expect(res.body).toBeTruthy()
   })
 
@@ -54,5 +54,4 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
       }
       expect(json).not.toBe(null)
   })
-  
 })
