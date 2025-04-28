@@ -58,7 +58,7 @@ let config = {
   // The root directory that Jest should scan for tests and modules within
   rootDir: "./",
 
-  testMatch: [ "**/__tests__/**/*.js?(x)", "**/?(*.)+(spec|test).js?(x)" ],
+  testMatch: [ "**/__tests__/**/*.js", "**/?(*.)+(spec|test).js" ],
 
   // The directory where Jest should output its coverage files.  Default is /coverage/.  See /coverage/index.html.
   // coverageDirectory: undefined,
@@ -100,12 +100,7 @@ let config = {
   // An array of file extensions your modules use
   moduleFileExtensions: [
     "js",
-    "mjs",
-    "jsx",
-    "ts",
-    "tsx",
-    "json",
-    "node"
+    "json"
   ],
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
