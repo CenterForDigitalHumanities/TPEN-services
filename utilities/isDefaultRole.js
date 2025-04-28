@@ -1,4 +1,4 @@
-import Group from "../classes/Group/Group.mjs"
+import Group from "../classes/Group/Group.js"
 
 export default function scrubDefaultRoles(roleName) {
   

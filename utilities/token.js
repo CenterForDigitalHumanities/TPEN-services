@@ -1,4 +1,4 @@
-import { respondWithError } from "./shared.mjs"
+import { respondWithError } from "./shared.js"
 
 export function extractToken(tokenString) {
   if (!tokenString) return null

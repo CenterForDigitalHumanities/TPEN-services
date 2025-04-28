@@ -1,4 +1,4 @@
-import DatabaseController from "../database/mongo/controller.mjs"
+import DatabaseController from "../database/mongo/controller.js"
 
 /**
  * Check if the supplied input is valid JSON or not.

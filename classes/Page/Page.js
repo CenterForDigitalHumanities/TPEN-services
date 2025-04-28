@@ -1,4 +1,4 @@
-import dbDriver from "../../database/driver.mjs"
+import dbDriver from "../../database/driver.js"
 
 const databaseTiny = new dbDriver("tiny")
 

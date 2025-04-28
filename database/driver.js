@@ -10,9 +10,9 @@
  * 
  */
 
-import TinyController from "./tiny/controller.mjs"
-import MariaController from "./maria/controller.mjs"
-import MongoController from "./mongo/controller.mjs"
+import TinyController from "./tiny/controller.js"
+import MariaController from "./maria/controller.js"
+import MongoController from "./mongo/controller.js"
 
 class dbDriver {
 

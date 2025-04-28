@@ -6,7 +6,7 @@
  * https://github.com/thehabes
  */
 
-import DatabaseDriver from "../driver.mjs"
+import DatabaseDriver from "../driver.js"
 const TIME_OUT = process.env.DB_TEST_TIMEOUT ?? 6500
 
 describe("Driver CRUD and query is registered.  #driver_unit #db", () => {

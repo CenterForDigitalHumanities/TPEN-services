@@ -1,5 +1,5 @@
-import Project from "../Project.mjs"
-import ProjectFactory from "../ProjectFactory.mjs"
+import Project from "../Project.js"
+import ProjectFactory from "../ProjectFactory.js"
 
 describe("ProjectFactory Class #importTests", () => {
   it("should have a constructor", () => {

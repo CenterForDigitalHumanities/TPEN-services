@@ -1,6 +1,6 @@
 // End to end tests that spin up and test it?
 
-import app from '../app.mjs'
+import app from '../app.js'
 import express from 'express'
 import request from 'supertest'
 
