@@ -6,16 +6,15 @@ describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
   })
 
   const page = new Page("layerID", { id: "canvasID", label: "Canvas Label", target: "https://example.com/canvas" })
-  
   it('has expected methods', () => {
     expect(typeof page.update).toBe('function')
-    expect(typeof page.delete).toBe('function')
+    expect(typeof page.save).toBe('function')
   })
 
   it('has expected properties', () => {
     expect(page).toHaveProperty('id')
     expect(page).toHaveProperty('label')
-    expect(page).toHaveProperty('target')
+    expect(page).toHaveProperty('url')
   })
 
   it('throws an error for poorly formed new Page calls', () => {

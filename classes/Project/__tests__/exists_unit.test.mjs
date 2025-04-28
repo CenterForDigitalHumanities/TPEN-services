@@ -27,31 +27,26 @@ describe("ProjectFactory Class #importTests", () => {
 
 describe("Project Class ", () => {
   it("should have a constructor", () => {
-    expect(Project.prototype.constructor).toBeInstanceOf(Function);
-  });
+    expect(Project.prototype.constructor).toBeInstanceOf(Function)
+  })
 
   it("should have a create method", () => {
-    expect(typeof Project.prototype.create).toBe("function");
-  });
+    expect(typeof Project.prototype.create).toBe("function")
+  })
 
-  it("should have an sendInvite method", () => {
-    expect(typeof Project.prototype.sendInvite).toBe("function");
-  });
+  it("should have a sendInvite method", () => {
+    expect(typeof Project.prototype.sendInvite).toBe("function")
+  })
 
   it("should have a removeMember method", () => {
-    expect(typeof Project.prototype.removeMember).toBe("function");
-  });
+    expect(typeof Project.prototype.removeMember).toBe("function")
+  })
 
   it("should have a checkUserAccess method", () => {
-    expect(typeof Project.prototype.checkUserAccess).toBe("function");
-  });
+    expect(typeof Project.prototype.checkUserAccess).toBe("function")
+  })
 
-  it("should have a inviteExistingTPENUser method", () => {
-    expect(typeof Project.prototype.inviteExistingTPENUser).toBe("function");
-  });
-
-  it("should have a inviteNewTPENUser method", () => {
-    expect(typeof Project.prototype.inviteNewTPENUser).toBe("function");
-  });
-
-});
+  it("should have an inviteUser method", () => {
+    expect(typeof Project.prototype.inviteUser).toBe("function")
+  })
+})
