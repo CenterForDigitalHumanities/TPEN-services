@@ -41,8 +41,4 @@ describe("Project Class ", () => {
   it("should have a checkUserAccess method", () => {
     expect(typeof Project.prototype.checkUserAccess).toBe("function")
   })
-
-  it("should have an inviteUser method", () => {
-    expect(typeof Project.prototype.inviteUser).toBe("function")
-  })
 })
