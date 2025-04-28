@@ -34,9 +34,9 @@ let config = {
   // An array of glob patterns indicating a set of files for which coverage information should be collected
   collectCoverageFrom: [
       //"**/*.js",
-      "**/manifest/index.mjs",
-      "**/app.mjs",
-      "**/index.mjs"
+      "**/manifest/index.js",
+      "**/app.js",
+      "**/index.js"
   ],
 
   // Indicates which provider should be used to instrument code for coverage
@@ -58,7 +58,7 @@ let config = {
   // The root directory that Jest should scan for tests and modules within
   rootDir: "./",
 
-  testMatch: [ "**/__tests__/**/*.m[jt]s?(x)", "**/?(*.)+(spec|test).m[jt]s?(x)" ],
+  testMatch: [ "**/__tests__/**/*.js?(x)", "**/?(*.)+(spec|test).js?(x)" ],
 
   // The directory where Jest should output its coverage files.  Default is /coverage/.  See /coverage/index.html.
   // coverageDirectory: undefined,
