@@ -105,10 +105,11 @@ router
   }
  
 router
-  .route("/import28")
-  .get(patchTokenFromQuery, auth0Middleware(), cookieParser(), async (req, res) => {
+  .route("/import28/:uid")
+  .get(cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
     const jsessionid = req.cookies.JSESSIONID
+    const uid = req.params.uid
  
     if (!user) {
       return respondWithError(res, 401, "Unauthenticated request")
@@ -120,7 +121,7 @@ router
  
     try {
       const response = await fetch(
-        "https://dev.t-pen.org/TPEN/getProjectTPENServlet?projectID=9183",
+        `https://dev.t-pen.org/TPEN/projects?uid=${uid}`,
         {
           method: "GET",
           headers: {
@@ -129,6 +130,11 @@ router
           credentials: "include",
         }
       )
+
+      if (response.status === 500) {
+        document.getElementById('message').textContent = 'The project cannot be imported.';
+        return;
+      }
  
       const rawText = await response.text()
       let parsedData
@@ -151,7 +157,7 @@ router
       }
  
       return res.status(200).json({
-        message: "Project 9183 Dummy",
+        message: "Select a Project to Import : ",
         data: parsedData,
       })
  
