@@ -34,10 +34,8 @@ export default class Layer {
         return this
     }
     
-    static build(projectId = database.reserveId(), label, canvases, projectLabel = "Default") {
-        if (!projectId) {
-            throw new Error("Project ID is required to create a Layer instance.")
-        }
+    static build(projectId, label, canvases, projectLabel = "Default") {
+        projectId ??= database.reserveId()
         this.projectId = projectId
         this.label = label ?? `${projectLabel} - Layer ${Date.now()}`
         
