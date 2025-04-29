@@ -20,11 +20,12 @@ export default class Project {
   async create(payload) {
     // validation checks for all the required elements without which a project cannot be created. modify validateProjectPayload function to include more elements as they become available (layers,... )
     const validation = validateProjectPayload(payload)
-
+    
     if (!validation.isValid) {
       throw { status: 400, message: validation.errors }
     }
-
+    
+    console.log("Creating project...", payload.layers)
     try {
       return database.save(payload, "projects")
     } catch (err) {

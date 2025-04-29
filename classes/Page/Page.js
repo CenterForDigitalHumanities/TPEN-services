@@ -23,11 +23,12 @@ export default class Page {
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target }) {
-        if (!id || !label || !target) {
+        console.log("Page constructor", layerId, id, label, target)
+        if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
         Object.assign(this, { id, label, target, partOf: layerId })
-        if(this.id.startsWith(process.env.RERUMIDPREFIX)) {
+        if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
@@ -44,18 +45,20 @@ export default class Page {
         const id = lines.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
-        this.data = {
-            "@context": "http://www.w3.org/ns/anno.jsonld",
-            id,
-            type: "AnnotationPage",
-            label: canvas.label,
-            target: canvas.id,
-            partOf: layerId,
-            items: lines,
-            prev,
-            next
+        const page = {
+            data: {
+                "@context": "http://www.w3.org/ns/anno.jsonld",
+                id,
+                type: "AnnotationPage",
+                label: canvas.label,
+                target: canvas.id,
+                partOf: layerId,
+                items: lines,
+                prev,
+                next
+            }
         }
-        return this
+        return new Page(layerId, page.data)
     }
 
     async #savePageToRerum() {
@@ -72,10 +75,10 @@ export default class Page {
         }
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(pageAsAnnotationPage)
-            .catch(err => {
-                console.error(err,pageAsAnnotationPage)
-                throw new Error(`Failed to save Page to RERUM: ${err.message}`)
-            })
+                .catch(err => {
+                    console.error(err, pageAsAnnotationPage)
+                    throw new Error(`Failed to save Page to RERUM: ${err.message}`)
+                })
             this.#tinyAction = 'update'
             return this
         }
@@ -100,6 +103,10 @@ export default class Page {
         return this.#updatePageForProject()
     }
 
+    asProjectPage() {
+        return this.#updatePageForProject()
+    }
+
     async #updatePageForProject() {
         // Page in local MongoDB is in the Project.layers.pages Array and looks like:
         // { 
@@ -115,10 +122,10 @@ export default class Page {
     }
 
     async delete() {
-        if(this.#tinyAction === 'update') {
+        if (this.#tinyAction === 'update') {
             // associated Annotations in RERUM will be left intact
             await databaseTiny.remove(this.id)
-            .catch(err => false)
+                .catch(err => false)
         }
         return true
     }

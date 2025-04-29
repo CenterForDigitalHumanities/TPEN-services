@@ -38,7 +38,7 @@ export default class ProjectFactory {
       label,
       metadata,
       manifest: [ manifest.id ],
-      layers: [ layer ]
+      layers: [ layer.asProjectLayer() ]
     }
   }
 

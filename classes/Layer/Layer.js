@@ -35,9 +35,10 @@ export default class Layer {
     }
     
     static build(projectId, label, canvases, projectLabel = "Default") {
+        let thisLayer = {}
         projectId ??= database.reserveId()
-        this.projectId = projectId
-        this.label = label ?? `${projectLabel} - Layer ${Date.now()}`
+        thisLayer.projectId = projectId
+        thisLayer.label = label ?? `${projectLabel} - Layer ${Date.now()}`
         
         if (!Array.isArray(canvases)) {
             if (!canvases) {
@@ -45,14 +46,15 @@ export default class Layer {
             } 
             canvases = [canvases]
         }
-        this.id = `${process.env.SERVERURL}layer/${databaseTiny.reserveId()}`
-        const pages = canvases.map(c => Page.build(this.id, c))
+        thisLayer.id = `${process.env.SERVERURL}layer/${databaseTiny.reserveId()}`
+        const pages = canvases.map(c => Page.build(thisLayer.id, c))
         
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
             if (index < pages.length - 1) page.next = pages[index + 1].id
         })
-        return this
+        const newLayer = new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages })
+        return newLayer
     }
 
     #setRerumId() {
@@ -83,6 +85,10 @@ export default class Layer {
         if (this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
             await this.#setRerumId().#saveCollectionToRerum()
         }
+        return this.#updateCollectionForProject()
+    }
+
+    asProjectLayer() {
         return this.#updateCollectionForProject()
     }
 
