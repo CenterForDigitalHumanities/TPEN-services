@@ -1,4 +1,4 @@
-import { Vault } from "@hyperion-framework/vault"
+import { Vault } from '@iiif/helpers/vault'
 
 const vault = new Vault()
 
@@ -22,12 +22,12 @@ class Manifest {
             new URL(id);
             this.uri = id;
         } catch (_) {
-            throw new Error('Invalid input: must be a valid URI string');
+            throw new Error('Invalid input: must be a valid URI string')
         }
 
         const requiredProperties = [
-            ['@type', 'type'],
             ['@context', 'context'],
+            ['@type', 'type'],
             ['sequences', 'items']
         ]
 
@@ -45,7 +45,22 @@ class Manifest {
         this.manifest = manifestOrUri
     }
 
-    load = async () => vault.loadManifest(this.uri)
+    load = async () => vault.loadManifest(this.uri).then(manifest => {
+        // load canvases
+        manifest.items = vault.get(manifest.items)
+        manifest.items = manifest.items.map(item => {
+            // Load canvas content
+            if (item.items) {
+                item.items = vault.get(item.items)
+            }
+            // Load Canvas AnnotationPages
+            if (item.annotations) {
+                item.annotations = vault.get(item.annotations)
+            }
+            return item
+        })
+        return manifest
+    })
 }
 
 export default Manifest
