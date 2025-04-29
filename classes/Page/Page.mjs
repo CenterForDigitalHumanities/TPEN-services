@@ -2,31 +2,32 @@ import dbDriver from "../../database/driver.mjs"
 
 const databaseTiny = new dbDriver("tiny")
 const databaseMongo = new dbDriver("mongo")
-export default class Page {
 
+export default class Page {
     #tinyAction = 'create'
+
     #setRerumId() {
         if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }
 
     /**
-     * Constructs a Page from the JSON Object in the Project `layers` Array reference. This 
-     * never creates a new Page, but rather wraps existing data in a Page object.
+     * Constructs a Page by wrapping existing data in a Page object.
      * Use the `build` method to create a new Page.
-     * @param {hexString} projectId For the project this layer belongs to
-     * @param {String} id The ID of the layer. This is the Layer stored in the Project.
-     * @param {String} label The label of the layer. This is the Layer stored in the Project.
-     * @param {String} target The uri of the targeted Canvas.
-     * @seeAlso {@link Page.build}
+     * @param {String} partOf The layer ID this page belongs to
+     * @param {Object} canvas An object with { id, label, target } properties
      */
-    constructor(projectId, layerId, { id, label, target }) {
+    constructor(partOf, canvas) {
+        if (!canvas || typeof canvas !== 'object') {
+            throw new Error("Page data is malformed.")
+        }
+        const { id, label, target } = canvas
         if (!id || !label || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { projectId, id, label, target, partOf: layerId })
+        Object.assign(this, { id, label, target, partOf })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -40,7 +41,6 @@ export default class Page {
         if (!canvas || !canvas.id) {
             throw new Error("Canvas with id is required to create a Page instance.")
         }
-
         const id = lines.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
@@ -55,7 +55,7 @@ export default class Page {
             prev,
             next
         }
-        const page = new Page(projectId, layerId, pageDoc)
+        const page = new Page(layerId, pageDoc)
         page.data = pageDoc
         return page
     }
@@ -73,11 +73,10 @@ export default class Page {
             next: this.next ?? null
         }
         if (this.#tinyAction === 'create') {
-            await databaseTiny.save(pageAsAnnotationPage)
-                .catch(err => {
-                    console.error(err, pageAsAnnotationPage)
-                    throw new Error(`Failed to save Page to RERUM: ${err.message}`)
-                })
+            await databaseTiny.save(pageAsAnnotationPage).catch(err => {
+                console.error(err, pageAsAnnotationPage)
+                throw new Error(`Failed to save Page to RERUM: ${err.message}`)
+            })
             this.#tinyAction = 'update'
             return this
         }
@@ -92,9 +91,9 @@ export default class Page {
     }
 
     /**
-     * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
-     * @returns {Promise} Resolves to the updated Layer object as stored in Project.
-     */
+      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
+      */
     async update(userId) {
         const hasItems = Array.isArray(this.data?.items) && this.data.items.length > 0
         if (this.#tinyAction === 'update' || hasItems) {
@@ -122,27 +121,25 @@ export default class Page {
     async delete() {
         if (this.#tinyAction === 'update') {
             // associated Annotations in RERUM will be left intact
-            await databaseTiny.remove(this.id)
-                .catch(err => false)
+            await databaseTiny.remove(this.id).catch(err => false)
         }
         return true
     }
+
     async #recordModification(userId) {
         try {
-            const { projectId, id } = this
-
+            const { id: pageId, partOf: projectId = this.partOf } = this
             await databaseMongo.controller.db
                 .collection(process.env.TPENPROJECTS)
                 .updateOne(
                     { _id: projectId },
                     {
                         $set: {
-                            _lastModified: id,
+                            _lastModified: pageId,
                             _modifiedAt: new Date()
                         }
                     }
                 )
-
 
             if (userId) {
                 await databaseMongo.controller.db
@@ -151,7 +148,7 @@ export default class Page {
                         { _id: userId },
                         {
                             $set: {
-                                _lastModified: id,
+                                _lastModified: pageId,
                                 _modifiedAt: new Date()
                             }
                         }
