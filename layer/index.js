@@ -1,5 +1,6 @@
 import express from 'express'
 import * as utils from '../utilities/shared.js'
+import auth0Middleware from "../auth/index.js"
 import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
@@ -34,7 +35,7 @@ router.route('/:layerId')
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
         }
     })
-    .put(async (req, res) => {
+    .put(auth0Middleware(), async (req, res) => {
         const { projectId, layerId } = req.params
         const { label, canvases } = req.body
 
@@ -72,7 +73,7 @@ router.route('/:layerId')
     })
 
 // Route to create a new layer within a project
-router.route('/').post(async (req, res) => {
+router.route('/').post(auth0Middleware(), async (req, res) => {
     const { projectId } = req.params
     const { label, canvases } = req.body
 
