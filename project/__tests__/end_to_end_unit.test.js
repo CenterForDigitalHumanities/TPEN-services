@@ -234,3 +234,56 @@ describe.skip("POST /project/:id/remove-member ", () => {
     expect(response.body).toBeTruthy();
   });
 });
+
+// Layer and Page Test cases
+describe("GET /project/:projectId/layer/:layerId", () => {
+  it("should return a valid AnnotationCollection for a valid layer", async () => {
+    const projectId = "6602dd2314cd575343f513ba"
+    const layerId = "layer123"
+
+    const res = await request(routeTester)
+      .get(`/project/${projectId}/layer/${layerId}`)
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toHaveProperty("@context", "http://www.w3.org/ns/anno.jsonld")
+    expect(res.body).toHaveProperty("type", "AnnotationCollection")
+  })
+
+  it("should return 404 if the layer does not exist", async () => {
+    const projectId = "6602dd2314cd575343f513ba"
+    const layerId = "nonexistentLayer"
+
+    const res = await request(routeTester)
+      .get(`/project/${projectId}/layer/${layerId}`)
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.statusCode).toBe(404)
+  })
+})
+
+describe("GET /project/:projectId/page/:pageId", () => {
+  it("should return a valid AnnotationPage for a valid page", async () => {
+    const projectId = "6602dd2314cd575343f513ba"
+    const pageId = "page123"
+
+    const res = await request(routeTester)
+      .get(`/project/${projectId}/page/${pageId}`)
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toHaveProperty("@context", "http://www.w3.org/ns/anno.jsonld")
+    expect(res.body).toHaveProperty("type", "AnnotationPage")
+  })
+
+  it("should return 404 if the page does not exist", async () => {
+    const projectId = "6602dd2314cd575343f513ba"
+    const pageId = "nonexistentPage"
+
+    const res = await request(routeTester)
+      .get(`/project/${projectId}/page/${pageId}`)
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.statusCode).toBe(404)
+  })
+})
