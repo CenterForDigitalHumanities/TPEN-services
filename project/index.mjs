@@ -118,6 +118,10 @@ router
     if (!jsessionid) {
       return respondWithError(res, 400, "Missing jsessionid in query")
     }
+
+    if (!uid) {
+      return respondWithError(res, 400, "Missing uid in query")
+    }
  
     try {
       const response = await fetch(
@@ -137,20 +141,19 @@ router
       }
  
       const rawText = await response.text()
-      let parsedData
+      let parsedData = {}
  
       try {
-        const firstLevel = JSON.parse(rawText)
-        parsedData = {}
- 
-        for (const [key, value] of Object.entries(firstLevel)) {
-          try {
-            parsedData[key] = JSON.parse(value)
-          } catch {
-            parsedData[key] = value
-          }
-        }
- 
+        const firstLevel = JSON.parse(rawText) 
+        parsedData = Object.fromEntries(
+          Object.entries(firstLevel).map(([key, value]) => {
+            try {
+              return [key, JSON.parse(value)]
+            } catch {
+              return [key, value]
+            }
+          })
+        )
       } catch (err) {
         console.error("Failed to parse project response:", err)
         return respondWithError(res, 500, "Invalid project response format")
