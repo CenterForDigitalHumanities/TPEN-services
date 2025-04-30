@@ -1,5 +1,5 @@
 import Permissions from "./permissions.js"
-import { ACTIONS, ENTITIES, SCOPES } from "./permissions_parameters.mjs"
+import { ACTIONS, ENTITIES, SCOPES } from "./permissions_parameters.js"
 
 const hasPermission = (role, action, scope, entity) => {
   const rolePermissions = Permissions[role]

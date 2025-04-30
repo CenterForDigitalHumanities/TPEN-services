@@ -1,9 +1,9 @@
-import dbDriver from "../../database/driver.mjs"
-import { sendMail } from "../../utilities/mailer/index.mjs"
-import { validateProjectPayload } from "../../utilities/validatePayload.mjs"
+import dbDriver from "../../database/driver.js"
+import { sendMail } from "../../utilities/mailer/index.js"
+import { validateProjectPayload } from "../../utilities/validatePayload.js"
 import User from "../User/User.js"
 import { createHash } from "node:crypto"
-import Group from "../Group/Group.mjs"
+import Group from "../Group/Group.js"
 
 const database = new dbDriver("mongo")
 
@@ -20,11 +20,12 @@ export default class Project {
   async create(payload) {
     // validation checks for all the required elements without which a project cannot be created. modify validateProjectPayload function to include more elements as they become available (layers,... )
     const validation = validateProjectPayload(payload)
-
+    
     if (!validation.isValid) {
       throw { status: 400, message: validation.errors }
     }
-
+    
+    console.log("Creating project...", payload.layers)
     try {
       return database.save(payload, "projects")
     } catch (err) {
@@ -154,7 +155,7 @@ export default class Project {
     }
   }
 
-/**
+  /**
  * Asynchronously updates the metadata of the current object and persists the changes.
  *
  * @param {Object} newMetadata - An object containing the new metadata properties to be assigned.

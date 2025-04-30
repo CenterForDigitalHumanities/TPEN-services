@@ -5,8 +5,8 @@
  * https://github.com/thehabes 
  * 
  * */
-import DatabaseDriver from "../database/driver.mjs"
-import * as utils from "../utilities/shared.mjs"
+import DatabaseDriver from "../database/driver.js"
+import * as utils from "../utilities/shared.js"
 
 // This module will use the TinyPEN API (RERUM Mongo DB)
 const database = new DatabaseDriver("tiny")

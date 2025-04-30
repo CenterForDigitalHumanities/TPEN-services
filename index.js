@@ -7,7 +7,7 @@
  * */
 
 import express from 'express'
-import * as utils from './utilities/shared.mjs'
+import * as utils from './utilities/shared.js'
 
 let router = express.Router()
 

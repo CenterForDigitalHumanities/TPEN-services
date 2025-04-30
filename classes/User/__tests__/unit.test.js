@@ -3,13 +3,11 @@ import request from "supertest"
 import express from "express"
 import User from "../User.js"
 
-import privateProfileRouter from "../../../userProfile/privateProfile.mjs"
- 
-import mainApp from "../../../app.mjs"
+import privateProfileRouter from "../../../userProfile/privateProfile.js"
+import mainApp from "../../../app.js"
 
-
-jest.mock("../User.mjs")
-jest.mock("../../../auth/index.mjs")
+jest.mock("../User.js")
+jest.mock("../../../auth/index.js")
 
 const app = express()
 

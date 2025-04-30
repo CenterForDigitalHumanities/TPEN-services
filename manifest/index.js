@@ -7,8 +7,8 @@
  * */
 
 import express from 'express'
-import * as logic from './manifest.mjs'
-import * as utils from '../utilities/shared.mjs'
+import * as logic from './manifest.js'
+import * as utils from '../utilities/shared.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 

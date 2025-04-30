@@ -29,14 +29,14 @@ let config = {
   },
 
   // Indicates whether the coverage information should be collected while executing the test
-  collectCoverage: true,
+  // collectCoverage: true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
   collectCoverageFrom: [
       //"**/*.js",
-      "**/manifest/index.mjs",
-      "**/app.mjs",
-      "**/index.mjs"
+      // "**/manifest/index.js",
+      // "**/app.js",
+      // "**/index.js"
   ],
 
   // Indicates which provider should be used to instrument code for coverage
@@ -58,7 +58,7 @@ let config = {
   // The root directory that Jest should scan for tests and modules within
   rootDir: "./",
 
-  testMatch: [ "**/__tests__/**/*.m[jt]s?(x)", "**/?(*.)+(spec|test).m[jt]s?(x)" ],
+  testMatch: [ "**/__tests__/**/*.js", "**/?(*.)+(spec|test).js" ],
 
   // The directory where Jest should output its coverage files.  Default is /coverage/.  See /coverage/index.html.
   // coverageDirectory: undefined,
@@ -100,12 +100,7 @@ let config = {
   // An array of file extensions your modules use
   moduleFileExtensions: [
     "js",
-    "mjs",
-    "jsx",
-    "ts",
-    "tsx",
-    "json",
-    "node"
+    "json"
   ],
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
@@ -197,9 +192,7 @@ let config = {
   // timers: "real",
 
   // A map from regular expressions to paths to transformers
-  // transform: {
-  //   "^.+\\.m?jsx?$": "babel-jest"
-  // },
+  transform: {},
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   // transformIgnorePatterns: [

@@ -1,5 +1,5 @@
 import { createGitHubIssue } from './githubService.js'
-import { respondWithError } from "../utilities/shared.mjs"
+import { respondWithError } from "../utilities/shared.js"
 
 /**
  * 

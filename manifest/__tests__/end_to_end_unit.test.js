@@ -7,7 +7,7 @@
  * 
  * */
 
-import manifestRouter from '../index.mjs'
+import manifestRouter from '../index.js'
 import express from 'express'
 import request from 'supertest'
 

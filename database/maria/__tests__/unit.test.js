@@ -4,7 +4,7 @@
     * @author Bryan Haberberger
     * https://github.com/thehabes 
 */
-import DatabaseController from '../controller.mjs'
+import DatabaseController from '../controller.js'
 const database = new DatabaseController()
 
 describe('A MARIADB stub test that is always true. #maria_unit #db',()=>{

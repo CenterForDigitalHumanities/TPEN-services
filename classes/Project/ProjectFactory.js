@@ -1,11 +1,11 @@
 import Project from "./Project.js"
-import Group from "../Group/Group.mjs"
+import Group from "../Group/Group.js"
 import User from "../User/User.js"
-import Layer from "../Layer/Layer.mjs"
-import dbDriver from "../../database/driver.mjs"
+import Layer from "../Layer/Layer.js"
+import dbDriver from "../../database/driver.js"
 import fs from "fs"
 import path from "path"
-import vault from "../../utilities/vault.mjs"
+import vault from "../../utilities/vault.js"
 
 const database = new dbDriver("mongo")
 
@@ -31,14 +31,14 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( null, `First Layer - ${label}`, manifest.items )
+    const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items )
 
     // required properties: id, label, metadata, manifest, layers
     return {
       label,
       metadata,
       manifest: [ manifest.id ],
-      layers: [ layer ]
+      layers: [ layer.asProjectLayer() ]
     }
   }
 

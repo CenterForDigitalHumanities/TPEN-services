@@ -1,24 +1,24 @@
-import { validateProjectPayload } from "../../../utilities/validatePayload.mjs"
+import { validateProjectPayload } from "../../../utilities/validatePayload.js"
 import Project from "../Project.js";
-import dbDriver from "../../../database/driver.mjs";
-import { sendMail } from "../../../utilities/mailer/index.mjs";
+import dbDriver from "../../../database/driver.js"
+import { sendMail } from "../../../utilities/mailer/index.js"
 import User from "../../User/User.js";
-import Group from "../../Group/Group.mjs";
+import Group from "../../Group/Group.js"
 import { jest } from "@jest/globals";
 
-jest.mock("../../../database/driver.mjs", () => {
+jest.mock("../../../database/driver.js", () => {
   return {
     save: jest.fn(),
     remove: jest.fn().mockResolvedValue({ _id: "deleted" }),
   };
 });
-jest.mock("../../../utilities/mailer/index.mjs");
-jest.mock("../../../utilities/validatePayload.mjs", () => {
+jest.mock("../../../utilities/mailer/index.js");
+jest.mock("../../../utilities/validatePayload.js", () => {
   return {
     validateProjectPayload: jest.fn(),
   };
 });
-jest.mock("../../User/User.mjs", () => {
+jest.mock("../../User/User.js", () => {
   return {
     User: jest.fn().mockImplementation(() => {
       return {
@@ -28,7 +28,7 @@ jest.mock("../../User/User.mjs", () => {
     }),
   };
 });
-jest.mock("../../Group/Group.mjs", () => {
+jest.mock("../../Group/Group.js", () => {
   return jest.fn().mockImplementation(() => {
     return {
       addMember: jest.fn(),
