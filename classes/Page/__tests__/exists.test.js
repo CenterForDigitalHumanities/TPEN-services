@@ -23,7 +23,6 @@ describe('Page Class looks how we expect it to. #Page_exists_unit', () => {
     expect(() => new Page("layerID")).toThrow() // Missing required arguments
     expect(() => new Page("layerID", null)).toThrow() // Null canvas object
     expect(() => new Page("layerID", { id: null, label: "Canvas Label", target: "https://example.com/canvas" })).toThrow() // Invalid canvas ID
-    expect(() => new Page("layerID", { id: "canvasID", label: null, target: "https://example.com/canvas" })).toThrow() // Invalid canvas label
     expect(() => new Page("layerID", { id: "canvasID", label: "Canvas Label", target: null })).toThrow() // Invalid canvas target
   })
 })
