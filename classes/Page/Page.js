@@ -34,17 +34,21 @@ export default class Page {
         return this
     }
 
-    static build(layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, lines = []) {
+        if (!projectId) {
+            throw new Error("Project ID is required to create a Page instance.")
+        }
         if (!layerId) {
             throw new Error("Layer ID is required to create a Page instance.")
         }
-        if (!canvas || !canvas.id) {
+        if (!canvas?.id) {
             throw new Error("Canvas with id is required to create a Page instance.")
         }
 
         const id = lines.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
-            : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
+            : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
+
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -58,6 +62,7 @@ export default class Page {
                 next
             }
         }
+
         return new Page(layerId, page.data)
     }
 
