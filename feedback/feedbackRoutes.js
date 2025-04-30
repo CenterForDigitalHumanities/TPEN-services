@@ -1,5 +1,5 @@
 import express from 'express'
-import auth0Middleware from "../auth/index.mjs"
+import auth0Middleware from "../auth/index.js"
 import cors from 'cors'
 import { submitFeedback, submitBug } from './feedbackController.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
