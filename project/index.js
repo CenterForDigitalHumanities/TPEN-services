@@ -16,9 +16,10 @@ import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import path from "path"
 import fs from "fs"
 import layerRouter from "../layer/index.js"
+import pageRouter from "../page/index.js"
 import cookieParser from "cookie-parser"
 
-let router = express.Router()
+let router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
 
 router
@@ -1121,5 +1122,6 @@ router.route("/:projectId/hotkeys").all((_, res) => {
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
+router.use('/:projectId/page', pageRouter)
 
 export default router

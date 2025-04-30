@@ -3,8 +3,9 @@ import * as utils from '../utilities/shared.js'
 import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
+import Project from '../classes/Project/Project.js'
 
-const router = express.Router()
+const router = express.Router({ mergeParams: true })
 
 router.use(cors(common_cors))
 
@@ -45,13 +46,15 @@ async function findLayerById(layerId, projectId) {
     if (layerId.startsWith(process.env.RERUMIDPREFIX)) {
         return fetch(layerId).then(res => res.json())
     }
-    const p = await Project.getById(projectId)
+    const p = (await Project.getById(projectId)).data
     if (!p) {
         const error = new Error(`Project with ID '${projectId}' not found`)
         error.status = 404
         throw error
     }
-    const layer = p.layers.find(layer => layer.id === layerId)
+    const layer = layerId.length < 6 
+        ? p.layers[parseInt(layerId) + 1] 
+        : p.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
     if (!layer) {
         const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
         error.status = 404
