@@ -206,4 +206,49 @@ export default class Project {
     await project.#load()
     return project
   }
+
+  updateLayer(layer, previousId) {
+    if (!this.data?.layers) {
+      throw new Error("Project does not have layers.")
+    }
+    previousId ??= layer.id
+    const layerIndex = this.data.layers.findIndex(l => l.id.split('/').pop() === previousId.split('/').pop())
+    if (layerIndex < 0) {
+      throw new Error("Layer not found in project.")
+    }
+    this.data.layers[layerIndex] = layer
+    return this
+  }
+
+  addLayer(layer) {
+    if (!this.data?.layers) {
+      throw new Error("Project does not have layers.")
+    }
+    if (!isValidLayer(layer)) {
+      throw new Error("Layer data is malformed.")
+    }
+    if (this.data.layers.findIndex(l => l.id.split('/').pop() === layer.id.split('/').pop()) >= 0) {
+      throw new Error("Layer with this ID already exists in the project.")
+    }
+    const existingLayerLabelCount = this.data.layers.find(l => l.label === layer.label).length
+    if (existingLayerLabelCount >= 0) {
+      layer.label+=`(${existingLayerLabelCount + 1})`
+    }
+    this.data.layers.push(layer)
+    return this
+  }
+}
+
+function isValidLayer(layer) {
+  if (typeof layer?.label !== 'string' || !layer?.id?.startsWith('http') || !Array.isArray(layer?.pages)) {
+    return false
+  }
+
+  for (const page of layer.pages) {
+    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http')) {
+      return false
+    }
+  }
+
+  return true
 }
