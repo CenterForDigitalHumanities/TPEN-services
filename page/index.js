@@ -3,16 +3,20 @@ import * as utils from '../utilities/shared.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
-let router = express.Router()
+let router = express.Router({ mergeParams: true })
+import Project from '../classes/Project/Project.js'
 
 router.use(
   cors(common_cors)
 )
 
+// This is a nested route for pages within a layer. It may be used 
+// directly from /project/:projectId/page or with /layer/:layerId/page
+// depending on the context of the request.
 router.route('/:id')
   .get(async (req, res, next) => {
-    const { projectId, layerId, pageId } = req.params
-      const pageObject = await findPageById(pageId, layerId, projectId)
+    const { projectId, pageId } = req.params
+      const pageObject = await findPageById(pageId, projectId)
       if (!pageObject) {
         utils.respondWithError(res, 404, 'No page found with that ID.')
         return
@@ -37,27 +41,25 @@ router.route('/:id')
 
 export default router
 
-async function findPageById(pageId, layerId, projectId) {
+async function findPageById(pageId, projectId) {
   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
     return fetch(pageId).then(res => res.json())
   }
-  const p = await Project?.getById(projectId)
+  const p = (await Project?.getById(projectId)).data
   if (!p) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
       throw error
   }
-  const layer = p.layers.find(layer => layer.id === layerId)
-  if (!layer) {
-      const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
-      error.status = 404
-      throw error
-  }
-  const page = layer.pages.find(page => page.id === pageId)
+  const page = p.layers
+    .flatMap(layer => layer.pages)
+    .find(page => page.id.split('/').pop() === pageId.split('/').pop())
+
   if (!page) {
-      const error = new Error(`Page with ID '${pageId}' not found in layer '${layerId}'`)
-      error.status = 404
-      throw error
+    const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
+    error.status = 404
+    throw error
   }
+
   return page
 }
