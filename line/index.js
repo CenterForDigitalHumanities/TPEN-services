@@ -49,7 +49,7 @@ router.get('/:lineId', async (req, res) => {
     const line = lineRef.id.startsWith(process.env.RERUMIDPREFIX)
     ? await fetch(lineRef.id).then(res => res.json())
     : new Line({ lineRef })
-    res.json(line?.asJSON?.())
+    res.json(line?.asJSON?.(true))
   } catch (error) {
     res.status(error.status ?? 500).json({ error: error.message })
   }
@@ -60,7 +60,7 @@ router.post('/:line', async (req, res) => {
   try {
     const newLine = Line.build({ id: req.params.line, ...req.body })
     const savedLine = await newLine.save()
-    res.status(201).json(savedLine.asJSON())
+    res.status(201).json(savedLine.asJSON(true))
   } catch (error) {
     res.status(error.status ?? 500).json({ error: error.message })
   }
@@ -71,7 +71,7 @@ router.put('/:line', async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedLine = await line.update(req.body)
-    res.json(updatedLine.asJSON())
+    res.json(updatedLine.asJSON(true))
   } catch (error) {
     res.status(error.status ?? 500).json({ error: error.message })
   }
@@ -82,7 +82,7 @@ router.patch('/:line/text', async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedText = await line.updateText(req.body)
-    res.json(updatedText.asJSON())
+    res.json(updatedText.asJSON(true))
   } catch (error) {
     res.status(error.status ?? 500).json({ error: error.message })
   }
@@ -93,7 +93,7 @@ router.patch('/:line/bounds', async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedBounds = await line.updateBounds(req.body)
-    res.json(updatedBounds.asJSON())
+    res.json(updatedBounds.asJSON(true))
   } catch (error) {
     res.status(error.status ?? 500).json(error.message)
   }

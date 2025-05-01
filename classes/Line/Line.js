@@ -1,135 +1,127 @@
+import dbDriver from "../../database/driver.js"
+
+const databaseTiny = new dbDriver("tiny")
 export class Line {
-    constructor(line = {}) {
-        this.annotation = line
-        if (!this.annotation.id) {
-            this.annotation.id = Date.now().toString()
+
+    #tinyAction = 'create'
+    #setRerumId() {
+        if (this.#tinyAction === 'create') {
+            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
         }
+        return this
     }
 
-    static build({ id, body, target }) {
-        if (!id) {
-            throw new Error('Line ID is required to create a Line instance.')
+    constructor({ id, target, body }) {
+        if(!id || !body || !target) {
+            throw new Error('Line data is malformed.')
         }
+        if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            this.#tinyAction = 'update'
+        }
+        return this
+    }
+
+    static build(projectId, pageId, { id, body, target }) {
+        id ??= `${process.env.SERVERURL}/project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
         return new Line({ id, body, target })
     }
 
-    get id() {
-        return this.annotation.id
-    }
-
-    set id(id) {
-        this.annotation.id = id
-    }
-
-    async load() {
-        // Simulate fetching line data from RERUM or temporary storage
+    async #saveLineToRerum() {
+        const lineAsAnnotation = {
+            "@context": "http://iiif.io/api/presentation/3/context.json",
+            id: this.id,
+            type: "Annotation",
+            motivation: this.motivation ?? "transcribing",
+            target: this.target,
+            body: this.body
+        }
+        if (this.label) lineAsAnnotation.label = { "none": [this.label] }
+        if (this.#tinyAction === 'create') {
+            await databaseTiny.save(lineAsAnnotation)
+                .catch(err => {
+                    throw new Error(`Failed to save Page to RERUM: ${err.message}`)
+                })
+            this.#tinyAction = 'update'
+            return this
+        }
+        // ...else Update the existing page in RERUM
+        const existingLine = await fetch(this.id).then(res => res.json())
+        if (!existingLine) {
+            throw new Error(`Failed to find Line in RERUM: ${this.id}`)
+        }
+        const updatedLine = { ...existingLine, ...lineAsAnnotation }
+        const newURI = await databaseTiny.update(updatedLine).then(res => res.headers.get('location')).catch(err => {
+            throw new Error(`Failed to update Line in RERUM: ${err.message}`)
+        })
+        this.id = newURI
+        this.#tinyAction = 'update'
         return this
     }
-
-    async save() {
-        // Simulate saving the line to RERUM
-        return this
+   /**
+     * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+     * @returns {Promise} Resolves to the updated Layer object as stored in Project.
+     */
+   async update() {
+    if (this.#tinyAction === 'update' || typeof this.body !== 'string') {
+        await this.#setRerumId().#saveLineToRerum()
     }
-
-    async update(data) {
-        Object.assign(this.annotation, data)
-        return this.save()
+    return this.#updateLineForPage()
+}
+    
+async #updateLineForPage() {
+    return {
+        id: this.id,
+        target: this.target,
+        body: this.body,
     }
-
+}
     async updateText(text) {
         if (typeof text !== 'string') {
             throw new Error('Text content must be a string')
         }
-        this.annotation.body = text
-        return this.save()
-    }
-
-    async updateBounds(xywh) {
-        if (!xywh) {
-            throw new Error('Bounds (xywh) must be provided')
+        if(this.body === text) {
+            return this
         }
-        this.annotation.target = xywh
-        return this.save()
+        this.body = text
+        return this.update()
     }
 
-    embedReferencedDocuments() {
-        console.log('Referenced documents embedded.')
-        return Promise.resolve();
+    async updateBounds({x,y,w,h}) {
+        if (!x || !y || !w || !h) {
+            throw new Error('Bounds ({x,y,w,h}) must be provided')
+        }
+        // TODO: this is very naive for now. We'll need selector builders for this.
+        const newTarget = `${this.target.split('=')[0]}=${x},${y},${w},${h}`
+        if (this.target === newTarget) {
+            return this
+        }
+        this.target = newTarget
+        return this.update()
     }
 
-    asJSON() {
-        this.embedReferencedDocuments();
-        return {
+    asJSON(isLD) {
+        return isLD ? {
+            '@context': 'http://iiif.io/api/presentation/3/context.json',
+            id: this.id,
             type: 'Annotation',
-            '@context': 'http://www.w3.org/ns/anno.jsonld',
-            body: this.annotation.body ?? '',
-            target: this.annotation.target ?? '',
-        };
-    }
-
-    // Set text content
-    setTextContent(text) {
-        if (typeof text !== 'string') {
-            throw new Error('Text content must be a string')
+            motivation: this.motivation ?? 'transcribing',
+            target: this.target,
+            body: this.body,
+        } : {
+            body: this.body ?? '',
+            target: this.target ?? '',
         }
-        this.annotation.body = text
-    }
-
-    // Set image link
-    setImageLink(url) {
-        if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
-            throw new Error('Image link must be a valid URL')
-        }
-        this.annotation.target = url
-    }
-
-    // Create a line
-    create() {
-        return Promise.resolve(new Line())
-    }
-
-    // Fetch the parent Annotation Page
-    getParentPage() {
-        return Promise.resolve(new AnnotationPage())
-    }
-
-    // Fetch previous line
-    getPreviousLine() {
-        return Promise.resolve(new Line())
-    }
-
-    // Fetch next line
-    getNextLine() {
-        return Promise.resolve(new Line())
-    }
-
-    // Fetch parent Annotation Collection (Layer)
-    getParentCollection() {
-        return Promise.resolve(new AnnotationCollection())
-    }
-
-    // To get metadata only
-    getMetadata() {
-        return Promise.resolve('Get only metadata of the page')
-    }
-
-    // Fetch metadata only
-    fetchMetadata() {
-        // Calling the internal getMetadata method
-        return this.getMetadata();
     }
 
     asHTML() {
         return Promise.resolve('<html><body>This is the HTML document content.</body></html>')
     }
 
-    // Update the line
-    update() {
-        return Promise.resolve(new Line())
-    }
-
-    // Delete the line
-    delete() {
-        return Promise.resolve()
+    async delete() {
+        if (this.#tinyAction === 'update') {
+            await databaseTiny.remove(this.id)
+                .catch(err => false)
+        }
+        return true
     }
 }
