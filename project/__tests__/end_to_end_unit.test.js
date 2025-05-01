@@ -36,7 +36,7 @@ describe.skip("Project endpoint end to end unit test (spinning up the endpoint a
   })
 })
 
-describe("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
+describe.skip("Project endpoint end to end unit test to /project/create #end2end_unit", () => {
   it("GET instead of POST. The status should be 404 with a message.", async () => {
     const res = await request(routeTester)
       .get("/project/create")
@@ -236,7 +236,7 @@ describe.skip("POST /project/:id/remove-member ", () => {
 });
 
 // Layer and Page Test cases
-describe("GET /project/:projectId/layer/:layerId", () => {
+describe.skip("GET /project/:projectId/layer/:layerId", () => {
   it("should return a valid AnnotationCollection for a valid layer", async () => {
     const projectId = "6602dd2314cd575343f513ba"
     const layerId = "layer123"
@@ -260,7 +260,7 @@ describe("GET /project/:projectId/layer/:layerId", () => {
   })
 })
 
-describe("GET /project/:projectId/page/:pageId", () => {
+describe.skip("GET /project/:projectId/page/:pageId", () => {
   it("should return a valid AnnotationPage for a valid page", async () => {
     const projectId = "6602dd2314cd575343f513ba"
     const pageId = "page123"

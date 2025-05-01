@@ -1,4 +1,4 @@
-import { Line } from '../Line.js'
+import Line from '../Line.js'
 
 describe('Line class unit tests', () => {
   it('should throw an error if no ID, body, or target is provided', () => {
