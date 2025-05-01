@@ -108,6 +108,7 @@ async #updateLineForPage() {
             target: this.target,
             body: this.body,
         } : {
+            id: this.id,
             body: this.body ?? '',
             target: this.target ?? '',
         }
