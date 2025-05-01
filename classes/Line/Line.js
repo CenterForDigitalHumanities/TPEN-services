@@ -6,6 +6,13 @@ export class Line {
         }
     }
 
+    static build({ id, body, target }) {
+        if (!id) {
+            throw new Error('Line ID is required to create a Line instance.')
+        }
+        return new Line({ id, body, target })
+    }
+
     get id() {
         return this.annotation.id
     }
@@ -13,12 +20,44 @@ export class Line {
     set id(id) {
         this.annotation.id = id
     }
+
+    async load() {
+        // Simulate fetching line data from RERUM or temporary storage
+        return this
+    }
+
+    async save() {
+        // Simulate saving the line to RERUM
+        return this
+    }
+
+    async update(data) {
+        Object.assign(this.annotation, data)
+        return this.save()
+    }
+
+    async updateText(text) {
+        if (typeof text !== 'string') {
+            throw new Error('Text content must be a string')
+        }
+        this.annotation.body = text
+        return this.save()
+    }
+
+    async updateBounds(xywh) {
+        if (!xywh) {
+            throw new Error('Bounds (xywh) must be provided')
+        }
+        this.annotation.target = xywh
+        return this.save()
+    }
+
     embedReferencedDocuments() {
         console.log('Referenced documents embedded.')
         return Promise.resolve();
-      }
-  
-      asJSON() {
+    }
+
+    asJSON() {
         this.embedReferencedDocuments();
         return {
             type: 'Annotation',
@@ -28,28 +67,25 @@ export class Line {
         };
     }
 
- // Set text content
- setTextContent(text) {
-    if (typeof text !== 'string') {
-        throw new Error('Text content must be a string')
+    // Set text content
+    setTextContent(text) {
+        if (typeof text !== 'string') {
+            throw new Error('Text content must be a string')
+        }
+        this.annotation.body = text
     }
-    this.annotation.body = text
-}
 
     // Set image link
-   setImageLink(url) {
-    if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
-        throw new Error('Image link must be a valid URL')
+    setImageLink(url) {
+        if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
+            throw new Error('Image link must be a valid URL')
+        }
+        this.annotation.target = url
     }
-    this.annotation.target = url
-}
-    //create a line 
+
+    // Create a line
     create() {
         return Promise.resolve(new Line())
-    }
-    //Save the line 
-    save() {
-        return Promise.resolve()
     }
 
     // Fetch the parent Annotation Page
@@ -72,15 +108,17 @@ export class Line {
         return Promise.resolve(new AnnotationCollection())
     }
 
-    // to get metadata only
+    // To get metadata only
     getMetadata() {
         return Promise.resolve('Get only metadata of the page')
     }
-    //Fetch metadata only
+
+    // Fetch metadata only
     fetchMetadata() {
-        // Calling  the internal getMetadata method
+        // Calling the internal getMetadata method
         return this.getMetadata();
     }
+
     asHTML() {
         return Promise.resolve('<html><body>This is the HTML document content.</body></html>')
     }

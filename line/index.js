@@ -1,51 +1,72 @@
 import express from 'express'
-import * as utils from '../utilities/shared.js'
 import cors from 'cors'
-import { findLineById } from './line.js'
+import { Line } from '../classes/Line/Line.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
-const router = express.Router()
+const router = express.Router({mergeParams: true})
 
 router.use(
   cors(common_cors)
 )
 
-router.route('/:id')
-  .get(async (req, res, next) => {
-    try {
-      let id = req.params.id
-
-      if (!utils.validateID(id)) {
-        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
-      }
-
-      id = parseInt(id)
-
-      const lineObject = await findLineById(id)
-
-      if (lineObject.statusCode === 404) {
-        return utils.respondWithError(res, 404, lineObject.body)
-      } 
-    } catch (error) {
-      console.error(error)
-      return utils.respondWithError(res, 500, 'Internal Server Error')
-    }
-  })
-  .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  })
-
-router.route('/')
-  .get((req, res, next) => {
-    return utils.respondWithError(res, 400, 'Improper request.  There was no line ID.')
-  })
-  .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  })
-
 function respondWithLine(res, lineObject) {
   res.set('Content-Type', 'application/json; charset=utf-8')
   res.status(200).json(lineObject)
 }
+
+// Load Line as temp line or from RERUM
+router.get('/:line', async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const loadedLine = await line.load()
+    res.json(loadedLine?.asJSON())
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Create temp Line until saved to RERUM
+router.post('/:line', async (req, res) => {
+  try {
+    const newLine = Line.build({ id: req.params.line, ...req.body })
+    const savedLine = await newLine.save()
+    res.status(201).json(savedLine.asJSON())
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Update an existing line, including in RERUM
+router.put('/:line', async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const updatedLine = await line.update(req.body)
+    res.json(updatedLine.asJSON())
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Update the text of an existing line
+router.patch('/:line/text', async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const updatedText = await line.updateText(req.body)
+    res.json(updatedText.asJSON())
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Update the xywh (bounds) of an existing line
+router.patch('/:line/bounds', async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const updatedBounds = await line.updateBounds(req.body)
+    res.json(updatedBounds.asJSON())
+  } catch (error) {
+    res.status(error.status ?? 500).json( error.message )
+  }
+})
 
 export default router

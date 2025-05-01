@@ -5,6 +5,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
+import lineRouter from '../line/index.js'
 
 router.use(
   cors(common_cors)
@@ -38,6 +39,8 @@ router.route('/:pageId')
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
   })
+
+router.use('/:pageId/line', lineRouter)
 
 export default router
 
