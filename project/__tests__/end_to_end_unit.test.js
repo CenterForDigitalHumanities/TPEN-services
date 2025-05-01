@@ -243,7 +243,6 @@ describe("GET /project/:projectId/layer/:layerId", () => {
 
     const res = await request(routeTester)
       .get(`/project/${projectId}/layer/${layerId}`)
-      .set("Authorization", `Bearer ${token}`)
 
     expect(res.statusCode).toBe(200)
     expect(res.body).toHaveProperty("@context", "http://www.w3.org/ns/anno.jsonld")
@@ -256,7 +255,6 @@ describe("GET /project/:projectId/layer/:layerId", () => {
 
     const res = await request(routeTester)
       .get(`/project/${projectId}/layer/${layerId}`)
-      .set("Authorization", `Bearer ${token}`)
 
     expect(res.statusCode).toBe(404)
   })
@@ -269,7 +267,6 @@ describe("GET /project/:projectId/page/:pageId", () => {
 
     const res = await request(routeTester)
       .get(`/project/${projectId}/page/${pageId}`)
-      .set("Authorization", `Bearer ${token}`)
 
     expect(res.statusCode).toBe(200)
     expect(res.body).toHaveProperty("@context", "http://www.w3.org/ns/anno.jsonld")
@@ -282,7 +279,6 @@ describe("GET /project/:projectId/page/:pageId", () => {
 
     const res = await request(routeTester)
       .get(`/project/${projectId}/page/${pageId}`)
-      .set("Authorization", `Bearer ${token}`)
 
     expect(res.statusCode).toBe(404)
   })

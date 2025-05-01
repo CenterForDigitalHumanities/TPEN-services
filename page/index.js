@@ -45,7 +45,7 @@ async function findPageById(pageId, projectId) {
   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
     return fetch(pageId).then(res => res.json())
   }
-  const projectData = (await Project.getById(projectId)).data
+  const projectData = (await Project.getById(projectId))?.data
   if (!projectData) {
     const error = new Error(`Project with ID '${projectId}' not found`)
     error.status = 404

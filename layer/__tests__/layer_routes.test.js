@@ -1,20 +1,28 @@
 import request from 'supertest'
 import express from 'express'
 import layerRouter from '../index.js'
-import Project from '../../classes/Project/Project.js'
-import Layer from '../../classes/Layer/Layer.js'
+import { Project } from '../../classes/Project/Project.js'
+import { Layer } from '../../classes/Layer/Layer.js'
 import { jest } from '@jest/globals'
-
 
 const app = express()
 app.use(express.json())
+
+// Mock authentication middleware to bypass authentication
+jest.mock('../../auth/index.js', () => jest.fn((req, res, next) => next()))
+
 app.use('/project/:projectId/layer', layerRouter)
 
-jest.mock('../../classes/Project/Project.js')
-jest.mock('../../classes/Layer/Layer.js')
+jest.mock('../../classes/Project/Project.js', () => ({
+  Project: jest.fn()
+}))
+
+jest.mock('../../classes/Layer/Layer.js', () => ({
+  Layer: jest.fn()
+}))
 
 describe('Layer Routes', () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks()
   })
 
