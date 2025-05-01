@@ -3,9 +3,15 @@ import app from '../../app.js'
 import { Line } from '../../classes/Line/Line.js'
 import { jest } from '@jest/globals'
 
-jest.mock('../../classes/Line/Line.js', () => ({
-  Line: jest.fn()
-}))
+jest.mock('../../classes/Line/Line.js', () => {
+  const mockLine = jest.fn()
+  mockLine.prototype.load = jest.fn()
+  mockLine.prototype.save = jest.fn()
+  mockLine.prototype.update = jest.fn()
+  mockLine.prototype.updateText = jest.fn()
+  mockLine.prototype.updateBounds = jest.fn()
+  return { Line: mockLine }
+})
 
 describe('lineRouter API tests', () => {
   beforeEach(() => {
@@ -13,9 +19,9 @@ describe('lineRouter API tests', () => {
   })
 
   it('GET /project/:pid/page/:pid/line/:line should load a line', async () => {
-    Line.mockImplementation(() => ({
-      load: jest.fn().mockResolvedValue({ asJSON: () => ({ id: '123', body: 'Sample Line', target: 'https://example.com?xywh=10,10,100,100' }) })
-    }))
+    Line.prototype.load.mockResolvedValue({
+      asJSON: () => ({ id: '123', body: 'Sample Line', target: 'https://example.com?xywh=10,10,100,100' })
+    })
 
     const response = await request(app).get('/project/1/page/1/line/123')
 
@@ -24,9 +30,9 @@ describe('lineRouter API tests', () => {
   })
 
   it('POST /project/:pid/page/:pid/line/:line should create a line', async () => {
-    Line.mockImplementation(() => ({
-      save: jest.fn().mockResolvedValue({ asJSON: () => ({ id: '123', body: 'New Line', target: 'https://example.com?xywh=10,10,100,100' }) })
-    }))
+    Line.prototype.save.mockResolvedValue({
+      asJSON: () => ({ id: '123', body: 'New Line', target: 'https://example.com?xywh=10,10,100,100' })
+    })
 
     const response = await request(app)
       .post('/project/1/page/1/line/123')
@@ -37,9 +43,9 @@ describe('lineRouter API tests', () => {
   })
 
   it('PUT /project/:pid/page/:pid/line/:line should update a line', async () => {
-    Line.mockImplementation(() => ({
-      update: jest.fn().mockResolvedValue({ asJSON: () => ({ id: '123', body: 'Updated Line', target: 'https://example.com?xywh=10,10,100,100' }) })
-    }))
+    Line.prototype.update.mockResolvedValue({
+      asJSON: () => ({ id: '123', body: 'Updated Line', target: 'https://example.com?xywh=10,10,100,100' })
+    })
 
     const response = await request(app)
       .put('/project/1/page/1/line/123')
@@ -50,9 +56,9 @@ describe('lineRouter API tests', () => {
   })
 
   it('PATCH /project/:pid/page/:pid/line/:line/text should update line text', async () => {
-    Line.mockImplementation(() => ({
-      updateText: jest.fn().mockResolvedValue({ asJSON: () => ({ id: '123', body: 'Updated Text', target: 'https://example.com?xywh=10,10,100,100' }) })
-    }))
+    Line.prototype.updateText.mockResolvedValue({
+      asJSON: () => ({ id: '123', body: 'Updated Text', target: 'https://example.com?xywh=10,10,100,100' })
+    })
 
     const response = await request(app)
       .patch('/project/1/page/1/line/123/text')
@@ -63,9 +69,9 @@ describe('lineRouter API tests', () => {
   })
 
   it('PATCH /project/:pid/page/:pid/line/:line/bounds should update line bounds', async () => {
-    Line.mockImplementation(() => ({
-      updateBounds: jest.fn().mockResolvedValue({ asJSON: () => ({ id: '123', body: 'Sample Line', target: 'https://example.com?xywh=20,20,200,200' }) })
-    }))
+    Line.prototype.updateBounds.mockResolvedValue({
+      asJSON: () => ({ id: '123', body: 'Sample Line', target: 'https://example.com?xywh=20,20,200,200' })
+    })
 
     const response = await request(app)
       .patch('/project/1/page/1/line/123/bounds')

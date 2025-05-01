@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.js"
 
 const databaseTiny = new dbDriver("tiny")
-export class Line {
+export default class Line {
 
     #tinyAction = 'create'
     #setRerumId() {

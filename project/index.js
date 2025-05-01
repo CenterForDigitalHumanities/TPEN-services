@@ -15,7 +15,6 @@ import scrubDefaultRoles from "../utilities/isDefaultRole.js"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import layerRouter from "../layer/index.js"
 import pageRouter from "../page/index.js"
-import lineRouter from "../line/index.js"
 import cookieParser from "cookie-parser"
 
 let router = express.Router({ mergeParams: true })
@@ -1122,6 +1121,5 @@ router.route("/:projectId/hotkeys").all((_, res) => {
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
 router.use('/:projectId/page', pageRouter)
-router.use('/:projectId/line', lineRouter)
 
 export default router

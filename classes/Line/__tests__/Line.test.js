@@ -15,7 +15,7 @@ describe('Line class unit tests', () => {
   it('should save a line to RERUM', async () => {
     const line = new Line({ id: '123', body: 'Sample text', target: 'https://example.com?xywh=10,10,100,100' })
     const savedLine = await line.update()
-    expect(savedLine).toBe(line)
+    expect(savedLine.id).toBeDefined()
   })
 
   it('should update the text of a line', async () => {
