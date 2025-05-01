@@ -136,7 +136,7 @@ router
  
     try {
       const response = await fetch(
-        `https://dev.t-pen.org/TPEN/projects?uid=${uid}`,
+        `${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`,
         {
           method: "GET",
           headers: {
