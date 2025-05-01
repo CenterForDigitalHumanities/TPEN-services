@@ -2,24 +2,53 @@ import express from 'express'
 import cors from 'cors'
 import { Line } from '../classes/Line/Line.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
+import { respondWithError } from '../utilities/shared.js'
 
-const router = express.Router({mergeParams: true})
+const router = express.Router({ mergeParams: true })
 
 router.use(
   cors(common_cors)
 )
 
-function respondWithLine(res, lineObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.status(200).json(lineObject)
-}
-
 // Load Line as temp line or from RERUM
-router.get('/:line', async (req, res) => {
+router.get('/:lineId', async (req, res) => {
+  const { projectId, pageId, lineId } = req.params
+  if (!lineId) {
+    respondWithError(res, 400, 'Line ID is required.')
+    return
+  }
+  if (!projectId || !pageId) {
+    respondWithError(res, 400, 'Project ID and Page ID are required.')
+    return
+  }
   try {
-    const line = new Line({ id: req.params.line })
-    const loadedLine = await line.load()
-    res.json(loadedLine?.asJSON())
+    if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
+      return fetch(pageId).then(res => res.json())
+    }
+    const projectData = (await Project.getById(projectId)).data
+    if (!projectData) {
+      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+      return
+    }
+    const layerContainingPage = projectData.layers.find(layer =>
+      layer.pages.some(page => page.id.split('/').pop() === pageId.split('/').pop())
+    )
+    if (!layerContainingPage) {
+      respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
+      return
+    }
+    const pageContainingLine = layerContainingPage.pages.find(page => page.id.split('/').pop() === pageId.split('/').pop())
+    if (!pageContainingLine) {
+      respondWithError(res, 404, `Page with ID '${pageId}' not found in layer '${layerContainingPage.id}'`)
+      return
+    }
+    const lineRef = pageContainingLine.lines.find(line => line.id.split('/').pop() === lineId.split('/').pop())
+    if (!lineRef) {
+      respondWithError(res, 404, `Line with ID '${lineId}' not found in page '${pageContainingLine.id}'`)
+      return
+    }
+    const line = new Line({ lineRef })
+    res.json(line?.asJSON())
   } catch (error) {
     res.status(error.status ?? 500).json({ error: error.message })
   }
@@ -65,7 +94,7 @@ router.patch('/:line/bounds', async (req, res) => {
     const updatedBounds = await line.updateBounds(req.body)
     res.json(updatedBounds.asJSON())
   } catch (error) {
-    res.status(error.status ?? 500).json( error.message )
+    res.status(error.status ?? 500).json(error.message)
   }
 })
 
