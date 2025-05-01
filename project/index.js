@@ -108,17 +108,6 @@ router
   .route("/import28/:uid")
   .get(cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
-    console.log(req.protocol, req.get('host'))
-    const origin = req.get('origin');
-
-   if (origin) {
-        console.log('Origin (from header):', origin);
-        res.send(`Origin: ${origin}`);
-    } else {
-        console.log('Origin header not present');
-        res.send('Origin header not present');
-    }
-    
     const jsessionid = req.cookies.JSESSIONID
     const uid = req.params.uid
  
@@ -169,7 +158,8 @@ router
         console.error("Failed to parse project response:", err)
         return respondWithError(res, 500, "Invalid project response format")
       }
- 
+      
+      res.setHeader("Access-Control-Allow-Origin", req.get("origin"))
       return res.status(200).json({
         message: "Select a Project to Import : ",
         data: parsedData,
