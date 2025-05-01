@@ -104,14 +104,20 @@ router
     next()
   }
  
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (origin) {
+        callback(null, true)
+      } else {
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
+    credentials: true
+  }
+ 
 router
   .route("/import28/:uid")
-  .options(async (req, res) => {
-      res.setHeader("Access-Control-Allow-Methods", req.get("origin"))
-      res.setHeader("Access-Control-Allow-Credentials", "true")
-      res.status(204).send()
-  })
-  .get(cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
+  .get(cors(corsOptions), cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
     const jsessionid = req.cookies.JSESSIONID
     const uid = req.params.uid
@@ -164,8 +170,6 @@ router
         return respondWithError(res, 500, "Invalid project response format")
       }
 
-      res.setHeader("Access-Control-Allow-Origin", req.get("origin"))
-      res.setHeader("Access-Control-Allow-Credentials", "true")
       return res.status(200).json({
         message: "Select a Project to Import : ",
         data: parsedData,
