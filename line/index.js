@@ -58,7 +58,7 @@ router.get('/:lineId', async (req, res) => {
 })
 
 // Create temp Line until saved to RERUM
-router.post(auth0Middleware(), '/:line', async (req, res) => {
+router.post('/:line', auth0Middleware(), async (req, res) => {
   try {
     const newLine = Line.build({ id: req.params.line, ...req.body })
     const savedLine = await newLine.save()
@@ -69,7 +69,7 @@ router.post(auth0Middleware(), '/:line', async (req, res) => {
 })
 
 // Update an existing line, including in RERUM
-router.put(auth0Middleware(), '/:line', async (req, res) => {
+router.put('/:line', auth0Middleware(), async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedLine = await line.update(req.body)
@@ -80,7 +80,7 @@ router.put(auth0Middleware(), '/:line', async (req, res) => {
 })
 
 // Update the text of an existing line
-router.patch(auth0Middleware(), '/:line/text', async (req, res) => {
+router.patch('/:line/text', auth0Middleware(), async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedText = await line.updateText(req.body)
@@ -91,7 +91,7 @@ router.patch(auth0Middleware(), '/:line/text', async (req, res) => {
 })
 
 // Update the xywh (bounds) of an existing line
-router.patch(auth0Middleware(), '/:line/bounds', async (req, res) => {
+router.patch('/:line/bounds', auth0Middleware(), async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedBounds = await line.updateBounds(req.body)
