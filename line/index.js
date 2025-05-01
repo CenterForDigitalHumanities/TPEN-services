@@ -3,6 +3,8 @@ import cors from 'cors'
 import { Line } from '../classes/Line/Line.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError } from '../utilities/shared.js'
+import auth0Middleware from '../auth/index.js'
+
 
 const router = express.Router({ mergeParams: true })
 
@@ -56,7 +58,7 @@ router.get('/:lineId', async (req, res) => {
 })
 
 // Create temp Line until saved to RERUM
-router.post('/:line', async (req, res) => {
+router.post(auth0Middleware(), '/:line', async (req, res) => {
   try {
     const newLine = Line.build({ id: req.params.line, ...req.body })
     const savedLine = await newLine.save()
@@ -67,7 +69,7 @@ router.post('/:line', async (req, res) => {
 })
 
 // Update an existing line, including in RERUM
-router.put('/:line', async (req, res) => {
+router.put(auth0Middleware(), '/:line', async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedLine = await line.update(req.body)
@@ -78,7 +80,7 @@ router.put('/:line', async (req, res) => {
 })
 
 // Update the text of an existing line
-router.patch('/:line/text', async (req, res) => {
+router.patch(auth0Middleware(), '/:line/text', async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedText = await line.updateText(req.body)
@@ -89,7 +91,7 @@ router.patch('/:line/text', async (req, res) => {
 })
 
 // Update the xywh (bounds) of an existing line
-router.patch('/:line/bounds', async (req, res) => {
+router.patch(auth0Middleware(), '/:line/bounds', async (req, res) => {
   try {
     const line = new Line({ id: req.params.line })
     const updatedBounds = await line.updateBounds(req.body)
