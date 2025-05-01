@@ -3,7 +3,9 @@ import app from '../../app.js'
 import { Line } from '../../classes/Line/Line.js'
 import { jest } from '@jest/globals'
 
-jest.mock('../../classes/Line/Line.js')
+jest.mock('../../classes/Line/Line.js', () => ({
+  Line: jest.fn()
+}))
 
 describe('lineRouter API tests', () => {
   beforeEach(() => {
@@ -22,9 +24,9 @@ describe('lineRouter API tests', () => {
   })
 
   it('POST /project/:pid/page/:pid/line/:line should create a line', async () => {
-    Line.build.mockReturnValue({
+    Line.mockImplementation(() => ({
       save: jest.fn().mockResolvedValue({ asJSON: () => ({ id: '123', body: 'New Line', target: 'https://example.com?xywh=10,10,100,100' }) })
-    })
+    }))
 
     const response = await request(app)
       .post('/project/1/page/1/line/123')

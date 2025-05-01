@@ -12,9 +12,12 @@ export class Line {
     }
 
     constructor({ id, target, body }) {
-        if(!id || !body || !target) {
+        if (!id || !body || !target) {
             throw new Error('Line data is malformed.')
         }
+        this.id = id // Ensure the id is assigned
+        this.body = body
+        this.target = target
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -86,11 +89,11 @@ async #updateLineForPage() {
         return this.update()
     }
 
-    async updateBounds({x,y,w,h}) {
+    async updateBounds({x, y, w, h}) {
         if (!x || !y || !w || !h) {
             throw new Error('Bounds ({x,y,w,h}) must be provided')
         }
-        // TODO: this is very naive for now. We'll need selector builders for this.
+        this.target ??= ''
         const newTarget = `${this.target.split('=')[0]}=${x},${y},${w},${h}`
         if (this.target === newTarget) {
             return this
