@@ -108,6 +108,17 @@ router
   .route("/import28/:uid")
   .get(cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
+    console.log(req.protocol, req.get('host'))
+    const origin = req.get('origin');
+
+   if (origin) {
+        console.log('Origin (from header):', origin);
+        res.send(`Origin: ${origin}`);
+    } else {
+        console.log('Origin header not present');
+        res.send('Origin header not present');
+    }
+    
     const jsessionid = req.cookies.JSESSIONID
     const uid = req.params.uid
  
