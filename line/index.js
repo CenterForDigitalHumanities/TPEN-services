@@ -23,32 +23,33 @@ router.get('/:lineId', async (req, res) => {
   }
   try {
     if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
-      return fetch(pageId).then(res => res.json())
+      return fetch(lineId).then(res => res.json())
     }
     const projectData = (await Project.getById(projectId)).data
     if (!projectData) {
       respondWithError(res, 404, `Project with ID '${projectId}' not found`)
       return
     }
-    const layerContainingPage = projectData.layers.find(layer =>
-      layer.pages.some(page => page.id.split('/').pop() === pageId.split('/').pop())
-    )
-    if (!layerContainingPage) {
+    const pageContainingLine = projectData.layers
+      .flatMap(layer => layer.pages)
+      .find(page => page.id.split('/').pop() === pageId.split('/').pop())
+
+    if (!pageContainingLine) {
       respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
       return
     }
-    const pageContainingLine = layerContainingPage.pages.find(page => page.id.split('/').pop() === pageId.split('/').pop())
-    if (!pageContainingLine) {
-      respondWithError(res, 404, `Page with ID '${pageId}' not found in layer '${layerContainingPage.id}'`)
-      return
-    }
-    const lineRef = pageContainingLine.lines.find(line => line.id.split('/').pop() === lineId.split('/').pop())
+    const pageObject = pageContainingLine.id.startsWith(process.env.RERUMIDPREFIX) 
+      ? await fetch(pageId).then(res => res.json())
+      : new Page({ pageContainingLine })
+    const lineRef = (pageObject.lines ?? pageObject.items).find(line => line.id.split('/').pop() === lineId.split('/').pop())
     if (!lineRef) {
       respondWithError(res, 404, `Line with ID '${lineId}' not found in page '${pageContainingLine.id}'`)
       return
     }
-    const line = new Line({ lineRef })
-    res.json(line?.asJSON())
+    const line = lineRef.id.startsWith(process.env.RERUMIDPREFIX)
+    ? await fetch(lineRef.id).then(res => res.json())
+    : new Line({ lineRef })
+    res.json(line?.asJSON?.())
   } catch (error) {
     res.status(error.status ?? 500).json({ error: error.message })
   }

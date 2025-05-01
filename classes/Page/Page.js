@@ -23,7 +23,6 @@ export default class Page {
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target }) {
-        console.log("Page constructor", layerId, id, label, target)
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
