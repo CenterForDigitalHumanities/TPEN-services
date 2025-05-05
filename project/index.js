@@ -565,8 +565,8 @@ router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
     return respondWithError(res, 400, "Invalid project ID provided.")
   }
 
-  if (!labelAndCanvases || !labelAndCanvases.canvases || !Array.isArray(labelAndCanvases.canvases) || labelAndCanvases.canvases.some(canvas => typeof canvas !== "string")) {
-    return respondWithError(res, 400, "Invalid layer provided. Expected an array of canvas IDs.")
+  if (!labelAndCanvases || !labelAndCanvases.canvases || !Array.isArray(labelAndCanvases.canvases) || labelAndCanvases.canvases.some(canvas => typeof canvas !== "object" || !canvas.id || !canvas.label)) {
+    return respondWithError(res, 400, "Invalid layer provided. Each canvas must be an object with 'id' and 'label'.")
   }
 
   try {
