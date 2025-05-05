@@ -104,6 +104,17 @@ router
     next()
   }
  
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (origin) {
+        callback(null, true)
+      } else {
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
+    credentials: true
+  }
+ 
 router
   .route("/import28/:uid")
   .options(async (req, res) => {
@@ -111,7 +122,7 @@ router
       res.setHeader("Access-Control-Allow-Credentials", "true")
       res.status(204).send()
   })
-  .get(cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
+  .get(cors(corsOptions), cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
     const jsessionid = req.cookies.JSESSIONID
     const uid = req.params.uid
@@ -130,7 +141,7 @@ router
  
     try {
       const response = await fetch(
-        `https://dev.t-pen.org/TPEN/projects?uid=${uid}`,
+        `${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`,
         {
           method: "GET",
           headers: {
