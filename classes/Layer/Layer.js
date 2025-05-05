@@ -47,7 +47,7 @@ export default class Layer {
             canvases = [canvases]
         }
         thisLayer.id = `${process.env.SERVERURL}layer/${databaseTiny.reserveId()}`
-        const pages = canvases.map(c => Page.build(projectId, c))
+        const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c))
         
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
