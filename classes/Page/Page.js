@@ -23,7 +23,6 @@ export default class Page {
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target }) {
-        console.log("Page constructor", layerId, id, label, target)
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
@@ -112,7 +111,7 @@ export default class Page {
         return this.#updatePageForProject()
     }
 
-    async #updatePageForProject() {
+    #updatePageForProject() {
         // Page in local MongoDB is in the Project.layers.pages Array and looks like:
         // { 
         //   id: "https://api.t-pen.org/layer/layerID/page/pageID", 
