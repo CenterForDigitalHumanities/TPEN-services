@@ -543,7 +543,6 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    console.log(error)
     respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
@@ -799,7 +798,6 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    console.log(error)
     respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
