@@ -1,4 +1,4 @@
-import vault from "../../utilities/vault.mjs"
+import vault from "../../utilities/vault.js"
 
 class Manifest {
 
@@ -7,10 +7,13 @@ class Manifest {
 
     constructor(manifestOrUri) {
 
-        let id = manifestOrUri?.['@id'] ?? manifestOrUri?.id ?? manifestOrUri
+        if (typeof manifestOrUri !== 'string' && typeof manifestOrUri !== 'object') {
+            throw new Error('Invalid input: must be a manifest object or a URI string')
+        }
+        let id = manifestOrUri['@id'] ?? manifestOrUri.id ?? manifestOrUri
 
         if (!id) {
-            throw new Error('Invalid input: Manifest object must have an @id or id property')
+            throw new Error('Invalid input: manifest object must have an @id or id property')
         }
 
         try {
@@ -40,22 +43,24 @@ class Manifest {
         this.manifest = manifestOrUri
     }
 
-    load = async () => vault.loadManifest(this.uri).then(manifest => {
-        // load canvases
-        manifest.items = vault.get(manifest.items)
-        manifest.items = manifest.items.map(item => {
-            // Load canvas content
-            if (item.items) {
-                item.items = vault.get(item.items)
-            }
-            // Load Canvas AnnotationPages
-            if (item.annotations) {
-                item.annotations = vault.get(item.annotations)
-            }
-            return item
+    async load() {
+        return vault.loadManifest(this.uri).then(manifest => {
+            // load canvases
+            manifest.items = vault.get(manifest.items)
+            manifest.items = manifest.items.map(item => {
+                // Load canvas content
+                if (item.items) {
+                    item.items = vault.get(item.items)
+                }
+                // Load Canvas AnnotationPages
+                if (item.annotations) {
+                    item.annotations = vault.get(item.annotations)
+                }
+                return item
+            })
+            return manifest
         })
-        return manifest
-    })
+    }
 }
 
 export default Manifest
