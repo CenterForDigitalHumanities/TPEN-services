@@ -37,7 +37,7 @@ router.route('/:layerId')
     })
     .put(auth0Middleware(), async (req, res) => {
         const { projectId, layerId } = req.params
-        const { label, canvases } = req.body
+        let { label, canvases } = req.body
 
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
 
@@ -57,7 +57,7 @@ router.route('/:layerId')
             label ??= label ?? layer.label
             const updatedLayer = canvases ?
                 Layer.build(projectId, label, canvases)
-                : new Layer(projectId, {id:layerId, label, pages:layer.pages})
+                : new Layer(projectId, {id:layer.id, label, pages:layer.pages})
 
             await updatedLayer.update()
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
