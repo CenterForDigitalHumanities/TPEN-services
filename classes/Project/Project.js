@@ -216,6 +216,9 @@ export default class Project {
     if (layerIndex < 0) {
       throw new Error("Layer not found in project.")
     }
+    if (!isValidLayer(layer)) {
+      throw new Error("Layer data is invalid.")
+    }
     this.data.layers[layerIndex] = layer
     return this
   }
@@ -225,7 +228,7 @@ export default class Project {
       throw new Error("Project does not have layers.")
     }
     if (!isValidLayer(layer)) {
-      throw new Error("Layer data is malformed.")
+      throw new Error("Layer data is invalid.")
     }
     if (this.data.layers.findIndex(l => l.id.split('/').pop() === layer.id.split('/').pop()) >= 0) {
       throw new Error("Layer with this ID already exists in the project.")

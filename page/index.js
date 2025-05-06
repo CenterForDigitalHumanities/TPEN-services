@@ -19,11 +19,8 @@ router.route('/:pageId')
     const { projectId, pageId } = req.params
     try {
       const pageObject = await findPageById(pageId, projectId)
-    } catch (error) {
-      return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
-    }
-    if (!pageObject) {
-      utils.respondWithError(res, 404, 'No page found with that ID.')
+      if (!pageObject) {
+        utils.respondWithError(res, 404, 'No page found with that ID.')
       return
     }
     // build as AnnotationPage
@@ -39,6 +36,9 @@ router.route('/:pageId')
       next: pageObject.next ?? null
     }
     res.status(200).json(pageAsAnnotationPage)
+  } catch (error) {
+    return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+  }
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
