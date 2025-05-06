@@ -50,7 +50,7 @@ router.route('/:layerId')
 
             if (!layers) return utils.respondWithError(res, 404, 'Project does not exist')
 
-            const layer = findLayerById(layerId, projectId, true)
+            const layer = await findLayerById(layerId, projectId, true)
 
             if (!layer) return utils.respondWithError(res, 404, 'Layer not found in project')
 
