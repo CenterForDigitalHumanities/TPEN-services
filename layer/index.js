@@ -56,14 +56,14 @@ router.route('/:layerId')
 
             label ??= label ?? layer.label
             const updatedLayer = canvases ?
-                Layer.build(projectId, layerId, label, canvases)
-                : new Layer(projectId, layerId, label, layer.pages)
+                Layer.build(projectId, label, canvases)
+                : new Layer(projectId, {id:layerId, label, pages:layer.pages})
 
             await updatedLayer.update()
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
             await project.update()
 
-            res.status(200).json(layer)
+            res.status(200).json(project.data)
         } catch (error) {
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
         }
@@ -80,7 +80,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
     if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
 
     if (!label || !Array.isArray(canvases)) {
-        return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of canvas IDs.')
+        return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
     }
 
     try {
@@ -90,7 +90,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
-        await project.save()
+        await project.update()
 
         res.status(201).json(project.data)
     } catch (error) {
