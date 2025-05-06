@@ -16,7 +16,11 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res, next) => {
     const { projectId, pageId } = req.params
-    const pageObject = await findPageById(pageId, projectId)
+    try {
+      const pageObject = await findPageById(pageId, projectId)
+    } catch (error) {
+      return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
     if (!pageObject) {
       utils.respondWithError(res, 404, 'No page found with that ID.')
       return
