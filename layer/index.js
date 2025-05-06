@@ -63,7 +63,7 @@ router.route('/:layerId')
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
             await project.update()
 
-            res.status(200).json(layer)
+            res.status(200).json(project.data)
         } catch (error) {
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
         }
