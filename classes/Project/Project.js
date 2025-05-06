@@ -232,7 +232,7 @@ export default class Project {
     }
     const existingLayerLabelCount = this.data.layers.find(l => l.label === layer.label).length
     if (existingLayerLabelCount >= 0) {
-      layer.label+=`(${existingLayerLabelCount + 1})`
+      layer.label+=`(${existingLayerLabelCount + 2})`
     }
     this.data.layers.push(layer)
     return this
