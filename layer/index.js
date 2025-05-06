@@ -56,8 +56,8 @@ router.route('/:layerId')
 
             label ??= label ?? layer.label
             const updatedLayer = canvases ?
-                Layer.build(projectId, layerId, label, canvases)
-                : new Layer(projectId, layerId, label, layer.pages)
+                Layer.build(projectId, label, canvases)
+                : new Layer(projectId, {id:layerId, label, pages:layer.pages})
 
             await updatedLayer.update()
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
