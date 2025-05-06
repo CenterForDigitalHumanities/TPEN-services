@@ -230,7 +230,7 @@ export default class Project {
     if (this.data.layers.findIndex(l => l.id.split('/').pop() === layer.id.split('/').pop()) >= 0) {
       throw new Error("Layer with this ID already exists in the project.")
     }
-    const existingLayerLabelCount = this.data.layers.find(l => l.label === layer.label).length
+    const existingLayerLabelCount = this.data.layers.find(l => l.label === layer.label)?.length
     if (existingLayerLabelCount >= 0) {
       layer.label+=`(${existingLayerLabelCount + 2})`
     }
@@ -245,7 +245,7 @@ function isValidLayer(layer) {
   }
 
   for (const page of layer.pages) {
-    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http')) {
+    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http') || !page.label ) {
       return false
     }
   }

@@ -80,7 +80,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
     if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
 
     if (!label || !Array.isArray(canvases)) {
-        return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of canvas IDs.')
+        return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
     }
 
     try {
@@ -90,7 +90,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
-        await project.save()
+        await project.update()
 
         res.status(201).json(project.data)
     } catch (error) {

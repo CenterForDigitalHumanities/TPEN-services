@@ -98,7 +98,8 @@ export default class Layer {
     }
 
     #getPageReference({ id, label, target }) {
-        const resolvedLabel = label.find?.(a => (a.none ?? a.en)?.join(", ") ?? label)
+        label ??= id.split("/").pop()
+        const resolvedLabel = label.none?.join(", ") ?? label.en?.join(", ") ?? label
         return { id, label: resolvedLabel, target }
     }
 

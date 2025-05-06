@@ -40,10 +40,13 @@ export default class Page {
         if (!layerId) {
             throw new Error("Layer ID is required to create a Page instance.")
         }
-        if (!canvas?.id) {
+        if (!canvas?.id && typeof canvas !== 'string') {
             throw new Error("Canvas with id is required to create a Page instance.")
         }
-
+        if (!canvas.id) {
+            canvas = {id : canvas}
+        }
+        
         const id = lines.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
@@ -53,7 +56,7 @@ export default class Page {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: canvas.label,
+                label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 partOf: layerId,
                 items: lines,
