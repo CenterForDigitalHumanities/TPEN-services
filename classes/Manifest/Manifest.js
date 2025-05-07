@@ -1,6 +1,4 @@
-import { Vault } from '@iiif/helpers/vault'
-
-const vault = new Vault()
+import vault from "../../utilities/vault.js"
 
 class Manifest {
 
@@ -45,22 +43,24 @@ class Manifest {
         this.manifest = manifestOrUri
     }
 
-    load = async () => vault.loadManifest(this.uri).then(manifest => {
-        // load canvases
-        manifest.items = vault.get(manifest.items)
-        manifest.items = manifest.items.map(item => {
-            // Load canvas content
-            if (item.items) {
-                item.items = vault.get(item.items)
-            }
-            // Load Canvas AnnotationPages
-            if (item.annotations) {
-                item.annotations = vault.get(item.annotations)
-            }
-            return item
+    async load() {
+        return vault.loadManifest(this.uri).then(manifest => {
+            // load canvases
+            manifest.items = vault.get(manifest.items)
+            manifest.items = manifest.items.map(item => {
+                // Load canvas content
+                if (item.items) {
+                    item.items = vault.get(item.items)
+                }
+                // Load Canvas AnnotationPages
+                if (item.annotations) {
+                    item.annotations = vault.get(item.annotations)
+                }
+                return item
+            })
+            return manifest
         })
-        return manifest
-    })
+    }
 }
 
 export default Manifest
