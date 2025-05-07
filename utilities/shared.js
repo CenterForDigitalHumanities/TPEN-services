@@ -1,5 +1,4 @@
 import DatabaseController from "../database/mongo/controller.js"
-import { respondWithError } from '../utilities/shared.js'
 import Project from '../classes/Project/Project.js'
 import { findPageById } from '../page/index.js'
 
