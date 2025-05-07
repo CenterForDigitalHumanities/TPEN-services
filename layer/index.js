@@ -80,7 +80,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 
     if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
 
-    if (!label || !Array.isArray(canvases)) {
+    if (!label || !Array.isArray(canvases) || canvases.length === 0) {
         return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
     }
 
