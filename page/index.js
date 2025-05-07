@@ -48,7 +48,7 @@ router.use('/:pageId/line', lineRouter)
 
 export default router
 
-async function findPageById(pageId, projectId) {
+export async function findPageById(pageId, projectId) {
   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
     return fetch(pageId).then(res => res.json())
   }

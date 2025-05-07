@@ -66,7 +66,8 @@ export default class Line {
      */
    async update() {
     if (this.#tinyAction === 'update' || typeof this.body !== 'string') {
-        await this.#setRerumId().#saveLineToRerum()
+        this.#setRerumId()
+        await this.#saveLineToRerum()
     }
     return this.#updateLineForPage()
 }

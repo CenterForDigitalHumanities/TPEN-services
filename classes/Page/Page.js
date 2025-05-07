@@ -105,7 +105,8 @@ export default class Page {
      */
     async update() {
         if (this.#tinyAction === 'update' || this.items.length) {
-            await this.#setRerumId().#savePageToRerum()
+            this.#setRerumId()
+            await this.#savePageToRerum()
         }
         return this.#updatePageForProject()
     }
