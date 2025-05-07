@@ -7,7 +7,7 @@ export default class Page {
     #tinyAction = 'create'
     #setRerumId() {
         if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }

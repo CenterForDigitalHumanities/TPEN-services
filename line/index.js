@@ -57,10 +57,9 @@ router.get('/:lineId', async (req, res) => {
 // Example: Refactored POST route
 router.post('/', auth0Middleware(), async (req, res) => {
   try {
-    const newLine = Line.build({ ...req.body })
+    const newLine = Line.build(req.params.projectId,req.params.pageId,{ ...req.body })
     const project = await getProjectById(req.params.projectId, res)
     if (!project) return
-
     const page = await getPageById(req.params.pageId, req.params.projectId, res)
     if (!page) return
 
@@ -69,14 +68,13 @@ router.post('/', auth0Middleware(), async (req, res) => {
       respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
       return
     }
-
     const savedLine = await newLine.update()
     page.lines.push(savedLine)
     await updatePageAndProject(page, project, res)
 
     res.status(201).json(newLine.asJSON(true))
   } catch (error) {
-    res.status(error.status ?? 500).json({ error: error.message })
+    respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
   }
 })
 

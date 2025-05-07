@@ -72,17 +72,16 @@ export const getProjectById = async (projectId, res) => {
  }
  
  // Find a line in a page
- export const findLineInPage = (page, lineId, res) => {
+ export const findLineInPage = (page, lineId) => {
    const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
    if (!line) {
-     respondWithError(res, 404, `Line with ID '${lineId}' not found in page '${page.id}'`)
      return null
    }
    return line
  }
  
  // Update a page and its project
- export const updatePageAndProject = async (page, project, res) => {
+ export const updatePageAndProject = async (page, project) => {
    await page.update()
    const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())

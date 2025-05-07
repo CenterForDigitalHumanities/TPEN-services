@@ -6,7 +6,7 @@ export default class Line {
     #tinyAction = 'create'
     #setRerumId() {
         if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }
@@ -24,8 +24,9 @@ export default class Line {
         return this
     }
 
-    static build(projectId, pageId, { id, body, target }) {
-        id ??= `${process.env.SERVERURL}/project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
+    static build(projectId, pageId, { body, target }) {
+        // TODO: Should this have a space for an id that is sent in?
+        const id = `${process.env.SERVERURL}project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
         return new Line({ id, body, target })
     }
 
