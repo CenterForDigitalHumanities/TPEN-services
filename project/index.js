@@ -103,11 +103,23 @@ router
     next()
   }
  
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (origin) {
+        callback(null, true)
+      } else {
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
+    credentials: true
+  }
+ 
 router
-  .route("/import28")
-  .get(patchTokenFromQuery, auth0Middleware(), cookieParser(), async (req, res) => {
+  .route("/import28/:uid")
+  .get(cors(corsOptions), cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
     const jsessionid = req.cookies.JSESSIONID
+    const uid = req.params.uid
  
     if (!user) {
       return respondWithError(res, 401, "Unauthenticated request")
@@ -116,10 +128,14 @@ router
     if (!jsessionid) {
       return respondWithError(res, 400, "Missing jsessionid in query")
     }
+
+    if (!uid) {
+      return respondWithError(res, 400, "Missing uid in query")
+    }
  
     try {
       const response = await fetch(
-        "https://t-pen.org/TPEN/getProjectTPENServlet?projectID=9183",
+        `${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`,
         {
           method: "GET",
           headers: {
@@ -128,29 +144,33 @@ router
           credentials: "include",
         }
       )
+
+      if (response.status === 500) {
+        document.getElementById('message').textContent = 'The project cannot be imported.';
+        return;
+      }
  
       const rawText = await response.text()
-      let parsedData
+      let parsedData = {}
  
       try {
-        const firstLevel = JSON.parse(rawText)
-        parsedData = {}
- 
-        for (const [key, value] of Object.entries(firstLevel)) {
-          try {
-            parsedData[key] = JSON.parse(value)
-          } catch {
-            parsedData[key] = value
-          }
-        }
- 
+        const firstLevel = JSON.parse(rawText) 
+        parsedData = Object.fromEntries(
+          Object.entries(firstLevel).map(([key, value]) => {
+            try {
+              return [key, JSON.parse(value)]
+            } catch {
+              return [key, value]
+            }
+          })
+        )
       } catch (err) {
         console.error("Failed to parse project response:", err)
         return respondWithError(res, 500, "Invalid project response format")
       }
- 
+
       return res.status(200).json({
-        message: "Project 9183 Dummy",
+        message: "Select a Project to Import : ",
         data: parsedData,
       })
  
