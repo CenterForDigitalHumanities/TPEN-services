@@ -1,7 +1,7 @@
 import express from 'express'
 import * as utils from '../utilities/shared.js'
 import cors from 'cors'
-import { findLineById } from './line.js'
+import Line from '../classes/Line/Line.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 
 const router = express.Router()

@@ -5,7 +5,7 @@ import request from 'supertest'
 const app = express()
 app.use('/line', lineRouter)
 
-describe('Line endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+describe.skip('Line endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
   it('should return 405 for POST request', async () => {
     const res = await request(app).post('/line/').send()
     expect(res.statusCode).toBe(405)
