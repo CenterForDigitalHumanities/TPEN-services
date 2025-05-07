@@ -282,3 +282,66 @@ The response is a list of projects the user is a member of regardless of the per
     - **500**: Server error
 
 The response is a projection of the full user object. The public profile is available to all users and serialized into this response with whatever the user has chosen to share. The `custom` field is not an actual property - it is a placeholder for any additional fields the user has added to their profile. The `displayName` and `_id` fields are always present.
+
+---
+
+### 5. **Layers**
+
+#### `POST /project/:projectId/layer` 🔐
+
+- **Description**: Create a new layer within a project.
+- **Parameters**:
+  - `projectId`: ID of the project.
+- **Request Body**:
+
+    ```json
+    {
+        "label": "string",
+        "canvases": ["string"]
+    }
+    ```
+
+- **Responses**:
+
+    - **201**: Layer created successfully
+        ```json
+        {
+            "id": "string",
+            "label": "string",
+            "canvases": ["string"]
+        }
+        ```
+    - **400**: Invalid input
+    - **404**: Project not found
+    - **401**: Unauthorized
+    - **500**: Server error
+
+#### `PUT /project/:projectId/layer/:layerId` 🔐
+
+- **Description**: Update an existing layer within a project.
+- **Parameters**:
+  - `projectId`: ID of the project.
+  - `layerId`: ID of the layer.
+- **Request Body**:
+
+    ```json
+    {
+        "label": "string",
+        "canvases": ["string"]
+    }
+    ```
+
+- **Responses**:
+
+    - **200**: Layer updated successfully
+        ```json
+        {
+            "id": "string",
+            "label": "string",
+            "canvases": ["string"]
+        }
+        ```
+    - **400**: Invalid input
+    - **404**: Layer or project not found
+    - **401**: Unauthorized
+    - **500**: Server error

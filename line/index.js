@@ -1,51 +1,104 @@
 import express from 'express'
-import * as utils from '../utilities/shared.js'
 import cors from 'cors'
-import { findLineById } from './line.js'
+import Line from '../classes/Line/Line.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
+import { respondWithError } from '../utilities/shared.js'
+import auth0Middleware from '../auth/index.js'
 
-const router = express.Router()
+
+const router = express.Router({ mergeParams: true })
 
 router.use(
   cors(common_cors)
 )
 
-router.route('/:id')
-  .get(async (req, res, next) => {
-    try {
-      let id = req.params.id
-
-      if (!utils.validateID(id)) {
-        return utils.respondWithError(res, 400, 'The TPEN3 Line ID must be a number')
-      }
-
-      id = parseInt(id)
-
-      const lineObject = await findLineById(id)
-
-      if (lineObject.statusCode === 404) {
-        return utils.respondWithError(res, 404, lineObject.body)
-      } 
-    } catch (error) {
-      console.error(error)
-      return utils.respondWithError(res, 500, 'Internal Server Error')
+// Load Line as temp line or from RERUM
+router.get('/:lineId', async (req, res) => {
+  const { projectId, pageId, lineId } = req.params
+  if (!lineId) {
+    respondWithError(res, 400, 'Line ID is required.')
+    return
+  }
+  if (!projectId || !pageId) {
+    respondWithError(res, 400, 'Project ID and Page ID are required.')
+    return
+  }
+  try {
+    if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
+      return fetch(lineId).then(res => res.json())
     }
-  })
-  .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  })
+    const projectData = (await Project.getById(projectId)).data
+    if (!projectData) {
+      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+      return
+    }
+    const pageContainingLine = projectData.layers
+      .flatMap(layer => layer.pages)
+      .find(page => page.id.split('/').pop() === pageId.split('/').pop())
 
-router.route('/')
-  .get((req, res, next) => {
-    return utils.respondWithError(res, 400, 'Improper request.  There was no line ID.')
-  })
-  .all((req, res, next) => {
-    return utils.respondWithError(res, 405, 'Improper request method, please use GET.')
-  })
+    if (!pageContainingLine) {
+      respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
+      return
+    }
+    const pageObject = pageContainingLine.id.startsWith(process.env.RERUMIDPREFIX) 
+      ? await fetch(pageId).then(res => res.json())
+      : new Page({ pageContainingLine })
+    const lineRef = (pageObject.lines ?? pageObject.items).find(line => line.id.split('/').pop() === lineId.split('/').pop())
+    if (!lineRef) {
+      respondWithError(res, 404, `Line with ID '${lineId}' not found in page '${pageContainingLine.id}'`)
+      return
+    }
+    const line = lineRef.id.startsWith(process.env.RERUMIDPREFIX)
+    ? await fetch(lineRef.id).then(res => res.json())
+    : new Line({ lineRef })
+    res.json(line?.asJSON?.(true))
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
 
-function respondWithLine(res, lineObject) {
-  res.set('Content-Type', 'application/json; charset=utf-8')
-  res.status(200).json(lineObject)
-}
+// Create temp Line until saved to RERUM
+router.post('/:line', auth0Middleware(), async (req, res) => {
+  try {
+    const newLine = Line.build({ id: req.params.line, ...req.body })
+    const savedLine = await newLine.save()
+    res.status(201).json(savedLine.asJSON(true))
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Update an existing line, including in RERUM
+router.put('/:line', auth0Middleware(), async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const updatedLine = await line.update(req.body)
+    res.json(updatedLine.asJSON(true))
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Update the text of an existing line
+router.patch('/:line/text', auth0Middleware(), async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const updatedText = await line.updateText(req.body)
+    res.json(updatedText.asJSON(true))
+  } catch (error) {
+    res.status(error.status ?? 500).json({ error: error.message })
+  }
+})
+
+// Update the xywh (bounds) of an existing line
+router.patch('/:line/bounds', auth0Middleware(), async (req, res) => {
+  try {
+    const line = new Line({ id: req.params.line })
+    const updatedBounds = await line.updateBounds(req.body)
+    res.json(updatedBounds.asJSON(true))
+  } catch (error) {
+    res.status(error.status ?? 500).json(error.message)
+  }
+})
 
 export default router

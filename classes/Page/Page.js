@@ -23,7 +23,6 @@ export default class Page {
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target }) {
-        console.log("Page constructor", layerId, id, label, target)
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
@@ -34,23 +33,30 @@ export default class Page {
         return this
     }
 
-    static build(layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, lines = []) {
+        if (!projectId) {
+            throw new Error("Project ID is required to create a Page instance.")
+        }
         if (!layerId) {
             throw new Error("Layer ID is required to create a Page instance.")
         }
-        if (!canvas || !canvas.id) {
+        if (!canvas?.id && typeof canvas !== 'string') {
             throw new Error("Canvas with id is required to create a Page instance.")
         }
-
+        if (!canvas.id) {
+            canvas = {id : canvas}
+        }
+        
         const id = lines.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
-            : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
+            : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
+
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: canvas.label,
+                label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 partOf: layerId,
                 items: lines,
@@ -58,6 +64,7 @@ export default class Page {
                 next
             }
         }
+
         return new Page(layerId, page.data)
     }
 
@@ -107,7 +114,7 @@ export default class Page {
         return this.#updatePageForProject()
     }
 
-    async #updatePageForProject() {
+    #updatePageForProject() {
         // Page in local MongoDB is in the Project.layers.pages Array and looks like:
         // { 
         //   id: "https://api.t-pen.org/layer/layerID/page/pageID", 
