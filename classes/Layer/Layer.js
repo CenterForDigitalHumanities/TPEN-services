@@ -59,7 +59,7 @@ export default class Layer {
 
     // Public Methods
     async delete() {
-        if (this.#tinyAction === 'update') {
+        if (this.#tinyAction === 'delete') {
             await Promise.all(this.pages.map(page => {
                 const p = new Page(this.id, page)
                 return p.delete()
