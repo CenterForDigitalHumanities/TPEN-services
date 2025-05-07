@@ -121,5 +121,12 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         error.status = 404
         throw error
     }
+    // Ensure the layer has pages and is not malformed
+    if (!layer.pages || layer.pages.length === 0) {
+        const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
+        error.status = 422
+        throw error
+    }
+    
     return layer
 }
