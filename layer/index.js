@@ -55,6 +55,7 @@ router.route('/:layerId')
             if (!layer) return utils.respondWithError(res, 404, 'Layer not found in project')
 
             label ??= label ?? layer.label
+            if(canvases?.length === 0) canvases = undefined
             const updatedLayer = canvases ?
                 Layer.build(projectId, label, canvases)
                 : new Layer(projectId, {id:layer.id, label, pages:layer.pages})
