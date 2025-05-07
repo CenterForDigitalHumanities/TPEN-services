@@ -308,13 +308,15 @@ The response is a projection of the full user object. The public profile is avai
         {
             "id": "string",
             "label": "string",
-            "canvases": ["string"]
+            "pages": ["string"]
         }
         ```
     - **400**: Invalid input
     - **404**: Project not found
     - **401**: Unauthorized
     - **500**: Server error
+    
+Note that requests without at least one canvas are considered invalid.
 
 #### `PUT /project/:projectId/layer/:layerId` 🔐
 
@@ -338,10 +340,69 @@ The response is a projection of the full user object. The public profile is avai
         {
             "id": "string",
             "label": "string",
-            "canvases": ["string"]
+            "pages": ["string"]
         }
         ```
     - **400**: Invalid input
     - **404**: Layer or project not found
     - **401**: Unauthorized
+    - **500**: Server error
+
+Note that you may not empty the canvases of an existing layer.  If the `canvases` property is an empty array the request will be treated as if it did not contain the `canvases` property at all.
+
+#### `GET /project/:projectId/layer/:layerId`
+
+- **Description**: Get an existing layer within a project.
+- **Parameters**:
+  - `projectId`: ID of the project.
+  - `layerId`: ID of the layer.
+
+- **Responses**:
+
+    - **200**: Layer found
+        ```json
+        {
+            "@context": "string",
+            "id": "string",
+            "type": "AnnotationCollection",
+            "label": {
+                "none":[
+                    "TPEN3 Layer"
+                ]
+            },
+            "total": "integer",
+            "first": "string",
+            "last": "string"
+        }
+        ```
+    - **500**: Server error
+    
+#### `GET /project/:projectId/layer/:layerId/page/:pageid`
+#### `GET /project/:projectId/page/:pageid`
+
+- **Description**: Get an existing page within a project.
+- **Parameters**:
+  - `projectId`: ID of the project.
+  - `layerId`: Optional.  ID of the layer.
+  - `pageId`: The ID of the page.
+
+- **Responses**:
+
+    - **200**: Page found
+        ```json
+        {
+            "@context": "string",
+            "id": "string",
+            "type": "AnnotationPage",
+            "label": {
+                "none":[
+                    "TPEN3 Page"
+                ]
+            },
+            "target": "string",
+            "items":[ {"type": "Canvas"} ],
+            "prev": "string",
+            "next": "string"
+        }
+        ```
     - **500**: Server error
