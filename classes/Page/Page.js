@@ -22,18 +22,18 @@ export default class Page {
      * @param {String} target The uri of the targeted Canvas.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, lines }) {
+    constructor(layerId, { id, label, target, items = [] }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId, lines })
+        Object.assign(this, { id, label, target, partOf: layerId, items })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -47,7 +47,7 @@ export default class Page {
             canvas = {id : canvas}
         }
         
-        const id = lines.length
+        const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
 
@@ -59,7 +59,7 @@ export default class Page {
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 partOf: layerId,
-                items: lines,
+                items,
                 prev,
                 next
             }
@@ -126,7 +126,7 @@ export default class Page {
             id: this.id,
             label: this.label,
             target: this.target,
-            lines: this.lines ?? []
+            items: this.items ?? []
         }
     }
 

@@ -6,6 +6,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import lineRouter from '../line/index.js'
+import Page from '../classes/Page/Page.js'
 
 router.use(
   cors(common_cors)
@@ -59,7 +60,7 @@ export async function findPageById(pageId, projectId) {
     throw error
   }
   const layerContainingPage = projectData.layers.find(layer =>
-    layer.pages.some(page => page.id.split('/').pop() === pageId.split('/').pop())
+    layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
   )
 
   if (!layerContainingPage) {
@@ -68,9 +69,7 @@ export async function findPageById(pageId, projectId) {
     throw error
   }
 
-  const pageIndex = layerContainingPage.pages.findIndex(page =>
-    page.id.split('/').pop() === pageId.split('/').pop()
-  )
+  const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
 
   if (pageIndex < 0) {
     const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
@@ -82,5 +81,5 @@ export async function findPageById(pageId, projectId) {
   page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
   page.next = layerContainingPage.pages[pageIndex + 1] ?? null
 
-  return page
+  return new Page(layerContainingPage.id, page)
 }
