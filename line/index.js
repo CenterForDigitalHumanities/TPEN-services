@@ -24,29 +24,22 @@ router.get('/:lineId', async (req, res) => {
     if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
       return fetch(lineId).then(res => res.json())
     }
-    const projectData = (await Project.getById(projectId)).data
+    const projectData = (await getProjectById(projectId)).data
     if (!projectData) {
       respondWithError(res, 404, `Project with ID '${projectId}' not found`)
       return
     }
     const pageContainingLine = projectData.layers
       .flatMap(layer => layer.pages)
-      .find(page => page.id.split('/').pop() === pageId.split('/').pop())
+      .find(page => findLineInPage(page, lineId))
 
     if (!pageContainingLine) {
       respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
       return
     }
-    const pageObject = pageContainingLine.id.startsWith(process.env.RERUMIDPREFIX) 
-      ? await fetch(pageId).then(res => res.json())
-      : new Page({ pageContainingLine })
-    const lineRef = (pageObject.lines ?? pageObject.items).find(line => line.id.split('/').pop() === lineId.split('/').pop())
-    if (!lineRef) {
-      respondWithError(res, 404, `Line with ID '${lineId}' not found in page '${pageContainingLine.id}'`)
-      return
-    }
-    const line = lineRef.id.startsWith(process.env.RERUMIDPREFIX)
-    ? await fetch(lineRef.id).then(res => res.json())
+    const lineRef = findLineInPage(pageContainingLine, lineId)
+    const line = (lineRef.id ?? lineRef).startsWith?.(process.env.RERUMIDPREFIX)
+    ? await fetch(lineRef.id ?? lineRef).then(res => res.json())
     : new Line({ lineRef })
     res.json(line?.asJSON?.(true))
   } catch (error) {

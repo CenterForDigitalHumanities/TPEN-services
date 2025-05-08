@@ -22,11 +22,11 @@ export default class Page {
      * @param {String} target The uri of the targeted Canvas.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target }) {
+    constructor(layerId, { id, label, target, lines }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId })
+        Object.assign(this, { id, label, target, partOf: layerId, lines })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -125,7 +125,8 @@ export default class Page {
         return {
             id: this.id,
             label: this.label,
-            target: this.target
+            target: this.target,
+            lines: this.lines ?? []
         }
     }
 
