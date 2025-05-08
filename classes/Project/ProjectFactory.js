@@ -21,6 +21,70 @@ export default class ProjectFactory {
    * @param {*} manifest : The manifest object to be processed
    * @returns object of project data
    */
+
+  static tools = {
+    "userTool": [
+      { 
+        "name":"page",
+        "state": false
+      },
+      { 
+        "name":"inspector",
+        "state": false
+      },
+      { 
+        "name":"characters",
+        "state": false
+      },
+      { 
+        "name":"xml",
+        "state": false
+      },
+      { 
+        "name":"fullpage",
+        "state": false
+      },
+      { 
+        "name":"history",
+        "state": false
+      },
+      { 
+        "name":"preview",
+        "state": false
+      },
+      { 
+        "name":"parsing",
+        "state": false
+      },
+      { 
+        "name":"compare",
+        "state": false
+      }
+    ],
+    "projectTool": [
+      {
+        "name": "Cappelli's Abbreviation",
+        "url": "https://centerfordigitalhumanities.github.io/cappelli/",
+        "state": false
+      },
+      {
+        "name": "Enigma",
+        "url": "http://ciham-digital.huma-num.fr/enigma/",
+        "state": false
+      },
+      {
+        "name": "Latin Dictionary",
+        "url": "http://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
+        "state": false
+      },
+      {
+        "name": "Latin Vulgate",
+        "url": "http://vulsearch.sourceforge.net/cgi-bin/vulsearch",
+        "state": false
+      }
+    ]
+  }
+
   static async DBObjectFromManifest(manifest) {
     if (!manifest) {
       throw {
@@ -31,14 +95,15 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items )
+    const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items ) 
 
     // required properties: id, label, metadata, manifest, layers
     return {
       label,
       metadata,
       manifest: [ manifest.id ],
-      layers: [ layer.asProjectLayer() ]
+      layers: [ layer.asProjectLayer() ],
+      tools: this.tools
     }
   }
 

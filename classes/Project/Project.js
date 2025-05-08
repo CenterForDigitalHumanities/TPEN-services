@@ -175,6 +175,11 @@ export default class Project {
     return await this.update()
   }
 
+  async getTools() {
+    await this.#load()
+    return this.data.tools
+  }
+
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
     return await this.update()
