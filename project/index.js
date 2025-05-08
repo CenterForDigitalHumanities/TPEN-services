@@ -1146,6 +1146,36 @@ router.route("/:projectId/hotkeys").all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use GET, PUT, or DELETE instead")
 })
 
+// Adding tools to the Project
+router.route("/:projectId/tools").post(async (req, res) => {
+  const { projectId } = req.params
+  const { tools } = req.body
+
+  if (!tools || (Object.keys(tools).length === 0)) {
+    return respondWithError(res, 400, "At least one tool group is required");
+  }
+  
+  if (!Array.isArray(tools.userTool) || tools.userTool.some(tool => typeof tool !== 'string')) {
+    return respondWithError(res, 400, "All user tools must be strings");
+  }
+  
+  if (!Array.isArray(tools.projectTool) || tools.projectTool.some(tool => typeof tool.name !== 'string' || typeof tool.url !== 'string')) {
+    return respondWithError(res, 400, "Each project tool must have a valid name and URL");
+  }  
+
+  try {
+    const project = new Project(projectId)
+    const addedTools = await project.addTools(tools)
+    
+    res.status(201).json(addedTools)
+    return
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message.toString())
+  }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use POST instead")
+})
+
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
 
