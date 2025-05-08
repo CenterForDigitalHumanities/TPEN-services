@@ -1,5 +1,4 @@
-import DatabaseController from "../database/mongo/controller.js"
-
+import Project from "../classes/Project/Project.js"
 /**
  * Check if the supplied input is valid JSON or not.
  * @param input A string or Object that should be JSON conformant.
@@ -49,3 +48,47 @@ export function respondWithJSON(res, status, json){
    res.status(status)
    res.json(json)
 }
+
+// Log modifications for recent changes
+export async function recordModification(res) {
+    const { projectId, pageId } = req.params
+    const userId = req.user?.id ?? null
+
+    if (!projectId || !pageId) {
+      // silent failure of logging
+      return
+      }
+
+      try {
+      const project = await getProjectById(projectId)
+      // set _lastModified for the Project for "recent project"
+            const { id: pageId, partOf: projectId = this.partOf } = this
+            database.
+                .collection(process.env.TPENPROJECTS)
+                .updateOne(
+                    { _id: projectId },
+                    {
+                        $set: {
+                            _lastModified: pageId,
+                            _modifiedAt: new Date()
+                        }
+                    }
+                )
+
+            if (userId) {
+                await databaseMongo.controller.db
+                    .collection(process.env.TPENUSERS)
+                    .updateOne(
+                        { _id: userId },
+                        {
+                            $set: {
+                                _lastModified: pageId,
+                                _modifiedAt: new Date()
+                            }
+                        }
+                    )
+            }
+        } catch (err) {
+            console.error("recordModification failed", err)
+        }
+    }

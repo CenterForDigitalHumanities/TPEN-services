@@ -100,12 +100,11 @@ export default class Page {
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
-    async update(userId) {
+    async update() {
         const hasItems = Array.isArray(this.data?.items) && this.data.items.length > 0
         if (this.#tinyAction === 'update' || hasItems) {
             this.#setRerumId()
             await this.#savePageToRerum()
-            await this.#recordModification(userId)
         }
         return this.#updatePageForProject()
     }
@@ -136,36 +135,4 @@ export default class Page {
         return true
     }
 
-    async #recordModification(userId) {
-        try {
-            const { id: pageId, partOf: projectId = this.partOf } = this
-            await databaseMongo.controller.db
-                .collection(process.env.TPENPROJECTS)
-                .updateOne(
-                    { _id: projectId },
-                    {
-                        $set: {
-                            _lastModified: pageId,
-                            _modifiedAt: new Date()
-                        }
-                    }
-                )
-
-            if (userId) {
-                await databaseMongo.controller.db
-                    .collection(process.env.TPENUSERS)
-                    .updateOne(
-                        { _id: userId },
-                        {
-                            $set: {
-                                _lastModified: pageId,
-                                _modifiedAt: new Date()
-                            }
-                        }
-                    )
-            }
-        } catch (err) {
-            console.error("recordModification failed", err)
-        }
-    }
 }
