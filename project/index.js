@@ -13,12 +13,11 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 import Group from "../classes/Group/Group.js"
 import scrubDefaultRoles from "../utilities/isDefaultRole.js"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
-import path from "path"
-import fs from "fs"
 import layerRouter from "../layer/index.js"
+import pageRouter from "../page/index.js"
 import cookieParser from "cookie-parser"
 
-let router = express.Router()
+let router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
 
 router
@@ -117,11 +116,6 @@ router
  
 router
   .route("/import28/:uid")
-  .options(async (req, res) => {
-      res.setHeader("Access-Control-Allow-Methods", req.get("origin"))
-      res.setHeader("Access-Control-Allow-Credentials", "true")
-      res.status(204).send()
-  })
   .get(cors(corsOptions), cookieParser(), patchTokenFromQuery, auth0Middleware(), async (req, res) => {
     const user = req.user
     const jsessionid = req.cookies.JSESSIONID
@@ -175,8 +169,6 @@ router
         return respondWithError(res, 500, "Invalid project response format")
       }
 
-      res.setHeader("Access-Control-Allow-Origin", req.get("origin"))
-      res.setHeader("Access-Control-Allow-Credentials", "true")
       return res.status(200).json({
         message: "Select a Project to Import : ",
         data: parsedData,
@@ -571,215 +563,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    console.log(error)
     respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
-  }
-})
-
-// Route to add a new layer to a project
-router.route("/:projectId/layer").post(auth0Middleware(), async (req, res) => {
-  const { projectId } = req.params
-  const labelAndCanvases = req.body
-  const user = req.user
-  if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
-  }
-
-  if (!projectId) {
-    return respondWithError(res, 400, "Project ID is required")
-  }
-
-  if(!validateID(projectId)){
-    return respondWithError(res, 400, "Invalid project ID provided.")
-  }
-
-  if (!labelAndCanvases || !labelAndCanvases.canvases || !Array.isArray(labelAndCanvases.canvases) || labelAndCanvases.canvases.some(canvas => typeof canvas !== "string")) {
-    return respondWithError(res, 400, "Invalid layer provided. Expected an array of canvas IDs.")
-  }
-
-  try {
-    const project = new Project(projectId)
-
-    if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
-      return respondWithError(res, 403, "You do not have permission to add layers to this project.")
-    }
-
-    const layers = await project.loadProject()
-
-    if(!project || layers === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layer = new Layer(layers)
-    const response = await layer.addLayer(projectId, labelAndCanvases, project.getLabel())
-    res.status(201).json(response)
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding layer to project.")      
-  }
-})
-
-// Route to delete a specific layer within a project
-router.route("/:projectId/layer/:layerId").delete(auth0Middleware(), async (req, res) => {
-  const { projectId, layerId } = req.params
-  const user = req.user
-  if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
-  }
-
-  if (!projectId) {
-    return respondWithError(res, 400, "Project ID is required")
-  }
-
-  if(!validateID(projectId)){
-    return respondWithError(res, 400, "Invalid project ID provided.")
-  }
-
-  if (!layerId) {
-    return respondWithError(res, 400, "Layer ID is required")
-  }
-
-  try {
-    const project = new Project(projectId)
-
-    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.LAYER))) {
-      return respondWithError(res, 403, "You do not have permission to delete layers from this project.")
-    }
-
-    const layers = await project.loadProject()
-    
-    if(!project || layers === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layer = new Layer(layers)
-    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
-      return respondWithError(res, 400, "Layer not found in project.")
-    }
-    
-    await layer.deleteLayer(projectId, layerId)
-    res.status(204).send()
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error deleting layer from project.")
-  }
-})
-
-// Route to update the ordering of pages/deleting of pages of a specific layer within a project
-router.route("/:projectId/layer/:layerId/pages").put(auth0Middleware(), async (req, res) => {
-  const { projectId, layerId } = req.params
-  const pages = req.body.pages
-  const user = req.user
-  if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
-  }
-
-  if (!pages || !Array.isArray(pages) || pages.some(page => typeof page !== "string")) {
-    return respondWithError(res, 400, "Invalid pages provided. Expected an array of page IDs.")
-  }
-
-  try {
-    const project = new Project(projectId)
-
-    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
-      return respondWithError(res, 403, "You do not have permission to update pages in this layer.")
-    }
-
-    const layers = await project.loadProject()
-
-    if(!project || layers === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layer = new Layer(layers)
-    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
-      return respondWithError(res, 400, "Layer not found in project.")
-    }
-
-    const existingPages = layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.map(page => page.id)
-
-    if (!existingPages.some(page => pages.includes(page))) {
-      return respondWithError(res, 400, "Page not found in layer.")
-    }
-
-    const response = await layer.updatePages(layerId, pages)
-    res.status(200).json(response)
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating layer pages.")
-  }
-})
-
-// Route to update the label only of a specific layer within a project
-router.route("/:projectId/layer/:layerId").put(auth0Middleware(), async (req, res) => {
-  const { projectId, layerId } = req.params
-  const label = req.body
-  const user = req.user
-  if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
-  }
-
-  if (!label || !Object(label)) {
-    return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
-  }
-
-  try {
-    const project = new Project(projectId)
-
-    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.LAYER))) {
-      return respondWithError(res, 403, "You do not have permission to update metadata for this layer.")
-    }
-
-    const layers = await project.loadProject()
-
-    if(!project || layers === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layer = new Layer(layers)
-    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
-      return respondWithError(res, 400, "Layer not found in project.")
-    }
-
-    const response = await layer.updateLayerMetadata(layerId, label)
-    res.status(200).json(response)
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error updating layer metadata.")
-  }
-})
-
-// Adding annotations to pages within a specific layer within a project
-router.route("/:projectId/layer/:layerId/page/:pageId/save").post(auth0Middleware(), async (req, res) => {
-  const { projectId, layerId, pageId } = req.params
-  const user = req.user
-  if (!user) {
-    return respondWithError(res, 401, "Unauthenticated request")
-  }
-
-  try {
-    const project = new Project(projectId)
-
-    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
-      return respondWithError(res, 403, "You do not have permission to add annotations to this page.")
-    }
-
-    const layers = await project.loadProject()
-
-    if(!project || layers === null) {
-      return respondWithError(res, 404, "Project does not exist.")
-    }
-
-    const layer = new Layer(layers)
-    if (layer.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`) === undefined) {
-      return respondWithError(res, 400, "Layer not found in project.")
-    }
-
-    const pages = new Page(layers)
-    if (pages.data.layers.find(layer => String(layer.id).split("/").pop() === `${layerId}`).pages.find(page => String(page.id).split("/").pop() === `${pageId}`) === undefined) {
-      return respondWithError(res, 400, "Page not found in layer.")
-    }
-
-    const response = await pages.saveCollectionToRerum(projectId, layerId)
-    res.status(200).json(response)
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? "Error adding annotations to page.")
   }
 })
 
@@ -1034,7 +818,6 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
 
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    console.log(error)
     respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
@@ -1148,5 +931,6 @@ router.route("/:projectId/hotkeys").all((_, res) => {
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
+router.use('/:projectId/page', pageRouter)
 
 export default router
