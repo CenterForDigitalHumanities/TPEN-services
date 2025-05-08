@@ -76,7 +76,7 @@ export default class Page {
             label: { "none": [this.label] },
             target: this.target,
             partOf: this.partOf,
-            items: this.data.items ?? [],
+            items: this.items ?? [],
             prev: this.prev ?? null,
             next: this.next ?? null
         }
