@@ -87,6 +87,15 @@ export default class User {
     return user.save()
   }
 
+  static async setLastModified(userId, pageId) {
+    const user = await database.getById(userId, "users")
+    if (!user) {
+      throw new Error(`User with _id ${userId} not found`)
+    }
+    user._lastModifiedPage = pageId
+    return database.update(user, "users")
+  }
+
   async save() {
     // validate before save
     if (!this._id) {
