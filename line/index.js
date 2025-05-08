@@ -3,7 +3,7 @@ import cors from 'cors'
 import auth0Middleware from '../auth/index.js'
 import Line from '../classes/Line/Line.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
-import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject } from '../utilities/shared.js'
+import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -74,9 +74,9 @@ router.post('/', auth0Middleware(), async (req, res) => {
 // Update an existing line, including in RERUM
 router.put('/:lineId', auth0Middleware(), async (req, res) => {
   try {
-    const project = await Project.getById(req.params.projectId)
+    const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
-    const oldLine = page.lines?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+    const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
@@ -88,8 +88,8 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
       // No changes made to the line, return the original
       return res.status(304).json({ message: 'No changes made to the line' })
     }
-    const lineIndex = page.lines.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-    page.lines[lineIndex] = updatedLine
+    const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+    page.items[lineIndex] = updatedLine
     await page.update()
     const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === req.params.pageId.split('/').pop()))
     const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === req.params.pageId.split('/').pop())

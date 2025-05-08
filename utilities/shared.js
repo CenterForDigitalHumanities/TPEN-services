@@ -2,6 +2,8 @@ import DatabaseController from "../database/mongo/controller.js"
 import Project from '../classes/Project/Project.js'
 import { findPageById } from '../page/index.js'
 
+export { findPageById }
+
 /**
  * Check if the supplied input is valid JSON or not.
  * @param input A string or Object that should be JSON conformant.

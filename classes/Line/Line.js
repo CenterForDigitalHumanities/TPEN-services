@@ -11,7 +11,7 @@ export default class Line {
         return this
     }
 
-    constructor({ id, target, body }) {
+    constructor({ id, target, body, motivation, label, type }) {
         if (!id || !body || !target) {
             throw new Error('Line data is malformed.')
         }
@@ -21,20 +21,23 @@ export default class Line {
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
+        if (motivation) this.motivation = motivation
+        if (label) this.label = label
+        if (type) this.type = type
         return this
     }
 
-    static build(projectId, pageId, { body, target }) {
+    static build(projectId, pageId, { body, target, motivation, label, type }) {
         // TODO: Should this have a space for an id that is sent in?
         const id = `${process.env.SERVERURL}project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
-        return new Line({ id, body, target })
+        return new Line({ id, body, target, motivation, label, type })
     }
 
     async #saveLineToRerum() {
         const lineAsAnnotation = {
             "@context": "http://iiif.io/api/presentation/3/context.json",
             id: this.id,
-            type: "Annotation",
+            type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
             body: this.body
@@ -66,7 +69,7 @@ export default class Line {
      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
      */
    async update() {
-    if (this.#tinyAction === 'update' || typeof this.body !== 'string') {
+    if (this.#tinyAction === 'update' || this.body) {
         this.#setRerumId()
         await this.#saveLineToRerum()
     }
@@ -76,8 +79,7 @@ export default class Line {
 async #updateLineForPage() {
     return {
         id: this.id,
-        target: this.target,
-        body: this.body,
+        target: this.target
     }
 }
     async updateText(text) {
