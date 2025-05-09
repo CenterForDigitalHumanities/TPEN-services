@@ -4,8 +4,8 @@ const databaseTiny = new dbDriver("tiny")
 export default class Line {
 
     #tinyAction = 'create'
-    #setRerumId() {
-        if (this.#tinyAction === 'create') {
+    #setRerumId(force) {
+        if (force || this.#tinyAction === 'create') {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
@@ -53,11 +53,20 @@ export default class Line {
         }
         // ...else Update the existing page in RERUM
         const existingLine = await fetch(this.id).then(res => res.json())
+        .catch(err => {
+            if (err.status === 404) {
+                // If the line doesn't exist, we can create it
+                return null
+            }
+            throw new Error(`Failed to fetch existing Line from RERUM: ${err.message}`)
+        })
+
         if (!existingLine) {
-            throw new Error(`Failed to find Line in RERUM: ${this.id}`)
+            // This id doesn't exist in RERUM, so we need to create it
+            this.#tinyAction = 'create'
         }
-        const updatedLine = { ...existingLine, ...lineAsAnnotation }
-        const newURI = await databaseTiny.update(updatedLine).then(res => res.headers.get('location')).catch(err => {
+        const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
+        const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.headers.get('location')).catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })
         this.id = newURI
@@ -70,7 +79,7 @@ export default class Line {
      */
    async update() {
     if (this.#tinyAction === 'update' || this.body) {
-        this.#setRerumId()
+        this.#setRerumId(true)
         await this.#saveLineToRerum()
     }
     return this.#updateLineForPage()
