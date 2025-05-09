@@ -22,68 +22,82 @@ export default class ProjectFactory {
    * @returns object of project data
    */
 
-  static tools = {
-    "userTool": [
+  static tools = [
       { 
-        "name":"page",
+        "name":"Page Tools",
+        "value":"page",
         "state": false
       },
-      { 
-        "name":"inspector",
+      {
+        "name":"Inspect",
+        "value":"inspector",
         "state": false
       },
-      { 
-        "name":"characters",
+      {
+        "name":"Special Characters", 
+        "value":"characters",
         "state": false
       },
-      { 
-        "name":"xml",
+      {
+        "name":"XML Tags", 
+        "value":"xml",
         "state": false
       },
-      { 
-        "name":"fullpage",
+      {
+        "name":"View Full Page", 
+        "value":"fullpage",
         "state": false
       },
-      { 
-        "name":"history",
+      {
+        "name":"History Tool", 
+        "value":"history",
         "state": false
       },
-      { 
-        "name":"preview",
+      {
+        "name":"Preview Tool", 
+        "value":"preview",
         "state": false
       },
-      { 
-        "name":"parsing",
+      {
+        "name":"Parsing Adjustment", 
+        "value":"parsing",
         "state": false
       },
-      { 
-        "name":"compare",
+      {
+        "name":"Compare Pages", 
+        "value":"compare",
         "state": false
-      }
-    ],
-    "projectTool": [
+      },
+      {
+        "name":"RTL Mode", 
+        "value":"rtl",
+        "state": false
+      },
       {
         "name": "Cappelli's Abbreviation",
+        "value": "cappelli",
         "url": "https://centerfordigitalhumanities.github.io/cappelli/",
         "state": false
       },
       {
         "name": "Enigma",
+        "value": "enigma",
         "url": "http://ciham-digital.huma-num.fr/enigma/",
         "state": false
       },
       {
         "name": "Latin Dictionary",
+        "value": "latin",
         "url": "http://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
         "state": false
       },
       {
         "name": "Latin Vulgate",
+        "value": "vulgate",
         "url": "http://vulsearch.sourceforge.net/cgi-bin/vulsearch",
         "state": false
       }
     ]
-  }
 
   static async DBObjectFromManifest(manifest) {
     if (!manifest) {

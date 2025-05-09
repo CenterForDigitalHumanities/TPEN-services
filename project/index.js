@@ -1147,19 +1147,7 @@ router.route("/:projectId/hotkeys").all((_, res) => {
 })
 
 // Adding tools to the Project
-router.route("/:projectId/tools").get(async (req, res) => {
-  const { projectId } = req.params
-
-  try {
-    const project = new Project(projectId)
-    const tools = await project.getTools()
-    
-    res.status(200).json(tools)
-    return
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message.toString())
-  }
-}).post(async (req, res) => {
+router.route("/:projectId/tools").post(async (req, res) => {
   const { projectId } = req.params
   const { tools } = req.body
 
