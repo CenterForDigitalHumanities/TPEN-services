@@ -168,6 +168,13 @@ export default class Project {
  *
  * @throws {Error} Throws an error if the update operation fails.
  */
+
+  async addTools(tools) {
+    await this.#load()
+    this.data.tools = tools
+    return await this.update()
+  }
+
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
     return await this.update()
