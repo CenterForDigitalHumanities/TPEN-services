@@ -23,81 +23,81 @@ export default class ProjectFactory {
    */
 
   static tools = [
-      { 
-        "name":"Page Tools",
-        "value":"page",
-        "state": false
-      },
-      {
-        "name":"Inspect",
-        "value":"inspector",
-        "state": false
-      },
-      {
-        "name":"Special Characters", 
-        "value":"characters",
-        "state": false
-      },
-      {
-        "name":"XML Tags", 
-        "value":"xml",
-        "state": false
-      },
-      {
-        "name":"View Full Page", 
-        "value":"fullpage",
-        "state": false
-      },
-      {
-        "name":"History Tool", 
-        "value":"history",
-        "state": false
-      },
-      {
-        "name":"Preview Tool", 
-        "value":"preview",
-        "state": false
-      },
-      {
-        "name":"Parsing Adjustment", 
-        "value":"parsing",
-        "state": false
-      },
-      {
-        "name":"Compare Pages", 
-        "value":"compare",
-        "state": false
-      },
-      {
-        "name":"RTL Mode", 
-        "value":"rtl",
-        "state": false
-      },
-      {
-        "name": "Cappelli's Abbreviation",
-        "value": "cappelli",
-        "url": "https://centerfordigitalhumanities.github.io/cappelli/",
-        "state": false
-      },
-      {
-        "name": "Enigma",
-        "value": "enigma",
-        "url": "http://ciham-digital.huma-num.fr/enigma/",
-        "state": false
-      },
-      {
-        "name": "Latin Dictionary",
-        "value": "latin",
-        "url": "http://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
-        "state": false
-      },
-      {
-        "name": "Latin Vulgate",
-        "value": "vulgate",
-        "url": "http://vulsearch.sourceforge.net/cgi-bin/vulsearch",
-        "state": false
-      }
-    ]
+    { 
+      "name":"Page Tools",
+      "value":"page",
+      "state": false
+    },
+    {
+      "name":"Inspect",
+      "value":"inspector",
+      "state": false
+    },
+    {
+      "name":"Special Characters", 
+      "value":"characters",
+      "state": false
+    },
+    {
+      "name":"XML Tags", 
+      "value":"xml",
+      "state": false
+    },
+    {
+      "name":"View Full Page", 
+      "value":"fullpage",
+      "state": false
+    },
+    {
+      "name":"History Tool", 
+      "value":"history",
+      "state": false
+    },
+    {
+      "name":"Preview Tool", 
+      "value":"preview",
+      "state": false
+    },
+    {
+      "name":"Parsing Adjustment", 
+      "value":"parsing",
+      "state": false
+    },
+    {
+      "name":"Compare Pages", 
+      "value":"compare",
+      "state": false
+    },
+    {
+      "name":"RTL Mode", 
+      "value":"rtl",
+      "state": false
+    },
+    {
+      "name": "Cappelli's Abbreviation",
+      "value": "cappelli",
+      "url": "https://centerfordigitalhumanities.github.io/cappelli/",
+      "state": false
+    },
+    {
+      "name": "Enigma",
+      "value": "enigma",
+      "url": "http://ciham-digital.huma-num.fr/enigma/",
+      "state": false
+    },
+    {
+      "name": "Latin Dictionary",
+      "value": "latin",
+      "url": "http://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
+      "state": false
+    },
+    {
+      "name": "Latin Vulgate",
+      "value": "vulgate",
+      "url": "http://vulsearch.sourceforge.net/cgi-bin/vulsearch",
+      "state": false
+    }
+  ]
 
   static async DBObjectFromManifest(manifest) {
     if (!manifest) {

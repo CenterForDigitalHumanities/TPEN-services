@@ -169,11 +169,27 @@ export default class Project {
  * @throws {Error} Throws an error if the update operation fails.
  */
 
+  async updateTools(selectedValues) {
+    await this.#load()
+  
+    if (!Array.isArray(selectedValues)) return
+  
+    this.data.tools = this.data.tools.map(tool => {
+      const match = selectedValues.find(t => t.value === tool.value)
+      return {
+        ...tool,
+        state: match ? match.state : tool.state
+      }
+    })    
+  
+    return await this.update()
+  }  
+
   async addTools(tools) {
     await this.#load()
-    this.data.tools = tools
+    this.data.tools = [...this.data.tools, ...tools]
     return await this.update()
-  }
+  }  
 
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
