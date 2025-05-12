@@ -13,8 +13,6 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 import Group from "../classes/Group/Group.js"
 import scrubDefaultRoles from "../utilities/isDefaultRole.js"
 import Hotkeys from "../classes/HotKeys/Hotkeys.js"
-import path from "path"
-import fs from "fs"
 import layerRouter from "../layer/index.js"
 import cookieParser from "cookie-parser"
 
@@ -1152,7 +1150,19 @@ router.route("/:projectId/tools").post(async (req, res) => {
   const { projectId } = req.params
   const { tools } = req.body
 
-  if (!Array.isArray(tools) || tools.length === 0) {
+  if (!projectId) {
+    return respondWithError(res, 400, "Project ID is required")
+  }
+
+  if (!action) {
+    return respondWithError(res, 400, "Action is required")
+  }
+
+  if (action !== 'addtools' && action !== 'updatetools') {
+    return respondWithError(res, 400, "Action must be either 'addtools' or 'updatetools'")
+  }
+
+  if (!Array.isArray(tools) || tools.length === 0 || tools.some(tool => typeof tool.value !== 'string' || typeof tool.state !== 'boolean' || (tool.name !== undefined && typeof tool.name !== 'string') || (tool.url !== undefined && typeof tool.url !== 'string'))) {
     return respondWithError(res, 400, "At least one tool is required");
   }
 
