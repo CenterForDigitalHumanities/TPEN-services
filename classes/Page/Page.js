@@ -81,7 +81,6 @@ export default class Page {
             next: this.next ?? null
         }
         if (this.#tinyAction === 'create') {
-            console.log("Saving Page to RERUM", pageAsAnnotationPage)
             await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
                     console.error(err, pageAsAnnotationPage)
@@ -92,7 +91,6 @@ export default class Page {
         }
         // ...else Update the existing page in RERUM
         const existingPage = await fetch(this.id).then(res => res.json())
-        console.log("Existing Page", existingPage)
         if (!existingPage) {
             throw new Error(`Failed to find Page in RERUM: ${this.id}`)
         }
