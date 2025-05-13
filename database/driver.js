@@ -119,6 +119,19 @@ class dbDriver {
     }
 
     /**
+     * Overwrite an existing object in the database
+     * @param data JSON from an HTTP POST request. It must contain an id.
+     * @param collection Optional collection override
+     * @return The updated document JSON or error JSON
+     */
+    async overwrite(data, collection) {
+        data._modifiedAt = new Date()
+        collection ??= resolveCollection(data)
+        if (!collection) throw new Error("Cannot determine collection for overwrite operation")
+        return this.controller.overwrite(data, collection)
+    }
+
+    /**
      * Get data from the database that have matching property values.
      * @param query JSON from an HTTP POST request. It must contain at least one property.
      * @param collection Optional collection override
