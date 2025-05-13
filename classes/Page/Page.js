@@ -1,26 +1,23 @@
 import dbDriver from "../../database/driver.js"
 
 const databaseTiny = new dbDriver("tiny")
+const databaseMongo = new dbDriver("mongo")
 
 export default class Page {
-
     #tinyAction = 'create'
+
     #setRerumId() {
         if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }
 
     /**
-     * Constructs a Page from the JSON Object in the Project `layers` Array reference. This 
-     * never creates a new Page, but rather wraps existing data in a Page object.
+     * Constructs a Page by wrapping existing data in a Page object.
      * Use the `build` method to create a new Page.
-     * @param {hexString} projectId For the project this layer belongs to
-     * @param {String} id The ID of the layer. This is the Layer stored in the Project.
-     * @param {String} label The label of the layer. This is the Layer stored in the Project.
-     * @param {String} target The uri of the targeted Canvas.
-     * @seeAlso {@link Page.build}
+     * @param {String} partOf The layer ID this page belongs to
+     * @param {Object} canvas An object with { id, label, target } properties
      */
     constructor(layerId, { id, label, target }) {
         if (!id || !target) {
@@ -100,12 +97,14 @@ export default class Page {
     }
 
     /**
-     * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
-     * @returns {Promise} Resolves to the updated Layer object as stored in Project.
-     */
+      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
+      */
     async update() {
-        if (this.#tinyAction === 'update' || this.items.length) {
-            await this.#setRerumId().#savePageToRerum()
+        const hasItems = Array.isArray(this.data?.items) && this.data.items.length > 0
+        if (this.#tinyAction === 'update' || hasItems) {
+            this.#setRerumId()
+            await this.#savePageToRerum()
         }
         return this.#updatePageForProject()
     }
@@ -131,9 +130,9 @@ export default class Page {
     async delete() {
         if (this.#tinyAction === 'update') {
             // associated Annotations in RERUM will be left intact
-            await databaseTiny.remove(this.id)
-                .catch(err => false)
+            await databaseTiny.remove(this.id).catch(err => false)
         }
         return true
     }
+
 }
