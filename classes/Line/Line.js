@@ -66,6 +66,7 @@ export default class Line {
             this.#tinyAction = 'create'
         }
         const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
+        console.log("Saving Line to RERUM", updatedLine, this.#tinyAction)
         const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.headers.get('location')).catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })

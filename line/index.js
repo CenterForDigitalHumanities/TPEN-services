@@ -76,11 +76,12 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
   try {
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
-    const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+    let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
+    if (!(oldLine.id && oldLine.target && oldLine.body)) oldLine = await fetch(oldLine.id).then(res => res.json())
     const line = new Line(oldLine)
     Object.assign(line, req.body)
     const updatedLine = await line.update()
