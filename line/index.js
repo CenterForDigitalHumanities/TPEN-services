@@ -1,9 +1,9 @@
 import express from 'express'
 import cors from 'cors'
-import auth0Middleware from '../auth/index.js'
-import Line from '../classes/Line/Line.js'
+import auth0Middleware from "../auth/index.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById } from '../utilities/shared.js'
+import Line from '../classes/Line/Line.js'
 
 const router = express.Router({ mergeParams: true })
 
