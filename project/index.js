@@ -1145,39 +1145,22 @@ router.route("/:projectId/hotkeys").all((_, res) => {
 })
 
 // Adding tools to the Project
-router.route("/:projectId/tools").post(async (req, res) => {
-  let { action } = req.query
+router.route("/:projectId/addtools").post(async (req, res) => {
   const { projectId } = req.params
-  const { tools } = req.body
+  const tools = req.body
 
   if (!projectId) {
     return respondWithError(res, 400, "Project ID is required")
   }
 
-  if (!action) {
-    return respondWithError(res, 400, "Action is required")
-  }
-
-  if (action !== 'addtools' && action !== 'updatetools') {
-    return respondWithError(res, 400, "Action must be either 'addtools' or 'updatetools'")
-  }
-
-  if (!Array.isArray(tools) || tools.length === 0 || tools.some(tool => typeof tool.value !== 'string' || typeof tool.state !== 'boolean' || (tool.name !== undefined && typeof tool.name !== 'string') || (tool.url !== undefined && typeof tool.url !== 'string'))) {
+  if (!Array.isArray(tools) || tools.length === 0) {
     return respondWithError(res, 400, "At least one tool is required");
   }
 
   try {
     const project = new Project(projectId)
-    if (action === 'addtools') {
-      await project.addTools(tools)
-      res.status(201).json("Tools added successfully")
-    }
-
-    if (action === 'updatetools') {
-      await project.updateTools(tools)
-      res.status(201).json("Tools updated successfully")
-    }
-
+    await project.addTools(tools)
+    res.status(201).json("Tools added successfully")
     return
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message.toString())
@@ -1185,6 +1168,32 @@ router.route("/:projectId/tools").post(async (req, res) => {
 }).all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
+
+//Update tools in the Project
+router.route("/:projectId/updatetools").put(async (req, res) => {
+  const { projectId } = req.params
+  const tools = req.body
+
+  if (!projectId) {
+    return respondWithError(res, 400, "Project ID is required")
+  }
+
+  if (!Array.isArray(tools) || tools.length === 0) {
+    return respondWithError(res, 400, "At least one tool is required");
+  }
+
+  try {
+    const project = new Project(projectId)
+    await project.updateTools(tools)
+    res.status(200).json("Tools updated successfully")
+    return
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message.toString())
+  }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use PUT instead")
+})
+
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
