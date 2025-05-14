@@ -1145,7 +1145,7 @@ router.route("/:projectId/hotkeys").all((_, res) => {
 })
 
 // Adding tools to the Project
-router.route("/:projectId/addtools").post(async (req, res) => {
+router.route("/:projectId/tools").post(async (req, res) => {
   const { projectId } = req.params
   const tools = req.body
 
@@ -1170,7 +1170,7 @@ router.route("/:projectId/addtools").post(async (req, res) => {
 })
 
 //Update tools in the Project
-router.route("/:projectId/updatetools").put(async (req, res) => {
+router.route("/:projectId/tools").put(async (req, res) => {
   const { projectId } = req.params
   const tools = req.body
 
