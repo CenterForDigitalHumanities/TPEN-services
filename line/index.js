@@ -106,24 +106,24 @@ router.route('/:lineId')
   })
 
 // Update the text of an existing line
-router.route('/:line/text')
+router.route('/:lineId/text')
   .patch(auth0Middleware(), async (req, res) => {
     try {
       if (typeof req.body !== 'string') {
         respondWithError(res, 400, 'Invalid request body. Expected a string.')
         return
       }
-      const project = await Project.getById(req.params.projectId)
+      const project = await getProjectById(req.params.projectId)
       const page = await findPageById(req.params.pageId, req.params.projectId)
-      const oldLine = page.lines?.find(l => l.id.split('/').pop() === req.params.line?.split('/').pop())
+      const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
       if (!oldLine) {
-        respondWithError(res, 404, `Line with ID '${req.params.line}' not found in page '${req.params.pageId}'`)
+        respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
         return
       }
       const line = new Line(oldLine)
       const updatedLine = await line.updateText(req.body)
-      const lineIndex = page.lines.findIndex(l => l.id.split('/').pop() === req.params.line?.split('/').pop())
-      page.lines[lineIndex] = updatedLine
+      const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+      page.items[lineIndex] = updatedLine
       await page.update()
       const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === req.params.pageId.split('/').pop()))
       const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === req.params.pageId.split('/').pop())
@@ -136,24 +136,24 @@ router.route('/:line/text')
   })
 
 // Update the xywh (bounds) of an existing line
-router.route('/:line/bounds')
+router.route('/:lineId/bounds')
   .patch(auth0Middleware(), async (req, res) => {
     try {
       if (typeof req.body !== 'object' || !req.body.x || !req.body.y || !req.body.w || !req.body.h) {
         respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
         return
       }
-      const project = await Project.getById(req.params.projectId)
+      const project = await getProjectById(req.params.projectId)
       const page = await findPageById(req.params.pageId, req.params.projectId)
-      const oldLine = page.lines?.find(l => l.id.split('/').pop() === req.params.line?.split('/').pop())
+      const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
       if (!oldLine) {
-        respondWithError(res, 404, `Line with ID '${req.params.line}' not found in page '${req.params.pageId}'`)
+        respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
         return
       }
       const line = new Line(oldLine)
       const updatedLine = await line.updateBounds(req.body)
-      const lineIndex = page.lines.findIndex(l => l.id.split('/').pop() === req.params.line?.split('/').pop())
-      page.lines[lineIndex] = updatedLine
+      const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+      page.items[lineIndex] = updatedLine
       await page.update()
       const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === req.params.pageId.split('/').pop()))
       const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === req.params.pageId.split('/').pop())
