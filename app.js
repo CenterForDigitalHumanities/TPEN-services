@@ -53,8 +53,8 @@ app.all('*', (req, res, next) => {
 
 app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
+app.use('/project/:projectId/page/:pageId/line', lineRouter) 
 app.use('/project', projectRouter)
-app.use('/line', lineRouter)
 app.use('/user', userProfileRouter)
 app.use('/my', privateProfileRouter)
 app.use('/proxy', proxyRouter)

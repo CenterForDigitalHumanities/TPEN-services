@@ -1,11 +1,8 @@
 import express from "express"
-import { validateID, respondWithError } from "../utilities/shared.js"
 import cors from "cors"
 import common_cors from "../utilities/common_cors.json" with {type: "json"}
-import auth0Middleware from "../auth/index.js"
 import layerRouter from "../layer/index.js"
 import pageRouter from "../page/index.js"
-import cookieParser from "cookie-parser"
 import projectCreateRouter from "./projectCreateRouter.js"
 import import28Router from "./import28Router.js"
 import projectReadRouter from "./projectReadRouter.js"
