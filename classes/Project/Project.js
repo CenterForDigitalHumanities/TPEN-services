@@ -171,9 +171,11 @@ export default class Project {
 
   async updateTools(selectedValues) {
     await this.#load()
-  
+    // Guard invalid input
     if (!Array.isArray(selectedValues)) return
-  
+    // Guard existing data in corrupted state
+    if(!this.data?.tools) this.data.tools = []
+    
     this.data.tools = this.data.tools.map(tool => {
       const match = selectedValues.find(t => t.value === tool.value)
       return {
