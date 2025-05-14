@@ -2,7 +2,6 @@
 
 /** Server initializer for the app.  Registers all the route paths. */ 
 
-import createError from 'http-errors'
 import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -47,15 +46,12 @@ app.use(express.static(path.join(__dirname, 'public')))
  */
 app.all('*', (req, res, next) => {
   if (process.env.DOWN === 'true') {
-    res
-      .status(503)
-      .json({
-        message:
-          'TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later.',
-      })
-  } else {
-    next() //pass on to the next app.use
+    return res.status(503).json({
+      message:
+        'TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later.'
+    })
   }
+  next()
 })
 
 app.use('/', indexRouter)
@@ -70,9 +66,8 @@ app.use('/proxy', proxyRouter)
 app.use('/beta', feedbackRouter)
 
 //catch 404 because of an invalid site path
-app.use('*', function(req, res, next) {
-    let message = res.statusMessage ?? "This page does not exist"
-    res.status(404).json({message})  
+app.use('*', (req, res) => {
+  res.status(404).json({ message: res.statusMessage ?? 'This page does not exist' })
 })
 
-export {app as default}
+export { app as default }
