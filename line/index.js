@@ -48,7 +48,7 @@ router.route('/:lineId')
     }
   })
 
-// Example: Refactored POST route
+// Add a new line to an existing Page, save it in RERUM if it has body content.
 router.route('/')
   .post(auth0Middleware(), async (req, res) => {
     try {
