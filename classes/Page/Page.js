@@ -7,7 +7,7 @@ export default class Page {
     #tinyAction = 'create'
     #setRerumId() {
         if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }
@@ -22,18 +22,18 @@ export default class Page {
      * @param {String} target The uri of the targeted Canvas.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target }) {
+    constructor(layerId, { id, label, target, items = [] }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId })
+        Object.assign(this, { id, label, target, partOf: layerId, items })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -47,7 +47,7 @@ export default class Page {
             canvas = {id : canvas}
         }
         
-        const id = lines.length
+        const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
 
@@ -59,7 +59,7 @@ export default class Page {
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 partOf: layerId,
-                items: lines,
+                items,
                 prev,
                 next
             }
@@ -76,7 +76,7 @@ export default class Page {
             label: { "none": [this.label] },
             target: this.target,
             partOf: this.partOf,
-            items: this.data.items ?? [],
+            items: this.items ?? [],
             prev: this.prev ?? null,
             next: this.next ?? null
         }
@@ -105,7 +105,8 @@ export default class Page {
      */
     async update() {
         if (this.#tinyAction === 'update' || this.items.length) {
-            await this.#setRerumId().#savePageToRerum()
+            this.#setRerumId()
+            await this.#savePageToRerum()
         }
         return this.#updatePageForProject()
     }
@@ -124,7 +125,8 @@ export default class Page {
         return {
             id: this.id,
             label: this.label,
-            target: this.target
+            target: this.target,
+            items: this.items ?? []
         }
     }
 
