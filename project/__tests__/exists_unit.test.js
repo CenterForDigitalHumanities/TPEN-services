@@ -55,16 +55,20 @@ describe("Member and collaborator endpoint availability", () => {
 describe("Custom roles endpoint availability", () => {
   test("responds to /project/:projectId/addCustomRoles, setCustomRoles, removeCustomRoles", () => {
     const stack = app._router.stack
-    expect(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes("/addCustomRoles"))).toBe(true)
-    expect(stack.some(middleware => middleware.route && middleware.route.methods.put && middleware.regexp.toString().includes("/setCustomRoles"))).toBe(true)
-    expect(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes("/removeCustomRoles"))).toBe(true)
+    const addCustomRolesPattern = "/project/([^/]+?)/addCustomRoles"
+    const setCustomRolesPattern = "/project/([^/]+?)/setCustomRoles"
+    const removeCustomRolesPattern = "/project/([^/]+?)/removeCustomRoles"
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes(addCustomRolesPattern))).toBe(true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.put && middleware.regexp.toString().includes(setCustomRolesPattern))).toBe(true)
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.post && middleware.regexp.toString().includes(removeCustomRolesPattern))).toBe(true)
   })
 })
 
 describe("Project metadata endpoint availability", () => {
   test("responds to /project/:projectId/metadata", () => {
     const stack = app._router.stack
-    expect(stack.some(middleware => middleware.route && middleware.route.methods.put && middleware.regexp.toString().includes("/metadata"))).toBe(true)
+    const metadataPattern = "/project/([^/]+?)/metadata"
+    expect(stack.some(middleware => middleware.route && middleware.route.methods.put && middleware.regexp.toString().includes(metadataPattern))).toBe(true)
   })
 })
 
