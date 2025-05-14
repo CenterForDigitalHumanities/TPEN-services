@@ -1,9 +1,8 @@
 import dbDriver from "../../database/driver.js"
+import Page from "../Page/Page.js"
 
 const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
-
-import Page from "../Page/Page.js"
 
 export default class Layer {
     #tinyAction = 'create'

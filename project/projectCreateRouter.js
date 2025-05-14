@@ -1,5 +1,5 @@
 import express from "express"
-import { validateID, respondWithError } from "../utilities/shared.js"
+import { respondWithError } from "../utilities/shared.js"
 import auth0Middleware from "../auth/index.js"
 import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
