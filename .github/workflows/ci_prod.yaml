@@ -50,5 +50,5 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run E2Etests
+          node --test "**/__tests__/*.js"
           

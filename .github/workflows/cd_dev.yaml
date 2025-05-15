@@ -47,10 +47,10 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - name: Install dependencies and run the test
+      - name: Install dependencies and run unit tests (no DB)
         run: |
           npm install
-          npm run allTests
+          node --test "**/functionality_unit.test.js" "**/isDefaultRole.test.js"
   deploy:
     needs:
       - test

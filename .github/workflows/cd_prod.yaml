@@ -47,10 +47,10 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - name: Install dependencies and run the test
+      - name: Install dependencies and run all tests (with DB)
         run: |
           npm install
-          npm run allTests
+          node --test "**/__tests__/*.js"
   deploy:
     needs:
       - test
