@@ -1,14 +1,14 @@
-import {validateID} from '../../utilities/shared.js'
+import { validateID } from '../../utilities/shared.js'
+import { test, describe } from 'node:test'
+import assert from 'node:assert'
 
-// These test the pieces of functionality in the route that make it work.
 describe('Testing /user/:id helper functions) #testThis', () => {
-
-  it('returns false for invalid ID and for no ID', () => {
-    expect(validateID()).toBe(false)
-    expect(validateID("jkl")).toBe(false)
+  test('returns false for invalid ID and for no ID', () => {
+    assert.strictEqual(validateID(), false)
+    assert.strictEqual(validateID('jkl'), false)
   })
- 
-  it("returns true for valid id",()=>{
-    expect(validateID(123)).toBe(true)
-  }) 
+
+  test('returns true for valid id', () => {
+    assert.strictEqual(validateID(123), true)
+  })
 })

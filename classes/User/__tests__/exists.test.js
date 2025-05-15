@@ -1,17 +1,19 @@
-import User from "../User.js"
+import User from "../User.js";
+import { test } from "node:test";
+import assert from "node:assert";
 
-const user = new User() 
+const user = new User();
 
-describe("user Class appears and behaves as expected #user_exists_test #user_class", () => {
-  it("Imports user", () => {
-    expect(User.constructor).toBeInstanceOf(Function)
-  }) 
+test("user Class appears and behaves as expected #user_exists_test #user_class", (t) => {
+  t.test("Imports user", () => {
+    assert.strictEqual(typeof User.constructor, "function");
+  });
 
-  it("Has required methods", () => {
-    expect(user.getSelf).toBeInstanceOf(Function)
-    expect(user.getProjects).toBeInstanceOf(Function) 
-    expect(user.getPublicInfo).toBeInstanceOf(Function)
-    expect(user.getByEmail).toBeInstanceOf(Function)
-    expect(User.create).toBeInstanceOf(Function)
-  }) 
-})
+  t.test("Has required methods", () => {
+    assert.strictEqual(typeof user.getSelf, "function");
+    assert.strictEqual(typeof user.getProjects, "function");
+    assert.strictEqual(typeof user.getPublicInfo, "function");
+    assert.strictEqual(typeof user.getByEmail, "function");
+    assert.strictEqual(typeof User.create, "function");
+  });
+});
