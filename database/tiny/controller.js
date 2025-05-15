@@ -11,18 +11,27 @@ import { ObjectId } from 'mongodb'
 let storedEnv = dotenv.config()
 let err_out = Object.assign(new Error(), {"status":123, "message":"N/A", "_dbaction":"N/A"})
 
+// Singleton pattern for Tiny API controller (for symmetry, though no real connection)
+let sharedInstance = null
+
 class DatabaseController {
 
     /** Basic constructor to establish constant class properties */
     constructor() {
-        this.URLS = {}
-        this.URLS.CREATE = process.env.TINYPEN+"create"
-        this.URLS.UPDATE = process.env.TINYPEN+"update"
-        this.URLS.OVERWRITE = process.env.TINYPEN+"overwrite"
-        this.URLS.QUERY = process.env.TINYPEN+"query"
-        this.URLS.DELETE = process.env.TINYPEN+"delete"
-        console.log("TINY API established")
-        console.log(this.URLS)
+        if (!sharedInstance) {
+            sharedInstance = this
+            this.URLS = {}
+            this.URLS.CREATE = process.env.TINYPEN+"create"
+            this.URLS.UPDATE = process.env.TINYPEN+"update"
+            this.URLS.OVERWRITE = process.env.TINYPEN+"overwrite"
+            this.URLS.QUERY = process.env.TINYPEN+"query"
+            this.URLS.DELETE = process.env.TINYPEN+"delete"
+            console.log("TINY API established")
+            console.log(this.URLS)
+        } else {
+            // Copy URLs from singleton
+            this.URLS = sharedInstance.URLS
+        }
     }
 
     /** 

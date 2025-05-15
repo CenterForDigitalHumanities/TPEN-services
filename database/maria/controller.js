@@ -10,15 +10,18 @@ import mariadb from 'mariadb'
 import dotenv from 'dotenv'
 let storedEnv = dotenv.config()
 
+// Singleton pattern for MariaDB pool and connection
+let sharedClient = null
+let sharedConn = null
+
 class DatabaseController {
     constructor(connect=false) {
-        // try to establish the client and connect
         if(connect) this.connect()
     }
 
     async connect() {
-        try{
-            this.client = mariadb.createPool({
+        if (!sharedClient) {
+            sharedClient = mariadb.createPool({
                 host: process.env.MARIADB, 
                 user: process.env.MARIADBUSER, 
                 password: process.env.MARIADBPASSWORD,
@@ -26,55 +29,54 @@ class DatabaseController {
                 connectionLimit: 55
             })
         }
-        catch(err){
-            console.error(err)
-            throw new Error(`Cannot establish MariaDB client to connect to.`)
+        if (!sharedConn) {
+            try {
+                sharedConn = await sharedClient.getConnection()
+                console.log("MariaDB Connection Established")
+                console.log(process.env.MARIADB)
+            } catch (err) {
+                sharedConn = null
+                console.error("MariaDB Connection Failed")
+                console.error(process.env.MARIADB)
+                console.error(err)
+                throw err
+            }
         }
-        try {
-            this.conn = await this.client.getConnection()
-            console.log("MariaDB Connection Established")
-            console.log(process.env.MARIADB)
-            return
-        } 
-        catch (err) {
-            this.conn = null
-            console.error("MariaDB Connection Failed")
-            console.error(process.env.MARIADB)
-            console.error(err)
-            throw err
-        } 
+        this.client = sharedClient
+        this.conn = sharedConn
+        return
     }
 
     async close() {
-        await this.conn.end()
+        if (sharedConn) {
+            await sharedConn.end()
+            sharedConn = null
+            console.log("MariaDB Connection Closed")
+        }
         return
     }
 
     async create(table, document) {
-        // TODO insert statement
-        //const result = await this.conn.query(`INSERT INTO ${table} value (${document})`)
-        const result = {"hello" : "Bryan"}
+        // ...implementation or stub...
+        const result = { hello: "Bryan" }
         return result
     }
 
     async read(table, params) {
-        // TODOD select statement
-        //const result = await this.conn.query(`SELECT * FROM ${table} WHERE ${params}`)
-        const result = {"hello" : "Bryan"}
+        // ...implementation or stub...
+        const result = { hello: "Bryan" }
         return result
     }
 
     async update(table, document, matchParams) {
-        // TODO update statement
-        //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`)
-        const result = {"hello" : "Bryan"}
+        // ...implementation or stub...
+        const result = { hello: "Bryan" }
         return result
     }
 
     async remove(table, matchParams) {
-        // TODO update statement
-        //const result = await this.conn.query(`UPDATE ${table} SET (${document}) WHERE $matchParams`)
-        const result = {"ok" : "deleted"}
+        // ...implementation or stub...
+        const result = { ok: "deleted" }
         return result
     }
 

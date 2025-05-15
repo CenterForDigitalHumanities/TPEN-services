@@ -2,6 +2,7 @@ import express from "express"
 import request from "supertest"
 import auth0Middleware from "../index.js"
 import { ObjectId } from "mongodb"
+import { test, expect, describe } from "node:test"
 
 process.env.AUDIENCE = "provide audience to test"
 // this test has a had time reading env directly. add

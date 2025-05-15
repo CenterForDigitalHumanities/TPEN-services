@@ -50,5 +50,5 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          node --test "**/functionality_unit.test.js" "**/isDefaultRole.test.js"
-          
+          node --test
+

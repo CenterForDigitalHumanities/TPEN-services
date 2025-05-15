@@ -6,7 +6,7 @@
  * https://github.com/thehabes
  */
 
-import {MongoClient, ObjectId} from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
 import dotenv from "dotenv"
 
 let storedEnv = dotenv.config()
@@ -16,6 +16,9 @@ let err_out = Object.assign(new Error(), {
   _dbaction: "N/A"
 })
 
+// Singleton MongoClient and DB
+let sharedClient = null
+let sharedDb = null
 
 class DatabaseController {
   /**
@@ -30,19 +33,16 @@ class DatabaseController {
    * Set the client for the controller and open a connection
    * */
   async connect() {
-    try {
-      this.client = new MongoClient(process.env.MONGODB)
-      this.db = this.client.db(process.env.MONGODBNAME)
-      await this.client.connect()
+    if (!sharedClient) {
+      sharedClient = new MongoClient(process.env.MONGODB)
+      await sharedClient.connect()
+      sharedDb = sharedClient.db(process.env.MONGODBNAME)
       console.log("MongoDB Connection Successful")
       console.log(process.env.MONGODB)
-      return
-    } catch (err) {
-      console.error("MongoDB Connection Failed")
-      console.error(process.env.MONGODB)
-      console.error(err)
-      throw err
     }
+    this.client = sharedClient
+    this.db = sharedDb
+    return
   }
 
   /**
@@ -86,8 +86,12 @@ class DatabaseController {
 
   /** Close the connection with the mongo client */
   async close() {
-    await this.client.close()
-    console.log("Mongo controller client has been closed")
+    if (sharedClient) {
+      await sharedClient.close()
+      sharedClient = null
+      sharedDb = null
+      console.log("Mongo controller client has been closed")
+    }
     return
   }
 
@@ -110,7 +114,7 @@ class DatabaseController {
   async connected() {
     // Send a ping to confirm a successful connection
     try {
-      let result = await this.db.command({ping: 1}).catch((_err) => {
+      let result = await this.db.command({ ping: 1 }).catch((_err) => {
         return false
       })
       result = result.ok ? true : false
@@ -129,13 +133,13 @@ class DatabaseController {
         err_out.status = 400
         throw err_out
       }
-      
+
       if (!collection) {
         err_out.message = `Collection is required for find operation`
         err_out.status = 400
         throw err_out
       }
-      
+
       let result = await this.db.collection(collection).find(query).toArray()
       return result
     } catch (err) {
@@ -155,13 +159,13 @@ class DatabaseController {
         err_out.status = 400
         throw err_out
       }
-      
+
       if (!collection) {
         err_out.message = `Collection is required for findOne operation`
         err_out.status = 400
         throw err_out
       }
-      
+
       let result = await this.db.collection(collection).findOne(query)
       return result
     } catch (err) {
@@ -185,14 +189,14 @@ class DatabaseController {
         err_out.status = 400
         throw err_out
       }
-      
+
       data._id ??= this.reserveId()
       const result = await this.db.collection(collection).insertOne(data)
-      
+
       if (result.insertedId) {
         return data
       }
-      
+
       err_out.message = `Document was not inserted into the database`
       err_out.status = 500
       throw err_out
@@ -218,25 +222,25 @@ class DatabaseController {
         err_out.status = 400
         throw err_out
       }
-      
+
       if (!collection) {
         err_out.message = `Collection is required for update operation.`
         err_out.status = 400
         throw err_out
       }
-      
+
       const obj_id = data_id.split("/").pop()
-      const filter = {_id: data_id}
+      const filter = { _id: data_id }
       const result = await this.db
         .collection(collection)
         .replaceOne(filter, data)
-        
+
       if (result?.matchedCount === 0) {
         err_out.message = `id '${obj_id}' Not Found`
         err_out.status = 404
         throw err_out
       }
-      
+
       if (result?.modifiedCount >= 0) {
         return data
       } else {
@@ -265,17 +269,17 @@ class DatabaseController {
         err_out.status = 400
         throw err_out
       }
-      
+
       const obj_id = id.split("/").pop()
-      const filter = {_id: obj_id}
+      const filter = { _id: obj_id }
       const result = await this.db.collection(collection).deleteOne(filter)
-      
+
       if (result?.deletedCount === 0) {
         err_out.message = `id '${obj_id}' Not Found`
         err_out.status = 404
         throw err_out
       }
-      
+
       return result
     } catch (err) {
       // Specifically account for unexpected mongo things.
@@ -290,7 +294,7 @@ class DatabaseController {
    * Get by ID. We need to decide about '@id', 'id', '_id', and http/s
    */
   async getById(_id, collection) {
-    return this.findOne({_id}, collection)
+    return this.findOne({ _id }, collection)
   }
 }
 

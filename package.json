@@ -21,7 +21,7 @@
    "scripts": {
       "start": "node ./bin/tpen3_services.js",
       "dev": "nodemon ./bin/tpen3_services.js",
-      "test": "node --test \"**/__tests__/*.js\""
+      "test": "node --test"
    },
    "dependencies": {
       "@iiif/helpers": "^1.3.1",

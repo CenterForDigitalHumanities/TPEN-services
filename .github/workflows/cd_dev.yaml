@@ -50,7 +50,7 @@ jobs:
       - name: Install dependencies and run unit tests (no DB)
         run: |
           npm install
-          node --test "**/functionality_unit.test.js" "**/isDefaultRole.test.js"
+          node --test "**/*.test.js"
   deploy:
     needs:
       - test
