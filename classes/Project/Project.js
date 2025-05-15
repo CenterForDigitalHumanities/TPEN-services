@@ -168,6 +168,60 @@ export default class Project {
  *
  * @throws {Error} Throws an error if the update operation fails.
  */
+
+  async updateTools(selectedValues) {
+    await this.#load()
+    // Guard invalid input
+    if (!Array.isArray(selectedValues)) return
+    // Guard existing data in corrupted state
+    if(!this.data?.tools) this.data.tools = []
+    
+    this.data.tools = this.data.tools.map(tool => {
+      const match = selectedValues.find(t => {
+        if (/[<>{}()[\];'"`]|script|on\w+=|javascript:/i.test(t.value)) 
+          throw new Error("Invalid value") 
+        t.value === tool.value})
+      return {
+        ...tool,
+        state: match ? match.state : tool.state
+      }
+    })    
+  
+    return await this.update()
+  }  
+
+  async addTools(tools) {
+
+    // Guard invalid input
+    if (!Array.isArray(tools)) return
+
+    await this.#load()
+    // Guard existing data in corrupted state
+    if(!this.data?.tools) this.data.tools = []
+
+    for (let newTool of tools) {
+      const name = newTool.name.trim()
+      const value = newTool.value.trim()
+      const url = newTool.url.trim()
+      const state = newTool.state
+
+      const containsCode = /[<>{}()[\];'"`]|script|on\w+=|javascript:/i.test(name) || /[<>{}()[\];'"`]|script|on\w+=|javascript:/i.test(value)
+      if (containsCode) 
+        throw new Error("Invalid name or value")
+
+      const isDuplicate = this.data.tools.some(
+        tool => tool.name === name || tool.url === url
+      )
+
+      if (isDuplicate) {
+        throw new Error("Tool already exists")
+      }
+
+      this.data.tools.push({ name, value, url, state })
+    }
+    return await this.update()
+  }  
+
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
     return await this.update()
