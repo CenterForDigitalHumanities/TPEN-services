@@ -80,11 +80,10 @@ class DatabaseController {
      * @param id the string to check
      * @return boolean
      */
-    isValidId(id) {
-        // Expect a String, Integer, or Hexstring-ish
+    static isValidId(id) {
         try {
             if (ObjectId.isValid(id)) { return true }
-            const intTest = Number(id)
+            let intTest = Number(id)
             if (!isNaN(intTest) && ObjectId.isValid(intTest)) { return true }
             if (ObjectId.isValid(id.padStart(24, "0"))) { return true }
         } catch(err) {

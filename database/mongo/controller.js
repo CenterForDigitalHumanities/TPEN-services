@@ -50,8 +50,7 @@ class DatabaseController {
    * @param id the string to check
    * @return boolean
    */
-  isValidId(id) {
-    // Expect a String, Integer, or Hexstring-ish
+  static isValidId(id) {
     try {
       if (ObjectId.isValid(id)) {
         return true
@@ -63,7 +62,6 @@ class DatabaseController {
       if (ObjectId.isValid(id.padStart(24, "0"))) {
         return true
       }
-      // possible slug string
       if (typeof id === "string" && id.length > 5) {
         return true
       }

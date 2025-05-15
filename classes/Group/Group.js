@@ -1,15 +1,17 @@
 import dbDriver from "../../database/driver.js"
-const database = new dbDriver("mongo")
+
+export const defaultDatabase = ()=>new dbDriver("mongo")
 
 export default class Group {
-    constructor(_id = database.reserveId()) {
+    constructor(_id = defaultDatabase().reserveId(),database) {
         this._id = _id
         this.data = { _id }
         this.data.members = {}
+        this.database = database ?? defaultDatabase()
     }
 
     async #loadFromDB() {
-        this.data = await database.getById(this._id, process.env.TPENGROUPS)
+        this.data = await this.database.getById(this._id, process.env.TPENGROUPS)
         return this
     }
 
@@ -229,12 +231,12 @@ export default class Group {
 
     async save() {
         await this.validateGroup()
-        return database.save(this.data, process.env.TPENGROUPS)
+        return this.database.save(this.data, process.env.TPENGROUPS)
     }
 
     async update() {
         await this.validateGroup()
-        return database.update(this.data, process.env.TPENGROUPS)
+        return this.database.update(this.data, process.env.TPENGROUPS)
     }
 
     async validateGroup() {

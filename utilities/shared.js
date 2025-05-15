@@ -27,7 +27,7 @@ export function isValidJSON(input=""){
  */ 
 export function validateID(id, type="mongo"){
    if(type == "mongo"){
-      return new DatabaseController().isValidId(id)
+      return DatabaseController.isValidId(id)
    }else{
       if(!isNaN(id)){
       try{

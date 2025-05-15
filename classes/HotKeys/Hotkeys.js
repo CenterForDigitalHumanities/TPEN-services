@@ -1,6 +1,6 @@
 import dbDriver from "../../database/driver.js"
-const database = new dbDriver("mongo")
 
+export const defaultDatabase = ()=>new dbDriver("mongo")
 
 /**
  * Class representing a hotkey.
@@ -8,7 +8,7 @@ const database = new dbDriver("mongo")
  * @param {String} _id - The ID of the hotkey matches the id of the Project it belongs to.
  */
 export default class Hotkeys {
-    constructor(_id, symbols = []) {
+    constructor(_id, symbols = [],database = defaultDatabase()) {
         if (!_id) {
             throw { status: 400, message: "_id is required" }
         }

@@ -1,7 +1,8 @@
 import Group from "../Group.js"
-import dbDriver from "../../../database/driver.js"
 import { test, describe, beforeEach } from 'node:test'
 import assert from 'node:assert'
+import dotenv from 'dotenv'
+dotenv.config()
 
 // Manual mock for dbDriver
 class MockDbDriver {
@@ -16,7 +17,7 @@ describe("Group Class", () => {
 
   beforeEach(() => {
     databaseMock = new MockDbDriver("mongo")
-    group = new Group()
+    group = new Group(null, databaseMock)
     group.members = {
       member1: { roles: ["role1"] },
       member2: { roles: ["role2"] },
@@ -70,7 +71,7 @@ describe("Group Class", () => {
   test("should create a new group", async () => {
     // Use the mock driver
     const payload = { label: "Test Group" }
-    const result = await Group.createNewGroup("01234567890123456789abcd", payload)
+    const result = await Group.createNewGroup("01234567890123456789abcd", payload, databaseMock)
     assert.strictEqual(result.creator, "01234567890123456789abcd")
     assert.strictEqual(result.label, "Test Group")
     assert.ok(result.members['01234567890123456789abcd'])

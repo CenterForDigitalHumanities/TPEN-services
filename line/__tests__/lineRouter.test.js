@@ -1,6 +1,6 @@
 import request from 'supertest'
 import app from '../../app.js'
-import { Line } from '../../classes/Line/Line.js'
+import Line from '../../classes/Line/Line.js'
 import { test } from 'node:test'
 import assert from 'node:assert'
 

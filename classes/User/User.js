@@ -1,9 +1,10 @@
 import dbDriver from "../../database/driver.js"
 
-const database = new dbDriver("mongo")
+export const defaultDatabase = () => new dbDriver("mongo")
 export default class User {
-  constructor(userId = database.reserveId()) {
+  constructor(userId = defaultDatabase.reserveId(), database = defaultDatabase()) {
     this._id = userId
+    this.database = database
   }
 
   /**
@@ -12,9 +13,7 @@ export default class User {
    * @throws {Error} any database error
    */
   async #loadFromDB() {
-    // load user from database
-    // TODO: possibly delete anything reserved for TPEN only
-    this.data = await database.getById(this._id, "users")
+    this.data = await this.database.getById(this._id, "users")
     return this
   }
 
@@ -29,23 +28,19 @@ export default class User {
   }
   
   async getPublicInfo() {
-    // returns user's public info 
     if (this.data) {
-      return { _id: this._id, ...this.data.profile };
+      return { _id: this._id, ...this.data.profile }
     }
-  
-    const user = await database.getById(this._id, "users");
+    const user = await this.database.getById(this._id, "users")
     if (!user) {
-      throw new Error(`User with _id ${this._id} not found`);
+      throw new Error(`User with _id ${this._id} not found`)
     }
-  
-    return { _id: user._id, ...user.profile };
+    return { _id: user._id, ...user.profile }
   }
   
   async getByEmail(email) {
     if (!email) throw new Error("No email provided")
-
-    return database
+    return this.database
       .findOne({ email }, "users")
       .then((resp) => {
         if (resp instanceof Error) {
@@ -58,8 +53,7 @@ export default class User {
       })
   }
 
-  static async create(data) {
-    // POST requests
+  static async create(data, database = defaultDatabase) {
     if (!data) {
       throw {
         status: 400,
@@ -82,13 +76,12 @@ export default class User {
         ?? data.fullName
         ?? `User ${new Date().toLocaleDateString()}`
     }
-    const user = new User()
+    const user = new User(undefined, database)
     Object.assign(user, data)
     return user.save()
   }
 
   async save() {
-    // validate before save
     if (!this._id) {
       throw new Error("User must have an _id")
     }
@@ -98,8 +91,7 @@ export default class User {
     if (!this.data.profile?.displayName) {
       throw new Error("User must have a profile with a displayName")
     }
-    // save user to database
-    return database.save({ _id: this._id, ...this.data }, "users")
+    return this.database.save({ _id: this._id, ...this.data }, "users")
   }
 
   /**
@@ -113,36 +105,33 @@ export default class User {
    * @returns project object
    */
 
-  async update(){
-    return database.update(this.data, "users")
+  async update() {
+    return this.database.update(this.data, "users")
   }
 
   async getProjects() {
-    return database.controller
+    return this.database.controller
       .db.collection('projects').aggregate([
-        // Step 1: Lookup the related group details
         {
           $lookup: {
             from: "groups",
-            localField: "group",   // Field in `projects` referencing `_id` in `groups`
+            localField: "group",
             foreignField: "_id",
             as: "groupInfo"
           }
         },
-        // Step 2: Filter for projects where the user is in the group's members
         {
           $match: {
             "groupInfo.members": { $exists: true },
             [`groupInfo.members.${this._id}`]: { $exists: true }
           }
         },
-        // Step 3: Project the required fields including the user's roles
         {
           $project: {
-            _id: 1,                        // Project ID
-            title: 1,                      // Project title
-            label: 1,                      // Project label
-            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
+            _id: 1,
+            title: 1,
+            label: 1,
+            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }
           }
         }
       ]).toArray()
@@ -153,12 +142,12 @@ export default class User {
         return userProjects
       })
   }
+
   async addPublicInfo(data) {
-    // add or modify public info
     if (!data) return
     const previousUser = this.data
     const publicProfile = { ...previousUser.profile, ...data }
-    const updatedUser = await database.update({
+    const updatedUser = await this.database.update({
       ...previousUser,
       profile: publicProfile
     }, "User")

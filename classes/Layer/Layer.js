@@ -1,7 +1,7 @@
 import dbDriver from "../../database/driver.js"
 
-const database = new dbDriver("mongo")
-const databaseTiny = new dbDriver("tiny")
+export const defaultDatabase = new dbDriver("tiny")
+const databaseTiny = defaultDatabase
 
 import Page from "../Page/Page.js"
 

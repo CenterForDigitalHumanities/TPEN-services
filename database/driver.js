@@ -181,8 +181,10 @@ class dbDriver {
      * @param id The id to check.
      * @return boolean
      */
-    isValidId(id) {
-        return this.controller.isValidId(id)
+    static isValidId(id) {
+        return this.controller?.constructor.isValidId
+            ? this.controller.constructor.isValidId(id)
+            : false
     }
 
     /**
