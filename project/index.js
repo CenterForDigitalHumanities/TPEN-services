@@ -1154,7 +1154,19 @@ router.route("/:projectId/tools").post(async (req, res) => {
   }
 
   if (!Array.isArray(tools) || tools.length === 0) {
-    return respondWithError(res, 400, "At least one tool is required");
+    return respondWithError(res, 400, "At least one tool is required")
+  }
+
+  if (!tools.every(tool => tool.name && tool.value && tool.url && tool.state)) {
+    return respondWithError(res, 400, "All tools must have a name, value, URL, and state")  
+  }
+
+  if (!tools.every(tool => typeof tool.name === "string" && typeof tool.value === "string" && typeof tool.url === "string" && typeof tool.state === "boolean")) {
+    return respondWithError(res, 400, "All tools must have a valid name, value, URL, and state")
+  }
+
+  if (!tools.every(tool => tool.url.startsWith("https://") || tool.url.startsWith("http://"))) {
+    return respondWithError(res, 400, "All tools must have a valid URL")
   }
 
   try {
@@ -1165,12 +1177,7 @@ router.route("/:projectId/tools").post(async (req, res) => {
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message.toString())
   }
-}).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
-})
-
-//Update tools in the Project
-router.route("/:projectId/tools").put(async (req, res) => {
+}).put(async (req, res) => {
   const { projectId } = req.params
   const tools = req.body
 
@@ -1179,7 +1186,15 @@ router.route("/:projectId/tools").put(async (req, res) => {
   }
 
   if (!Array.isArray(tools) || tools.length === 0) {
-    return respondWithError(res, 400, "At least one tool is required");
+    return respondWithError(res, 400, "At least one tool is required")
+  }
+
+  if (!tools.every(tool => tool.value && tool.state)) {
+    return respondWithError(res, 400, "All tools must have a value and state")  
+  }
+
+  if (!tools.every(tool => typeof tool.value === "string" && typeof tool.state === "boolean")) {
+    return respondWithError(res, 400, "All tools must have a valid value and state")
   }
 
   try {

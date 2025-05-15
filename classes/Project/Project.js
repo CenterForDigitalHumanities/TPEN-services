@@ -188,8 +188,30 @@ export default class Project {
   }  
 
   async addTools(tools) {
+
+    // Guard invalid input
+    if (!Array.isArray(tools)) return
+
     await this.#load()
-    this.data.tools = [...this.data.tools, ...tools]
+    // Guard existing data in corrupted state
+    if(!this.data?.tools) this.data.tools = []
+
+    for (let newTool of tools) {
+      const name = encodeURIComponent(newTool.name.trim())
+      const value = encodeURIComponent(newTool.value.trim())
+      const url = encodeURI(newTool.url.trim())
+      const state = newTool.state
+
+      const isDuplicate = this.data.tools.some(
+        tool => tool.name === name || tool.url === url
+      )
+
+      if (isDuplicate) {
+        continue
+      }
+
+      this.data.tools.push({ name, value, url, state })
+    }
     return await this.update()
   }  
 
