@@ -1157,7 +1157,7 @@ router.route("/:projectId/tools").post(async (req, res) => {
     return respondWithError(res, 400, "At least one tool is required")
   }
 
-  if (!tools.every(tool => tool.name && tool.value && tool.url && tool.state)) {
+  if (tools.every(tool => tool.name === "" || tool.value === "" || tool.url === "" || tool.state === undefined)) {
     return respondWithError(res, 400, "All tools must have a name, value, URL, and state")  
   }
 
@@ -1189,7 +1189,7 @@ router.route("/:projectId/tools").post(async (req, res) => {
     return respondWithError(res, 400, "At least one tool is required")
   }
 
-  if (!tools.every(tool => tool.value && tool.state)) {
+  if (tools.every(tool => tool.value === "" || tool.state === undefined)) {
     return respondWithError(res, 400, "All tools must have a value and state")  
   }
 
