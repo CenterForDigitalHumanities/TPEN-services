@@ -68,5 +68,5 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run unitTests
+          npm run test
           
