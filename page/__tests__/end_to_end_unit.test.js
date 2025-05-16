@@ -14,10 +14,10 @@ describe('page endpoint end to end unit test (spinning up the endpoint and using
       expect(res.body).toBeTruthy()
   })
 
-  it('PUT instead of GET. That status should be 405 with a message.', async () => {
+  it('PUT unauthed. That status should be 401 with a message.', async () => {
     const res = await request(routeTester)
       .put('/dummyId')
-      expect(res.statusCode).toBe(405)
+      expect(res.statusCode).toBe(401)
       expect(res.body).toBeTruthy()
   })
 

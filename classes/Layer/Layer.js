@@ -82,7 +82,7 @@ export default class Layer {
 
     // Private Methods
     #setRerumId() {
-        if (this.#tinyAction === 'create') {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
