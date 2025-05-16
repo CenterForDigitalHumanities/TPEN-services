@@ -89,4 +89,12 @@ export const getProjectById = async (projectId, res) => {
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    layer.pages[pageIndex] = page.asProjectPage()
    await project.update()
+   return project
  }
+
+ // Get a Layer that contains a PageId
+   export const getLayerContainingPage = (project, pageId) => {
+      return project.data.layers.find(layer =>
+      layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
+      )
+   }
