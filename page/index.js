@@ -6,6 +6,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Page from '../classes/Page/Page.js'
+import Line from '../classes/Line/Line.js'
 // import lineRouter from '../line/index.js'
 
 router.use(
@@ -40,6 +41,47 @@ router.route('/:pageId')
   } catch (error) {
     return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
   }
+  })
+  .put(async (req, res) => {
+    const { projectId, pageId } = req.params
+    const update = req.body
+    if (!update) {
+      utils.respondWithError(res, 400, 'No update data provided.')
+      return
+    }
+    const project = await Project.getById(projectId)
+    if (!project) {
+      utils.respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+      return
+    }
+
+    try {
+      // Find the page object
+      const pageObject = await findPageById(pageId, projectId)
+      if (!pageObject) {
+        utils.respondWithError(res, 404, 'No page found with that ID.')
+        return
+      }
+      // Only update top-level properties that are present in the request
+      Object.keys(update ?? {}).forEach(key => {
+        if (key in pageObject) {
+          pageObject[key] = update[key]
+        }
+      })
+      pageObject.items = (pageObject.items ?? []).map(async item => {
+        const id = item?.id?.startsWith('http') ? item.id : undefined
+        const line = id ? new Line({ ...item, id }) : Line.build(projectId, pageId, item)
+        item = await line.update()
+        return { item }
+      })
+      await Page.update(pageObject)
+      
+      await project.update()
+      
+      res.status(200).json(pageObject)
+    } catch (error) {
+      return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
   })
   .all((req, res, next) => {
     utils.respondWithError(res, 405, 'Improper request method, please use GET.')
