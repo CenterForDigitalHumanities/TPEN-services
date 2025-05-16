@@ -8,6 +8,7 @@ dotenv.config()
 class MockDbDriver {
   constructor(type) {}
   reserveId() { return "01234567890123456789abcd" }
+  getById() { return Promise.resolve({}) }
   save() { return Promise.resolve("newGroup") }
 }
 
