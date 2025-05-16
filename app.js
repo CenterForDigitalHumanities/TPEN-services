@@ -20,6 +20,7 @@ import logger from 'morgan'
 import indexRouter from './index.js'
 import manifestRouter from './manifest/index.js'
 import projectRouter from './project/index.js'
+import pageRouter from './page/index.js'
 import lineRouter from './line/index.js'
 import userProfileRouter from './userProfile/index.js'
 import privateProfileRouter from './userProfile/privateProfile.js'
@@ -54,6 +55,7 @@ app.all('*', (req, res, next) => {
 app.use('/', indexRouter)
 app.use('/manifest', manifestRouter)
 app.use('/project/:projectId/page/:pageId/line', lineRouter) 
+app.use('/project/:projectId/page', pageRouter) 
 app.use('/project', projectRouter)
 app.use('/user', userProfileRouter)
 app.use('/my', privateProfileRouter)

@@ -1,13 +1,12 @@
 import express from 'express'
-import { respondWithError, getLayerContainingPage, updatePageAndProject } from '../utilities/shared.js'
+import auth0Middleware from '../auth/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
-import auth0Middleware from '../auth/index.js'
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Page from '../classes/Page/Page.js'
 import Line from '../classes/Line/Line.js'
-// import lineRouter from '../line/index.js'
+import { respondWithError, getLayerContainingPage, updatePageAndProject } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -114,38 +113,3 @@ router.route('/:pageId')
 // router.use('/:pageId/line', lineRouter)
 
 export default router
-
-export async function findPageById(pageId, projectId) {
-  if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
-    return fetch(pageId).then(res => res.json())
-  }
-  const projectData = (await Project.getById(projectId))?.data
-  if (!projectData) {
-    const error = new Error(`Project with ID '${projectId}' not found`)
-    error.status = 404
-    throw error
-  }
-  const layerContainingPage = projectData.layers.find(layer =>
-    layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
-  )
-
-  if (!layerContainingPage) {
-    const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
-    error.status = 404
-    throw error
-  }
-
-  const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
-
-  if (pageIndex < 0) {
-    const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
-    error.status = 404
-    throw error
-  }
-
-  const page = layerContainingPage.pages[pageIndex]
-  page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
-  page.next = layerContainingPage.pages[pageIndex + 1] ?? null
-
-  return new Page(layerContainingPage.id, page)
-}

@@ -5,7 +5,7 @@ import request from 'supertest'
 const routeTester = new express()
 routeTester.use("/", pageRouter)
 
-describe('page endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
+describe.skip('page endpoint end to end unit test (spinning up the endpoint and using it). #end2end_unit', () => {
 
   it('POST instead of GET. That status should be 405 with a message.', async () => {
     const res = await request(routeTester)

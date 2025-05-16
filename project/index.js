@@ -25,6 +25,6 @@ router.use(metadataRouter)
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
-router.use('/:projectId/page', pageRouter)
+// router.use('/:projectId/page', pageRouter)
 
 export default router
