@@ -3,8 +3,6 @@ import Group from "../Group/Group.js"
 import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
 import dbDriver from "../../database/driver.js"
-import fs from "fs"
-import path from "path"
 import vault from "../../utilities/vault.js"
 
 const database = new dbDriver("mongo")
@@ -21,6 +19,79 @@ export default class ProjectFactory {
    * @param {*} manifest : The manifest object to be processed
    * @returns object of project data
    */
+
+  static tools = [
+    { 
+      "name":"Page Tools",
+      "value":"page",
+      "state": false
+    },
+    {
+      "name":"Inspect",
+      "value":"inspector",
+      "state": false
+    },
+    {
+      "name":"Special Characters", 
+      "value":"characters",
+      "state": false
+    },
+    {
+      "name":"XML Tags", 
+      "value":"xml",
+      "state": false
+    },
+    {
+      "name":"View Full Page", 
+      "value":"fullpage",
+      "state": false
+    },
+    {
+      "name":"History Tool", 
+      "value":"history",
+      "state": false
+    },
+    {
+      "name":"Preview Tool", 
+      "value":"preview",
+      "state": false
+    },
+    {
+      "name":"Parsing Adjustment", 
+      "value":"parsing",
+      "state": false
+    },
+    {
+      "name":"Compare Pages", 
+      "value":"compare",
+      "state": false
+    },
+    {
+      "name": "Cappelli's Abbreviation",
+      "value": "cappelli",
+      "url": "https://centerfordigitalhumanities.github.io/cappelli/",
+      "state": false
+    },
+    {
+      "name": "Enigma",
+      "value": "enigma",
+      "url": "https://ciham-digital.huma-num.fr/enigma/",
+      "state": false
+    },
+    {
+      "name": "Latin Dictionary",
+      "value": "latin",
+      "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
+      "state": false
+    },
+    {
+      "name": "Latin Vulgate",
+      "value": "vulgate",
+      "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
+      "state": false
+    }
+  ]
+
   static async DBObjectFromManifest(manifest) {
     if (!manifest) {
       throw {
@@ -31,14 +102,15 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items )
+    const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items ) 
 
     // required properties: id, label, metadata, manifest, layers
     return {
       label,
       metadata,
       manifest: [ manifest.id ],
-      layers: [ layer.asProjectLayer() ]
+      layers: [ layer.asProjectLayer() ],
+      tools: this.tools
     }
   }
 
