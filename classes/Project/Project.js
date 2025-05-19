@@ -1,6 +1,7 @@
 import dbDriver from "../../database/driver.js"
 import { sendMail } from "../../utilities/mailer/index.js"
 import { validateProjectPayload } from "../../utilities/validatePayload.js"
+import { isNotValidName, isNotValidValue } from "../../utilities/validateNameValue.js"
 import User from "../User/User.js"
 import { createHash } from "node:crypto"
 import Group from "../Group/Group.js"
@@ -178,9 +179,9 @@ export default class Project {
     
     this.data.tools = this.data.tools.map(tool => {
       const match = selectedValues.find(t => {
-        if (/[<>{}()[\];'"`]|script|on\w+=|javascript:/i.test(t.value)) 
-          throw new Error("Invalid value") 
-        t.value === tool.value})
+        if (isNotValidValue(t.value)) 
+          throw new Error("Invalid value")
+        return t.value === tool.value})
       return {
         ...tool,
         state: match ? match.state : tool.state
@@ -205,7 +206,7 @@ export default class Project {
       const url = newTool.url.trim()
       const state = newTool.state
 
-      const containsCode = /[<>{}()[\];'"`]|script|on\w+=|javascript:/i.test(name) || /[<>{}()[\];'"`]|script|on\w+=|javascript:/i.test(value)
+      const containsCode = isNotValidName(name) || isNotValidValue(value)
       if (containsCode) 
         throw new Error("Invalid name or value")
 
@@ -214,7 +215,7 @@ export default class Project {
       )
 
       if (isDuplicate) {
-        throw new Error("Tool already exists")
+        continue
       }
 
       this.data.tools.push({ name, value, url, state })

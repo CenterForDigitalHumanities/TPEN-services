@@ -69,11 +69,6 @@ export default class ProjectFactory {
       "state": false
     },
     {
-      "name":"RTL Mode", 
-      "value":"rtl",
-      "state": false
-    },
-    {
       "name": "Cappelli's Abbreviation",
       "value": "cappelli",
       "url": "https://centerfordigitalhumanities.github.io/cappelli/",
@@ -82,19 +77,19 @@ export default class ProjectFactory {
     {
       "name": "Enigma",
       "value": "enigma",
-      "url": "http://ciham-digital.huma-num.fr/enigma/",
+      "url": "https://ciham-digital.huma-num.fr/enigma/",
       "state": false
     },
     {
       "name": "Latin Dictionary",
       "value": "latin",
-      "url": "http://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
+      "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
       "state": false
     },
     {
       "name": "Latin Vulgate",
       "value": "vulgate",
-      "url": "http://vulsearch.sourceforge.net/cgi-bin/vulsearch",
+      "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
       "state": false
     }
   ]

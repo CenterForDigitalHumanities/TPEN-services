@@ -1153,8 +1153,8 @@ router.route("/:projectId/tools").post(async (req, res) => {
     return respondWithError(res, 400, "Project ID is required")
   }
 
-  if (!Array.isArray(tools) || tools.length === 0) {
-    return respondWithError(res, 400, "At least one tool is required")
+  if (!Array.isArray(tools)) {
+    tools = [tools]
   }
 
   if (tools.every(tool => tool.name === "" || tool.value === "" || tool.url === "" || tool.state === undefined)) {
@@ -1165,7 +1165,7 @@ router.route("/:projectId/tools").post(async (req, res) => {
     return respondWithError(res, 400, "All tools must have a valid name, value, URL, and state")
   }
 
-  if (!tools.every(tool => tool.url.startsWith("https://") || tool.url.startsWith("http://"))) {
+  if (!tools.every(tool => validateURL(tool.url))) {
     return respondWithError(res, 400, "All tools must have a valid URL")
   }
 
