@@ -1,6 +1,7 @@
 import dbDriver from "../../database/driver.js"
 import { sendMail } from "../../utilities/mailer/index.js"
 import { validateProjectPayload } from "../../utilities/validatePayload.js"
+import { isNotValidName, isNotValidValue } from "../../utilities/validateNameValue.js"
 import User from "../User/User.js"
 import { createHash } from "node:crypto"
 import Group from "../Group/Group.js"
@@ -168,6 +169,60 @@ export default class Project {
  *
  * @throws {Error} Throws an error if the update operation fails.
  */
+
+  async updateTools(selectedValues) {
+    await this.#load()
+    // Guard invalid input
+    if (!Array.isArray(selectedValues)) return
+    // Guard existing data in corrupted state
+    if(!this.data?.tools) this.data.tools = []
+    
+    this.data.tools = this.data.tools.map(tool => {
+      const match = selectedValues.find(t => {
+        if (isNotValidValue(t.value)) 
+          throw new Error("Invalid value")
+        return t.value === tool.value})
+      return {
+        ...tool,
+        state: match ? match.state : tool.state
+      }
+    })    
+  
+    return await this.update()
+  }  
+
+  async addTools(tools) {
+
+    // Guard invalid input
+    if (!Array.isArray(tools)) return
+
+    await this.#load()
+    // Guard existing data in corrupted state
+    if(!this.data?.tools) this.data.tools = []
+
+    for (let newTool of tools) {
+      const name = newTool.name.trim()
+      const value = newTool.value.trim()
+      const url = newTool.url.trim()
+      const state = newTool.state
+
+      const containsCode = isNotValidName(name) || isNotValidValue(value)
+      if (containsCode) 
+        throw new Error("Invalid name or value")
+
+      const isDuplicate = this.data.tools.some(
+        tool => tool.name === name || tool.url === url
+      )
+
+      if (isDuplicate) {
+        continue
+      }
+
+      this.data.tools.push({ name, value, url, state })
+    }
+    return await this.update()
+  }  
+
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
     return await this.update()
@@ -206,4 +261,52 @@ export default class Project {
     await project.#load()
     return project
   }
+
+  updateLayer(layer, previousId) {
+    if (!this.data?.layers) {
+      throw new Error("Project does not have layers.")
+    }
+    previousId ??= layer.id
+    const layerIndex = this.data.layers.findIndex(l => l.id.split('/').pop() === previousId.split('/').pop())
+    if (layerIndex < 0) {
+      throw new Error("Layer not found in project.")
+    }
+    if (!isValidLayer(layer)) {
+      throw new Error("Layer data is invalid.")
+    }
+    this.data.layers[layerIndex] = layer
+    return this
+  }
+
+  addLayer(layer) {
+    if (!this.data?.layers) {
+      throw new Error("Project does not have layers.")
+    }
+    if (!isValidLayer(layer)) {
+      throw new Error("Layer data is invalid.")
+    }
+    if (this.data.layers.findIndex(l => l.id.split('/').pop() === layer.id.split('/').pop()) >= 0) {
+      throw new Error("Layer with this ID already exists in the project.")
+    }
+    const existingLayerLabelCount = this.data.layers.find(l => l.label === layer.label)?.length
+    if (existingLayerLabelCount >= 0) {
+      layer.label+=`(${existingLayerLabelCount + 2})`
+    }
+    this.data.layers.push(layer)
+    return this
+  }
+}
+
+function isValidLayer(layer) {
+  if (typeof layer?.label !== 'string' || !layer?.id?.startsWith('http') || !Array.isArray(layer?.pages)) {
+    return false
+  }
+
+  for (const page of layer.pages) {
+    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http') || !page.label ) {
+      return false
+    }
+  }
+
+  return true
 }
