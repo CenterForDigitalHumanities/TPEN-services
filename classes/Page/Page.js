@@ -6,8 +6,8 @@ export default class Page {
 
     #tinyAction = 'create'
     #setRerumId() {
-        if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }
@@ -22,42 +22,49 @@ export default class Page {
      * @param {String} target The uri of the targeted Canvas.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target }) {
-        console.log("Page constructor", layerId, id, label, target)
+    constructor(layerId, { id, label, target, items = [] }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId })
+        Object.assign(this, { id, label, target, partOf: layerId, items })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, items = []) {
+        if (!projectId) {
+            throw new Error("Project ID is required to create a Page instance.")
+        }
         if (!layerId) {
             throw new Error("Layer ID is required to create a Page instance.")
         }
-        if (!canvas || !canvas.id) {
+        if (!canvas?.id && typeof canvas !== 'string') {
             throw new Error("Canvas with id is required to create a Page instance.")
         }
-
-        const id = lines.length
+        if (!canvas.id) {
+            canvas = {id : canvas}
+        }
+        
+        const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
-            : `${process.env.SERVERURL}layer/${layerId.split("/").pop()}/page/${databaseTiny.reserveId()}`
+            : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
+
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: canvas.label,
+                label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf: layerId,
-                items: lines,
+                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                items,
                 prev,
                 next
             }
         }
+
         return new Page(layerId, page.data)
     }
 
@@ -69,7 +76,7 @@ export default class Page {
             label: { "none": [this.label] },
             target: this.target,
             partOf: this.partOf,
-            items: this.data.items ?? [],
+            items: this.items ?? [],
             prev: this.prev ?? null,
             next: this.next ?? null
         }
@@ -98,7 +105,8 @@ export default class Page {
      */
     async update() {
         if (this.#tinyAction === 'update' || this.items.length) {
-            await this.#setRerumId().#savePageToRerum()
+            this.#setRerumId()
+            await this.#savePageToRerum()
         }
         return this.#updatePageForProject()
     }
@@ -107,7 +115,7 @@ export default class Page {
         return this.#updatePageForProject()
     }
 
-    async #updatePageForProject() {
+    #updatePageForProject() {
         // Page in local MongoDB is in the Project.layers.pages Array and looks like:
         // { 
         //   id: "https://api.t-pen.org/layer/layerID/page/pageID", 
@@ -117,7 +125,8 @@ export default class Page {
         return {
             id: this.id,
             label: this.label,
-            target: this.target
+            target: this.target,
+            items: this.items ?? []
         }
     }
 
