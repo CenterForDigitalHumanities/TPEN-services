@@ -6,7 +6,7 @@ export default class Page {
 
     #tinyAction = 'create'
     #setRerumId() {
-        if (this.#tinyAction === 'create') {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
@@ -58,7 +58,7 @@ export default class Page {
                 type: "AnnotationPage",
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf: layerId,
+                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
                 items,
                 prev,
                 next

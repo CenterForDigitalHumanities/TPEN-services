@@ -4,8 +4,8 @@ const databaseTiny = new dbDriver("tiny")
 export default class Line {
 
     #tinyAction = 'create'
-    #setRerumId(force) {
-        if (force || this.#tinyAction === 'create') {
+    #setRerumId() {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
@@ -46,7 +46,7 @@ export default class Line {
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(lineAsAnnotation)
                 .catch(err => {
-                    throw new Error(`Failed to save Page to RERUM: ${err.message}`)
+                    throw new Error(`Failed to save Line to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
             return this
@@ -80,13 +80,13 @@ export default class Line {
      */
    async update() {
     if (this.#tinyAction === 'update' || this.body) {
-        this.#setRerumId(true)
+        this.#setRerumId()
         await this.#saveLineToRerum()
     }
     return this.#updateLineForPage()
 }
     
-async #updateLineForPage() {
+#updateLineForPage() {
     return {
         id: this.id,
         target: this.target
