@@ -2,7 +2,6 @@ import express from "express"
 import cors from "cors"
 import common_cors from "../utilities/common_cors.json" with {type: "json"}
 import layerRouter from "../layer/index.js"
-import pageRouter from "../page/index.js"
 import projectCreateRouter from "./projectCreateRouter.js"
 import import28Router from "./import28Router.js"
 import projectReadRouter from "./projectReadRouter.js"
@@ -91,6 +90,5 @@ router.route("/:projectId/tools").post(async (req, res) => {
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
-// router.use('/:projectId/page', pageRouter)
 
 export default router
