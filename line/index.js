@@ -48,23 +48,29 @@ router.route('/:lineId')
     }
   })
 
-// Add a new line to an existing Page, save it in RERUM if it has body content.
+// Add a new line/lines to an existing Page, save it in RERUM if it has body content.
 router.route('/')
   .post(auth0Middleware(), async (req, res) => {
     try {
-      const newLine = Line.build(req.params.projectId, req.params.pageId, { ...req.body })
       const project = await getProjectById(req.params.projectId, res)
       if (!project) return
       const page = await getPageById(req.params.pageId, req.params.projectId, res)
       if (!page) return
-
-      const existingLine = findLineInPage(page, newLine.id, res)
-      if (existingLine) {
-        respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
-        return
+ 
+      const inputLines = Array.isArray(req.body) ? req.body : [req.body]
+ 
+      for (const lineData of inputLines) {
+        const newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
+ 
+        const existingLine = findLineInPage(page, newLine.id, res)
+        if (existingLine) {
+          respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
+          return
+        }
+ 
+        const savedLine = await newLine.update()
+        page.items.push(savedLine)
       }
-      const savedLine = await newLine.update()
-      page.items.push(savedLine)
       await updatePageAndProject(page, project, res)
 
       res.status(201).json(newLine.asJSON(true))
