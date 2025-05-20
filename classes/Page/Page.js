@@ -1,11 +1,9 @@
 import dbDriver from "../../database/driver.js"
 
 const databaseTiny = new dbDriver("tiny")
-const databaseMongo = new dbDriver("mongo")
 
 export default class Page {
     #tinyAction = 'create'
-
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -14,10 +12,14 @@ export default class Page {
     }
 
     /**
-     * Constructs a Page by wrapping existing data in a Page object.
+     * Constructs a Page from the JSON Object in the Project `layers` Array reference. This 
+     * never creates a new Page, but rather wraps existing data in a Page object.
      * Use the `build` method to create a new Page.
-     * @param {String} partOf The layer ID this page belongs to
-     * @param {Object} canvas An object with { id, label, target } properties
+     * @param {String} id The ID of the layer. This is the Layer stored in the Project.
+     * @param {String} label The label of the layer. This is the Layer stored in the Project.
+     * @param {String} target The uri of the targeted Canvas.
+     * @param {Array} items The array of Annotation objects.
+     * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target, items = [] }) {
         if (!id || !target) {

@@ -36,10 +36,12 @@ router.route("/projects").get(auth0Middleware(), async (req, res) => {
   try {
     const userObj = await new User(user._id)
     const userProjects = await userObj.getProjects()
+    const validMetrics = userProjects.filter((proj) => proj._createdAt && proj._modifiedAt)
 
-    const newestProj = userProjects.slice().sort((a, b) => new Date(b._createdAt) - new Date(a._createdAt))[0]
+    // TODO: When the projects are all formatted correctly, we will not need this
 
-    const lastModified = userProjects.slice().sort((a, b) => new Date(b._modifiedAt || 0) - new Date(a._modifiedAt || 0))[0]
+    const newestProj = validMetrics.reduce((max, proj) => proj._createdAt > max._createdAt ? proj : max, {_createdAt: 0})?._id
+    const lastModified = validMetrics.reduce((max, proj) => proj._modifiedAt > max._modifiedAt ? proj : max, {_modifiedAt: 0})?._id
 
     await userObj.getSelf()
     const myRecent = userObj.data?._lastModified
