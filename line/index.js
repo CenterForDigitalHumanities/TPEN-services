@@ -49,6 +49,8 @@ router.get('/:lineId', async (req, res) => {
 
 // Example: Refactored POST route
 router.post('/', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     const newLine = Line.build(req.params.projectId,req.params.pageId,{ ...req.body })
     const project = await getProjectById(req.params.projectId, res)
@@ -63,7 +65,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     }
     const savedLine = await newLine.update()
     page.items.push(savedLine)
-    await updatePageAndProject(page, project, res.user._id)
+    await updatePageAndProject(page, project, user._id)
 
     res.status(201).json(newLine.asJSON(true))
   } catch (error) {
