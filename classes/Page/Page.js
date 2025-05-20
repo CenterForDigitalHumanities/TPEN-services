@@ -7,7 +7,7 @@ export default class Page {
     #tinyAction = 'create'
 
     #setRerumId() {
-        if (this.#tinyAction === 'create') {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
@@ -19,18 +19,18 @@ export default class Page {
      * @param {String} partOf The layer ID this page belongs to
      * @param {Object} canvas An object with { id, label, target } properties
      */
-    constructor(layerId, { id, label, target }) {
+    constructor(layerId, { id, label, target, items = [] }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId })
+        Object.assign(this, { id, label, target, partOf: layerId, items })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, prev, next, lines = []) {
+    static build(projectId, layerId, canvas, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -44,7 +44,7 @@ export default class Page {
             canvas = {id : canvas}
         }
         
-        const id = lines.length
+        const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
 
@@ -55,8 +55,8 @@ export default class Page {
                 type: "AnnotationPage",
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf: layerId,
-                items: lines,
+                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                items,
                 prev,
                 next
             }
@@ -73,7 +73,7 @@ export default class Page {
             label: { "none": [this.label] },
             target: this.target,
             partOf: this.partOf,
-            items: this.data.items ?? [],
+            items: this.items ?? [],
             prev: this.prev ?? null,
             next: this.next ?? null
         }
@@ -101,8 +101,7 @@ export default class Page {
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
     async update() {
-        const hasItems = Array.isArray(this.data?.items) && this.data.items.length > 0
-        if (this.#tinyAction === 'update' || hasItems) {
+        if (this.#tinyAction === 'update' || this.items.length) {
             this.#setRerumId()
             await this.#savePageToRerum()
         }
@@ -123,7 +122,8 @@ export default class Page {
         return {
             id: this.id,
             label: this.label,
-            target: this.target
+            target: this.target,
+            items: this.items ?? []
         }
     }
 

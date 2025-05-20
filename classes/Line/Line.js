@@ -5,13 +5,13 @@ export default class Line {
 
     #tinyAction = 'create'
     #setRerumId() {
-        if (this.#tinyAction === 'create') {
-            this.id = `${process.env.RERUMIDPREFIX}${id.split("/").pop()}`
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this
     }
 
-    constructor({ id, target, body }) {
+    constructor({ id, target, body, motivation, label, type }) {
         if (!id || !body || !target) {
             throw new Error('Line data is malformed.')
         }
@@ -21,19 +21,23 @@ export default class Line {
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
+        if (motivation) this.motivation = motivation
+        if (label) this.label = label
+        if (type) this.type = type
         return this
     }
 
-    static build(projectId, pageId, { id, body, target }) {
-        id ??= `${process.env.SERVERURL}/project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
-        return new Line({ id, body, target })
+    static build(projectId, pageId, { body, target, motivation, label, type }) {
+        // TODO: Should this have a space for an id that is sent in?
+        const id = `${process.env.SERVERURL}project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
+        return new Line({ id, body, target, motivation, label, type })
     }
 
     async #saveLineToRerum() {
         const lineAsAnnotation = {
             "@context": "http://iiif.io/api/presentation/3/context.json",
             id: this.id,
-            type: "Annotation",
+            type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
             body: this.body
@@ -42,18 +46,28 @@ export default class Line {
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(lineAsAnnotation)
                 .catch(err => {
-                    throw new Error(`Failed to save Page to RERUM: ${err.message}`)
+                    throw new Error(`Failed to save Line to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
             return this
         }
         // ...else Update the existing page in RERUM
         const existingLine = await fetch(this.id).then(res => res.json())
+        .catch(err => {
+            if (err.status === 404) {
+                // If the line doesn't exist, we can create it
+                return null
+            }
+            throw new Error(`Failed to fetch existing Line from RERUM: ${err.message}`)
+        })
+
         if (!existingLine) {
-            throw new Error(`Failed to find Line in RERUM: ${this.id}`)
+            // This id doesn't exist in RERUM, so we need to create it
+            this.#tinyAction = 'create'
         }
-        const updatedLine = { ...existingLine, ...lineAsAnnotation }
-        const newURI = await databaseTiny.update(updatedLine).then(res => res.headers.get('location')).catch(err => {
+        const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
+        const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.id)
+        .catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })
         this.id = newURI
@@ -65,17 +79,17 @@ export default class Line {
      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
      */
    async update() {
-    if (this.#tinyAction === 'update' || typeof this.body !== 'string') {
-        await this.#setRerumId().#saveLineToRerum()
+    if (this.#tinyAction === 'update' || this.body) {
+        this.#setRerumId()
+        await this.#saveLineToRerum()
     }
     return this.#updateLineForPage()
 }
     
-async #updateLineForPage() {
+#updateLineForPage() {
     return {
         id: this.id,
-        target: this.target,
-        body: this.body,
+        target: this.target
     }
 }
     async updateText(text) {

@@ -1,9 +1,8 @@
 import dbDriver from "../../database/driver.js"
+import Page from "../Page/Page.js"
 
 const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
-
-import Page from "../Page/Page.js"
 
 export default class Layer {
     #tinyAction = 'create'
@@ -59,7 +58,7 @@ export default class Layer {
 
     // Public Methods
     async delete() {
-        if (this.#tinyAction === 'delete') {
+        if (this.#tinyAction === 'update') {
             await Promise.all(this.pages.map(page => {
                 const p = new Page(this.id, page)
                 return p.delete()
@@ -83,7 +82,7 @@ export default class Layer {
 
     // Private Methods
     #setRerumId() {
-        if (this.#tinyAction === 'create') {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
         }
         return this

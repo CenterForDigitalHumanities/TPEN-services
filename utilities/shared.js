@@ -1,7 +1,6 @@
 import DatabaseController from "../database/mongo/controller.js"
 import Project from '../classes/Project/Project.js'
-import User from "../classes/User/User.js"
-import { findPageById } from '../page/index.js'
+import Page from '../classes/Page/Page.js'
 
 /**
  * Check if the supplied input is valid JSON or not.
@@ -94,7 +93,7 @@ export const updatePageAndProject = async (page, project, userId) => {
 
 // Log modifications for recent changes. We don't need to know much about it. 
 // We want to capture the id of the changed page and the user who made the change.
-const recordModification = async ( project, pageId, userId) => {
+const recordModification = async (project, pageId, userId) => {
    if (!project || !pageId) {
       // silent failure of logging
       console.error(`recordModification failed: projectId or pageId is missing. Submitted values - project: ${project}, page: ${page}, userId: ${userId}`)
@@ -122,4 +121,47 @@ const recordModification = async ( project, pageId, userId) => {
       console.error("recordModification failed", err)
       return
    }
+}
+
+// Get a Layer that contains a PageId
+export const getLayerContainingPage = (project, pageId) => {
+   return project.data.layers.find(layer =>
+      layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
+   )
+}
+
+// Find a page by ID (moved from page/index.js)
+export async function findPageById(pageId, projectId) {
+  if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
+    return fetch(pageId).then(res => res.json())
+  }
+  const projectData = (await getProjectById(projectId))?.data
+  if (!projectData) {
+    const error = new Error(`Project with ID '${projectId}' not found`)
+    error.status = 404
+    throw error
+  }
+  const layerContainingPage = projectData.layers.find(layer =>
+    layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
+  )
+
+  if (!layerContainingPage) {
+    const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
+    error.status = 404
+    throw error
+  }
+
+  const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
+
+  if (pageIndex < 0) {
+    const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
+    error.status = 404
+    throw error
+  }
+
+  const page = layerContainingPage.pages[pageIndex]
+  page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
+  page.next = layerContainingPage.pages[pageIndex + 1] ?? null
+
+  return new Page(layerContainingPage.id, page)
 }
