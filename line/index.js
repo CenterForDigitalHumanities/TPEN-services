@@ -58,9 +58,10 @@ router.route('/')
       if (!page) return
  
       const inputLines = Array.isArray(req.body) ? req.body : [req.body]
+      let newLine
  
       for (const lineData of inputLines) {
-        const newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
+        newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
  
         const existingLine = findLineInPage(page, newLine.id, res)
         if (existingLine) {
