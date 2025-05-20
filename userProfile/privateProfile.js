@@ -40,19 +40,19 @@ router.route("/projects").get(auth0Middleware(), async (req, res) => {
 
     // TODO: When the projects are all formatted correctly, we will not need this
 
-    const newestProj = validMetrics.reduce((max, proj) => proj._createdAt > max._createdAt ? proj : max, {_createdAt: 0})?._id
+    const newest = validMetrics.reduce((max, proj) => proj._createdAt > max._createdAt ? proj : max, {_createdAt: 0})?._id
     const lastModified = validMetrics.reduce((max, proj) => proj._modifiedAt > max._modifiedAt ? proj : max, {_modifiedAt: 0})?._id
 
-    await userObj.getSelf()
-    const myRecent = userObj.data?._lastModified
+    const userData = await userObj.getSelf()
+    const myRecent = userData._lastModifiedPage
 
     res.set("Content-Type", "application/json; charset=utf-8")
 
     res.status(200).json({
       metrics: {
-        newest: newestProj?._id ?? null,
-        lastModified: lastModified?._id ?? null,
-        myRecent: myRecent ?? null
+        newest,
+        lastModified,
+        myRecent
       },
       projects: userProjects
     })

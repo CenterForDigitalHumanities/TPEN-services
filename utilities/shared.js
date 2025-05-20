@@ -87,7 +87,6 @@ export const updatePageAndProject = async (page, project, userId) => {
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    layer.pages[pageIndex] = page.asProjectPage()
    await recordModification(project, page.id, userId)
-   console.log("Page updated and modification recorded:", project.data._lastModified, page.id)
    await project.update()
 }
 

@@ -92,7 +92,7 @@ export default class User {
     if (!user) {
       throw new Error(`User with _id ${userId} not found`)
     }
-    user._lastModifiedPage = pageId
+    user._lastModifiedPage = pageId.split("/").pop()
     return database.update(user, "users")
   }
 
@@ -151,7 +151,10 @@ export default class User {
             _id: 1,                        // Project ID
             title: 1,                      // Project title
             label: 1,                      // Project label
-            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
+            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] },  // User roles within the group
+            _lastModifiedPage: 1, // Last modified page
+            _createdAt: 1,    // Creation date
+            _modifiedAt: 1 // Last modified date
           }
         }
       ]).toArray()
