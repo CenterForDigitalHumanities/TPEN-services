@@ -36,7 +36,10 @@ router.route("/projects").get(auth0Middleware(), async (req, res) => {
   try {
     const userObj = await new User(user._id)
     const userProjects = await userObj.getProjects()
-    const validMetrics = userProjects.filter((proj) => proj._createdAt && proj._modifiedAt)
+    const validMetrics = userProjects.filter((proj) => proj._createdAt && proj._modifiedAt && proj._lastModified)
+    if (validMetrics.length === 0) {
+      return respondWithError(res, 404, "No valid projects found")
+    }
 
     // TODO: When the projects are all formatted correctly, we will not need this
 
