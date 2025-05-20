@@ -101,7 +101,7 @@ const recordModification = async (project, pageId, userId) => {
 
    try {
       // set _lastModified for the Project for "recent project"
-      project.data._lastModified = pageId
+      project.data._lastModified = pageId.split("/").pop()
    } catch (err) {
       console.error("recordModification failed", err)
       return
@@ -115,7 +115,8 @@ const recordModification = async (project, pageId, userId) => {
 
    // set _lastModified for the User for "recent user"
    try {
-      return User.setLastModified(userId, pageId)
+      const lastModified = `project:${project._id}/page:${pageId.split("/").pop()}`
+      return User.setLastModified(userId, lastModified)
    } catch (err) {
       console.error("recordModification failed", err)
       return
