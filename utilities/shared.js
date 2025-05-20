@@ -1,7 +1,7 @@
 import DatabaseController from "../database/mongo/controller.js"
 import Project from '../classes/Project/Project.js'
 import Page from '../classes/Page/Page.js'
-
+import User from '../classes/User/User.js'
 /**
  * Check if the supplied input is valid JSON or not.
  * @param input A string or Object that should be JSON conformant.

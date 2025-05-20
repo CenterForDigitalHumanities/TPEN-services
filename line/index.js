@@ -63,7 +63,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     }
     const savedLine = await newLine.update()
     page.items.push(savedLine)
-    await updatePageAndProject(page, project, res)
+    await updatePageAndProject(page, project, res.user._id)
 
     res.status(201).json(newLine.asJSON(true))
   } catch (error) {
