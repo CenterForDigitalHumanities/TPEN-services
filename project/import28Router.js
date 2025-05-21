@@ -53,6 +53,7 @@ router.route("/import28/:uid").get(
             .then(resp => {
                 if(resp.status === 401) {
                     console.error("Got a 401")
+                    return respondWithError(res, 401, resp.statusText)
                 }
                 return resp.json()
             })
