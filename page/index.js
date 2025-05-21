@@ -21,34 +21,36 @@ router.route('/:pageId')
       const pageObject = await findPageById(pageId, projectId)
       if (!pageObject) {
         respondWithError(res, 404, 'No page found with that ID.')
-      return
-    }
-    if(pageObject.id?.startsWith(process.env.RERUMIDPREFIX)){
-      // If the page is a RERUM document, we need to fetch it from the server
-      const pageFromRerum = await fetch(pageObject.id).then(res => res.json())
-      if (pageFromRerum) {
-        res.status(200).json(pageFromRerum)
         return
       }
+      if (pageObject.id?.startsWith(process.env.RERUMIDPREFIX)) {
+        // If the page is a RERUM document, we need to fetch it from the server
+        const pageFromRerum = await fetch(pageObject.id).then(res => res.json())
+        if (pageFromRerum) {
+          res.status(200).json(pageFromRerum)
+          return
+        }
+      }
+      // build as AnnotationPage
+      const pageAsAnnotationPage = {
+        '@context': 'http://www.w3.org/ns/anno.jsonld',
+        id: pageObject.id,
+        type: 'AnnotationPage',
+        label: { none: [pageObject.label] },
+        target: pageObject.target,
+        partOf: pageObject.partOf,
+        items: pageObject.items ?? [],
+        prev: pageObject.prev ?? null,
+        next: pageObject.next ?? null
+      }
+      res.status(200).json(pageAsAnnotationPage)
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
-    // build as AnnotationPage
-    const pageAsAnnotationPage = {
-      '@context': 'http://www.w3.org/ns/anno.jsonld',
-      id: pageObject.id,
-      type: 'AnnotationPage',
-      label: { none: [pageObject.label] },
-      target: pageObject.target,
-      partOf: pageObject.partOf,
-      items: pageObject.items ?? [],
-      prev: pageObject.prev ?? null,
-      next: pageObject.next ?? null
-    }
-    res.status(200).json(pageAsAnnotationPage)
-  } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
-  }
   })
   .put(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
     const { projectId, pageId } = req.params
     const update = req.body
     if (!update) {
@@ -60,7 +62,7 @@ router.route('/:pageId')
       respondWithError(res, 404, `Project with ID '${projectId}' not found`)
       return
     }
-    const layer = getLayerContainingPage(project,pageId)
+    const layer = getLayerContainingPage(project, pageId)
     if (!layer) {
       respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
       return
@@ -91,14 +93,14 @@ router.route('/:pageId')
 
       if (update.items) {
         pageObject.items = await Promise.all(pageObject.items.map(async item => {
-            const line = item.id?.startsWith?.('http')
+          const line = item.id?.startsWith?.('http')
             ? new Line(item)
             : Line.build(projectId, pageId, item)
           return await line.update()
         }))
       }
 
-      await updatePageAndProject(pageObject, project)
+      await updatePageAndProject(pageObject, project, user._id)
 
       res.status(200).json(pageObject)
     } catch (error) {
