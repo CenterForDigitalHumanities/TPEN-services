@@ -39,44 +39,40 @@ router.route("/import28/:uid").get(
         if (!uid) return respondWithError(res, 400, "Missing uid in query")
 
         try {
-            const response = await fetch(
+            const firstLevel = await fetch(
                 `${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`,
                 {
                     method: "GET",
-                    headers: { Cookie: `JSESSIONID=${jsessionid}` },
+                    headers: { 
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Cookie": `JSESSIONID=${jsessionid}` 
+                    },
                     credentials: "include"
                 }
             )
+            .then(resp => {
+                if(!resp.ok) throw resp
+                return resp.json()
+            })
+            .catch(err => {throw err})
 
-            if (response.status === 500)
-                return res.status(500).json({ message: "The project cannot be imported." })
-
-            const rawText = await response.text()
             let parsedData = {}
-
-            try {
-                const firstLevel = JSON.parse(rawText)
-                parsedData = Object.fromEntries(
-                    Object.entries(firstLevel).map(([key, value]) => {
-                        try {
-                            return [key, JSON.parse(value)]
-                        } catch {
-                            return [key, value]
-                        }
-                    })
-                )
-            } catch (err) {
-                console.error("Failed to parse project response:", err)
-                return respondWithError(res, 500, "Invalid project response format")
-            }
+            parsedData = Object.fromEntries(
+                Object.entries(firstLevel).map(([key, value]) => {
+                    try {
+                        return [key, JSON.parse(value)]
+                    } catch {
+                        return [key, value]
+                    }
+                })
+            )
 
             return res.status(200).json({
                 message: "Select a Project to Import : ",
                 data: parsedData
             })
         } catch (error) {
-            console.error("Error fetching project data:", error)
-            return respondWithError(res, 500, "Error fetching project data")
+            return respondWithError(res, error.status ?? 500, error.statusText ?? "Error fetching project data")
         }
     }
 ).all((req, res) => {
