@@ -48,37 +48,36 @@ router.get('/:lineId', async (req, res) => {
 })
 
 // Add a new line/lines to an existing Page, save it in RERUM if it has body content.
-router.route('/')
-  .post(auth0Middleware(), async (req, res) => {
-    const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    try {
-      const project = await getProjectById(req.params.projectId, res)
-      if (!project) return
-      const page = await getPageById(req.params.pageId, req.params.projectId, res)
-      if (!page) return
- 
-      const inputLines = Array.isArray(req.body) ? req.body : [req.body]
-      let newLine
- 
-      for (const lineData of inputLines) {
-        newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
- 
-        const existingLine = findLineInPage(page, newLine.id, res)
-        if (existingLine) {
-          respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
-          return
-        }
- 
-        const savedLine = await newLine.update()
-        page.items.push(savedLine)
-      }
-      await updatePageAndProject(page, project, res)
+router.post('/', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  try {
+    const project = await getProjectById(req.params.projectId, res)
+    if (!project) return
+    const page = await getPageById(req.params.pageId, req.params.projectId, res)
+    if (!page) return
 
-      res.status(201).json(newLine.asJSON(true))
-    } catch (error) {
-      respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    const inputLines = Array.isArray(req.body) ? req.body : [req.body]
+    let newLine
+
+    for (const lineData of inputLines) {
+      newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
+
+      const existingLine = findLineInPage(page, newLine.id, res)
+      if (existingLine) {
+        respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
+        return
+      }
+
+      const savedLine = await newLine.update()
+      page.items.push(savedLine)
     }
+    await updatePageAndProject(page, project, user._id)
+
+    res.status(201).json(newLine.asJSON(true))
+  } catch (error) {
+    respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+  }
 })
 
 // Update an existing line, including in RERUM
