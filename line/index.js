@@ -51,6 +51,8 @@ router.route('/:lineId')
 // Add a new line/lines to an existing Page, save it in RERUM if it has body content.
 router.route('/')
   .post(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
     try {
       const project = await getProjectById(req.params.projectId, res)
       if (!project) return
