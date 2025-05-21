@@ -52,10 +52,6 @@ router.route("/import28/:uid").get(
             )
             .then(resp => {
                 if(!resp.ok) throw resp
-                // if(resp.status === 401) {
-                //     console.error("Got a 401")
-                //     throw resp
-                // }
                 return resp.json()
             })
             .catch(err => {throw err})
@@ -76,8 +72,6 @@ router.route("/import28/:uid").get(
                 data: parsedData
             })
         } catch (error) {
-            console.error("Error fetching project data")
-            console.error(error)
             return respondWithError(res, error.status ?? 500, error.statusText ?? "Error fetching project data")
         }
     }
