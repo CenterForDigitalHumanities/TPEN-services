@@ -39,8 +39,6 @@ router.route("/import28/:uid").get(
         if (!uid) return respondWithError(res, 400, "Missing uid in query")
 
         try {
-            console.log(`FETCH ${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`)
-            console.log(`JSESSION ${jsessionid}`)
             const firstLevel = await fetch(
                 `${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`,
                 {
@@ -53,8 +51,10 @@ router.route("/import28/:uid").get(
                 }
             )
             .then(resp => {
-                console.log(resp)
-                if(resp.ok) return resp.json()
+                if(resp.status === 401) {
+                    console.error("Got a 401")
+                }
+                return resp.json()
             })
             .catch(err => {throw err})
 
@@ -74,7 +74,8 @@ router.route("/import28/:uid").get(
                 data: parsedData
             })
         } catch (error) {
-            console.error("Error fetching project data:", error)
+            console.error("Error fetching project data")
+            console.error(error)
             return respondWithError(res, 500, "Error fetching project data")
         }
     }
