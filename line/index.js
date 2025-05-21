@@ -59,7 +59,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
     let newLine
-
+    // This feels like a use case for /bulkCreate in RERUM.  Make all these lines with one call.
     for (const lineData of inputLines) {
       newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
 
