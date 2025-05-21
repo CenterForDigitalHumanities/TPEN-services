@@ -3,7 +3,6 @@ import dbDriver from "../../database/driver.js"
 const databaseTiny = new dbDriver("tiny")
 
 export default class Page {
-
     #tinyAction = 'create'
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
@@ -16,10 +15,10 @@ export default class Page {
      * Constructs a Page from the JSON Object in the Project `layers` Array reference. This 
      * never creates a new Page, but rather wraps existing data in a Page object.
      * Use the `build` method to create a new Page.
-     * @param {hexString} projectId For the project this layer belongs to
      * @param {String} id The ID of the layer. This is the Layer stored in the Project.
      * @param {String} label The label of the layer. This is the Layer stored in the Project.
      * @param {String} target The uri of the targeted Canvas.
+     * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target, items = [] }) {
@@ -100,9 +99,9 @@ export default class Page {
     }
 
     /**
-     * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
-     * @returns {Promise} Resolves to the updated Layer object as stored in Project.
-     */
+      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
+      */
     async update() {
         if (this.#tinyAction === 'update' || this.items.length) {
             this.#setRerumId()
@@ -133,9 +132,9 @@ export default class Page {
     async delete() {
         if (this.#tinyAction === 'update') {
             // associated Annotations in RERUM will be left intact
-            await databaseTiny.remove(this.id)
-                .catch(err => false)
+            await databaseTiny.remove(this.id).catch(err => false)
         }
         return true
     }
+
 }
