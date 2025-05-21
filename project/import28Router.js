@@ -50,12 +50,10 @@ router.route("/import28/:uid").get(
 
             if (response.status === 500)
                 return res.status(500).json({ message: "The project cannot be imported." })
-
-            const rawText = await response.text()
-            let parsedData = {}
-
+            
             try {
-                const firstLevel = JSON.parse(rawText)
+                const firstLevel = await response.json().then(j => j).catch(err => {throw err})
+                let parsedData = {}
                 parsedData = Object.fromEntries(
                     Object.entries(firstLevel).map(([key, value]) => {
                         try {
