@@ -9,6 +9,7 @@ import memberRouter from "./memberRouter.js"
 import customRolesRouter from "./customRolesRouter.js"
 import hotkeysRouter from "./hotkeysRouter.js"
 import metadataRouter from "./metadataRouter.js"
+import { respondWithError } from "../utilities/shared.js"
 
 const router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
