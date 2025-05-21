@@ -43,7 +43,10 @@ router.route("/import28/:uid").get(
                 `${process.env.TPEN28URL}/TPEN/projects?uid=${uid}`,
                 {
                     method: "GET",
-                    headers: { Cookie: `JSESSIONID=${jsessionid}` },
+                    headers: { 
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Cookie": `JSESSIONID=${jsessionid}` 
+                    },
                     credentials: "include"
                 }
             ).then(resp => resp.json()).catch(err => {throw err})
