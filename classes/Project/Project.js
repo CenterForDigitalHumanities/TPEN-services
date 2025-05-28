@@ -25,7 +25,10 @@ export default class Project {
     if (!validation.isValid) {
       throw { status: 400, message: validation.errors }
     }
-    
+
+    payload._createdAt ??= Date.now().toString().slice(-6)
+    payload._modifiedAt ??= -1
+    payload._lastModified ??= payload.layers?.[0]?.pages?.[0]?.id ?? true
     console.log("Creating project...", payload.layers)
     try {
       return database.save(payload, "projects")
