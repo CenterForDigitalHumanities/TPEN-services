@@ -36,18 +36,18 @@ export default class Layer {
 
     // Static Methods
     static build(projectId, label, canvases, projectLabel = "Default") {
-        let thisLayer = {}
-        projectId ??= database.reserveId()
-        thisLayer.projectId = projectId
-        thisLayer.label = label ?? `${projectLabel} - Layer ${Date.now()}`
-
         if (!Array.isArray(canvases)) {
             if (!canvases) {
                 throw new Error("At least one Canvas must be included.")
             }
             canvases = [canvases]
         }
-        thisLayer.id = `${process.env.SERVERURL}layer/${databaseTiny.reserveId()}`
+
+        const thisLayer = {
+            projectId,
+            label: label ?? `${projectLabel} - Layer ${Date.now()}`,
+            id: `${process.env.SERVERURL}/project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
+        }
         const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c).asProjectPage())
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
