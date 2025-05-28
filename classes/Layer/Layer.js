@@ -46,7 +46,7 @@ export default class Layer {
         const thisLayer = {
             projectId,
             label: label ?? `${projectLabel} - Layer ${Date.now()}`,
-            id: `${process.env.SERVERURL}/project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
+            id: `${process.env.SERVERURL}project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
         }
         const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c).asProjectPage())
         pages.forEach((page, index) => {
