@@ -104,13 +104,18 @@ export default class ProjectFactory {
     const metadata = manifest.metadata ?? []
     const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items ) 
 
+    const firstPage = layer.pages[0]?.id ?? true
+
     // required properties: id, label, metadata, manifest, layers
     return {
       label,
       metadata,
       manifest: [ manifest.id ],
       layers: [ layer.asProjectLayer() ],
-      tools: this.tools
+      tools: this.tools,
+      _createdAt: now,
+      _modifiedAt: -1,
+      _lastModified: firstPage,
     }
   }
 
