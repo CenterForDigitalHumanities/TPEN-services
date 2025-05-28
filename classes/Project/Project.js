@@ -29,7 +29,6 @@ export default class Project {
     payload._createdAt ??= Date.now().toString().slice(-6)
     payload._modifiedAt ??= -1
     payload._lastModified ??= payload.layers?.[0]?.pages?.[0]?.id ?? true
-    console.log("Creating project...", payload.layers)
     try {
       return database.save(payload, "projects")
     } catch (err) {
