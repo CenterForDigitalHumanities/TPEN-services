@@ -99,15 +99,17 @@ export default class ProjectFactory {
         message: err.message ?? "No manifest found. Cannot process empty object"
       }
     }
+    const _id = database.reserveId()
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( database.reserveId(), `First Layer - ${label}`, manifest.items ) 
+    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items ) 
 
     const firstPage = layer.pages[0]?.id ?? true
 
     // required properties: id, label, metadata, manifest, layers
     return {
+      _id,
       label,
       metadata,
       manifest: [ manifest.id ],
