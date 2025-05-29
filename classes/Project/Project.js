@@ -28,7 +28,7 @@ export default class Project {
 
     payload._createdAt ??= Date.now().toString().slice(-6)
     payload._modifiedAt ??= -1
-    payload._lastModified ??= payload.layers?.[0]?.pages?.[0]?.id ?? true
+    payload._lastModified ??= payload.layers?.[0]?.pages?.[0]?.id.split('/').pop() ?? true
     try {
       return database.save(payload, "projects")
     } catch (err) {

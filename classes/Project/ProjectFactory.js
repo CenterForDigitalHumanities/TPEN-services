@@ -105,7 +105,7 @@ export default class ProjectFactory {
     const metadata = manifest.metadata ?? []
     const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items ) 
 
-    const firstPage = layer.pages[0]?.id ?? true
+    const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
     // required properties: id, label, metadata, manifest, layers
     return {
