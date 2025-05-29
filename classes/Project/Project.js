@@ -141,7 +141,7 @@ export default class Project {
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
 
-    return user.inviteCode
+    return inviteCode
   }
 
   async removeMember(userId) {
