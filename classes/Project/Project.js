@@ -75,7 +75,7 @@ export default class Project {
         // We will replace this URL with the correct url
         const url = `http://localhost:4001/login
           ?inviteCode=${inviteData.inviteCode}
-          &inviteHash=${inviteData.inviteHash}
+          &inviteId=${inviteData.inviteId}
           &returnTo=https://localhost:4000/project?projectID=${this.data._id}
         `
         message += `<p>Click the button below to get started with your project</p> 
