@@ -58,18 +58,26 @@ export default class Project {
 
   async sendInvite(email, rolesString) {
     try {
+      console.log("Send invite for 'this'")
+      console.log(this)
       let userObj = new User()
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       let message = `You have been invited to the TPEN project ${projectTitle}. 
-      View project <a href='https://three.t-pen.org/project/${this.data._id}'>here</a>.`
+      View project <a href='http://localhost:4001/project/${this.data._id}'>here</a>.`
       if (user) {
         await this.inviteExistingTPENUser(user._id, roles)
       } else {
-        const inviteCode = await this.inviteNewTPENUser(email, roles)
+        const inviteData = await this.inviteNewTPENUser(email, roles)
+        console.log("Invite Data")
+        console.log(inviteData)
         // We will replace this URL with the correct url
-        const url = `https://three.t-pen.org/login?invite-code=${inviteCode}`
+        const url = `http://localhost:4001/login
+          ?inviteCode=${inviteData.inviteCode}
+          &inviteHash=${inviteData.inviteHash}
+          &returnTo=https://localhost:4000/project?projectID=${this.data._id}
+        `
         message += `<p>Click the button below to get started with your project</p> 
         <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
@@ -140,8 +148,7 @@ export default class Project {
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
-
-    return inviteCode
+    return { "_id":user._id, "inviteCode":inviteCode }
   }
 
   async removeMember(userId) {

@@ -11,7 +11,7 @@ This document provides an overview of the available routes in the TPEN Services 
 
 ### 1. **Authentication**
 
-Endpoints marked with a 🔐 requiring authentication expect a valid JWT token in the `Authorization` header.  Use the [public TPEN3 login](https://three.t-pen.org/login/) to get one of these JWT tokens.
+Endpoints marked with a 🔐 requiring authentication expect a valid JWT token in the `Authorization` header.  Use the [public TPEN3 login](http://localhost:4001/login/) to get one of these JWT tokens.
 
 ---
 

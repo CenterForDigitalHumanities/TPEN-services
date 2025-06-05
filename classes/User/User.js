@@ -123,6 +123,15 @@ export default class User {
    */
 
   async update(){
+    if (!this._id) {
+      throw new Error("User must have an _id")
+    }
+    if (!this.data.email) {
+      throw new Error("User must have an email")
+    }
+    if (!this.data.profile?.displayName) {
+      throw new Error("User must have a profile with a displayName")
+    }
     return database.update(this.data, "users")
   }
 
