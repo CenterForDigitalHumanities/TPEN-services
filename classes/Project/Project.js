@@ -58,8 +58,7 @@ export default class Project {
 
   async sendInvite(email, rolesString) {
     try {
-      console.log("Send invite for 'this'")
-      console.log(this)
+      console.log("Send invite")
       let userObj = new User()
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
@@ -74,15 +73,15 @@ export default class Project {
         console.log(inviteData)
         // We will replace this URL with the correct url
         const url = `http://localhost:4001/login
-          ?inviteCode=${inviteData.inviteCode}
-          &inviteId=${inviteData.inviteId}
+          ?tpenGroupId=${inviteData.tpenGroupId}
+          &tpenUserId=${inviteData.tpenUserId}
           &returnTo=https://localhost:4000/project?projectID=${this.data._id}
         `
         message += `<p>Click the button below to get started with your project</p> 
         <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
         or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
       }
-
+      console.log(message)
       await sendMail(email, `Invitation to ${projectTitle}`, message)
       return this
     } catch (error) {
@@ -140,15 +139,16 @@ export default class Project {
   }
 
   async inviteNewTPENUser(email, roles) {
+    console.log("invite new temp user")
     const user = new User()
-    const inviteCode = this.#generateInviteCode(user._id)
+    const inviteCode = this.data.group
     const agent = `https://store.rerum.io/v1/id/${user._id}`
     const profile = { displayName: email.split("@")[0] }
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
-    return { "_id":user._id, "inviteCode":inviteCode }
+    return { "tpenUserId":user._id, "tpenGroupId":this.data.group }
   }
 
   async removeMember(userId) {
