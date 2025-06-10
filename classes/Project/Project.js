@@ -75,7 +75,7 @@ export default class Project {
           ?inviteCode=${inviteData.tpenUserID}
           &returnTo=${returnTo}
         `
-        // Decline starting at the TPEN3 Interfaces decline invite page.
+        // TODO decline endpoint in TPEN Services
         const decline = `https://dev.api.t-pen.org/decline
           ?inviteCode=${inviteData.tpenUserID}
           &groupID=${inviteData.tpenGroupID}
