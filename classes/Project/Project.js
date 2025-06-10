@@ -63,19 +63,20 @@ export default class Project {
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       let message = `You have been invited to the TPEN project ${projectTitle}. 
-      View project <a href='http://localhost:4001/project/${this.data._id}'>here</a>.`
+      View project <a href='https://app.t-pen.org/project/${this.data._id}'>here</a>.`
       if (user) {
         await this.inviteExistingTPENUser(user._id, roles)
-      } else {
+      } 
+      else {
         const inviteData = await this.inviteNewTPENUser(email, roles)
-        const returnTo = encodeURIComponent(`https://localhost:4000/project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
+        const returnTo = encodeURIComponent(`https://app.t-pen.org/project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
         // Signup starting at the TPEN3 public site
-        const signup = `http://localhost:4001/login
+        const signup = `https://three.t-pen.org/login
           ?inviteCode=${inviteData.tpenUserID}
           &returnTo=${returnTo}
         `
         // Decline starting at the TPEN3 Interfaces decline invite page.
-        const decline = `http://localhost:4000/decline
+        const decline = `https://dev.api.t-pen.org/decline
           ?inviteCode=${inviteData.tpenUserID}
           &groupID=${inviteData.tpenGroupID}
         `
