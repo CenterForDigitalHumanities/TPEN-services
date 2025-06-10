@@ -71,15 +71,30 @@ export default class Project {
         const inviteData = await this.inviteNewTPENUser(email, roles)
         console.log("Invite Data")
         console.log(inviteData)
-        // We will replace this URL with the correct url
-        const url = `http://localhost:4001/login
-          ?tpenGroupId=${inviteData.tpenGroupId}
-          &tpenUserId=${inviteData.tpenUserId}
-          &returnTo=https://localhost:4000/project?projectID=${this.data._id}
+        const returnTo = encodeURIComponent(`https://localhost:4000/project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
+        // Signup starting at the TPEN3 public site
+        const signup = `http://localhost:4001/login
+          ?inviteCode=${inviteData.tpenUserID}
+          &returnTo=${returnTo}
         `
-        message += `<p>Click the button below to get started with your project</p> 
-        <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
-        or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
+        // Decline starting at the TPEN3 Interfaces decline invite page.
+        const decline = `http://localhost:4000/decline
+          ?inviteCode=${inviteData.tpenUserID}
+          &groupID=${inviteData.tpenGroupID}
+        `
+        message += `
+          <p>
+            Click the button below to get started with your project</p> 
+            <button class="buttonStyle" ><a href="${signup}">Get Started</a></button>
+            or copy the following link into your web browser <a href="${signup}">${signup}</a> 
+          </p>
+          <p>
+            This E-mail address may be visible to members of the project so that they know
+            about the potential of new members.  You may decline this invitation which will keep
+            you out of the project and remove the visibility of this E-mail address from project details. <br>
+            <a href="${decline}">Click here to decline the invitation.</a>
+          </p>
+        `
       }
       console.log(message)
       await sendMail(email, `Invitation to ${projectTitle}`, message)
@@ -141,14 +156,14 @@ export default class Project {
   async inviteNewTPENUser(email, roles) {
     console.log("invite new temp user")
     const user = new User()
-    const inviteCode = this.data.group
+    const inviteCode = user._id
     const agent = `https://store.rerum.io/v1/id/${user._id}`
     const profile = { displayName: email.split("@")[0] }
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
-    return { "tpenUserId":user._id, "tpenGroupId":this.data.group }
+    return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
   }
 
   async removeMember(userId) {
