@@ -257,15 +257,6 @@ export default class Project {
     return await database.save(this.data, process.env.TPENPROJECTS)
   }
 
-  #generateInviteCode(userId) {
-    const date = Date.now().toString()
-    const data = `${date}:${userId}`
-
-    const hash = createHash("sha256")
-    hash.update(data)
-    return hash.digest("hex")
-  }
-
   async #load() {
     return database.getById(this._id, "projects").then((resp) => {
       this.data = resp
