@@ -58,7 +58,6 @@ export default class Project {
 
   async sendInvite(email, rolesString) {
     try {
-      console.log("Send invite")
       let userObj = new User()
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
@@ -69,8 +68,6 @@ export default class Project {
         await this.inviteExistingTPENUser(user._id, roles)
       } else {
         const inviteData = await this.inviteNewTPENUser(email, roles)
-        console.log("Invite Data")
-        console.log(inviteData)
         const returnTo = encodeURIComponent(`https://localhost:4000/project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
         // Signup starting at the TPEN3 public site
         const signup = `http://localhost:4001/login
@@ -96,7 +93,6 @@ export default class Project {
           </p>
         `
       }
-      console.log(message)
       await sendMail(email, `Invitation to ${projectTitle}`, message)
       return this
     } catch (error) {
