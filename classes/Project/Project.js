@@ -63,18 +63,37 @@ export default class Project {
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       let message = `You have been invited to the TPEN project ${projectTitle}. 
-      View project <a href='https://three.t-pen.org/project/${this.data._id}'>here</a>.`
+      View project <a href='${process.env.TPENINTERFACES}project/${this.data._id}'>here</a>.`
       if (user) {
         await this.inviteExistingTPENUser(user._id, roles)
-      } else {
-        const inviteCode = await this.inviteNewTPENUser(email, roles)
-        // We will replace this URL with the correct url
-        const url = `https://three.t-pen.org/login?invite-code=${inviteCode}`
-        message += `<p>Click the button below to get started with your project</p> 
-        <button class = "buttonStyle" ><a href=${url} >Get Started</a> </button>
-        or copy the following link into your web browser <a href=${url}>${url}</a> </p>`
+      } 
+      else {
+        const inviteData = await this.inviteNewTPENUser(email, roles)
+        const returnTo = encodeURIComponent(`${process.env.TPENINTERFACES}project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
+        // Signup starting at the TPEN3 public site
+        const signup = `${process.env.TPENTHREE}login
+          ?inviteCode=${inviteData.tpenUserID}
+          &returnTo=${returnTo}
+        `
+        // TODO decline endpoint in TPEN Services
+        const decline = `${process.env.TPENINTERFACES}project/decline
+          ?inviteCode=${inviteData.tpenUserID}
+          &groupID=${inviteData.tpenGroupID}
+        `
+        message += `
+          <p>
+            Click the button below to get started with your project</p> 
+            <button class="buttonStyle" ><a href="${signup}">Get Started</a></button>
+            or copy the following link into your web browser <a href="${signup}">${signup}</a> 
+          </p>
+          <p>
+            This E-mail address may be visible to members of the project so that they know
+            about the potential of new members.  You may decline this invitation which will keep
+            you out of the project and remove the visibility of this E-mail address from project details. <br>
+            <a href="${decline}">Click here to decline the invitation.</a>
+          </p>
+        `
       }
-
       await sendMail(email, `Invitation to ${projectTitle}`, message)
       return this
     } catch (error) {
@@ -133,15 +152,14 @@ export default class Project {
 
   async inviteNewTPENUser(email, roles) {
     const user = new User()
-    const inviteCode = this.#generateInviteCode(user._id)
+    const inviteCode = user._id
     const agent = `https://store.rerum.io/v1/id/${user._id}`
     const profile = { displayName: email.split("@")[0] }
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
     await this.inviteExistingTPENUser(user._id, roles)
-
-    return inviteCode
+    return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
   }
 
   async removeMember(userId) {
@@ -236,15 +254,6 @@ export default class Project {
 
   async save() {
     return await database.save(this.data, process.env.TPENPROJECTS)
-  }
-
-  #generateInviteCode(userId) {
-    const date = Date.now().toString()
-    const data = `${date}:${userId}`
-
-    const hash = createHash("sha256")
-    hash.update(data)
-    return hash.digest("hex")
   }
 
   async #load() {

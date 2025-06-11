@@ -55,11 +55,6 @@ function auth0Middleware() {
       const uid = agent.split("id/")[1]
       const user = new User(uid)
       user.getSelf().then(async (u) => {
-        if (u?.profile) {
-          req.user = u
-          next()
-          return
-        }
         user.data = {
           _id: uid,
           agent,
@@ -67,9 +62,21 @@ function auth0Middleware() {
           email: payload.name,
           profile: { displayName: payload.nickname },
         }
-        user.save()
-        req.user = user
+        if(!u || !u?.profile) {
+          user.save()
+          req.user = user
+          next()
+          return
+        }
+        if(u?.inviteCode || u._sub.includes("temp-")) {
+          user.update()
+          req.user = user
+          next()
+          return
+        }
+        req.user = u
         next()
+        return
       })
     } catch (error) {
       next(error)
