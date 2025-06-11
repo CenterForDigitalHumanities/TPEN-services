@@ -111,6 +111,13 @@ export default class User {
     return database.save({ _id: this._id, ...this.data }, "users")
   }
 
+  async delete() {
+    // validate before save
+    // save user to database
+    console.log("delete temp user "+this._id)
+    return database.delete({ _id: this._id}, "users")
+  }
+
   /**
    *  this assumes that the project object includes the following properties
     {

@@ -115,7 +115,8 @@ class dbDriver {
     async delete(data, collection) {
         collection ??= resolveCollection(data)
         if (!collection) throw new Error("Cannot determine collection for delete operation")
-        return this.controller.remove(data, collection)
+        const id = data["@id"] ?? data.id ?? data._id ?? data
+        return this.controller.remove(id, collection)
     }
 
     /**
