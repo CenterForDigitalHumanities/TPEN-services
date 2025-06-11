@@ -63,7 +63,7 @@ export default class Project {
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       let message = `You have been invited to the TPEN project ${projectTitle}. 
-      View project <a href='${process.env.TPENINTERFACES}project/${this.data._id}'>here</a>.`
+      View project <a href='${process.env.TPENINTERFACES}project?projectID=${this.data._id}'>here</a>.`
       if (user) {
         await this.inviteExistingTPENUser(user._id, roles)
       } 
