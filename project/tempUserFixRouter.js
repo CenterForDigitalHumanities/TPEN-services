@@ -17,7 +17,7 @@ router.route("/tempUserFix").get(async (req, res) => {
     //console.log("temp user")
     //console.log(tempData)
     if(!tempData?.profile) return respondWithError(res, 404, "Temp user does not exist")
-    if(!tempData?.inviteCode) return respondWithError(res, 403, "Temp user was not temp")
+    if(!tempData?.inviteCode) return respondWithError(res, 403, "Temp user provided is not temp")
     const project = await new Project(projectID).loadProject()
     //console.log("project")
     //console.log(project)
