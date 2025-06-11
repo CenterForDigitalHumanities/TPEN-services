@@ -71,15 +71,9 @@ export default class Project {
         const inviteData = await this.inviteNewTPENUser(email, roles)
         const returnTo = encodeURIComponent(`${process.env.TPENINTERFACES}project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
         // Signup starting at the TPEN3 public site
-        const signup = `${process.env.TPENTHREE}login
-          ?inviteCode=${inviteData.tpenUserID}
-          &returnTo=${returnTo}
-        `
+        const signup = `${process.env.TPENTHREE}login?inviteCode=${inviteData.tpenUserID}&returnTo=${returnTo}`
         // TODO decline endpoint in TPEN Services
-        const decline = `${process.env.TPENINTERFACES}project/decline
-          ?inviteCode=${inviteData.tpenUserID}
-          &groupID=${inviteData.tpenGroupID}
-        `
+        const decline = `${process.env.TPENINTERFACES}project/decline?inviteCode=${inviteData.tpenUserID}&groupID=${inviteData.tpenGroupID}`
         message += `
           <p>
             Click the button below to get started with your project</p> 
