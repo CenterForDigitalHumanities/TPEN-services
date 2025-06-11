@@ -151,7 +151,6 @@ export default class Project {
   }
 
   async inviteNewTPENUser(email, roles) {
-    console.log("invite new temp user")
     const user = new User()
     const inviteCode = user._id
     const agent = `https://store.rerum.io/v1/id/${user._id}`
