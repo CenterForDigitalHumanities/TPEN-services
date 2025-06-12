@@ -18,7 +18,7 @@ const router = express.Router({ mergeParams: true })
  *
  * @param projectId - The project which contains the temporary TPEN3 User as a member.
  * @param collaboratorId - The temporary TPEN3 User wanting a new Agent that matches their inviteCode.
- * @param agentId - The existing Agent _id to use for 'upgrading' the TPEN3 User.
+ * @param agentId - The existing Agent _id to use for 'upgrading' the TPEN3 User instead of their collaboratorId.
  */
 router.route("/:projectId/collaborator/:collaboratorId/agent/:agentId").get(async (req, res) => {
   const { projectId, collaboratorId, agentId  } = req.params
