@@ -112,9 +112,7 @@ export default class User {
   }
 
   async delete() {
-    // validate before save
-    // save user to database
-    console.log("delete temp user "+this._id)
+    // delete user from database
     return database.delete({ _id: this._id}, "users")
   }
 
