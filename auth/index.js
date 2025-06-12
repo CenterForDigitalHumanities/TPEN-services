@@ -55,14 +55,14 @@ function auth0Middleware() {
       const uid = agent.split("id/")[1]
       const user = new User(uid)
       user.getSelf().then(async (u) => {
-        user.data = {
-          _id: uid,
-          agent,
-          _sub: payload.sub,
-          email: payload.name,
-          profile: { displayName: payload.nickname },
-        }
         if(!u || !u?.profile) {
+          user.data = {
+            _id: uid,
+            agent,
+            _sub: payload.sub,
+            email: payload.name,
+            profile: { displayName: payload.nickname },
+          }
           user.save()
           req.user = user
           next()

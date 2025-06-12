@@ -27,9 +27,9 @@ router.route("/:projectId/collaborator/:collaboratorId/agent/:agentId").get(asyn
     const tempUser = new User(collaboratorId)
     const tempData = await tempUser.getSelf()
     if(!tempData?.profile) return respondWithError(res, 404, "Temporary user does not exist")
-    if(!tempData?.inviteCode) return respondWithError(res, 400, "Temporary user provided is not a temporary user")
+    if(!tempData?.inviteCode) return respondWithError(res, 400, "Temporary user provided is not a temporary user.")
     const project = await new Project(projectId).loadProject()
-    if(!project) return respondWithError(res, 404, "Project does not exist")
+    if(!project) return respondWithError(res, 404, "Project does not exist.")
     const group = new Group(project.group)
     let tempRoles = await group.getMemberRoles(tempData._id)
     if(!tempRoles) tempRoles = {"VIEWER":[]}
@@ -42,7 +42,7 @@ router.route("/:projectId/collaborator/:collaboratorId/agent/:agentId").get(asyn
     }
     await group.update()
     tempUser.delete()
-    res.status(200).send(`Temporary user '${collaboratorId}' upgraded to user '${agentId}'`)
+    res.status(200).send(`Temporary user '${collaboratorId}' upgraded to user '${agentId}'.`)
   } catch (error) {
     return respondWithError(
       res,
