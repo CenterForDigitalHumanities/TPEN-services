@@ -111,6 +111,11 @@ export default class User {
     return database.save({ _id: this._id, ...this.data }, "users")
   }
 
+  async delete() {
+    // delete user from database
+    return database.delete({ _id: this._id}, "users")
+  }
+
   /**
    *  this assumes that the project object includes the following properties
     {
