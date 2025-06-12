@@ -63,19 +63,11 @@ function auth0Middleware() {
           profile: { displayName: payload.nickname },
         }
         if(!u || !u?.profile) {
-          console.log("Save the user")
-          console.log(user)
           user.save()
           req.user = user
           next()
           return
         }
-        // if(u?.inviteCode || u._sub.includes("temp-")) {
-        //   user.update()
-        //   req.user = user
-        //   next()
-        //   return
-        // }
         req.user = u
         next()
         return

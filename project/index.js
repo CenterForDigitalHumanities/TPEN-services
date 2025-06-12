@@ -10,13 +10,13 @@ import customRolesRouter from "./customRolesRouter.js"
 import hotkeysRouter from "./hotkeysRouter.js"
 import metadataRouter from "./metadataRouter.js"
 import projectToolsRouter from "./projectToolsRouter.js"
-import tempUserFixRouter from "./tempUserFixRouter.js"
+import memberUpgradeRouter from "./memberUpgradeRouter.js"
 
 const router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
 
 // Use split routers
-router.use(tempUserFixRouter)
+router.use(memberUpgradeRouter) // Contains unauthenticated route!
 router.use(projectCreateRouter)
 router.use(import28Router)
 router.use(projectReadRouter)
