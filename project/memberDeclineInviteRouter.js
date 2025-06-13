@@ -12,7 +12,7 @@ const router = express.Router({ mergeParams: true })
  * Their temporary user should be removed from the db.
  *
  * @param projectId - The project which contains the temporary TPEN3 User as a member.
- * @param collaboratorId - The temporary TPEN3 User wanting a new Agent that matches their inviteCode.
+ * @param collaboratorId - The temporary TPEN3 User declining the invitation.
  */
 router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req, res) => {
   const { projectId, collaboratorId  } = req.params

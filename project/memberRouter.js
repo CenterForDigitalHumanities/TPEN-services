@@ -112,6 +112,36 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
   }
 })
 
+// Remove a member from the project.  If they are a temp user, remove them from the db.
+router.route("/:projectId/collaborator/:collaboratorId/").delete(auth0Middleware(),async (req, res) => {
+  const { projectId, collaboratorId  } = req.params
+  const user = req.user
+  if (!projectId || !collaboratorId) return respondWithError(res, 400, "Not all data was provided.")
+  try {
+    const member = new User(collaboratorId)
+    const memberData = await member.getSelf()
+    if(!memberData?.profile) return respondWithError(res, 404, "Temporary user does not exist")
+    const project = await new Project(projectId).loadProject()
+    if(!project) return respondWithError(res, 404, "Project does not exist.")
+    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBERS))) {
+      return respondWithError(res, 403, "You do not have permission to remove project members.")
+    }
+    const group = new Group(project.group)
+    group.removeMember(collaboratorId)
+    group.update()
+    if(memberData?.inviteCode) member.delete()
+    res.status(200).send(`Project member '${collaboratorId}' successfully removed from the Group '${group._id}'.`)
+  } catch (error) {
+    return respondWithError(
+      res,
+      error.status || error.code || 500,
+      error.message ?? "An error occurred."
+    )
+  }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use GET instead")
+})
+
 // Switch project owner
 router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
