@@ -15,6 +15,7 @@ const router = express.Router({ mergeParams: true })
  * @param collaboratorId - The temporary TPEN3 User declining the invitation.
  */
 router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req, res) => {
+  console.log("DECLINED")
   const { projectId, collaboratorId  } = req.params
   if (!projectId || !collaboratorId) return respondWithError(res, 400, "Not all data was provided.")
   try {

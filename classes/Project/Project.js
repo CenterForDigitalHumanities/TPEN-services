@@ -156,8 +156,17 @@ export default class Project {
     return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
   }
 
+  /**
+   * Remove a member from the Project Group.
+   * If the member is an invitee User, delete that User from the db.
+   *
+   * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
+   */
   async removeMember(userId) {
     try {
+      const member = new User(userId)
+      const memberData = await member.getSelf()
+      if(memberData?.inviteCode) member.delete()
       const group = new Group(this.data.group)
       await group.removeMember(userId)
       await group.update()

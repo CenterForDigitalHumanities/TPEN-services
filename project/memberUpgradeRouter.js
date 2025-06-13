@@ -33,9 +33,9 @@ router.route("/:projectId/collaborator/:collaboratorId/agent/:agentId").get(asyn
     const group = new Group(project.group)
     let tempRoles = await group.getMemberRoles(tempData._id)
     if(!tempRoles) tempRoles = {"VIEWER":[]}
-    group.addMember(agentId, Object.keys(tempRoles))
+    await group.addMember(agentId, Object.keys(tempRoles))
     try {
-      group.removeMember(tempData._id)
+      await group.removeMember(tempData._id)
     }
     catch (err) {
       // keep going.
