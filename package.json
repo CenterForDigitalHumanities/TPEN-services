@@ -45,6 +45,7 @@
       "express-oauth2-jwt-bearer": "^1.6.0",
       "express-urlrewrite": "^2.0.3",
       "http-errors": "^2.0.0",
+      "image-size": "^2.0.2",
       "jsdom": "^26.0.0",
       "manifesto.js": "^4.2.21",
       "mariadb": "^3.4.0",
