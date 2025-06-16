@@ -18,13 +18,13 @@ router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req,
   const { projectId, collaboratorId  } = req.params
   if (!projectId || !collaboratorId) return respondWithError(res, 400, "Not all data was provided.")
   try {
+    const project = await new Project(projectId)
+    const projectData = await project.loadProject()
+    if(!projectData) return respondWithError(res, 404, "Project does not exist.")
     const invitedUser = new User(collaboratorId)
     const userData = await invitedUser.getSelf()
     if(!userData?.profile) return respondWithError(res, 404, "This user has already declined or the user id is invalid.")
     if(!userData?.inviteCode) return respondWithError(res, 400, "This user has already accepted the invitation.")
-    const project = await new Project(projectId)
-    const projectData = await project.loadProject()
-    if(!projectData) return respondWithError(res, 404, "Project does not exist.")
     await project.removeMember(collaboratorId)
     res.status(200).send(`User '${collaboratorId}' successfully declined the invite.`)
   } catch (error) {
