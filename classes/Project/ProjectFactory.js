@@ -489,9 +489,8 @@ export default class ProjectFactory {
    * - Uploads the file using the GitHub API, including the correct commit message and SHA for updates.
    */
   static async uploadFileToGitHub(manifest, projectId) {
-    const fileName = manifest.id.split('/').pop() || 'manifest.json' 
+    const fileName = manifest?.id?.split('/').pop() ?? 'manifest.json'
     const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/${fileName}`
-    const fileUrl = `${process.env.TPENSTATIC}/${projectId}/${fileName}`
     const token = process.env.GITHUB_TOKEN
 
     try {
