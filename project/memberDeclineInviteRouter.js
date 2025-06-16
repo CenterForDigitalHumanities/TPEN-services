@@ -20,7 +20,7 @@ router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req,
   try {
     const project = await new Project(projectId)
     const projectData = await project.loadProject()
-    if(!projectData) return respondWithError(res, 404, "Project does not exist.")
+    if(!projectData) return respondWithError(res, 404, "Project does not exist or the project id is invalid.")
     const invitedUser = new User(collaboratorId)
     const userData = await invitedUser.getSelf()
     if(!userData?.profile) return respondWithError(res, 404, "This user has already declined or the user id is invalid.")
