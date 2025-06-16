@@ -20,12 +20,13 @@ router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req,
   try {
     const invitedUser = new User(collaboratorId)
     const userData = await invitedUser.getSelf()
-    if(!userData?.profile) return respondWithError(res, 404, "Temporary user does not exist")
-    if(!userData?.inviteCode) return respondWithError(res, 400, "Temporary user provided is not a temporary user.  Use the project management page instead.")
-    const project = await new Project(projectId).loadProject()
-    if(!project) return respondWithError(res, 404, "Project does not exist.")
+    if(!userData?.profile) return respondWithError(res, 404, "This user has already declined or the user id is invalid.")
+    if(!userData?.inviteCode) return respondWithError(res, 400, "This user has already accepted the invitation.")
+    const project = await new Project(projectId)
+    const projectData = await project.loadProject()
+    if(!projectData) return respondWithError(res, 404, "Project does not exist.")
     await project.removeMember(collaboratorId)
-    res.status(200).send(`Temporary user '${collaboratorId}' successfully declined the invite.`)
+    res.status(200).send(`User '${collaboratorId}' successfully declined the invite.`)
   } catch (error) {
     return respondWithError(
       res,
