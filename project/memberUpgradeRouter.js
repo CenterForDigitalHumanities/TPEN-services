@@ -33,15 +33,14 @@ router.route("/:projectId/collaborator/:collaboratorId/agent/:agentId").get(asyn
     const group = new Group(project.group)
     let tempRoles = await group.getMemberRoles(tempData._id)
     if(!tempRoles) tempRoles = {"VIEWER":[]}
-    await group.addMember(agentId, Object.keys(tempRoles))
+    await project.addMember(agentId, Object.keys(tempRoles))
     try {
-      await group.removeMember(tempData._id)
+      // This will also delete the temporary User from the users collection.
+      await project.removeMember(tempData._id)
     }
     catch (err) {
       // keep going.
     }
-    await group.update()
-    tempUser.delete()
     res.status(200).send(`Temporary user '${collaboratorId}' upgraded to user '${agentId}'.`)
   } catch (error) {
     return respondWithError(

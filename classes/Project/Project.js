@@ -73,7 +73,7 @@ export default class Project {
         // Signup starting at the TPEN3 public site
         const signup = `${process.env.TPENTHREE}login?inviteCode=${inviteData.tpenUserID}&returnTo=${returnTo}`
         // TODO decline endpoint in TPEN Services
-        const decline = `${process.env.TPENINTERFACES}project/decline?inviteCode=${inviteData.tpenUserID}&groupID=${inviteData.tpenGroupID}`
+        const decline = `${process.env.TPENINTERFACES}project/decline?email=${encodeURIComponent(email)}&user=${inviteData.tpenUserID}&project=${this.data._id}&projectTitle=${encodeURIComponent(projectTitle)}`
         message += `
           <p>
             Click the button below to get started with your project</p> 
@@ -164,12 +164,13 @@ export default class Project {
    */
   async removeMember(userId) {
     try {
-      const member = new User(userId)
-      const memberData = await member.getSelf()
-      if(memberData?.inviteCode) member.delete()
       const group = new Group(this.data.group)
       await group.removeMember(userId)
       await group.update()
+      // Don't leave orphaned invitees in the db.
+      const member = new User(userId)
+      const memberData = await member.getSelf()
+      if(memberData?.inviteCode) member.delete()
       return this
     } catch (error) {
       throw {
