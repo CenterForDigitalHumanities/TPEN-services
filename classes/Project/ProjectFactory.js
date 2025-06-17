@@ -239,13 +239,6 @@ export default class ProjectFactory {
                     id: imageURL,
                     type: "Image",
                     format: `image/${imageURL.split('.').pop()}`,
-                    service: [
-                      {
-                        id: `https://iiif.io/api/image/3.0/example/reference/15f769d62ca9a3a2deca390efed75d73-3_titlepage1`,
-                        type: "ImageService3",
-                        profile: "level1"
-                      }
-                    ],
                     width: dimensions.width,
                     height: dimensions.height
                   },
@@ -278,13 +271,6 @@ export default class ProjectFactory {
                 id: imageURL,
                 type: "Image",
                 format: `image/${imageURL.split('.').pop()}`,
-                service: [
-                  {
-                    id: `https://iiif.io/api/image/3.0/example/reference/15f769d62ca9a3a2deca390efed75d73-3_titlepage1`,
-                    type: "ImageService3",
-                    profile: "level1"
-                  }
-                ],
                 width: dimensions.width,
                 height: dimensions.height
               },
