@@ -65,7 +65,8 @@ export default class Project {
       let message = `You have been invited to the TPEN project ${projectTitle}. 
       View project <a href='${process.env.TPENINTERFACES}project?projectID=${this.data._id}'>here</a>.`
       if (user) {
-        // FIXME this does not have the functionality of an 'invite'.  It adds the user to the project without their consent.
+        // FIXME this does not have the functionality of an 'invite'.  The User is added to the project.  
+        // There is no step for them to accept or decline.
         await this.inviteExistingTPENUser(user._id, roles)
       } 
       else {
@@ -159,7 +160,8 @@ export default class Project {
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
-    // FIXME this does not have the functionality of an 'invite'.  It adds the user to the project without their consent.
+    // FIXME this does not have the functionality of an 'invite'.  The User is added to the project.  
+    // There is no step for them to accept or decline.
     await this.inviteExistingTPENUser(user._id, roles)
     return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
   }
@@ -167,7 +169,7 @@ export default class Project {
   /**
    * Add a member to the Project Group.
    *
-   * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
+   * @param userId The User/member _id to add to the Group.
    */
   async addMember(userId, roles) {
     try {
@@ -184,13 +186,12 @@ export default class Project {
 
   /**
    * Remove a member from the Project Group.
-   * If the member is an invitee User, delete that User from the db.
+   * If the member is an invitee (temporary) User, delete that User from the db.
    *
    * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
    */
   async removeMember(userId) {
     try {
-      console.log(`remove ${userId} from group ${this.data.group}`)
       const group = new Group(this.data.group)
       await group.removeMember(userId)
       await group.update()

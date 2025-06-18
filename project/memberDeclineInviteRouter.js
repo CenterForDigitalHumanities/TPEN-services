@@ -14,7 +14,6 @@ const router = express.Router({ mergeParams: true })
  * @param collaboratorId - The temporary TPEN3 User declining the invitation.
  */
 router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req, res) => {
-  console.log("DECLINED")
   const { projectId, collaboratorId  } = req.params
   if (!projectId || !collaboratorId) return respondWithError(res, 400, "Not all data was provided.")
   try {
@@ -26,12 +25,13 @@ router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req,
     if(!userData?.profile) return respondWithError(res, 404, "This user has already declined or the user id is invalid.")
     if(!userData?.inviteCode) return respondWithError(res, 400, "This user has already accepted the invitation.")
     await project.removeMember(collaboratorId)
-    res.status(200).send(`User '${collaboratorId}' successfully declined the invite.`)
+    const name = userData.email ?? userData.profile.displayName ?? collaboratorId
+    res.status(200).send(`User '${name}' successfully declined the invitation.`)
   } catch (error) {
     return respondWithError(
       res,
       error.status || error.code || 500,
-      error.message ?? "An error occurred."
+      error.message ?? "There was an error declining the invititation"
     )
   }
 }).all((_, res) => {
