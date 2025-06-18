@@ -4,6 +4,8 @@ import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
+import imageSize from 'image-size';
+import mime from 'mime-types';
 
 const database = new dbDriver("mongo")
 
@@ -148,6 +150,139 @@ export default class ProjectFactory {
           message: err.message ?? "Internal Server Error"
         }
       })
+  }
+
+  /** 
+   * Creates a new manifest from given image url and project label.
+   * @param {string} imageUrl - URL of the image to be used in the project.
+   * @param {string} label - Label for the project.
+   * @returns {Object} - Returns the created project object.
+   */
+
+  static async getImageDimensions(imgUrl) {
+    try {
+      const response = await fetch(imgUrl)
+      if (!response.ok) {
+        throw {
+          status: response.status,
+          message: `Failed to fetch image: ${response.statusText}`
+        }
+      }
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      const dimensions = imageSize(buffer)
+      return {
+        width: dimensions.width,
+        height: dimensions.height
+      }
+    } catch (err) {
+      console.error("Error fetching image dimensions:", err.message)
+      return
+    }
+  }
+
+  static async DBObjectFromImage(manifest) {
+    if (!manifest) {
+      throw {
+        status: 404,
+        message: err.message ?? "No manifest found. Cannot process empty object"
+      }
+    }
+    const _id = manifest.id.split('/').slice(-2, -1)[0]
+    const now = Date.now().toString().slice(-6)
+    const label = ProjectFactory.getLabelAsString(manifest.label)
+    const metadata = manifest.metadata ?? []
+    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items ) 
+
+    const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
+
+    return {
+      _id,
+      label,
+      metadata,
+      manifest: [ manifest.id ],
+      layers: [ layer.asProjectLayer() ],
+      tools: this.tools,
+      _createdAt: now,
+      _modifiedAt: -1,
+      _lastModified: firstPage,
+    }
+  }
+
+  static async createManifestFromImage(imageURL, projectLabel, creator) {
+    if (!imageURL) {
+      throw {
+        status: 404,
+        message: "No image found. Cannot process further."
+      }
+    }
+    const _id = database.reserveId()
+    const now = Date.now().toString().slice(-6)
+    const label = projectLabel ?? now
+    const dimensions = await this.getImageDimensions(imageURL)
+
+    const canvasLayout = {
+      id: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`,
+      type: "Canvas",
+      label: { "none": [`${label} Page 1`] },
+      width: dimensions.width,
+      height: dimensions.height,
+      items: [
+        {
+          id: `${process.env.TPENSTATIC}/${_id}/contentPage.json`,
+          type: "AnnotationPage",
+          items: [
+            {
+              id: `${process.env.TPENSTATIC}/${_id}/content.json`,
+              type: "Annotation",
+              motivation: "painting",
+              body: {
+                id: imageURL,
+                type: "Image",
+                format: mime.lookup(imageURL) || "image/jpeg",
+                width: dimensions.width,
+                height: dimensions.height
+              },
+              target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`
+            }
+          ]
+        }
+      ]
+    }
+
+    const projectManifest = {
+      "@context": "http://iiif.io/api/presentation/3/context.json",
+      id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
+      type: "Manifest",
+      label: { "none": [label] },
+      items: [ canvasLayout ]
+    }
+
+    const projectCanvas = {
+      "@context": "http://iiif.io/api/presentation/3/context.json",
+      ...canvasLayout
+    }
+
+    await this.uploadFileToGitHub(projectManifest, _id)
+    await this.uploadFileToGitHub(projectCanvas, _id)
+
+    return await ProjectFactory.DBObjectFromImage(projectManifest)
+    .then(async (project) => {
+      const projectObj = new Project()
+      const group = await Group.createNewGroup(creator,
+        {
+          label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
+          members: { [creator]: { roles: [] } }
+        })
+      .then((group) => group._id)
+      return await projectObj.create({ ...project, creator, group })
+    })
+    .catch((err) => {
+      throw {
+        status: err.status ?? 500,
+        message: err.message ?? "Internal Server Error"
+      }
+    })
   }
 
   /**
@@ -321,7 +456,8 @@ export default class ProjectFactory {
    * - Uploads the file using the GitHub API, including the correct commit message and SHA for updates.
    */
   static async uploadFileToGitHub(manifest, projectId) {
-    const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`
+    const fileName = manifest?.id?.split('/').pop() ?? 'manifest.json'
+    const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/${fileName}`
     const token = process.env.GITHUB_TOKEN
 
     try {
@@ -339,7 +475,7 @@ export default class ProjectFactory {
         sha = fileData.sha
       }
 
-      await fetch(manifestUrl, {
+      const putResponse = await fetch(manifestUrl, {
         method: 'PUT',
         headers: {
           'Authorization': `token ${token}`,
@@ -347,15 +483,22 @@ export default class ProjectFactory {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            message: sha ? `Updated ${projectId}/manifest.json` : `Created ${projectId}/manifest.json`,
+            message: sha ? `Updated ${projectId}/${fileName}` : `Created ${projectId}/${fileName}`,
             content: Buffer.from(JSON.stringify(manifest)).toString('base64'),
             branch: process.env.BRANCH,
             ...(sha && { sha }),
         })
     })
 
+    if (!putResponse.ok) {
+      const errText = await putResponse.text()
+      throw new Error(`GitHub upload failed: ${putResponse.status} - ${errText}`)
+    }
+
+    return await putResponse.json()
+
     } catch (error) {
-      console.error(`Failed to upload ${projectId}/manifest.json:`, error)
+      console.error(`Failed to upload ${projectId}/${fileName}:`, error)
     }
   }
 

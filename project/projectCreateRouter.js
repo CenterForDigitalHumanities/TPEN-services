@@ -67,4 +67,26 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
+router.route("/import-image").post(auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  try {
+    const { imageUrl, projectLabel } = req.body
+    if (!imageUrl || !projectLabel) {
+      return respondWithError(res, 400, "Image URL and project label are required")
+    }
+    const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user._id)
+    res.status(201).json(project)
+  } catch (error) {
+    respondWithError(
+      res,
+      error.status ?? error.code ?? 500,
+      error.message ?? "Unknown server error"
+    )
+  }
+}
+).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use POST instead")
+})
+
 export default router
