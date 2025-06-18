@@ -268,7 +268,6 @@ export default class ProjectFactory {
 
     return await ProjectFactory.DBObjectFromImage(projectManifest)
     .then(async (project) => {
-      console.log("Creating project from image manifest", project)
       const projectObj = new Project()
       const group = await Group.createNewGroup(creator,
         {
