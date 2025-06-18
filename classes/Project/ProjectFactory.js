@@ -4,7 +4,7 @@ import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
-import { imageSize } from 'image-size';
+import imageSize from 'image-size';
 
 const database = new dbDriver("mongo")
 
@@ -254,7 +254,7 @@ export default class ProjectFactory {
       id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
       type: "Manifest",
       label: { "none": [label] },
-      items: [ ...canvasLayout ]
+      items: [ canvasLayout ]
     }
 
     const projectCanvas = {
