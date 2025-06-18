@@ -5,7 +5,6 @@ import Layer from "../Layer/Layer.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
 import { imageSize } from 'image-size';
-import fetch from 'node-fetch';
 
 const database = new dbDriver("mongo")
 
@@ -163,14 +162,21 @@ export default class ProjectFactory {
     try {
       const response = await fetch(imgUrl)
       if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`)
+        throw {
+          status: response.status,
+          message: `Failed to fetch image: ${response.statusText}`
+        }
       }
-      const buffer = await response.buffer()
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
       const dimensions = imageSize(buffer)
-      return { width: dimensions.width, height: dimensions.height }
-    } catch (error) {
-      console.error('Error getting image dimensions:', error)
-      return null
+      return {
+        width: dimensions.width,
+        height: dimensions.height
+      }
+    } catch (err) {
+      console.error("Error fetching image dimensions:", err.message)
+      return
     }
   }
 
@@ -214,45 +220,7 @@ export default class ProjectFactory {
     const label = projectLabel ?? now
     const dimensions = await this.getImageDimensions(imageURL)
 
-    const projectManifest = {
-      "@context": "http://iiif.io/api/presentation/3/context.json",
-      id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
-      type: "Manifest",
-      label: { "none": [label] },
-      items: [
-        {
-          id: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`,
-          type: "Canvas",
-          label: { "none": [`${label} Page 1`] },
-          width: dimensions.width,
-          height: dimensions.height,
-          items: [
-            {
-              id: `${process.env.TPENSTATIC}/${_id}/contentPage.json`,
-              type: "AnnotationPage",
-              items: [
-                {
-                  id: `${process.env.TPENSTATIC}/${_id}/content.json`,
-                  type: "Annotation",
-                  motivation: "painting",
-                  body: {
-                    id: imageURL,
-                    type: "Image",
-                    format: `image/${imageURL.split('.').pop()}`,
-                    width: dimensions.width,
-                    height: dimensions.height
-                  },
-                  target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-
-    const projectCanvas = {
-      "@context": "http://iiif.io/api/presentation/3/context.json",
+    const canvasLayout = {
       id: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`,
       type: "Canvas",
       label: { "none": [`${label} Page 1`] },
@@ -279,6 +247,19 @@ export default class ProjectFactory {
           ]
         }
       ]
+    }
+
+    const projectManifest = {
+      "@context": "http://iiif.io/api/presentation/3/context.json",
+      id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
+      type: "Manifest",
+      label: { "none": [label] },
+      items: [ ...canvasLayout ]
+    }
+
+    const projectCanvas = {
+      "@context": "http://iiif.io/api/presentation/3/context.json",
+      ...canvasLayout
     }
 
     await this.uploadFileToGitHub(projectManifest, _id)
