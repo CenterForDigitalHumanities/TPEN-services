@@ -5,6 +5,7 @@ import Layer from "../Layer/Layer.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
 import imageSize from 'image-size';
+import mime from 'mime-types';
 
 const database = new dbDriver("mongo")
 
@@ -238,7 +239,7 @@ export default class ProjectFactory {
               body: {
                 id: imageURL,
                 type: "Image",
-                format: `image/${imageURL.split('.').pop()}`,
+                format: mime.lookup(imageURL) || "image/jpeg",
                 width: dimensions.width,
                 height: dimensions.height
               },
