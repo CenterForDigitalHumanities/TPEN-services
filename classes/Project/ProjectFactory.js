@@ -216,6 +216,28 @@ export default class ProjectFactory {
         message: "No image found. Cannot process further."
       }
     }
+
+    let isIIFImage = false
+    let IIIFServiceURL = null
+    let IIIFServiceJson = null
+
+    if (imageURL.startsWith("https://iiif.io/api/image/")) {
+      IIIFServiceURL = imageURL.split('/full/')[0]
+      await fetch(`${IIIFServiceURL}/info.json`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch IIIF info: ${response.statusText}`)
+          }
+          return response.json()
+        })
+        .then(info => {
+          if (info?.protocol === "http://iiif.io/api/image") {
+            isIIFImage = true
+            IIIFServiceJson = info
+          }
+        })
+    }
+
     const _id = database.reserveId()
     const now = Date.now().toString().slice(-6)
     const label = projectLabel ?? now
@@ -241,7 +263,14 @@ export default class ProjectFactory {
                 type: "Image",
                 format: mime.lookup(imageURL) || "image/jpeg",
                 width: dimensions.width,
-                height: dimensions.height
+                height: dimensions.height,
+                ...(isIIFImage && {
+                  service: [{
+                    id: IIIFServiceURL,
+                    type: IIIFServiceJson?.type,
+                    profile: IIIFServiceJson?.profile,
+                  }]
+                })
               },
               target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`
             }
