@@ -65,6 +65,7 @@ export default class Project {
       let message = `You have been invited to the TPEN project ${projectTitle}. 
       View project <a href='${process.env.TPENINTERFACES}project?projectID=${this.data._id}'>here</a>.`
       if (user) {
+        // FIXME this does not have the functionality of an 'invite'.
         await this.inviteExistingTPENUser(user._id, roles)
       } 
       else {
@@ -72,8 +73,8 @@ export default class Project {
         const returnTo = encodeURIComponent(`${process.env.TPENINTERFACES}project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
         // Signup starting at the TPEN3 public site
         const signup = `${process.env.TPENTHREE}login?inviteCode=${inviteData.tpenUserID}&returnTo=${returnTo}`
-        // TODO decline endpoint in TPEN Services
-        const decline = `${process.env.TPENINTERFACES}project/decline?inviteCode=${inviteData.tpenUserID}&groupID=${inviteData.tpenGroupID}`
+        // Decline endpoint in TPEN Services
+        const decline = `${process.env.TPENINTERFACES}project/decline?email=${encodeURIComponent(email)}&user=${inviteData.tpenUserID}&project=${this.data._id}&projectTitle=${encodeURIComponent(projectTitle)}`
         message += `
           <p>
             Click the button below to get started with your project</p> 
@@ -138,12 +139,19 @@ export default class Project {
     return roles
   }
 
+  /**
+    * Invite an existing TPEN3 User to the project.
+    * FIXME this does not have the functionality of an 'invite'.  The User is added to the project.  
+    * There is no step for them to accept or decline.
+    */
   async inviteExistingTPENUser(userId, roles) {
-    const group = new Group(this.data.group)
-    await group.addMember(userId, roles)
+    await this.addMember(userId, roles)
     return this
   }
 
+  /**
+    * Add a new temporary user to the users collection and send the invite E-mail.
+    */
   async inviteNewTPENUser(email, roles) {
     const user = new User()
     const inviteCode = user._id
@@ -152,15 +160,44 @@ export default class Project {
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
+    // FIXME this does not have the functionality of an 'invite'.
     await this.inviteExistingTPENUser(user._id, roles)
     return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
   }
 
+  /**
+   * Add a member to the Project Group.
+   *
+   * @param userId The User/member _id to add to the Group.
+   */
+  async addMember(userId, roles) {
+    try {
+      const group = new Group(this.data.group)
+      await group.addMember(userId, roles)
+    } catch (error) {
+      throw {
+        status: error.status || 500,
+        message: error.message || "An error occurred while adding the member."
+      }
+    }
+    
+  }
+
+  /**
+   * Remove a member from the Project Group.
+   * If the member is an invitee (temporary) User, delete that User from the db.
+   *
+   * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
+   */
   async removeMember(userId) {
     try {
       const group = new Group(this.data.group)
       await group.removeMember(userId)
       await group.update()
+      // Don't leave orphaned invitees in the db.
+      const member = new User(userId)
+      const memberData = await member.getSelf()
+      if(memberData?.inviteCode) member.delete()
       return this
     } catch (error) {
       throw {

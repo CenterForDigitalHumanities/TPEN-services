@@ -11,12 +11,14 @@ import hotkeysRouter from "./hotkeysRouter.js"
 import metadataRouter from "./metadataRouter.js"
 import projectToolsRouter from "./projectToolsRouter.js"
 import memberUpgradeRouter from "./memberUpgradeRouter.js"
+import memberDeclineInviteRouter from "./memberDeclineInviteRouter.js"
 
 const router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
 
 // Use split routers
 router.use(memberUpgradeRouter) // Contains unauthenticated route!
+router.use(memberDeclineInviteRouter) // Contains unauthenticated route!
 router.use(projectCreateRouter)
 router.use(import28Router)
 router.use(projectReadRouter)
