@@ -218,11 +218,54 @@ export default class ProjectFactory {
     }
 
     let isIIFImage = false
-    let IIIFServiceURL = null
+    let IIIFServiceParts = imageURL.split('/').reverse()
     let IIIFServiceJson = null
 
-    if (imageURL.startsWith("https://iiif.io/api/image/")) {
-      IIIFServiceURL = imageURL.split('/full/')[0]
+    function isValidIIIFRegion(region) {
+      return (
+        region === "full" ||
+        region === "square" ||
+        /^pct:\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/.test(region) || 
+        /^\d+,\d+,\d+,\d+$/.test(region)
+      )
+    }
+
+    function isValidIIIFSize(size) {
+      return (
+        size === "max" ||
+        size.startsWith("^max") ||
+        /^\d+,$/.test(size) ||
+        size.startsWith("^") && /^\d+,$/.test(size) ||
+        /^,\d+$/.test(size) ||
+        size.startsWith("^") && /^,\d+$/.test(size) ||
+        size.startsWith("pct:") && /^\d+(\.\d+)?$/.test(size) ||
+        size.startsWith("^pct:") && /^\d+(\.\d+)?$/.test(size) ||
+        /^\d+,\d+$/.test(size) ||
+        size.startsWith("^") && /^\d+,\d+$/.test(size) ||
+        size.startsWith("!") && /^\d+,\d+$/.test(size) ||
+        size.startsWith("^!") && /^\d+,\d+$/.test(size)
+      )
+    }
+
+    function isValidIIIFRotation(rotation) {
+      return (
+        /^\d+(\.\d+)?$/.test(rotation) ||
+        size.startsWith("!") && /^\d+(\.\d+)?$/.test(rotation)
+      )
+    }
+
+    function isValidIIIFQuality(quality) {
+      return (
+        quality === "default" ||
+        quality === "color" ||
+        quality === "gray" ||
+        quality === "bitonal"
+      )
+    }
+
+    let IIIFServiceURL = IIIFServiceParts.slice(4).reverse().join("/")
+
+    if (isValidIIIFQuality(IIIFServiceParts[0].split(".")[0]) && isValidIIIFRotation(IIIFServiceParts[1]) && isValidIIIFSize(IIIFServiceParts[2]) && isValidIIIFRegion(IIIFServiceParts[3])) {
       await fetch(`${IIIFServiceURL}/info.json`)
         .then(response => {
           if (!response.ok) {
