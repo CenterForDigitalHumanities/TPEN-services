@@ -126,6 +126,8 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
+    console.log('Old line found:', oldLine)
+    oldLine.body ??= []
     const line = new Line(oldLine)
     const updatedLine = await line.updateText(req.body)
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())

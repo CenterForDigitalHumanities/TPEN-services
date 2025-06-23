@@ -93,14 +93,33 @@ export default class Line {
     }
 }
     async updateText(text) {
-        if (typeof text !== 'string') {
-            throw new Error('Text content must be a string')
+        if (typeof text !== 'string') throw new Error('Text content must be a string')
+
+        const isTextualBody = body => body?.type === 'TextualBody' && typeof body?.value === 'string'
+
+        if (Array.isArray(this.body)) {
+            const textualBodies = this.body.filter(isTextualBody)
+            if (textualBodies.length !== 1) throw new Error(textualBodies.length > 1 ? 'Multiple textual bodies found. Cannot determine which one to update.' : 'No textual body found in the array to update.')
+
+            const textualBody = textualBodies[0]
+            if (textualBody.value === text) return this
+            Object.assign(textualBody, { value: text, format: "text/plain" })
+            return this.update()
         }
-        if(this.body === text) {
-            return this
+
+        if (isTextualBody(this.body)) {
+            if (this.body.value === text) return this
+            Object.assign(this.body, { value: text, format: "text/plain" })
+            return this.update()
         }
-        this.body = text
-        return this.update()
+
+        if (typeof this.body === 'string') {
+            if (this.body === text) return this
+            this.body = { type: 'TextualBody', value: text, format: "text/plain" }
+            return this.update()
+        }
+
+        throw new Error('Unexpected body format. Cannot update text.')
     }
 
     async updateBounds({x, y, w, h}) {
