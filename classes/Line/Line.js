@@ -92,30 +92,53 @@ export default class Line {
         target: this.target
     }
 }
-    async updateText(text) {
+    /**
+     * Updates the textual content of the annotation body.
+     *
+     * Handles various body formats, including arrays of bodies and different textual body variants.
+     * Throws errors if the body format is unexpected or ambiguous.
+     *
+     * @async
+     * @param {string} text - The new text content to set.
+     * @param {Object} [options={}] - Optional parameters for updating the text.
+     * @param {string} [options.format="text/plain"] - The format of the text (e.g., "text/plain").
+     * @param {string} [options.language] - The language of the text.
+     * @param {string} [options.creator] - The creator of the annotation (applied at the annotation level).
+     * @param {string} [options.generator] - The generator of the annotation (applied at the annotation level).
+     * @returns {Promise<this>} The updated instance for chaining.
+     * @throws {Error} If the text is not a string, or if the body format is unexpected or ambiguous.
+     */
+    async updateText(text, options = {}) {
         if (typeof text !== 'string') throw new Error('Text content must be a string')
 
-        const isTextualBody = body => body?.type === 'TextualBody' && typeof body?.value === 'string'
+        const isVariantTextualBody = body => typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
 
         if (Array.isArray(this.body)) {
-            const textualBodies = this.body.filter(isTextualBody)
+            const textualBodies = this.body.filter(body => isVariantTextualBody(body))
             if (textualBodies.length !== 1) throw new Error(textualBodies.length > 1 ? 'Multiple textual bodies found. Cannot determine which one to update.' : 'No textual body found in the array to update.')
 
             const textualBody = textualBodies[0]
-            if (textualBody.value === text) return this
-            Object.assign(textualBody, { value: text, format: "text/plain" })
+            const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
+            if (currentValue === text) return this
+            Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
             return this.update()
         }
 
         if (isTextualBody(this.body)) {
             if (this.body.value === text) return this
-            Object.assign(this.body, { value: text, format: "text/plain" })
+            Object.assign(this.body, { value: text, format: options.format ?? "text/plain", language: options.language })
+            // discard Annotation-level options if only one body entry is modified.
             return this.update()
         }
 
-        if (typeof this.body === 'string') {
-            if (this.body === text) return this
-            this.body = { type: 'TextualBody', value: text, format: "text/plain" }
+        if (isVariantTextualBody(this.body)) {
+            const currentValue = this.body.chars ?? this.body['cnt:asChars'] ?? this.body.value ?? this.body
+            if (currentValue === text) return this
+            this.body = { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language }
+            // Apply options directly to the Annotation
+            if (options.creator) this.creator = options.creator
+            if (options.generator) this.generator = options.generator
+            // discarding unknown options
             return this.update()
         }
 
