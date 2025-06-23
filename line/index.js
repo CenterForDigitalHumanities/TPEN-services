@@ -113,6 +113,7 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
 
 // Update the text of an existing line
 router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
+  console.log('Updating line text:', req.params.lineId, req.body)
   try {
     if (typeof req.body !== 'string') {
       respondWithError(res, 400, 'Invalid request body. Expected a string.')
