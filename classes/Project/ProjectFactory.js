@@ -232,8 +232,8 @@ export default class ProjectFactory {
 
     function isValidIIIFSize(size) {
       return (
-        size === "max" ||
-        size.startsWith("^max") ||
+        size === "full" ||
+        size.startsWith("^full") ||
         /^\d+,$/.test(size) ||
         size.startsWith("^") && /^\d+,$/.test(size) ||
         /^,\d+$/.test(size) ||
@@ -277,6 +277,13 @@ export default class ProjectFactory {
           if (info?.protocol === "http://iiif.io/api/image") {
             isIIFImage = true
             IIIFServiceJson = info
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching IIIF info:", err.message)
+          throw {
+            status: 500,
+            message: "Failed to fetch IIIF info"
           }
         })
     }
