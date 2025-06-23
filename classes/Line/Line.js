@@ -12,9 +12,8 @@ export default class Line {
     }
 
     constructor({ id, target, body, motivation, label, type }) {
-        if (!id || !body || !target) {
+        if (!id || !target) 
             throw new Error('Line data is malformed.')
-        }
         this.id = id // Ensure the id is assigned
         this.body = body
         this.target = target
@@ -110,6 +109,7 @@ export default class Line {
      */
     async updateText(text, options = {}) {
         if (typeof text !== 'string') throw new Error('Text content must be a string')
+        if (!this.body) this.body = "" // simple variant for no body
 
         const isVariantTextualBody = body => typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
 
@@ -121,12 +121,6 @@ export default class Line {
             const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
             if (currentValue === text) return this
             Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
-            return this.update()
-        }
-
-        if (isTextualBody(this.body)) {
-            if (this.body.value === text) return this
-            Object.assign(this.body, { value: text, format: options.format ?? "text/plain", language: options.language })
             // discard Annotation-level options if only one body entry is modified.
             return this.update()
         }

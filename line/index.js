@@ -113,7 +113,6 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
 
 // Update the text of an existing line
 router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
-  console.log('Updating line text:', req.params.lineId, req.body)
   try {
     if (typeof req.body !== 'string') {
       respondWithError(res, 400, 'Invalid request body. Expected a string.')
@@ -126,8 +125,6 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
-    console.log('Old line found:', oldLine)
-    oldLine.body ??= []
     const line = new Line(oldLine)
     const updatedLine = await line.updateText(req.body)
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
