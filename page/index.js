@@ -5,7 +5,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -103,7 +103,11 @@ router.route('/:pageId')
       await updatePageAndProject(pageObject, project, user._id)
 
       res.status(200).json(pageObject)
-    } catch (error) {
+    } catch (error) {      
+      // Handle version conflicts with optimistic locking
+      if (error.status === 409) {
+        return handleVersionConflict(res, error)
+      }
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
   })

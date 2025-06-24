@@ -127,7 +127,21 @@ export default class Layer {
             throw new Error(`Layer not found in RERUM: ${this.id}`)
         }
         const updatedLayer = { ...existingLayer, ...layerAsCollection }
-        await databaseTiny.overwrite(updatedLayer)
-        return this
+        
+        // Handle optimistic locking version if available        
+        try {
+            await databaseTiny.overwrite(updatedLayer)
+            return this
+        } catch (err) {
+            if (err.status === 409) {
+                // Handle version conflict - re-throw with more context
+                const conflictError = new Error(`Layer update failed due to version conflict. The layer '${this.id}' was modified by another process.`)
+                conflictError.status = 409
+                conflictError.currentVersion = err.currentVersion
+                conflictError.layerId = this.id
+                throw conflictError
+            }
+            throw err
+        }
     }
 }

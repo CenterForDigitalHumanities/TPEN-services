@@ -94,8 +94,22 @@ export default class Page {
             throw new Error(`Failed to find Page in RERUM: ${this.id}`)
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-        await databaseTiny.overwrite(updatedPage)
-        return this
+        
+        // Handle optimistic locking version if available
+        try {
+            await databaseTiny.overwrite(updatedPage)
+            return this
+        } catch (err) {
+            if (err.status === 409) {
+                // Handle version conflict - re-throw with more context
+                const conflictError = new Error(`Page update failed due to version conflict. The page '${this.id}' was modified by another process.`)
+                conflictError.status = 409
+                conflictError.currentVersion = err.currentVersion
+                conflictError.pageId = this.id
+                throw conflictError
+            }
+            throw err
+        }
     }
 
     /**
