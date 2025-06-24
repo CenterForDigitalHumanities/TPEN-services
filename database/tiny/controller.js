@@ -184,20 +184,44 @@ class DatabaseController {
 
     /**
      * Use the TinyPEN overwrite endpoint to overwrite the supplied JSON object.
+     * Implements optimistic locking using If-Overwritten-Version header.
      * TODO Pass forward the user bearer token from the Interfaced to TinyPEN?
      * @return the updated JSON or Error
      */
     async overwrite(data) {
         err_out._dbaction = this.URLS.OVERWRITE
+        
+        const headers = {
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        
+        // Add optimistic locking header if __rerum.isOverwritten exists
+        if (data.__rerum?.isOverwritten) {
+            headers['If-Overwritten-Version'] = data.__rerum.isOverwritten
+        }
+        
         return await fetch(this.URLS.OVERWRITE, {
                 method: 'put',
                 body: JSON.stringify(data),
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
-                }
+                headers
             })
             .then(resp => {
                 if (!resp.ok) {
+                    if (resp.status === 409) {
+                        // Handle optimistic locking conflict
+                        return resp.json().then(errorData => {
+                            const conflictError = new Error('Version conflict detected')
+                            conflictError.status = 409
+                            conflictError.currentVersion = errorData.currentVersion
+                            conflictError._dbaction = this.URLS.OVERWRITE
+                            throw conflictError
+                        }).catch(jsonErr => {
+                            // If we can't parse the error response, use the original error
+                            err_out.message = resp.statusText ?? `Version conflict - document was modified by another process`
+                            err_out.status = 409
+                            throw err_out
+                        })
+                    }
                     err_out.message = resp.statusText ?? `TinyPEN Overwrite sent a bad response`
                     err_out.status = resp.status ?? 500
                     throw err_out
@@ -205,6 +229,11 @@ class DatabaseController {
                 return resp.json()
             })
             .catch(err => {
+                // Re-throw structured errors (like version conflicts)
+                if (err.status === 409) {
+                    throw err
+                }
+                
                 // Specifically account for unexpected fetch()y things. 
                 if(!err?.message) err.message = err.statusText ?? `TinyPEN Overwrite did not complete successfully`
                 if(!err?.status) err.status = err.status ?? 500
@@ -248,5 +277,27 @@ class DatabaseController {
             })
     }
 }
+
+/**
+ * OPTIMISTIC LOCKING IMPLEMENTATION
+ * 
+ * This controller implements optimistic locking for TinyPen overwrite operations:
+ * 
+ * 1. When fetching existing documents, check for __rerum.isOverwritten property
+ * 2. Include this value as "If-Overwritten-Version" header when calling overwrite/update
+ * 3. TinyPen will return 409 conflict if versions don't match
+ * 4. Error response includes currentVersion for potential retry
+ * 
+ * Usage pattern in classes:
+ * ```javascript
+ * try {
+ *   await databaseTiny.overwrite(updatedDoc)
+ * } catch (err) {
+ *   if (err.status === 409) {
+ *     // Handle version conflict - retry with err.currentVersion if needed
+ *   }
+ * }
+ * ```
+ */
 
 export default DatabaseController

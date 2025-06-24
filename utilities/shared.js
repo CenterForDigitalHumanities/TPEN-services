@@ -165,3 +165,54 @@ export async function findPageById(pageId, projectId) {
 
   return new Page(layerContainingPage.id, page)
 }
+
+/**
+ * Handle version conflict errors from optimistic locking consistently
+ * @param {Response} res - Express response object
+ * @param {Error} error - The error object from the version conflict
+ * @returns {Response} JSON response with conflict details
+ */
+export const handleVersionConflict = (res, error) => {
+  return res.status(409).json({
+    error: error.message,
+    currentVersion: error.currentVersion,
+    code: 'VERSION_CONFLICT',
+    details: 'The document was modified by another process.',
+    // Include additional context if available
+    ...(error.pageId && { pageId: error.pageId }),
+    ...(error.layerId && { layerId: error.layerId }),
+    ...(error.lineId && { lineId: error.lineId })
+  })
+}
+
+/**
+ * Wrapper function to add optimistic locking retry logic to any async operation
+ * @param {Function} operation - The async operation to execute
+ * @param {number} maxRetries - Maximum number of retries (default: 1)
+ * @returns {Promise} The result of the operation or throws the final error
+ */
+export const withOptimisticLocking = async (operation, retryFn, maxRetries = 2) => {
+  let lastError
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      let currentVersion = lastError.currentVersion || null
+      return await attempt === 0 ? operation() : retryFn(currentVersion)
+    } catch (error) {
+      lastError = error
+      
+      // Only retry on version conflicts
+      if (error.status === 409 && attempt < maxRetries) {
+        // Could add backoff here if needed
+         console.warn(`Version conflict detected, retrying operation... Attempt ${attempt + 1}/${maxRetries}`)
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
+        continue
+      }
+      
+      // If it's not a version conflict or we've exhausted retries, throw
+      throw error
+    }
+  }
+  
+  throw lastError
+}
