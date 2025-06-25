@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
 
 const database = new dbDriver("mongo")
@@ -134,12 +135,8 @@ export default class Layer {
             return this
         } catch (err) {
             if (err.status === 409) {
-                // Handle version conflict - re-throw with more context
-                const conflictError = new Error(`Layer update failed due to version conflict. The layer '${this.id}' was modified by another process.`)
-                conflictError.status = 409
-                conflictError.currentVersion = err.currentVersion
-                conflictError.layerId = this.id
-                throw conflictError
+                handleVersionConflict(null, err)
+                return
             }
             throw err
         }

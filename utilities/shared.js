@@ -174,14 +174,9 @@ export async function findPageById(pageId, projectId) {
  */
 export const handleVersionConflict = (res, error) => {
   return res.status(409).json({
-    error: error.message,
-    currentVersion: error.currentVersion,
+    currentVersion: error,
     code: 'VERSION_CONFLICT',
-    details: 'The document was modified by another process.',
-    // Include additional context if available
-    ...(error.pageId && { pageId: error.pageId }),
-    ...(error.layerId && { layerId: error.layerId }),
-    ...(error.lineId && { lineId: error.lineId })
+    details: 'The document was modified by another process.'
   })
 }
 

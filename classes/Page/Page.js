@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { handleVersionConflict } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -101,12 +102,8 @@ export default class Page {
             return this
         } catch (err) {
             if (err.status === 409) {
-                // Handle version conflict - re-throw with more context
-                const conflictError = new Error(`Page update failed due to version conflict. The page '${this.id}' was modified by another process.`)
-                conflictError.status = 409
-                conflictError.currentVersion = err.currentVersion
-                conflictError.pageId = this.id
-                throw conflictError
+                handleVersionConflict(null, err)
+                return
             }
             throw err
         }

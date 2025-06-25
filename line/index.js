@@ -94,6 +94,8 @@ router.post('/', auth0Middleware(), async (req, res) => {
 
 // Update an existing line, including in RERUM
 router.put('/:lineId', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
@@ -137,6 +139,8 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
 
 // Update the text of an existing line
 router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     if (typeof req.body !== 'string') {
       respondWithError(res, 400, 'Invalid request body. Expected a string.')
@@ -178,6 +182,8 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
 
 // Update the xywh (bounds) of an existing line
 router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     if (typeof req.body !== 'object' || !req.body.x || !req.body.y || !req.body.w || !req.body.h) {
       respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
