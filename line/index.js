@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
-import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict } from '../utilities/shared.js'
+import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
 
 const router = express.Router({ mergeParams: true })
@@ -86,7 +86,8 @@ router.post('/', auth0Middleware(), async (req, res) => {
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
-      withOptimisticLocking
+      return handleVersionConflict(res, error)
+    }
     respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
   }
 })
