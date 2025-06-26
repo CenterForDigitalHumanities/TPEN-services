@@ -132,38 +132,38 @@ export const getLayerContainingPage = (project, pageId) => {
 
 // Find a page by ID (moved from page/index.js)
 export async function findPageById(pageId, projectId) {
-  if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
-    return fetch(pageId).then(res => res.json())
-  }
-  const projectData = (await getProjectById(projectId))?.data
-  if (!projectData) {
-    const error = new Error(`Project with ID '${projectId}' not found`)
-    error.status = 404
-    throw error
-  }
-  const layerContainingPage = projectData.layers.find(layer =>
-    layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
-  )
+   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
+      return fetch(pageId).then(res => res.json())
+   }
+   const projectData = (await getProjectById(projectId))?.data
+   if (!projectData) {
+      const error = new Error(`Project with ID '${projectId}' not found`)
+      error.status = 404
+      throw error
+   }
+   const layerContainingPage = projectData.layers.find(layer =>
+      layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
+   )
 
-  if (!layerContainingPage) {
-    const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
-    error.status = 404
-    throw error
-  }
+   if (!layerContainingPage) {
+      const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
+      error.status = 404
+      throw error
+   }
 
-  const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
+   const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
 
-  if (pageIndex < 0) {
-    const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
-    error.status = 404
-    throw error
-  }
+   if (pageIndex < 0) {
+      const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
+      error.status = 404
+      throw error
+   }
 
-  const page = layerContainingPage.pages[pageIndex]
-  page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
-  page.next = layerContainingPage.pages[pageIndex + 1] ?? null
+   const page = layerContainingPage.pages[pageIndex]
+   page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
+   page.next = layerContainingPage.pages[pageIndex + 1] ?? null
 
-  return new Page(layerContainingPage.id, page)
+   return new Page(layerContainingPage.id, page)
 }
 
 /**
@@ -173,11 +173,16 @@ export async function findPageById(pageId, projectId) {
  * @returns {Response} JSON response with conflict details
  */
 export const handleVersionConflict = (res, error) => {
-  return res.status(409).json({
-    currentVersion: error,
-    code: 'VERSION_CONFLICT',
-    details: 'The document was modified by another process.'
-  })
+   return res ? res.status(409).json({
+      currentVersion: error,
+      code: 'VERSION_CONFLICT',
+      details: 'The document was modified by another process.'
+   }) : {
+      status: 409,
+      currentVersion: error,
+      code: 'VERSION_CONFLICT',
+      details: 'The document was modified by another process.'
+   }
 }
 
 /**
@@ -187,27 +192,28 @@ export const handleVersionConflict = (res, error) => {
  * @returns {Promise} The result of the operation or throws the final error
  */
 export const withOptimisticLocking = async (operation, retryFn, maxRetries = 2) => {
-  let lastError
-  
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      let currentVersion = lastError.currentVersion || null
-      return await attempt === 0 ? operation() : retryFn(currentVersion)
-    } catch (error) {
-      lastError = error
-      
-      // Only retry on version conflicts
-      if (error.status === 409 && attempt < maxRetries) {
-        // Could add backoff here if needed
-         console.warn(`Version conflict detected, retrying operation... Attempt ${attempt + 1}/${maxRetries}`)
-        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
-        continue
+   let lastError
+
+   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+         let currentVersion = lastError?.currentVersion || null
+         console.log(currentVersion ? `Retrying operation due to error: ${currentVersion}` : 'Executing operation')
+         return await (attempt === 0 ? operation() : retryFn(currentVersion))
+      } catch (error) {
+         lastError = error
+
+         // Only retry on version conflicts
+         if (error.status === 409 && attempt < maxRetries) {
+            // Could add backoff here if needed
+            console.warn(`Version conflict detected, retrying operation... Attempt ${attempt + 1}/${maxRetries}`)
+            await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
+            continue
+         }
+
+         // If it's not a version conflict or we've exhausted retries, throw
+         throw error
       }
-      
-      // If it's not a version conflict or we've exhausted retries, throw
-      throw error
-    }
-  }
-  
-  throw lastError
+   }
+
+   throw lastError
 }

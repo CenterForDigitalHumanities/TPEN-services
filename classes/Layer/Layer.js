@@ -135,8 +135,7 @@ export default class Layer {
             return this
         } catch (err) {
             if (err.status === 409) {
-                handleVersionConflict(null, err)
-                return
+                throw handleVersionConflict(null, err)
             }
             throw err
         }

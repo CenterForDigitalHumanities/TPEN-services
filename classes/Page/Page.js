@@ -102,8 +102,7 @@ export default class Page {
             return this
         } catch (err) {
             if (err.status === 409) {
-                handleVersionConflict(null, err)
-                return
+                throw handleVersionConflict(null, err)
             }
             throw err
         }
