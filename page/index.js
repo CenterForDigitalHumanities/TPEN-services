@@ -106,8 +106,10 @@ router.route('/:pageId')
     } catch (error) {      
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
+        if(res.headersSent) return
         return handleVersionConflict(res, error)
       }
+      if(res.headersSent) return
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
   })
