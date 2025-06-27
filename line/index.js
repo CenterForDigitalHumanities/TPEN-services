@@ -164,11 +164,13 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       () => updatePageAndProject(page, project, user._id),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          if(res.headersSent) return
           respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
           return
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
         if (!newLineIndex === -1) {
+          if(res.headersSent) return
           respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
           return
         }
@@ -177,6 +179,7 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
         return updatePageAndProject(page, project, user._id)
       }
     )
+    if(res.headersSent) return
     res.json(line.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
