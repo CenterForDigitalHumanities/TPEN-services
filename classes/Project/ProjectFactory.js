@@ -216,6 +216,78 @@ export default class ProjectFactory {
         message: "No image found. Cannot process further."
       }
     }
+
+    let isIIFImage = false
+    let IIIFServiceParts = imageURL.split('/').reverse()
+    let IIIFServiceJson = null
+
+    function isValidIIIFRegion(region) {
+      return (
+        region === "full" ||
+        region === "square" ||
+        /^pct:\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/.test(region) || 
+        /^\d+,\d+,\d+,\d+$/.test(region)
+      )
+    }
+
+    function isValidIIIFSize(size) {
+      return (
+        size === "full" ||
+        size.startsWith("^full") ||
+        /^\d+,$/.test(size) ||
+        size.startsWith("^") && /^\d+,$/.test(size) ||
+        /^,\d+$/.test(size) ||
+        size.startsWith("^") && /^,\d+$/.test(size) ||
+        size.startsWith("pct:") && /^\d+(\.\d+)?$/.test(size) ||
+        size.startsWith("^pct:") && /^\d+(\.\d+)?$/.test(size) ||
+        /^\d+,\d+$/.test(size) ||
+        size.startsWith("^") && /^\d+,\d+$/.test(size) ||
+        size.startsWith("!") && /^\d+,\d+$/.test(size) ||
+        size.startsWith("^!") && /^\d+,\d+$/.test(size)
+      )
+    }
+
+    function isValidIIIFRotation(rotation) {
+      return (
+        /^\d+(\.\d+)?$/.test(rotation) ||
+        size.startsWith("!") && /^\d+(\.\d+)?$/.test(rotation)
+      )
+    }
+
+    function isValidIIIFQuality(quality) {
+      return (
+        quality === "default" ||
+        quality === "color" ||
+        quality === "gray" ||
+        quality === "bitonal"
+      )
+    }
+
+    let IIIFServiceURL = IIIFServiceParts.slice(4).reverse().join("/")
+
+    if (isValidIIIFQuality(IIIFServiceParts[0].split(".")[0]) && isValidIIIFRotation(IIIFServiceParts[1]) && isValidIIIFSize(IIIFServiceParts[2]) && isValidIIIFRegion(IIIFServiceParts[3])) {
+      await fetch(`${IIIFServiceURL}/info.json`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch IIIF info: ${response.statusText}`)
+          }
+          return response.json()
+        })
+        .then(info => {
+          if (info?.protocol === "http://iiif.io/api/image") {
+            isIIFImage = true
+            IIIFServiceJson = info
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching IIIF info:", err.message)
+          throw {
+            status: 500,
+            message: "Failed to fetch IIIF info"
+          }
+        })
+    }
+
     const _id = database.reserveId()
     const now = Date.now().toString().slice(-6)
     const label = projectLabel ?? now
@@ -241,7 +313,14 @@ export default class ProjectFactory {
                 type: "Image",
                 format: mime.lookup(imageURL) || "image/jpeg",
                 width: dimensions.width,
-                height: dimensions.height
+                height: dimensions.height,
+                ...(isIIFImage && {
+                  service: [{
+                    id: IIIFServiceURL,
+                    type: IIIFServiceJson?.type,
+                    profile: IIIFServiceJson?.profile,
+                  }]
+                })
               },
               target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`
             }
