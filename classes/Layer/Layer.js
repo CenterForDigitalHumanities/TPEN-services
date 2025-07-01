@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
 
 const database = new dbDriver("mongo")
@@ -127,7 +128,16 @@ export default class Layer {
             throw new Error(`Layer not found in RERUM: ${this.id}`)
         }
         const updatedLayer = { ...existingLayer, ...layerAsCollection }
-        await databaseTiny.overwrite(updatedLayer)
-        return this
+        
+        // Handle optimistic locking version if available        
+        try {
+            await databaseTiny.overwrite(updatedLayer)
+            return this
+        } catch (err) {
+            if (err.status === 409) {
+                throw handleVersionConflict(null, err)
+            }
+            throw err
+        }
     }
 }

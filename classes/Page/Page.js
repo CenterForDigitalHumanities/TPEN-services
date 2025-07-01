@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { handleVersionConflict } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -94,8 +95,17 @@ export default class Page {
             throw new Error(`Failed to find Page in RERUM: ${this.id}`)
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-        await databaseTiny.overwrite(updatedPage)
-        return this
+        
+        // Handle optimistic locking version if available
+        try {
+            await databaseTiny.overwrite(updatedPage)
+            return this
+        } catch (err) {
+            if (err.status === 409) {
+                throw handleVersionConflict(null, err)
+            }
+            throw err
+        }
     }
 
     /**
