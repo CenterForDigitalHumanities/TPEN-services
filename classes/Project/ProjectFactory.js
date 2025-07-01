@@ -2,6 +2,8 @@ import Project from "./Project.js"
 import Group from "../Group/Group.js"
 import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
+import Line from "../Line/Line.js"
+import Page from "../Page/Page.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
 import imageSize from 'image-size'
@@ -198,7 +200,7 @@ export default class ProjectFactory {
       }
     }
 
-    const copiedProject = {
+    let copiedProject = {
       _id: database.reserveId(),
       label: `Copy of ${project.label}`,
       metadata: project.metadata,
@@ -211,19 +213,58 @@ export default class ProjectFactory {
     }
 
     for (const layer of project.layers) {
-      const newLayer = Layer.build(
-        copiedProject._id,
-        layer.label,
-        layer.pages.map(page => ({ ...page, id: database.reserveId() }))
-      )
-      if (newLayer) {
-        copiedProject.layers.push(newLayer.asProjectLayer())
-      } else {
-        throw {
-          status: 500,
-          message: `Failed to copy layer ${layer._id}`
-        }
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: layer.label,
+        pages: []
       }
+      const newPages = await Promise.all(layer.pages.map(async (page) => {
+        if(!page.id.startsWith(process.env.RERUMIDPREFIX)) {
+          return {
+            id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+            label: page.label,
+            target: page.target
+          }
+        }
+        else {
+          return await fetch(page.id)
+          .then(response => response.json())
+          .then(async pageData => {
+            const newPage = new Page(layer.id, {
+              id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+              label: page.label,
+              target: page.target,
+              items: await Promise.all(pageData.items.map(async item => {
+                return await fetch(item.id)
+                .then(response => response.json())
+                .then(async itemData => {
+                  const newItem = new Line({
+                    id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
+                    target: itemData.target,
+                    body: itemData.body,
+                    motivation: itemData.motivation,
+                    label: itemData.label,
+                    type: itemData.type
+                  })
+                  await newItem.update()
+                  return {
+                    id: newItem.id,
+                    target: newItem.target,
+                  }
+                })
+              }))
+            })
+            await newPage.update()
+            return {
+              id: newPage.id,
+              label: newPage.label,
+              target: newPage.target
+            }
+          })
+        }
+      }))
+      newLayer.pages.push(...newPages)
+      copiedProject.layers.push(newLayer)
     }
 
     const group = await Group.findById(project.group)
