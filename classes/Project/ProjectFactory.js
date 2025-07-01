@@ -284,6 +284,125 @@ export default class ProjectFactory {
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
+  static async copyProjectWithoutAnnotations(projectId, creator) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+
+    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = {
+      _id: database.reserveId(),
+      label: `Copy of ${project.label}`,
+      metadata: project.metadata,
+      manifest: project.manifest,
+      layers: [],
+      tools: project.tools,
+      _createdAt: Date.now().toString().slice(-6),
+      _modifiedAt: -1,
+      creator: creator
+    }
+
+    for (const layer of project.layers) {
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: layer.label,
+        pages: []
+      }
+      const newPages = await Promise.all(layer.pages.map(async (page) => {
+        return {
+          id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+          label: page.label,
+          target: page.target
+        }
+      }))
+      newLayer.pages.push(...newPages)
+      copiedProject.layers.push(newLayer)
+    }
+
+    const group = await Group.findById(project.group)
+    const copiedGroup = await Group.createNewGroup(
+      creator,
+      {
+        label: `Copy of ${project.label}`,
+        members: group.members,
+        customRoles: group.customRoles
+      }
+    )
+
+    const hotkeys = await Hotkeys.getByProjectId(project._id)
+    const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
+    await copiedHotkeys.create()
+
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+  }
+
+  static async copyProjectWithGroup(projectId, creator) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = {
+      _id: database.reserveId(),
+      label: `Copy of ${project.label}`,
+      metadata: [],
+      manifest: project.manifest,
+      layers: [],
+      tools: this.tools,
+      _createdAt: Date.now().toString().slice(-6),
+      _modifiedAt: -1,
+      creator: creator
+    }
+
+    for (const layer of project.layers) {
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: layer.label,
+        pages: []
+      }
+      const newPages = await Promise.all(layer.pages.map(async (page) => {
+        return {
+          id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+          label: page.label,
+          target: page.target
+        }
+      }))
+      newLayer.pages.push(...newPages)
+      copiedProject.layers.push(newLayer)
+    }
+
+    const group = await Group.findById(project.group)
+    const copiedGroup = await Group.createNewGroup(
+      creator,
+      {
+        label: `Copy of ${project.label}`,
+        members: group.members,
+        customRoles: group.customRoles
+      }
+    )
+
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+  }
+
   static async DBObjectFromImage(manifest) {
     if (!manifest) {
       throw {
