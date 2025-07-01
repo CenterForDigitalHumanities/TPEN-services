@@ -266,6 +266,23 @@ export default class Group {
         }
     }
 
+    static async findById(_id) {
+        if (!_id) {
+            throw {
+                status: 400,
+                message: "Group ID is required"
+            }
+        }
+        const group = await database.getById(_id, process.env.TPENGROUPS)
+        if (!group) {
+            throw {
+                status: 404,
+                message: "Group not found"
+            }
+        }
+        return group
+    }
+
     static async createNewGroup(creator, payload) {
         const { customRoles, label, members } = payload
         const newGroup = new Group()

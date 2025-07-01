@@ -4,8 +4,9 @@ import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
-import imageSize from 'image-size';
-import mime from 'mime-types';
+import imageSize from 'image-size'
+import mime from 'mime-types'
+import Hotkeys from "../HotKeys/Hotkeys.js"
 
 const database = new dbDriver("mongo")
 
@@ -179,6 +180,67 @@ export default class ProjectFactory {
       console.error("Error fetching image dimensions:", err.message)
       return
     }
+  }
+
+  static async copyProject(projectId, creator) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+
+    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    const copiedProject = {
+      _id: database.reserveId(),
+      label: `Copy of ${project.label}`,
+      metadata: project.metadata,
+      manifest: project.manifest,
+      layers: [],
+      tools: project.tools,
+      _createdAt: Date.now().toString().slice(-6),
+      _modifiedAt: -1,
+      creator: creator
+    }
+
+    for (const layer of project.layers) {
+      const newLayer = Layer.build(
+        copiedProject._id,
+        layer.label,
+        layer.pages.map(page => ({ ...page, id: database.reserveId() }))
+      )
+      if (newLayer) {
+        copiedProject.layers.push(newLayer.asProjectLayer())
+      } else {
+        throw {
+          status: 500,
+          message: `Failed to copy layer ${layer._id}`
+        }
+      }
+    }
+
+    const group = await Group.findById(project.group)
+    const copiedGroup = await Group.createNewGroup(
+      creator,
+      {
+        label: `Copy of ${project.label}`,
+        members: group.members,
+        customRoles: group.customRoles
+      }
+    )
+
+    const hotkeys = await Hotkeys.getByProjectId(project._id)
+    const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
+    await copiedHotkeys.create()
+
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
   static async DBObjectFromImage(manifest) {
@@ -672,6 +734,7 @@ export default class ProjectFactory {
           license: 1,
           tools: 1,
           options: 1,
+          group: 1,
           _createdAt:1,
           _modifiedAt:1,
           _lastModified:1
