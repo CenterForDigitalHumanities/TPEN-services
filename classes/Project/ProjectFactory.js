@@ -403,6 +403,150 @@ export default class ProjectFactory {
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
+  static async copyProjectWithCustomizations(projectId, creator, modules) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+
+    if (!modules || typeof modules !== 'object') {
+      throw {
+        status: 400,
+        message: "Modules must be an object"
+      }
+    }
+
+    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = {
+      _id: database.reserveId(),
+      label: `Copy of ${project.label}`,
+      metadata: modules['Metadata'] ? project.metadata : [],
+      manifest: project.manifest,
+      layers: [],
+      tools: modules['Tools'] ? project.tools : this.tools,
+      _createdAt: Date.now().toString().slice(-6),
+      _modifiedAt: -1,
+      creator: creator
+    }
+
+    let result = {}
+
+    for (const layer of project.layers) {
+      
+      for (const newlayer of modules['Layers']) {
+        if (newlayer.hasOwnProperty(layer.id)) {
+          result[layer.id] = newlayer[layer.id].withAnnotations
+          break
+        }
+        else {
+          result[layer.id] = undefined
+        }
+      }
+
+      if (result[layer.id] === undefined) {
+        continue
+      }
+
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: layer.label,
+        pages: []
+      }
+
+      let newPages = []
+
+      if(result[layer.id]) {
+        newPages = await Promise.all(layer.pages.map(async (page) => {
+          if(!page.id.startsWith(process.env.RERUMIDPREFIX)) {
+            return {
+              id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+              label: page.label,
+              target: page.target
+            }
+          }
+
+          if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
+            return await fetch(page.id)
+            .then(response => response.json())
+            .then(async pageData => {
+              const newPage = new Page(layer.id, {
+                id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+                label: page.label,
+                target: page.target,
+                items: await Promise.all(pageData.items.map(async item => {
+                  return await fetch(item.id)
+                  .then(response => response.json())
+                  .then(async itemData => {
+                    const newItem = new Line({
+                      id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
+                      target: itemData.target,
+                      body: itemData.body,
+                      motivation: itemData.motivation,
+                      label: itemData.label,
+                      type: itemData.type
+                    })
+                    await newItem.update()
+                    return {
+                      id: newItem.id,
+                      target: newItem.target,
+                    }
+                  })
+                }))
+              })
+              await newPage.update()
+              return {
+                id: newPage.id,
+                label: newPage.label,
+                target: newPage.target
+              }
+            })
+          }
+        }))
+        newLayer.pages.push(...newPages)
+        copiedProject.layers.push(newLayer)
+      }
+
+      if(!result[layer.id]) {
+        newPages = await Promise.all(layer.pages.map(async (page) => {
+          return {
+            id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+            label: page.label,
+            target: page.target
+          }
+        }))
+        newLayer.pages.push(...newPages)
+        copiedProject.layers.push(newLayer)
+      }
+    }
+
+    const group = await Group.findById(project.group)
+    const copiedGroup = await Group.createNewGroup(
+      creator,
+      {
+        label: `Copy of ${project.label}`,
+        members: modules['Group Members'] ? group.members : { [creator]: { roles: [] } },
+        customRoles: modules['Group Members'] ? group.customRoles : {}
+      }
+    )
+
+    if( modules['Hotkeys'] ) {
+      const hotkeys = await Hotkeys.getByProjectId(project._id)
+      const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
+      await copiedHotkeys.create()
+    }
+
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+  }
+  
   static async DBObjectFromImage(manifest) {
     if (!manifest) {
       throw {

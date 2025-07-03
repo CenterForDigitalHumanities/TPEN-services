@@ -65,4 +65,28 @@ router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, 
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
+router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    const { modules } = req.body
+    if (!user) {
+        return respondWithError(res, 401, "Unauthorized: User not authenticated")
+    }
+    if (!modules || typeof modules !== 'object') {
+        return respondWithError(res, 400, "Bad Request: 'modules' must be an object")
+    }
+    try {
+        const { projectId } = req.params
+        const project = await ProjectFactory.copyProjectWithCustomizations(projectId, user._id, modules)
+        res.status(201).json(project)
+    } catch (error) {
+        respondWithError(
+            res,
+            error.status ?? error.code ?? 500,
+            error.message ?? "Unknown server error"
+        )
+    }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use POST instead")
+})
+
 export default router
