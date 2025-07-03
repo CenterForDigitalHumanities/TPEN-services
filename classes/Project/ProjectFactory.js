@@ -258,7 +258,13 @@ export default class ProjectFactory {
             return {
               id: newPage.id,
               label: newPage.label,
-              target: newPage.target
+              target: newPage.target,
+              items: newPage.items.map(item => {
+                return {
+                  id: item.id,
+                  target: item.target
+                }
+              })
             }
           })
         }
@@ -278,8 +284,10 @@ export default class ProjectFactory {
     )
 
     const hotkeys = await Hotkeys.getByProjectId(project._id)
-    const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
-    await copiedHotkeys.create()
+    if (hotkeys) {
+      const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
+      await copiedHotkeys.create()
+    }
 
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
@@ -340,8 +348,10 @@ export default class ProjectFactory {
     )
 
     const hotkeys = await Hotkeys.getByProjectId(project._id)
-    const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
-    await copiedHotkeys.create()
+    if (hotkeys) {
+      const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
+      await copiedHotkeys.create()
+    }
 
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
@@ -380,10 +390,54 @@ export default class ProjectFactory {
         pages: []
       }
       const newPages = await Promise.all(layer.pages.map(async (page) => {
-        return {
-          id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
-          label: page.label,
-          target: page.target
+        if(!page.id.startsWith(process.env.RERUMIDPREFIX)) {
+          return {
+            id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+            label: page.label,
+            target: page.target
+          }
+        }
+        else {
+          return await fetch(page.id)
+          .then(response => response.json())
+          .then(async pageData => {
+            const newPage = new Page(layer.id, {
+              id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+              label: page.label,
+              target: page.target,
+              items: await Promise.all(pageData.items.map(async item => {
+                return await fetch(item.id)
+                .then(response => response.json())
+                .then(async itemData => {
+                  const newItem = new Line({
+                    id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
+                    target: itemData.target,
+                    body: itemData.body,
+                    motivation: itemData.motivation,
+                    label: itemData.label,
+                    type: itemData.type
+                  })
+                  await newItem.update()
+                  return {
+                    id: newItem.id,
+                    target: newItem.target,
+                  }
+                })
+              }))
+            })
+            await newPage.update()
+            return {
+              id: newPage.id,
+              label: newPage.label,
+              target: newPage.target,
+              items: newPage.items.map(item => {
+                return {
+                  id: item.id,
+                  target: item.target
+                }
+              })
+            }
+          })
         }
       }))
       newLayer.pages.push(...newPages)
@@ -506,7 +560,13 @@ export default class ProjectFactory {
               return {
                 id: newPage.id,
                 label: newPage.label,
-                target: newPage.target
+                target: newPage.target,
+                items: newPage.items.map(item => {
+                  return {
+                    id: item.id,
+                    target: item.target
+                  }
+                })
               }
             })
           }
@@ -540,8 +600,10 @@ export default class ProjectFactory {
 
     if( modules['Hotkeys'] ) {
       const hotkeys = await Hotkeys.getByProjectId(project._id)
-      const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
-      await copiedHotkeys.create()
+      if (hotkeys) {
+        const copiedHotkeys = new Hotkeys(copiedProject._id, hotkeys.symbols)
+        await copiedHotkeys.create()
+      }
     }
 
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
