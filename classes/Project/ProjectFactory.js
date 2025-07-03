@@ -186,6 +186,7 @@ export default class ProjectFactory {
 
   static copiedProjectConfig(project, database, creator, modules = { 'Metadata': true, 'Tools': true }) {
     return {
+      ...project,
       _id: database.reserveId(),
       label: `Copy of ${project.label}`,
       metadata: modules['Metadata'] ? project.metadata : [],
@@ -212,7 +213,7 @@ export default class ProjectFactory {
         if (modules['Group Members'] && Array.isArray(modules['Group Members'])) {
           return modules['Group Members'].includes(userId)
         }
-        return false
+        return true
       }).map(([userId, user]) => {
         if (userId === creator) {
           return [userId, { roles: ['OWNER', 'LEADER'] }]
