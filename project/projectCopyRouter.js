@@ -32,7 +32,7 @@ router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), asy
     }
     try {
         const { projectId } = req.params
-        const project = await ProjectFactory.copyProjectWithoutAnnotations(projectId, user._id)
+        const project = await ProjectFactory.cloneWithoutAnnotations(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
         respondWithError(
@@ -52,7 +52,7 @@ router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, 
     }
     try {
         const { projectId } = req.params
-        const project = await ProjectFactory.copyProjectWithGroup(projectId, user._id)
+        const project = await ProjectFactory.cloneWithGroup(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
         respondWithError(
@@ -76,7 +76,7 @@ router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), asy
     }
     try {
         const { projectId } = req.params
-        const project = await ProjectFactory.copyProjectWithCustomizations(projectId, user._id, modules)
+        const project = await ProjectFactory.cloneWithCustomizations(projectId, user._id, modules)
         res.status(201).json(project)
     } catch (error) {
         respondWithError(
