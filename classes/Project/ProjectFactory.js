@@ -184,14 +184,6 @@ export default class ProjectFactory {
     }
   }
 
-  static async cloneHotkeys(projectId, copiedProjectId) {
-    const hotkeys = await Hotkeys.getByProjectId(projectId)
-    if (hotkeys) {
-      const copiedHotkeys = new Hotkeys(copiedProjectId, hotkeys.symbols)
-      await copiedHotkeys.create()
-    }
-  }
-
   static copiedProjectConfig(project, database, creator, modules = { 'Metadata': true, 'Tools': true }) {
     return {
       _id: database.reserveId(),
@@ -206,14 +198,22 @@ export default class ProjectFactory {
     }
   }
 
-  static async cloneGroup(project, creator) {
+  static async cloneHotkeys(projectId, copiedProjectId) {
+    const hotkeys = await Hotkeys.getByProjectId(projectId)
+    if (hotkeys) {
+      const copiedHotkeys = new Hotkeys(copiedProjectId, hotkeys.symbols)
+      await copiedHotkeys.create()
+    }
+  }
+
+  static async cloneGroup(project, creator, modules = { 'Group Members': true }) {
     const group = await Group.findById(project.group)
     const copiedGroup = await Group.createNewGroup(
       creator,
       {
         label: `Copy of ${project.label}`,
-        members: group.members,
-        customRoles: group.customRoles
+        members: modules['Group Members'] ? group.members : { [creator]: { roles: [] } },
+        customRoles: modules['Group Members'] ? group.customRoles : {}
       }
     )
     return copiedGroup
@@ -306,7 +306,7 @@ export default class ProjectFactory {
 
     let copiedProject = this.copiedProjectConfig(project, database, creator)
     await this.cloneLayers(project, copiedProject, database, true)
-    const copiedGroup = await this.cloneGroup(project, creator)
+    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
@@ -329,7 +329,7 @@ export default class ProjectFactory {
 
     let copiedProject = this.copiedProjectConfig(project, database, creator)
     await this.cloneLayers(project, copiedProject, database, false)
-    const copiedGroup = await this.cloneGroup(project, creator)
+    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
@@ -351,7 +351,7 @@ export default class ProjectFactory {
 
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': false, 'Tools': false })
     await this.cloneLayers(project, copiedProject, database, true)
-    const copiedGroup = await this.cloneGroup(project, creator)
+    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
@@ -417,20 +417,10 @@ export default class ProjectFactory {
       }
     }
 
-    const group = await Group.findById(project.group)
-    const copiedGroup = await Group.createNewGroup(
-      creator,
-      {
-        label: `Copy of ${project.label}`,
-        members: modules['Group Members'] ? group.members : { [creator]: { roles: [] } },
-        customRoles: modules['Group Members'] ? group.customRoles : {}
-      }
-    )
-
+    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': modules['Group Members'] })
     if( modules['Hotkeys'] ) {
       await this.cloneHotkeys(project._id, copiedProject._id)
     }
-
     return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
   
