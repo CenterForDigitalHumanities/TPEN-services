@@ -207,13 +207,33 @@ export default class ProjectFactory {
   }
 
   static async cloneGroup(project, creator, modules = { 'Group Members': true }) {
-    const group = await Group.findById(project.group)
+    const members = Object.fromEntries(
+      Object.entries(project.collaborators).filter(([userId]) => {
+        if (modules['Group Members'] && Array.isArray(modules['Group Members'])) {
+          return modules['Group Members'].includes(userId)
+        }
+        return false
+      }).map(([userId, user]) => {
+        if (userId === creator) {
+          return [userId, { roles: ['OWNER', 'LEADER'] }]
+        }
+        if (user.roles.includes('OWNER') || user.roles.includes('LEADER')) {
+          return [userId, { roles: ['LEADER'] }]
+        }
+        return [userId, { roles: user.roles }]
+      })
+    )
+
+    const customRoles = Object.fromEntries(
+      Object.entries(project.roles).filter(([role]) => !['OWNER', 'LEADER', 'VIEWER', 'CONTRIBUTOR'].includes(role))
+    )
+
     const copiedGroup = await Group.createNewGroup(
       creator,
       {
         label: `Copy of ${project.label}`,
-        members: modules['Group Members'] ? group.members : { [creator]: { roles: [] } },
-        customRoles: modules['Group Members'] ? group.customRoles : {}
+        members: modules['Group Members'] ? members : { [creator]: { roles: [] } },
+        customRoles: modules['Group Members'] ? customRoles : {}
       }
     )
     return copiedGroup
@@ -381,42 +401,55 @@ export default class ProjectFactory {
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': modules['Metadata'], 'Tools': modules['Tools'] })
     let result = {}
 
-    for (const layer of project.layers) {
-      for (const newlayer of modules['Layers']) {
-        if (newlayer.hasOwnProperty(layer.id)) {
-          result[layer.id] = newlayer[layer.id].withAnnotations
-          break
+    if (modules['Layers'] && Array.isArray(modules['Layers']) && modules['Layers'].length > 0) {
+      for (const layer of project.layers) {
+        for (const newlayer of modules['Layers']) {
+          if (newlayer.hasOwnProperty(layer.id)) {
+            result[layer.id] = newlayer[layer.id].withAnnotations
+            break
+          }
+          else {
+            result[layer.id] = undefined
+          }
         }
-        else {
-          result[layer.id] = undefined
+
+        if (result[layer.id] === undefined) {
+          continue
         }
-      }
 
-      if (result[layer.id] === undefined) {
-        continue
-      }
+        const newLayer = {
+          id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+          label: layer.label,
+          pages: []
+        }
 
-      const newLayer = {
-        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
-        label: layer.label,
-        pages: []
-      }
+        let newPages = []
 
-      let newPages = []
+        if(result[layer.id]) {
+          newPages = await this.clonePages(layer, newLayer, database, true)
+          newLayer.pages.push(...newPages)
+          copiedProject.layers.push(newLayer)
+        }
 
-      if(result[layer.id]) {
-        newPages = await this.clonePages(layer, newLayer, database, true)
-        newLayer.pages.push(...newPages)
-        copiedProject.layers.push(newLayer)
-      }
-
-      if(!result[layer.id]) {
-        newPages = await this.clonePages(layer, newLayer, database, false)
-        newLayer.pages.push(...newPages)
-        copiedProject.layers.push(newLayer)
+        if(!result[layer.id]) {
+          newPages = await this.clonePages(layer, newLayer, database, false)
+          newLayer.pages.push(...newPages)
+          copiedProject.layers.push(newLayer)
+        }  
       }
     }
+    else {
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: project.layers[0].label,
+        pages: []
+      }
+      const newPages = await this.clonePages(project.layers[0], newLayer, database, true)
+      newLayer.pages.push(...newPages)
+      copiedProject.layers.push(newLayer)
+    }
 
+    modules['Group Members'].push(creator)
     const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': modules['Group Members'] })
     if( modules['Hotkeys'] ) {
       await this.cloneHotkeys(project._id, copiedProject._id)
