@@ -387,6 +387,9 @@ export default class ProjectFactory {
       }
     }
 
+    // modules is an object with keys as module names and values as true/false
+    // e.g. { 'Metadata': true, 'Group Members': [member1, member2], 'Hotkeys': true, 'Tools': false, 'Layers': [{ 'layerId1': { withAnnotations: true } }, { 'layerId2': { withAnnotations: false } }] }
+
     if (!modules || typeof modules !== 'object') {
       throw {
         status: 400,
