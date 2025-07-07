@@ -262,7 +262,7 @@ export default class ProjectFactory {
         pages: []
       }
 
-      const newPages = await this.clonePages(layer, newLayer, database, withAnnotations)
+      const newPages = await this.clonePages(layer, copiedProject, database, withAnnotations)
       newLayer.pages.push(...newPages)
       copiedProject.layers.push(newLayer)
     }
@@ -414,6 +414,7 @@ export default class ProjectFactory {
     }
 
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': modules['Metadata'], 'Tools': modules['Tools'] })
+    console.log(copiedProject)
     let result = {}
 
     if (modules['Layers'] && Array.isArray(modules['Layers']) && modules['Layers'].length > 0) {
@@ -441,13 +442,13 @@ export default class ProjectFactory {
         let newPages = []
 
         if(result[layer.id]) {
-          newPages = await this.clonePages(layer, newLayer, database, true)
+          newPages = await this.clonePages(layer, copiedProject, database, true)
           newLayer.pages.push(...newPages)
           copiedProject.layers.push(newLayer)
         }
 
         if(!result[layer.id]) {
-          newPages = await this.clonePages(layer, newLayer, database, false)
+          newPages = await this.clonePages(layer, copiedProject, database, false)
           newLayer.pages.push(...newPages)
           copiedProject.layers.push(newLayer)
         }  
@@ -459,7 +460,7 @@ export default class ProjectFactory {
         label: project.layers[0].label,
         pages: []
       }
-      const newPages = await this.clonePages(project.layers[0], newLayer, database, false)
+      const newPages = await this.clonePages(project.layers[0], copiedProject, database, false)
       newLayer.pages.push(...newPages)
       copiedProject.layers.push(newLayer)
     }
