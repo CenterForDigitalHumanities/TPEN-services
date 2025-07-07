@@ -459,7 +459,7 @@ export default class ProjectFactory {
         label: project.layers[0].label,
         pages: []
       }
-      const newPages = await this.clonePages(project.layers[0], newLayer, database, true)
+      const newPages = await this.clonePages(project.layers[0], newLayer, database, false)
       newLayer.pages.push(...newPages)
       copiedProject.layers.push(newLayer)
     }
