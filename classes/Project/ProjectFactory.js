@@ -194,8 +194,7 @@ export default class ProjectFactory {
       layers: [],
       tools: modules['Tools'] ? project.tools : this.tools,
       _createdAt: Date.now().toString().slice(-6),
-      _modifiedAt: -1,
-      creator: creator
+      _modifiedAt: -1
     }
   }
 
@@ -207,7 +206,8 @@ export default class ProjectFactory {
     }
   }
 
-  static async cloneGroup(project, creator, modules = { 'Group Members': true }) {
+  static async cloneGroup(projectId, creator, modules = { 'Group Members': true }) {
+    const project = await ProjectFactory.loadAsUser(projectId, creator)
     const members = Object.fromEntries(
       Object.entries(project.collaborators).filter(([userId]) => {
         if (modules['Group Members'] && Array.isArray(modules['Group Members'])) {
@@ -317,7 +317,7 @@ export default class ProjectFactory {
       }
     }
 
-    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    const project = await new Project(projectId).loadProject()
     if (!project) {
       throw {
         status: 404,
@@ -328,9 +328,9 @@ export default class ProjectFactory {
     let copiedProject = this.copiedProjectConfig(project, database, creator)
     await this.cloneLayers(project, copiedProject, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
-    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
-    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
   static async cloneWithoutAnnotations(projectId, creator) {
@@ -341,7 +341,7 @@ export default class ProjectFactory {
       }
     }
 
-    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    const project = await new Project(projectId).loadProject()
     if (!project) {
       throw {
         status: 404,
@@ -352,9 +352,9 @@ export default class ProjectFactory {
     let copiedProject = this.copiedProjectConfig(project, database, creator)
     await this.cloneLayers(project, copiedProject, database, false)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
-    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
-    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
   static async cloneWithGroup(projectId, creator) {
@@ -364,7 +364,7 @@ export default class ProjectFactory {
         message: "No project ID provided"
       }
     }
-    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    const project = await new Project(projectId).loadProject()
     if (!project) {
       throw {
         status: 404,
@@ -375,8 +375,8 @@ export default class ProjectFactory {
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': false, 'Tools': false })
     await this.cloneLayers(project, copiedProject, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
-    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
-    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")    
   }
 
   static async cloneWithCustomizations(projectId, creator, modules) {
@@ -394,7 +394,7 @@ export default class ProjectFactory {
       }
     }
 
-    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    const project = await new Project(projectId).loadProject()
     if (!project) {
       throw {
         status: 404,
@@ -454,12 +454,12 @@ export default class ProjectFactory {
     }
 
     modules['Group Members'].push(creator)
-    const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': modules['Group Members'] })
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': modules['Group Members'] })
     if( modules['Hotkeys'] ) {
       await this.cloneHotkeys(project._id, copiedProject._id)
     }
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
-    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
   
   static async DBObjectFromImage(manifest) {
