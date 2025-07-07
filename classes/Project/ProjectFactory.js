@@ -199,20 +199,6 @@ export default class ProjectFactory {
     }
   }
 
-  static projectConfigToDB(project) {
-    return {
-      _id: project._id,
-      label: project.label,
-      metadata: project.metadata,
-      manifest: project.manifest,
-      layers: project.layers,
-      tools: project.tools,
-      _createdAt: project._createdAt,
-      _modifiedAt: project._modifiedAt,
-      _lastModified: project.layers[0]?.pages[0]?.id.split('/').pop()
-    }
-  }
-
   static async cloneHotkeys(projectId, copiedProjectId) {
     const hotkeys = await Hotkeys.getByProjectId(projectId)
     if (hotkeys) {
@@ -341,9 +327,10 @@ export default class ProjectFactory {
 
     let copiedProject = this.copiedProjectConfig(project, database, creator)
     await this.cloneLayers(project, copiedProject, database, true)
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
-    return await new Project().create({ ...this.projectConfigToDB(copiedProject), creator, group: copiedGroup._id })
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
   static async cloneWithoutAnnotations(projectId, creator) {
@@ -364,9 +351,10 @@ export default class ProjectFactory {
 
     let copiedProject = this.copiedProjectConfig(project, database, creator)
     await this.cloneLayers(project, copiedProject, database, false)
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
-    return await new Project().create({ ...this.projectConfigToDB(copiedProject), creator, group: copiedGroup._id })
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
   static async cloneWithGroup(projectId, creator) {
@@ -386,8 +374,9 @@ export default class ProjectFactory {
 
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': false, 'Tools': false })
     await this.cloneLayers(project, copiedProject, database, true)
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project, creator, { 'Group Members': true })
-    return await new Project().create({ ...this.projectConfigToDB(copiedProject), creator, group: copiedGroup._id })
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
 
   static async cloneWithCustomizations(projectId, creator, modules) {
@@ -414,7 +403,6 @@ export default class ProjectFactory {
     }
 
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': modules['Metadata'], 'Tools': modules['Tools'] })
-    console.log(copiedProject)
     let result = {}
 
     if (modules['Layers'] && Array.isArray(modules['Layers']) && modules['Layers'].length > 0) {
@@ -470,7 +458,8 @@ export default class ProjectFactory {
     if( modules['Hotkeys'] ) {
       await this.cloneHotkeys(project._id, copiedProject._id)
     }
-    return await new Project().create({ ...this.projectConfigToDB(copiedProject), creator, group: copiedGroup._id })
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
+    return await new Project().create({ ...copiedProject, creator, group: copiedGroup._id })
   }
   
   static async DBObjectFromImage(manifest) {
