@@ -89,7 +89,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
-router.route("/:projectId/label").post(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectId = req.params.projectId
@@ -109,7 +109,7 @@ router.route("/:projectId/label").post(auth0Middleware(), async (req, res) => {
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  respondWithError(res, 405, "Improper request method. Use PATCH instead")
 })
 
 export default router
