@@ -127,6 +127,15 @@ export default class Project {
     return this.data?.label ?? `No Label`
   }
 
+  async setLabel(label) {
+    await this.#load()    
+    if (typeof label !== "string" || label.trim() === "") {
+      throw new Error("Label must be a non-empty string")
+    }
+    this.data.label = label.trim()
+    return await this.update()
+  }
+
   getCombinedPermissions(roles) {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
