@@ -2,10 +2,13 @@ import Project from "./Project.js"
 import Group from "../Group/Group.js"
 import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
+import Line from "../Line/Line.js"
+import Page from "../Page/Page.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
-import imageSize from 'image-size';
-import mime from 'mime-types';
+import imageSize from 'image-size'
+import mime from 'mime-types'
+import Hotkeys from "../HotKeys/Hotkeys.js"
 
 const database = new dbDriver("mongo")
 
@@ -181,6 +184,287 @@ export default class ProjectFactory {
     }
   }
 
+  static copiedProjectConfig(project, database, creator, modules = { 'Metadata': true, 'Tools': true }) {
+    return {
+      ...project,
+      _id: database.reserveId(),
+      label: `Copy of ${project.label}`,
+      metadata: modules['Metadata'] ? project.metadata : [],
+      manifest: project.manifest,
+      layers: [],
+      tools: modules['Tools'] ? project.tools : this.tools,
+      _createdAt: Date.now().toString().slice(-6),
+      _modifiedAt: -1
+    }
+  }
+
+  static async cloneHotkeys(projectId, copiedProjectId) {
+    const hotkeys = await Hotkeys.getByProjectId(projectId)
+    if (hotkeys) {
+      const copiedHotkeys = new Hotkeys(copiedProjectId, hotkeys.symbols)
+      await copiedHotkeys.create()
+    }
+  }
+
+  static async cloneGroup(projectId, creator, modules = { 'Group Members': true }) {
+    const project = await ProjectFactory.loadAsUser(projectId, creator)
+    const members = Object.fromEntries(
+      Object.entries(project.collaborators).filter(([userId]) => {
+        if (modules['Group Members'] && Array.isArray(modules['Group Members'])) {
+          return modules['Group Members'].includes(userId)
+        }
+        return true
+      }).map(([userId, user]) => {
+        if (userId === creator) {
+          return [userId, { roles: ['OWNER', 'LEADER'] }]
+        }
+        if (user.roles.includes('OWNER') || user.roles.includes('LEADER')) {
+          return [userId, { roles: ['LEADER'] }]
+        }
+        return [userId, { roles: user.roles }]
+      })
+    )
+
+    const customRoles = Object.fromEntries(
+      Object.entries(project.roles).filter(([role]) => !['OWNER', 'LEADER', 'VIEWER', 'CONTRIBUTOR'].includes(role))
+    )
+
+    const copiedGroup = await Group.createNewGroup(
+      creator,
+      {
+        label: `Copy of ${project.label}`,
+        members: modules['Group Members'] ? members : { [creator]: { roles: [] } },
+        customRoles: modules['Group Members'] ? customRoles : {}
+      }
+    )
+    return copiedGroup
+  }
+
+  static async cloneLayers(project, copiedProject, database, withAnnotations = true) {
+    for (const layer of project.layers) {
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: layer.label,
+        pages: []
+      }
+
+      const newPages = await this.clonePages(layer, copiedProject, database, withAnnotations)
+      newLayer.pages.push(...newPages)
+      copiedProject.layers.push(newLayer)
+    }
+  }
+
+  static async clonePages(layer, copiedProject, database, withAnnotations) {
+    const newPages = await Promise.all(layer.pages.map(async (page) => {
+      if (withAnnotations) {
+        return await this.clonePagesWithAnnotations(layer, page, copiedProject, database)
+      }
+      return await this.clonePageWithoutAnnotations(page, copiedProject, database)
+    }))
+    return newPages
+  }
+
+  static async clonePageWithoutAnnotations(page, copiedProject, database) {
+    return {
+      id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+      label: page.label,
+      target: page.target
+    }
+  }
+
+  static async clonePagesWithAnnotations(layer, page, copiedProject, database) {
+    if(!page.id.startsWith(process.env.RERUMIDPREFIX)) {
+      return {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+        label: page.label,
+        target: page.target
+      }
+    }
+    else {
+      return await fetch(page.id)
+      .then(response => response.json())
+      .then(async pageData => {
+        const newPage = new Page(layer.id, {
+          id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+          label: page.label,
+          target: page.target,
+          items: await Promise.all(pageData.items.map(async item => {
+            return await fetch(item.id)
+            .then(response => response.json())
+            .then(async itemData => {
+              const newItem = new Line({
+                id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
+                target: itemData.target,
+                body: itemData.body,
+                motivation: itemData.motivation,
+                label: itemData.label,
+                type: itemData.type
+              })
+              return await newItem.update()
+            })
+          }))
+        })
+        return await newPage.update()
+      })
+    }
+  }
+
+  static async copyProject(projectId, creator) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+
+    const project = await new Project(projectId).loadProject()
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = this.copiedProjectConfig(project, database, creator)
+    await this.cloneLayers(project, copiedProject, database, true)
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
+    await this.cloneHotkeys(project._id, copiedProject._id)
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
+  }
+
+  static async cloneWithoutAnnotations(projectId, creator) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+
+    const project = await new Project(projectId).loadProject()
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = this.copiedProjectConfig(project, database, creator)
+    await this.cloneLayers(project, copiedProject, database, false)
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
+    await this.cloneHotkeys(project._id, copiedProject._id)
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
+  }
+
+  static async cloneWithGroup(projectId, creator) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+    const project = await new Project(projectId).loadProject()
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': false, 'Tools': false })
+    await this.cloneLayers(project, copiedProject, database, true)
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")    
+  }
+
+  static async cloneWithCustomizations(projectId, creator, modules) {
+    if (!projectId) {
+      throw {
+        status: 400,
+        message: "No project ID provided"
+      }
+    }
+
+    // modules is an object with keys as module names and values as true/false
+    // e.g. { 'Metadata': true, 'Group Members': [member1, member2], 'Hotkeys': true, 'Tools': false, 'Layers': [{ 'layerId1': { withAnnotations: true } }, { 'layerId2': { withAnnotations: false } }] }
+
+    if (!modules || typeof modules !== 'object') {
+      throw {
+        status: 400,
+        message: "Modules must be an object"
+      }
+    }
+
+    const project = await new Project(projectId).loadProject()
+    if (!project) {
+      throw {
+        status: 404,
+        message: "Project not found"
+      }
+    }
+
+    let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': modules['Metadata'], 'Tools': modules['Tools'] })
+    let result = {}
+
+    if (modules['Layers'] && Array.isArray(modules['Layers']) && modules['Layers'].length > 0) {
+      for (const layer of project.layers) {
+        for (const newlayer of modules['Layers']) {
+          if (newlayer.hasOwnProperty(layer.id)) {
+            result[layer.id] = newlayer[layer.id].withAnnotations
+            break
+          }
+          else {
+            result[layer.id] = undefined
+          }
+        }
+
+        if (result[layer.id] === undefined) {
+          continue
+        }
+
+        const newLayer = {
+          id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+          label: layer.label,
+          pages: []
+        }
+
+        let newPages = []
+
+        if(result[layer.id]) {
+          newPages = await this.clonePages(layer, copiedProject, database, true)
+          newLayer.pages.push(...newPages)
+          copiedProject.layers.push(newLayer)
+        }
+
+        if(!result[layer.id]) {
+          newPages = await this.clonePages(layer, copiedProject, database, false)
+          newLayer.pages.push(...newPages)
+          copiedProject.layers.push(newLayer)
+        }  
+      }
+    }
+    else {
+      const newLayer = {
+        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        label: project.layers[0].label,
+        pages: []
+      }
+      const newPages = await this.clonePages(project.layers[0], copiedProject, database, false)
+      newLayer.pages.push(...newPages)
+      copiedProject.layers.push(newLayer)
+    }
+
+    modules['Group Members'].push(creator)
+    const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': modules['Group Members'] })
+    if( modules['Hotkeys'] ) {
+      await this.cloneHotkeys(project._id, copiedProject._id)
+    }
+    copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
+  }
+  
   static async DBObjectFromImage(manifest) {
     if (!manifest) {
       throw {
