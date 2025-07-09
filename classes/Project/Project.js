@@ -127,6 +127,16 @@ export default class Project {
     return this.data?.label ?? `No Label`
   }
 
+  async setLabel(label) {
+    if (typeof label !== "string" || label.trim() === "") {
+      throw new Error("Label must be a non-empty string")
+    }
+    if(!this?.data?.label) await this.#load()
+    if(this.data.label.trim() === label.trim()) return this.data
+    this.data.label = label.trim()
+    return await this.update()
+  }
+
   getCombinedPermissions(roles) {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
@@ -222,9 +232,9 @@ export default class Project {
  */
 
   async updateTools(selectedValues) {
-    await this.#load()
     // Guard invalid input
     if (!Array.isArray(selectedValues)) return
+    if(!this?.data?.tools) await this.#load()
     // Guard existing data in corrupted state
     if(!this.data?.tools) this.data.tools = []
     
@@ -246,8 +256,7 @@ export default class Project {
 
     // Guard invalid input
     if (!Array.isArray(tools)) return
-
-    await this.#load()
+    if(!this?.data?.tools) await this.#load()
     // Guard existing data in corrupted state
     if(!this.data?.tools) this.data.tools = []
 
