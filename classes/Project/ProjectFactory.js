@@ -117,7 +117,7 @@ export default class ProjectFactory {
       _id,
       label,
       metadata,
-      manifest: importTPEN28 ? [ manifest.id ] : [ manifest["@id"].split('/manifest.json')[0] + '?version=3' ],
+      manifest: importTPEN28 ? [ manifest["@id"].split('/manifest.json')[0] + '?version=3' ] : [ manifest.id ],
       layers: [ layer.asProjectLayer() ],
       tools: this.tools,
       _createdAt: now,
