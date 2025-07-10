@@ -48,7 +48,8 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     try {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
-        user._id
+        user._id,
+        true
       )
       res.status(201).json(result)
     } catch (error) {

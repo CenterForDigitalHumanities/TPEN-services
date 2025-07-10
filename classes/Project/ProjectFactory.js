@@ -97,7 +97,7 @@ export default class ProjectFactory {
     }
   ]
 
-  static async DBObjectFromManifest(manifest) {
+  static async DBObjectFromManifest(manifest, importTPEN28 = false) {
     if (!manifest) {
       throw {
         status: 404,
@@ -117,7 +117,7 @@ export default class ProjectFactory {
       _id,
       label,
       metadata,
-      manifest: [ manifest.id ],
+      manifest: importTPEN28 ? [ manifest.id ] : [ manifest["@id"].split('/manifest.json')[0] + '?version=3' ],
       layers: [ layer.asProjectLayer() ],
       tools: this.tools,
       _createdAt: now,
@@ -131,10 +131,10 @@ export default class ProjectFactory {
     return label[defaultLanguage]?.join(", ") ?? label.none?.join(",")
   }
 
-  static async fromManifestURL(manifestId, creator) {
+  static async fromManifestURL(manifestId, creator, importTPEN28 = false) {
     return vault.loadManifest(manifestId)
       .then(async (manifest) => {
-        return await ProjectFactory.DBObjectFromManifest(manifest)
+        return await ProjectFactory.DBObjectFromManifest(manifest, importTPEN28)
       })
       .then(async (project) => {
         const projectObj = new Project()
