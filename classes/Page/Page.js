@@ -22,18 +22,18 @@ export default class Page {
      * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, creator, partOf, prev, next, items = [] }) {
+    constructor(layerId, { id, label, target, items = [], creator = null, prev = null, next = null, partOf = null }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf, creator, prev, next, items })
+        Object.assign(this, { id, label, target, items, creator, prev, next, partOf })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, prev, next, items = []) {
+    static build(projectId, layerId, canvas, creator, partOf, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -58,7 +58,8 @@ export default class Page {
                 type: "AnnotationPage",
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf: [{ id: partOf.startsWith(process.env.RERUMIDPREFIX) ? partOf : `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`, type: "AnnotationCollection" }],
+                creator: creator,
+                partOf: [{ id: partOf ? partOf : `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`, type: "AnnotationCollection" }],
                 items,
                 prev,
                 next

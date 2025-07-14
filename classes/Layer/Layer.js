@@ -18,7 +18,7 @@ export default class Layer {
      * @param {Array} pages The pages in the layer by reference.
      * @seeAlso {@link Layer.build}
      */
-    constructor(projectId, { id, label, creator, pages }) {
+    constructor(projectId, { id, label, pages, creator = null }) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Layer instance.")
         }
@@ -37,7 +37,7 @@ export default class Layer {
     }
 
     // Static Methods
-    static build(projectId, label, canvases, projectLabel = "Default") {
+    static build(projectId, label, canvases, projectLabel = "Default", creator) {
         if (!Array.isArray(canvases)) {
             if (!canvases) {
                 throw new Error("At least one Canvas must be included.")
@@ -48,6 +48,7 @@ export default class Layer {
         const thisLayer = {
             projectId,
             label: label ?? `${projectLabel} - Layer ${Date.now()}`,
+            creator,
             id: `${process.env.SERVERURL}project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
         }
         const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c).asProjectPage())
@@ -55,7 +56,7 @@ export default class Layer {
             if (index > 0) page.prev = pages[index - 1].id
             if (index < pages.length - 1) page.next = pages[index + 1].id
         })
-        return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages })
+        return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages, creator: thisLayer.creator })
     }
 
     // Public Methods
