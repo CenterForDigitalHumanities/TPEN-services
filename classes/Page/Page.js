@@ -59,14 +59,14 @@ export default class Page {
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 creator: creator,
-                partOf: [{ id: partOf ? partOf : `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`, type: "AnnotationCollection" }],
+                partOf: partOf ? partOf : `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
                 items,
                 prev,
                 next
             }
         }
 
-        return new Page(layerId, page.data)
+        return new Page(layerId, page.data, { creator, partOf, prev, next })
     }
 
     async #savePageToRerum() {
