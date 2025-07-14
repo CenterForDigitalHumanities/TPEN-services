@@ -18,7 +18,7 @@ export default class Layer {
      * @param {Array} pages The pages in the layer by reference.
      * @seeAlso {@link Layer.build}
      */
-    constructor(projectId, { id, label, pages }) {
+    constructor(projectId, { id, label, creator, pages }) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Layer instance.")
         }
@@ -28,6 +28,7 @@ export default class Layer {
         this.projectId = projectId
         this.id = id
         this.label = label
+        this.creator = creator
         this.pages = pages
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
@@ -109,9 +110,16 @@ export default class Layer {
             id: this.id,
             type: "AnnotationCollection",
             label: { "none": [this.label] },
+            creator: `https://store.rerum.io/v1/id/${this.creator}`,
             total: this.pages.length,
             first: this.pages.at(0).id,
-            last: this.pages.at(-1).id
+            last: this.pages.at(-1).id,
+            items: this.pages.map(page => ({
+                id: page.id,
+                type: "AnnotationPage",
+                label: { "none": [page.label] },
+                target: page.target
+            }))
         }
 
         if (this.#tinyAction === 'create') {

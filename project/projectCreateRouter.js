@@ -48,6 +48,27 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     try {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
+        user._id
+      )
+      res.status(201).json(result)
+    } catch (error) {
+      res.status(error.status ?? 500).json({
+        status: error.status ?? 500,
+        message: error.message,
+        data: error.resolvedPayload
+      })
+    }
+  } else if (createFrom === "tpen28url") {
+    const manifestURL = req?.body?.url
+    let checkURL = await validateURL(manifestURL)
+    if (!checkURL.valid)
+      return res.status(checkURL.status).json({
+        message: checkURL.message,
+        resolvedPayload: checkURL.resolvedPayload
+      })
+    try {
+      const result = await ProjectFactory.fromManifestURL(
+        manifestURL,
         user._id,
         true
       )

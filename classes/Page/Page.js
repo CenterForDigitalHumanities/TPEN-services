@@ -22,11 +22,11 @@ export default class Page {
      * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, items = [] }) {
+    constructor(layerId, { id, label, target, creator, partOf, prev, next, items = [] }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId, items })
+        Object.assign(this, { id, label, target, partOf, creator, prev, next, items })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -58,7 +58,7 @@ export default class Page {
                 type: "AnnotationPage",
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                partOf,
                 items,
                 prev,
                 next
@@ -74,11 +74,12 @@ export default class Page {
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
-            target: this.target,
-            partOf: this.partOf,
             items: this.items ?? [],
             prev: this.prev ?? null,
-            next: this.next ?? null
+            next: this.next ?? null,
+            creator: `https://store.rerum.io/v1/id/${this.creator}`,
+            target: this.target,
+            partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(pageAsAnnotationPage)

@@ -11,12 +11,13 @@ export default class Line {
         return this
     }
 
-    constructor({ id, target, body, motivation, label, type }) {
+    constructor({ id, target, creator, body, motivation, label, type }) {
         if (!id || !target) 
             throw new Error('Line data is malformed.')
         this.id = id // Ensure the id is assigned
         this.body = body
         this.target = target
+        this.creator = creator
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -39,6 +40,7 @@ export default class Line {
             type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
+            creator: `https://store.rerum.io/v1/id/${this.creator}`,
             body: this.body
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }
@@ -84,7 +86,19 @@ export default class Line {
     }
     return this.#updateLineForPage()
 }
-    
+
+    asProjectLine() {
+        return {
+            id: this.id,
+            type: this.type ?? 'Annotation',
+            label: this.label ?? '',
+            motivation: this.motivation ?? 'transcribing',
+            body: this.body ?? '',
+            target: this.target,
+            creator: this.creator
+        }
+    }
+
 #updateLineForPage() {
     return {
         id: this.id,
