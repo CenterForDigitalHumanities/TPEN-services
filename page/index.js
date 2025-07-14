@@ -95,7 +95,7 @@ router.route('/:pageId')
         pageObject.items = await Promise.all(pageObject.items.map(async item => {
           const line = item.id?.startsWith?.('http')
             ? new Line(item)
-            : Line.build(projectId, pageId, item)
+            : Line.build(projectId, pageId, item, user._id)
           return await line.update()
         }))
       }

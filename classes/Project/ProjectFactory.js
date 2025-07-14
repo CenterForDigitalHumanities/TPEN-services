@@ -109,7 +109,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items ) 
+    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, manifest.creator) 
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
@@ -483,7 +483,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label)
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items ) 
+    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, manifest.creator) 
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
