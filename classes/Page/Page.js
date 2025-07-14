@@ -58,7 +58,7 @@ export default class Page {
                 type: "AnnotationPage",
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf,
+                partOf: [{ id: partOf.startsWith(process.env.RERUMIDPREFIX) ? partOf : `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`, type: "AnnotationCollection" }],
                 items,
                 prev,
                 next

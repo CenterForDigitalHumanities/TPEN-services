@@ -11,6 +11,7 @@ import mime from 'mime-types'
 import Hotkeys from "../HotKeys/Hotkeys.js"
 
 const database = new dbDriver("mongo")
+const databaseTiny = new dbDriver("tiny")
 
 export default class ProjectFactory {
   constructor(data) {
@@ -242,13 +243,16 @@ export default class ProjectFactory {
 
   static async cloneLayers(project, copiedProject, database, withAnnotations = true) {
     for (const layer of project.layers) {
-      const newLayer = {
+      let newLayer = {
         id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
         label: layer.label,
         pages: []
       }
 
       const newPages = await this.clonePages(layer, copiedProject, database, withAnnotations)
+      const layerObj = new Layer(`${process.env.SERVERURL}project/${copiedProject._id}`, { id: newLayer.id, label: newLayer.label, creator: copiedProject.creator, pages: newPages })
+      await layerObj.update()
+      newLayer.id = layerObj.id
       newLayer.pages.push(...newPages)
       copiedProject.layers.push(newLayer)
     }
@@ -288,19 +292,22 @@ export default class ProjectFactory {
           id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
           label: page.label,
           target: page.target,
+          creator: copiedProject.creator,
           items: await Promise.all(pageData.items.map(async item => {
             return await fetch(item.id)
             .then(response => response.json())
             .then(async itemData => {
               const newItem = new Line({
                 id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
-                target: itemData.target,
-                body: itemData.body,
-                motivation: itemData.motivation,
+                type: itemData.type,
                 label: itemData.label,
-                type: itemData.type
+                motivation: itemData.motivation,
+                body: itemData.body,
+                target: itemData.target,
+                creator: copiedProject.creator
               })
-              return await newItem.update()
+              await newItem.update()
+              return newItem.asProjectLine()
             })
           }))
         })
@@ -709,6 +716,7 @@ export default class ProjectFactory {
     }
 
     const project = await ProjectFactory.loadAsUser(projectId, null)
+    const manifestJson = await this.fetchJson(project.manifest[0])
 
     const manifest = {
       "@context": "http://iiif.io/api/presentation/3/context.json",
@@ -716,29 +724,49 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getManifestItems(project),
+      items: await this.getManifestItems(project, manifestJson),
     }
     return manifest
   }
 
-  static async getManifestItems(project) {
+  static async getManifestItems(project, manifestJson) {
     return Promise.all(
-      project.layers.map(async (layer) => {
+      manifestJson.items.map(async (canvas) => {
         try {
-          const canvasUrl = layer.pages[0].target
-          const canvasData = await this.fetchJson(canvasUrl)
-          if (!canvasData) return null
-
-          const canvasItems = {
-            id: canvasData.id ?? canvasData["@id"],
-            type: canvasData.type,
-            label: canvasData.label,
-            width: canvasData.width,
-            height: canvasData.height,
-            items: canvasData.items,
-            annotations: await this.getAnnotations(canvasData),
+          let canvasItems = {
+            id: `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`,
+            type: canvas.type,
+            label: canvas.label,
+            width: canvas.width,
+            height: canvas.height,
+            items: canvas.items,
+            annotations: [],
           }
-          return canvasItems
+          let canvasRerum = canvasItems
+          canvasItems.items[0].items[0].target = canvasRerum.items[0].items[0].target = canvasItems.id
+          canvasRerum['@context'] = "http://iiif.io/api/presentation/3/context.json"
+          await Promise.all(project.layers.map(layer => {
+            return layer.pages.forEach(page => {
+              if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
+                const annotationPage = {
+                  id: page.id,
+                  type: "AnnotationPage"
+                }
+                canvasRerum.annotations.push(annotationPage)
+              }
+            })
+          }))
+          await databaseTiny.save(canvasRerum)
+          canvasItems.annotations = await this.getAnnotations(canvasRerum)
+          return {
+            id: canvasItems.id,
+            type: canvasItems.type,
+            label: canvasItems.label,
+            width: canvasItems.width,
+            height: canvasItems.height,
+            items: canvasItems.items,
+            annotations: canvasItems.annotations
+          }
         } catch (error) {
           console.error(`Error processing layer:`, error)
           return null
@@ -760,6 +788,8 @@ export default class ProjectFactory {
             label: annotationData.label,
             items: await this.getLines(annotationData),
             partOf: annotationData.partOf,
+            prev: annotationData.prev.startsWith(process.env.RERUMIDPREFIX) ? annotationData.prev : null,
+            next: annotationData.next.startsWith(process.env.RERUMIDPREFIX) ? annotationData.next : null,
             creator: annotationData.creator,
             target: annotationData.target,
           }
