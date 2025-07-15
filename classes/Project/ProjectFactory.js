@@ -306,8 +306,7 @@ export default class ProjectFactory {
                 target: itemData.target,
                 creator: copiedProject.creator
               })
-              await newItem.update()
-              return newItem.asProjectLine()
+              return await newItem.update()
             })
           }))
         })

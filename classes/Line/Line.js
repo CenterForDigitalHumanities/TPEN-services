@@ -87,18 +87,6 @@ export default class Line {
     return this.#updateLineForPage()
 }
 
-    asProjectLine() {
-        return {
-            id: this.id,
-            type: this.type ?? 'Annotation',
-            label: this.label ?? '',
-            motivation: this.motivation ?? 'transcribing',
-            body: this.body ?? '',
-            target: this.target,
-            creator: this.creator
-        }
-    }
-
 #updateLineForPage() {
     return {
         id: this.id,
