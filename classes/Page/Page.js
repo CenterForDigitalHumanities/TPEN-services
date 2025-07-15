@@ -75,8 +75,12 @@ export default class Page {
             type: "AnnotationPage",
             label: { "none": [this.label] },
             items: this.items ?? [],
-            prev: this.prev ?? null,
-            next: this.next ?? null,
+            ...(this?.prev?.startsWith(process.env.RERUMIDPREFIX) && {
+              prev: this.prev
+            }),
+            ...(this?.next?.startsWith(process.env.RERUMIDPREFIX) && {
+              next: this.next
+            }),
             creator: `https://store.rerum.io/v1/id/${this.creator}`,
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]

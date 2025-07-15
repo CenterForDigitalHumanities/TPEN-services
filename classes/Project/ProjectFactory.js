@@ -741,7 +741,7 @@ export default class ProjectFactory {
             height: canvas.height,
             items: canvas.items,
             annotations: [],
-            creator: `${process.env.RERUMIDPREFIX}${creator}`,
+            creator: `https://store.rerum.io/v1/id/${creator}`,
           }
           let canvasRerum = canvasItems
           canvasItems.items[0].items[0].target = canvasRerum.items[0].items[0].target = canvasItems.id
@@ -790,8 +790,12 @@ export default class ProjectFactory {
             label: annotationData.label,
             items: await this.getLines(annotationData),
             partOf: annotationData.partOf,
-            prev: annotationData?.prev?.startsWith(process.env.RERUMIDPREFIX) ? annotationData.prev : null,
-            next: annotationData?.next?.startsWith(process.env.RERUMIDPREFIX) ? annotationData.next : null,
+            ...(annotationData?.prev?.startsWith(process.env.RERUMIDPREFIX) && {
+              prev: annotationData.prev
+            }),
+            ...(annotationData?.next?.startsWith(process.env.RERUMIDPREFIX) && {
+              next: annotationData.next
+            }),
             creator: annotationData.creator,
             target: annotationData.target,
           }

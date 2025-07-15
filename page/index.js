@@ -40,8 +40,12 @@ router.route('/:pageId')
         target: pageObject.target,
         partOf: pageObject.partOf,
         items: pageObject.items ?? [],
-        prev: pageObject.prev ?? null,
-        next: pageObject.next ?? null
+        ...pageObject.prev?.startsWith(process.env.RERUMIDPREFIX) && {
+          prev: pageObject.prev
+        },
+        ...pageObject.next?.startsWith(process.env.RERUMIDPREFIX) && {
+          next: pageObject.next
+        }
       }
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
@@ -78,8 +82,17 @@ router.route('/:pageId')
       const pageObject = await findPageById(pageId, projectId)
       pageObject.creator = user._id
       pageObject.partOf = layerId
-      pageObject.next = pageObject.next ? pageObject.next.id : null
-      pageObject.prev = pageObject.prev ? pageObject.prev.id : null
+      if (pageObject?.prev?.id.startsWith(process.env.RERUMIDPREFIX)) {
+        pageObject.prev = pageObject.prev.id
+      } else {
+        delete pageObject.prev
+      }
+
+      if (pageObject?.next?.id.startsWith(process.env.RERUMIDPREFIX)) {
+        pageObject.next = pageObject.next.id
+      } else {
+        delete pageObject.next
+      }
       if (!pageObject) {
         respondWithError(res, 404, 'No page found with that ID.')
         return

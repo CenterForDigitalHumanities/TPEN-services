@@ -17,14 +17,14 @@ router.route('/:layerId')
         const { projectId, layerId } = req.params
 
         try {
-            const layer = await findLayerById(layerId, projectId)
+            const { layer, creator } = await findLayerById(layerId, projectId)
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
                 id: layer.id,
                 type: 'AnnotationCollection',
                 label: { none: [layer.label] },
-                creator: null,
+                creator: `https://store.rerum.io/v1/id/${creator}`,
                 total: layer.pages.length,
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id
@@ -130,5 +130,5 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         throw error
     }
     
-    return layer
+    return { layer, creator: p.creator }
 }
