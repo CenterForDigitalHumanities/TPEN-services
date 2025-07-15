@@ -98,7 +98,7 @@ export default class ProjectFactory {
     }
   ]
 
-  static async DBObjectFromManifest(manifest, importTPEN28 = false) {
+  static async DBObjectFromManifest(manifest, creator, importTPEN28 = false) {
     if (!manifest) {
       throw {
         status: 404,
@@ -109,7 +109,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, manifest.creator) 
+    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, creator )
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
@@ -135,7 +135,7 @@ export default class ProjectFactory {
   static async fromManifestURL(manifestId, creator, importTPEN28 = false) {
     return vault.loadManifest(manifestId)
       .then(async (manifest) => {
-        return await ProjectFactory.DBObjectFromManifest(manifest, importTPEN28)
+        return await ProjectFactory.DBObjectFromManifest(manifest, creator, importTPEN28)
       })
       .then(async (project) => {
         const projectObj = new Project()
@@ -241,7 +241,7 @@ export default class ProjectFactory {
     return copiedGroup
   }
 
-  static async cloneLayers(project, copiedProject, database, withAnnotations = true) {
+  static async cloneLayers(project, copiedProject, creator, database, withAnnotations = true) {
     for (const layer of project.layers) {
       let newLayer = {
         id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
@@ -250,7 +250,7 @@ export default class ProjectFactory {
       }
 
       const newPages = await this.clonePages(layer, copiedProject, database, withAnnotations)
-      const layerObj = new Layer(`${process.env.SERVERURL}project/${copiedProject._id}`, { id: newLayer.id, label: newLayer.label, creator: copiedProject.creator, pages: newPages })
+      const layerObj = new Layer(`${process.env.SERVERURL}project/${copiedProject._id}`, { id: newLayer.id, label: newLayer.label, pages: newPages, creator: creator })
       await layerObj.update()
       newLayer.id = layerObj.id
       newLayer.pages.push(...newPages)
@@ -333,7 +333,7 @@ export default class ProjectFactory {
     }
 
     let copiedProject = this.copiedProjectConfig(project, database, creator)
-    await this.cloneLayers(project, copiedProject, database, true)
+    await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
@@ -357,7 +357,7 @@ export default class ProjectFactory {
     }
 
     let copiedProject = this.copiedProjectConfig(project, database, creator)
-    await this.cloneLayers(project, copiedProject, database, false)
+    await this.cloneLayers(project, copiedProject, creator, database, false)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
     await this.cloneHotkeys(project._id, copiedProject._id)
@@ -380,7 +380,7 @@ export default class ProjectFactory {
     }
 
     let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': false, 'Tools': false })
-    await this.cloneLayers(project, copiedProject, database, true)
+    await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")    
@@ -472,7 +472,7 @@ export default class ProjectFactory {
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
   
-  static async DBObjectFromImage(manifest) {
+  static async DBObjectFromImage(manifest, creator) {
     if (!manifest) {
       throw {
         status: 404,
@@ -483,7 +483,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label)
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, manifest.creator) 
+    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, creator) 
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
@@ -636,7 +636,7 @@ export default class ProjectFactory {
     await this.uploadFileToGitHub(projectManifest, _id)
     await this.uploadFileToGitHub(projectCanvas, _id)
 
-    return await ProjectFactory.DBObjectFromImage(projectManifest)
+    return await ProjectFactory.DBObjectFromImage(projectManifest, creator)
     .then(async (project) => {
       const projectObj = new Project()
       const group = await Group.createNewGroup(creator,
@@ -710,7 +710,7 @@ export default class ProjectFactory {
    * - A dynamically fetched list of manifest items, including canvases and their annotations.
    * - All elements are embedded in the manifest object.
    */
-  static async exportManifest(projectId) {
+  static async exportManifest(projectId, creator) {
     if (!projectId) {
       throw { status: 400, message: "No project ID provided" }
     }
@@ -724,12 +724,12 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getManifestItems(project, manifestJson),
+      items: await this.getManifestItems(project, manifestJson, creator),
     }
     return manifest
   }
 
-  static async getManifestItems(project, manifestJson) {
+  static async getManifestItems(project, manifestJson, creator) {
     return Promise.all(
       manifestJson.items.map(async (canvas) => {
         try {
@@ -741,6 +741,7 @@ export default class ProjectFactory {
             height: canvas.height,
             items: canvas.items,
             annotations: [],
+            creator: `${process.env.RERUMIDPREFIX}${creator}`,
           }
           let canvasRerum = canvasItems
           canvasItems.items[0].items[0].target = canvasRerum.items[0].items[0].target = canvasItems.id
@@ -765,7 +766,8 @@ export default class ProjectFactory {
             width: canvasItems.width,
             height: canvasItems.height,
             items: canvasItems.items,
-            annotations: canvasItems.annotations
+            annotations: canvasItems.annotations,
+            creator: canvasItems.creator
           }
         } catch (error) {
           console.error(`Error processing layer:`, error)
@@ -788,8 +790,8 @@ export default class ProjectFactory {
             label: annotationData.label,
             items: await this.getLines(annotationData),
             partOf: annotationData.partOf,
-            prev: annotationData.prev.startsWith(process.env.RERUMIDPREFIX) ? annotationData.prev : null,
-            next: annotationData.next.startsWith(process.env.RERUMIDPREFIX) ? annotationData.next : null,
+            prev: annotationData?.prev?.startsWith(process.env.RERUMIDPREFIX) ? annotationData.prev : null,
+            next: annotationData?.next?.startsWith(process.env.RERUMIDPREFIX) ? annotationData.next : null,
             creator: annotationData.creator,
             target: annotationData.target,
           }

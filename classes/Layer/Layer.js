@@ -37,7 +37,7 @@ export default class Layer {
     }
 
     // Static Methods
-    static build(projectId, label, canvases, projectLabel = "Default", creator) {
+    static build(projectId, label, canvases, creator, projectLabel = "Default") {
         if (!Array.isArray(canvases)) {
             if (!canvases) {
                 throw new Error("At least one Canvas must be included.")
@@ -51,10 +51,11 @@ export default class Layer {
             creator,
             id: `${process.env.SERVERURL}project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
         }
-        const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c).asProjectPage())
+        let pages = canvases.map(c => { return {id: thisLayer.id, label: c.label, target: c.id, items: c.items, creator: thisLayer.creator, prev: null, next: null} })
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
             if (index < pages.length - 1) page.next = pages[index + 1].id
+            pages[index] = Page.build(projectId, thisLayer.id, canvases[index], thisLayer.creator, page.prev, page.next).asProjectPage()
         })
         return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages, creator: thisLayer.creator })
     }

@@ -21,7 +21,7 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
     if (!await new Project(id).checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
       return respondWithError(res, 403, "You do not have permission to export this project")
     }
-    const manifest = await ProjectFactory.exportManifest(id)
+    const manifest = await ProjectFactory.exportManifest(id, user._id)
     await ProjectFactory.uploadFileToGitHub(manifest, `${id}`)
     res.status(200).json(manifest)
   } catch (error) {

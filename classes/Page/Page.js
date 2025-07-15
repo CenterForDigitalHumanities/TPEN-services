@@ -22,18 +22,18 @@ export default class Page {
      * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, items = [], creator = null, prev = null, next = null, partOf = null }) {
+    constructor(layerId, { id, label, target, items = [], creator = null, prev = null, next = null }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, items, creator, prev, next, partOf })
+        Object.assign(this, { id, label, target, items, creator, prev, next })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, creator, partOf, prev, next, items = []) {
+    static build(projectId, layerId, canvas, creator, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -46,7 +46,6 @@ export default class Page {
         if (!canvas.id) {
             canvas = {id : canvas}
         }
-        
         const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
@@ -59,14 +58,14 @@ export default class Page {
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 creator: creator,
-                partOf: partOf ? partOf : `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
                 items,
                 prev,
                 next
             }
         }
 
-        return new Page(layerId, page.data, { creator, partOf, prev, next })
+        return new Page(layerId, { id: page.data.id, label: page.data.label, target: page.data.target, items: page.data.items, creator: page.data.creator, prev: page.data.prev, next: page.data.next })
     }
 
     async #savePageToRerum() {

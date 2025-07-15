@@ -76,6 +76,10 @@ router.route('/:pageId')
     try {
       // Find the page object
       const pageObject = await findPageById(pageId, projectId)
+      pageObject.creator = user._id
+      pageObject.partOf = layerId
+      pageObject.next = pageObject.next ? pageObject.next.id : null
+      pageObject.prev = pageObject.prev ? pageObject.prev.id : null
       if (!pageObject) {
         respondWithError(res, 404, 'No page found with that ID.')
         return

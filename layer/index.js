@@ -24,6 +24,7 @@ router.route('/:layerId')
                 id: layer.id,
                 type: 'AnnotationCollection',
                 label: { none: [layer.label] },
+                creator: null,
                 total: layer.pages.length,
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id
@@ -58,7 +59,7 @@ router.route('/:layerId')
             if(canvases?.length === 0) canvases = undefined
             const updatedLayer = canvases ?
                 Layer.build(projectId, label, canvases, req.user._id)
-                : new Layer(projectId, {id:layer.id, label, pages:layer.pages})
+                : new Layer(projectId, {id:layer.id, label, pages:layer.pages, creator: req.user._id})
 
             await updatedLayer.update()
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
