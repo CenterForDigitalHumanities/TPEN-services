@@ -86,7 +86,7 @@ export default class Line {
     }
     return this.#updateLineForPage()
 }
-
+    
 #updateLineForPage() {
     return {
         id: this.id,
