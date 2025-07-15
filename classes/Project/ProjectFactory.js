@@ -185,7 +185,7 @@ export default class ProjectFactory {
     }
   }
 
-  static copiedProjectConfig(project, database, creator, modules = { 'Metadata': true, 'Tools': true }) {
+  static copiedProjectConfig(project, database, modules = { 'Metadata': true, 'Tools': true }) {
     return {
       ...project,
       _id: database.reserveId(),
@@ -249,7 +249,7 @@ export default class ProjectFactory {
         pages: []
       }
 
-      const newPages = await this.clonePages(layer, copiedProject, database, withAnnotations)
+      const newPages = await this.clonePages(layer, copiedProject, creator, database, withAnnotations)
       const layerObj = new Layer(`${process.env.SERVERURL}project/${copiedProject._id}`, { id: newLayer.id, label: newLayer.label, pages: newPages, creator: creator })
       await layerObj.update()
       newLayer.id = layerObj.id
@@ -258,10 +258,10 @@ export default class ProjectFactory {
     }
   }
 
-  static async clonePages(layer, copiedProject, database, withAnnotations) {
+  static async clonePages(layer, copiedProject, creator, database, withAnnotations) {
     const newPages = await Promise.all(layer.pages.map(async (page) => {
       if (withAnnotations) {
-        return await this.clonePagesWithAnnotations(layer, page, copiedProject, database)
+        return await this.clonePagesWithAnnotations(layer, page, copiedProject, creator, database)
       }
       return await this.clonePageWithoutAnnotations(page, copiedProject, database)
     }))
@@ -276,7 +276,7 @@ export default class ProjectFactory {
     }
   }
 
-  static async clonePagesWithAnnotations(layer, page, copiedProject, database) {
+  static async clonePagesWithAnnotations(layer, page, copiedProject, creator, database) {
     if(!page.id.startsWith(process.env.RERUMIDPREFIX)) {
       return {
         id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
@@ -292,7 +292,7 @@ export default class ProjectFactory {
           id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
           label: page.label,
           target: page.target,
-          creator: copiedProject.creator,
+          creator: creator,
           items: await Promise.all(pageData.items.map(async item => {
             return await fetch(item.id)
             .then(response => response.json())
@@ -304,7 +304,7 @@ export default class ProjectFactory {
                 motivation: itemData.motivation,
                 body: itemData.body,
                 target: itemData.target,
-                creator: copiedProject.creator
+                creator: creator
               })
               return await newItem.update()
             })
@@ -331,7 +331,7 @@ export default class ProjectFactory {
       }
     }
 
-    let copiedProject = this.copiedProjectConfig(project, database, creator)
+    let copiedProject = this.copiedProjectConfig(project, database)
     await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
@@ -355,7 +355,7 @@ export default class ProjectFactory {
       }
     }
 
-    let copiedProject = this.copiedProjectConfig(project, database, creator)
+    let copiedProject = this.copiedProjectConfig(project, database)
     await this.cloneLayers(project, copiedProject, creator, database, false)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
@@ -378,7 +378,7 @@ export default class ProjectFactory {
       }
     }
 
-    let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': false, 'Tools': false })
+    let copiedProject = this.copiedProjectConfig(project, database, { 'Metadata': false, 'Tools': false })
     await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
@@ -411,7 +411,7 @@ export default class ProjectFactory {
       }
     }
 
-    let copiedProject = this.copiedProjectConfig(project, database, creator, { 'Metadata': modules['Metadata'], 'Tools': modules['Tools'] })
+    let copiedProject = this.copiedProjectConfig(project, database, { 'Metadata': modules['Metadata'], 'Tools': modules['Tools'] })
     let result = {}
 
     if (modules['Layers'] && Array.isArray(modules['Layers']) && modules['Layers'].length > 0) {
