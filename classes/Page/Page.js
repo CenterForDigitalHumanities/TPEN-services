@@ -26,7 +26,7 @@ export default class Page {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, items, creator, prev, next })
+        Object.assign(this, { id, label, target, partOf: layerId, items, creator, prev, next })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -46,6 +46,7 @@ export default class Page {
         if (!canvas.id) {
             canvas = {id : canvas}
         }
+
         const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
@@ -65,7 +66,7 @@ export default class Page {
             }
         }
 
-        return new Page(layerId, { id: page.data.id, label: page.data.label, target: page.data.target, items: page.data.items, creator: page.data.creator, prev: page.data.prev, next: page.data.next })
+        return new Page(layerId, page.data)
     }
 
     async #savePageToRerum() {
