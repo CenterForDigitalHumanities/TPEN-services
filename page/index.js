@@ -40,10 +40,10 @@ router.route('/:pageId')
         target: pageObject.target,
         partOf: pageObject.partOf,
         items: pageObject.items ?? [],
-        ...pageObject.prev?.startsWith(process.env.RERUMIDPREFIX) && {
+        ...pageObject.prev && {
           prev: pageObject.prev
         },
-        ...pageObject.next?.startsWith(process.env.RERUMIDPREFIX) && {
+        ...pageObject.next && {
           next: pageObject.next
         }
       }
