@@ -40,11 +40,11 @@ router.route('/:pageId')
         target: pageObject.target,
         partOf: pageObject.partOf,
         items: pageObject.items ?? [],
-        ...pageObject.prev && {
-          prev: pageObject.prev
+        ...pageObject?.prev?.id && {
+          prev: pageObject.prev.id
         },
-        ...pageObject.next && {
-          next: pageObject.next
+        ...pageObject?.next?.id && {
+          next: pageObject.next.id
         }
       }
       res.status(200).json(pageAsAnnotationPage)
