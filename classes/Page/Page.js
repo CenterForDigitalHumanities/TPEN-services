@@ -46,7 +46,7 @@ export default class Page {
         if (!canvas.id) {
             canvas = {id : canvas}
         }
-
+        
         const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
