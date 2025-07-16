@@ -80,15 +80,15 @@ router.route('/:pageId')
     try {
       // Find the page object
       const pageObject = await findPageById(pageId, projectId)
-      pageObject.creator = user._id
+      pageObject.creator = user.agent.split('/').pop()
       pageObject.partOf = layerId
-      if (pageObject?.prev?.id.startsWith(process.env.RERUMIDPREFIX)) {
+      if (pageObject?.prev?.id) {
         pageObject.prev = pageObject.prev.id
       } else {
         delete pageObject.prev
       }
 
-      if (pageObject?.next?.id.startsWith(process.env.RERUMIDPREFIX)) {
+      if (pageObject?.next?.id) {
         pageObject.next = pageObject.next.id
       } else {
         delete pageObject.next
@@ -112,7 +112,7 @@ router.route('/:pageId')
         pageObject.items = await Promise.all(pageObject.items.map(async item => {
           const line = item.id?.startsWith?.('http')
             ? new Line(item)
-            : Line.build(projectId, pageId, item, user._id)
+            : Line.build(projectId, pageId, item, user.agent.split('/').pop())
           return await line.update()
         }))
       }
