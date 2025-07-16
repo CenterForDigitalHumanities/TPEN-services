@@ -22,18 +22,18 @@ export default class Page {
      * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, items = [], creator = null, prev = null, next = null }) {
+    constructor(layerId, { id, label, target, items = [], creator = null, partOf = null, prev = null, next = null }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId, items, creator, prev, next })
+        Object.assign(this, { id, label, target, partOf: partOf ?? layerId, items, creator, prev, next })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, creator, prev, next, items = []) {
+    static build(projectId, layerId, canvas, creator, partOf, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -59,7 +59,7 @@ export default class Page {
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 creator: creator,
-                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
                 items,
                 prev,
                 next
@@ -76,12 +76,12 @@ export default class Page {
             type: "AnnotationPage",
             label: { "none": [this.label] },
             items: this.items ?? [],
-            ...(this?.prev?.startsWith(process.env.RERUMIDPREFIX) && {
+            ...this?.prev && {
               prev: this.prev
-            }),
-            ...(this?.next?.startsWith(process.env.RERUMIDPREFIX) && {
+            },
+            ...this?.next && {
               next: this.next
-            }),
+            },
             creator: `https://store.rerum.io/v1/id/${this.creator}`,
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]

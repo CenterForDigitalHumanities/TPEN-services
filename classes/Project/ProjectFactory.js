@@ -250,6 +250,18 @@ export default class ProjectFactory {
       }
 
       const newPages = await this.clonePages(layer, copiedProject, creator, database, withAnnotations)
+      for (const page of newPages) {
+        const updatedPage = new Page(
+          `${process.env.RERUMIDPREFIX}${newLayer.id.split('/').pop()}`,
+          { id: page.id, label: page.label, target: page.target,
+            items: page.items,
+            creator: creator,
+            partOf: `${process.env.RERUMIDPREFIX}${newLayer.id.split('/').pop()}`,
+            prev: newPages[newPages.indexOf(page) - 1]?.id,
+            next: newPages[newPages.indexOf(page) + 1]?.id
+          })
+        await updatedPage.update()
+      }
       const layerObj = new Layer(`${process.env.SERVERURL}project/${copiedProject._id}`, { id: newLayer.id, label: newLayer.label, pages: newPages, creator: creator })
       await layerObj.update()
       newLayer.id = layerObj.id
@@ -288,7 +300,7 @@ export default class ProjectFactory {
       return await fetch(page.id)
       .then(response => response.json())
       .then(async pageData => {
-        const newPage = new Page(layer.id, {
+        const newPage = new Page(`${process.env.RERUMIDPREFIX}${layer.id.split('/').pop()}`,{
           id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
           label: page.label,
           target: page.target,
