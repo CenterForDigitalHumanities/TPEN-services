@@ -48,7 +48,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     try {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
-        user._id
+        user.agent.split('/').pop(),
       )
       res.status(201).json(result)
     } catch (error) {
@@ -69,7 +69,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     try {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
-        user._id,
+        user.agent.split('/').pop(),
         true
       )
       res.status(201).json(result)
