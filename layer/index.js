@@ -58,8 +58,8 @@ router.route('/:layerId')
             label ??= label ?? layer.label
             if(canvases?.length === 0) canvases = undefined
             const updatedLayer = canvases ?
-                Layer.build(projectId, label, canvases, req.user._id)
-                : new Layer(projectId, {id:layer.id, label, pages:layer.pages, creator: req.user._id})
+                Layer.build(projectId, label, canvases, req.agent.split('/').pop())
+                : new Layer(projectId, {id:layer.id, label, pages:layer.pages, creator: req.agent.split('/').pop()})
 
             await updatedLayer.update()
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
@@ -90,7 +90,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 
         if (!project) return utils.respondWithError(res, 404, 'Project does not exist')
 
-        const newLayer = Layer.build(projectId, label, canvases, req.user._id)
+        const newLayer = Layer.build(projectId, label, canvases, req.agent.split('/').pop())
         project.addLayer(newLayer.asProjectLayer())
         await project.update()
 

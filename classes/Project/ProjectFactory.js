@@ -709,7 +709,7 @@ export default class ProjectFactory {
    * - A dynamically fetched list of manifest items, including canvases and their annotations.
    * - All elements are embedded in the manifest object.
    */
-  static async exportManifest(projectId, creator) {
+  static async exportManifest(projectId) {
     if (!projectId) {
       throw { status: 400, message: "No project ID provided" }
     }
@@ -723,7 +723,7 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getCanvasItems(project, manifestJson, creator),
+      items: await this.getCanvasItems(project, manifestJson, project.creator),
     }
     return manifest
   }
@@ -785,12 +785,12 @@ export default class ProjectFactory {
             label: annotationData.label,
             items: await this.getLines(annotationData),
             partOf: annotationData.partOf,
-            ...(annotationData?.prev?.startsWith(process.env.RERUMIDPREFIX) && {
+            ...(annotationData?.prev) && {
               prev: annotationData.prev
-            }),
-            ...(annotationData?.next?.startsWith(process.env.RERUMIDPREFIX) && {
+            },
+            ...(annotationData?.next) && {
               next: annotationData.next
-            }),
+            },
             creator: annotationData.creator,
             target: annotationData.target,
           }
