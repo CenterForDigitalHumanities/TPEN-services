@@ -723,12 +723,12 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getManifestItems(project, manifestJson, creator),
+      items: await this.getCanvasItems(project, manifestJson, creator),
     }
     return manifest
   }
 
-  static async getManifestItems(project, manifestJson, creator) {
+  static async getCanvasItems(project, manifestJson, creator) {
     return Promise.all(
       manifestJson.items.map(async (canvas) => {
         try {
@@ -742,38 +742,34 @@ export default class ProjectFactory {
             annotations: [],
             creator: `https://store.rerum.io/v1/id/${creator}`,
           }
-          let canvasRerum = canvasItems
-          canvasItems.items[0].items[0].target = canvasRerum.items[0].items[0].target = canvasItems.id
-          canvasRerum['@context'] = "http://iiif.io/api/presentation/3/context.json"
-          await Promise.all(project.layers.map(layer => {
-            return layer.pages.forEach(page => {
-              if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
-                const annotationPage = {
-                  id: page.id,
-                  type: "AnnotationPage"
-                }
-                canvasRerum.annotations.push(annotationPage)
-              }
-            })
-          }))
-          await databaseTiny.save(canvasRerum)
-          canvasItems.annotations = await this.getAnnotations(canvasRerum)
-          return {
-            id: canvasItems.id,
-            type: canvasItems.type,
-            label: canvasItems.label,
-            width: canvasItems.width,
-            height: canvasItems.height,
-            items: canvasItems.items,
-            annotations: canvasItems.annotations,
-            creator: canvasItems.creator
-          }
+          canvasItems.items[0].items[0].target = canvasItems.id
+          canvasItems = await this.saveCanvasToRerum(canvasItems, project, canvas)
+          delete canvasItems['@context']
+          canvasItems.annotations = await this.getAnnotations(canvasItems)
+          return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
           return null
         }
       })
     )
+  }
+
+  static async saveCanvasToRerum(canvasItems, project, canvas) {
+    canvasItems['@context'] = "http://iiif.io/api/presentation/3/context.json"
+    await Promise.all(project.layers.map(layer => {
+      return layer.pages.forEach(page => {
+        if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
+          const annotationPage = {
+            id: page.id,
+            type: "AnnotationPage"
+          }
+          canvasItems.annotations.push(annotationPage)
+        }
+      })
+    }))
+    await databaseTiny.save(canvasItems)
+    return canvasItems
   }
 
   static async getAnnotations(canvasData) {
