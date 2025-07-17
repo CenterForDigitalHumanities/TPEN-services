@@ -97,7 +97,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
     if (!imageUrl || !projectLabel) {
       return respondWithError(res, 400, "Image URL and project label are required")
     }
-    const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user._id)
+    const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user.agent.split('/').pop())
     res.status(201).json(project)
   } catch (error) {
     respondWithError(
