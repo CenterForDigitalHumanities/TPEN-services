@@ -40,7 +40,7 @@ export default class Line {
             type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
-            creator: `https://store.rerum.io/v1/id/${this.creator}`,
+            creator: `${process.env.RERUMIDPREFIX + this.creator}`,
             body: this.body
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }

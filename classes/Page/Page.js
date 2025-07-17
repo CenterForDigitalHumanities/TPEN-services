@@ -82,7 +82,7 @@ export default class Page {
             ...this?.next && {
               next: this.next
             },
-            creator: `https://store.rerum.io/v1/id/${this.creator}`,
+            creator: `${process.env.RERUMIDPREFIX + this.creator}`,
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }

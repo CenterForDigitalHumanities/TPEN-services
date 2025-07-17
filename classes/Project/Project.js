@@ -165,7 +165,7 @@ export default class Project {
   async inviteNewTPENUser(email, roles) {
     const user = new User()
     const inviteCode = user._id
-    const agent = `https://store.rerum.io/v1/id/${user._id}`
+    const agent = `${process.env.RERUMIDPREFIX + user._id}`
     const profile = { displayName: email.split("@")[0] }
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
