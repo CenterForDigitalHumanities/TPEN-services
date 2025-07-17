@@ -622,11 +622,9 @@ export default class ProjectFactory {
                   }]
                 })
               },
-              target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`,
-              creator: await fetchUserAgent(creator),
+              target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`
             }
-          ],
-          creator: await fetchUserAgent(creator),
+          ]
         }
       ],
       creator: await fetchUserAgent(creator),
