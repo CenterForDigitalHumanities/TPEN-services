@@ -736,12 +736,13 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getCanvasItems(project, manifestJson, project.creator),
+      items: await this.getCanvasItems(project, manifestJson),
+      creator: await fetchUserAgent(project.creator)
     }
     return manifest
   }
 
-  static async getCanvasItems(project, manifestJson, creator) {
+  static async getCanvasItems(project, manifestJson) {
     return Promise.all(
       manifestJson.items.map(async (canvas) => {
         try {
@@ -753,7 +754,7 @@ export default class ProjectFactory {
             height: canvas.height,
             items: canvas.items,
             annotations: [],
-            creator: await fetchUserAgent(creator),
+            creator: await fetchUserAgent(project.creator),
           }
           canvasItems.items[0].items[0].target = canvasItems.id
           canvasItems = await this.saveCanvasToRerum(canvasItems, project, canvas)
