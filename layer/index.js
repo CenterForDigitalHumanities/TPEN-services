@@ -91,7 +91,7 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 
         if (!project) return utils.respondWithError(res, 404, 'Project does not exist')
 
-        const newLayer = Layer.build(projectId, label, canvases, req.agent.split('/').pop())
+        const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()
 
