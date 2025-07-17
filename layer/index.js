@@ -6,6 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
+import { fetchUserAgent } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -24,7 +25,7 @@ router.route('/:layerId')
                 id: layer.id,
                 type: 'AnnotationCollection',
                 label: { none: [layer.label] },
-                creator: `https://store.rerum.io/v1/id/${creator}`,
+                creator: await fetchUserAgent(creator),
                 total: layer.pages.length,
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id

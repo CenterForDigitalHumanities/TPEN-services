@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 export default class Line {
@@ -40,7 +41,7 @@ export default class Line {
             type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
-            creator: `https://store.rerum.io/v1/id/${this.creator}`,
+            creator: await fetchUserAgent(this.creator.split('/').pop()),
             body: this.body
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }

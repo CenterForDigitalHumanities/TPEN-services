@@ -217,3 +217,25 @@ export const withOptimisticLocking = async (operation, retryFn, maxRetries = 2) 
 
    throw lastError
 }
+
+/** * Fetch the user agent for a given user ID
+ * @param {string} userId - The ID of the user to fetch the agent for
+ * @returns {Promise<string>} The user agent string
+ * @throws {Error} If the user ID is not provided or the user cannot be found
+ */
+
+export const fetchUserAgent = async (userId) => {
+   if (!userId) {
+      throw new Error('User ID is required to fetch user agent')
+   }
+   try {
+      let user = new User(userId)
+      user =await user.getSelf()
+      if (!user) {
+         throw new Error(`User with ID '${userId}' not found`)
+      }
+      return user.agent
+   } catch (error) {
+      throw new Error(`Error fetching user agent: ${error.message}`)
+   }
+}

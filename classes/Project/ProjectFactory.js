@@ -9,6 +9,7 @@ import vault from "../../utilities/vault.js"
 import imageSize from 'image-size'
 import mime from 'mime-types'
 import Hotkeys from "../HotKeys/Hotkeys.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
 const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
@@ -752,7 +753,7 @@ export default class ProjectFactory {
             height: canvas.height,
             items: canvas.items,
             annotations: [],
-            creator: `https://store.rerum.io/v1/id/${creator}`,
+            creator: await fetchUserAgent(creator),
           }
           canvasItems.items[0].items[0].target = canvasItems.id
           canvasItems = await this.saveCanvasToRerum(canvasItems, project, canvas)

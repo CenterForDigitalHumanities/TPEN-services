@@ -1,5 +1,6 @@
 import dbDriver from "../../database/driver.js"
 import { handleVersionConflict } from "../../utilities/shared.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -82,7 +83,7 @@ export default class Page {
             ...this?.next && {
               next: this.next
             },
-            creator: `https://store.rerum.io/v1/id/${this.creator}`,
+            creator: await fetchUserAgent(this.creator),
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }

@@ -1,8 +1,8 @@
 import dbDriver from "../../database/driver.js"
 import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
-const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
 
 export default class Layer {
@@ -113,7 +113,7 @@ export default class Layer {
             id: this.id,
             type: "AnnotationCollection",
             label: { "none": [this.label] },
-            creator: `https://store.rerum.io/v1/id/${this.creator}`,
+            creator: await fetchUserAgent(this.creator),
             total: this.pages.length,
             first: this.pages.at(0).id,
             last: this.pages.at(-1).id,
