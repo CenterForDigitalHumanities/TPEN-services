@@ -752,7 +752,7 @@ export default class ProjectFactory {
             height: canvas.height,
             items: canvas.items,
             annotations: [],
-            creator: `${process.env.RERUMIDPREFIX + creator}`,
+            creator: `https://store.rerum.io/v1/id/${creator}`,
           }
           canvasItems.items[0].items[0].target = canvasItems.id
           canvasItems = await this.saveCanvasToRerum(canvasItems, project, canvas)

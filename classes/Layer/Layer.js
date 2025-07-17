@@ -113,7 +113,7 @@ export default class Layer {
             id: this.id,
             type: "AnnotationCollection",
             label: { "none": [this.label] },
-            creator: `${process.env.RERUMIDPREFIX + this.creator}`,
+            creator: `https://store.rerum.io/v1/id/${this.creator}`,
             total: this.pages.length,
             first: this.pages.at(0).id,
             last: this.pages.at(-1).id,
