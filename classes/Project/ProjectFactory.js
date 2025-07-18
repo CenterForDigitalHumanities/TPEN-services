@@ -734,13 +734,13 @@ export default class ProjectFactory {
       type: "Manifest",
       label: { none: [project.label] },
       metadata: project.metadata,
-      items: await this.getCanvasItems(project, manifestJson),
+      items: await this.getManifestItems(project, manifestJson),
       creator: await fetchUserAgent(project.creator)
     }
     return manifest
   }
 
-  static async getCanvasItems(project, manifestJson) {
+  static async getManifestItems(project, manifestJson) {
     return Promise.all(
       manifestJson.items.map(async (canvas) => {
         try {
