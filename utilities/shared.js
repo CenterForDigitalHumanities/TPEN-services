@@ -63,7 +63,7 @@ export const getProjectById = async (projectId, res) => {
 
 // Fetch a page by ID
 export const getPageById = async (pageId, projectId, res) => {
-   const page = await findPageById(pageId, projectId)
+   const { page, creator } = await findPageById(pageId, projectId)
    if (!page) {
       respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
       return null
@@ -163,7 +163,7 @@ export async function findPageById(pageId, projectId) {
    page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
    page.next = layerContainingPage.pages[pageIndex + 1] ?? null
 
-   return { pageObject: new Page(layerContainingPage.id, page), creator: projectData.creator }
+   return { page: new Page(layerContainingPage.id, page), creator: projectData.creator }
 }
 
 /**

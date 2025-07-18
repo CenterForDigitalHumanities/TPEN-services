@@ -80,7 +80,7 @@ router.route('/:pageId')
 
     try {
       // Find the page object
-      const pageObject = await findPageById(pageId, projectId)
+      const { pageObject, creator } = await findPageById(pageId, projectId)
       pageObject.creator = user.agent.split('/').pop()
       pageObject.partOf = layerId
       if (pageObject?.prev?.id) {
