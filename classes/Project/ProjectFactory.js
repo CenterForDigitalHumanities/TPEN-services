@@ -746,43 +746,36 @@ export default class ProjectFactory {
       manifestJson.items.map(async (canvas) => {
         try {
           let canvasItems = {
-            id: `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`,
+            id: canvas.id,
             type: canvas.type,
             label: canvas.label,
             width: canvas.width,
             height: canvas.height,
             items: canvas.items,
-            annotations: [],
             creator: await fetchUserAgent(project.creator),
           }
-          canvasItems.items[0].items[0].target = canvasItems.id
-          canvasItems = await this.saveCanvasToRerum(canvasItems, project, canvas)
-          delete canvasItems['@context']
-          canvasItems.annotations = await this.getAnnotations(canvasItems)
+
+          const annotationPages = []
+          await Promise.all(project.layers.map(layer => {
+              return layer.pages.forEach(page => {
+                if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
+                  const annotationPage = {
+                    id: page.id,
+                    type: "AnnotationPage"
+                  }
+                  annotationPages.push(annotationPage)
+                }
+              })
+            })
+          )
+          annotationPages.length > 0 && (canvasItems.annotations = annotationPages)
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
-          return null
+          return 
         }
       })
     )
-  }
-
-  static async saveCanvasToRerum(canvasItems, project, canvas) {
-    canvasItems['@context'] = "http://iiif.io/api/presentation/3/context.json"
-    await Promise.all(project.layers.map(layer => {
-      return layer.pages.forEach(page => {
-        if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
-          const annotationPage = {
-            id: page.id,
-            type: "AnnotationPage"
-          }
-          canvasItems.annotations.push(annotationPage)
-        }
-      })
-    }))
-    await databaseTiny.save(canvasItems)
-    return canvasItems
   }
 
   static async getAnnotations(canvasData) {
