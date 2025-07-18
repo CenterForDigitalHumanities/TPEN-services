@@ -18,7 +18,7 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const pageObject = await findPageById(pageId, projectId)
+      const { pageObject, creator } = await findPageById(pageId, projectId)
       if (!pageObject) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
@@ -46,7 +46,7 @@ router.route('/:pageId')
         ...pageObject?.next?.id && {
           next: pageObject.next.id
         },
-        creator: await fetchUserAgent(pageObject.creator),
+        creator: await fetchUserAgent(creator),
       }
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {

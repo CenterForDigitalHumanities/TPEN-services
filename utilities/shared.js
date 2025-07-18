@@ -163,7 +163,7 @@ export async function findPageById(pageId, projectId) {
    page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
    page.next = layerContainingPage.pages[pageIndex + 1] ?? null
 
-   return new Page(layerContainingPage.id, page)
+   return { pageObject: new Page(layerContainingPage.id, page), creator: projectData.creator }
 }
 
 /**
