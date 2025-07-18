@@ -18,14 +18,14 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const { pageObject, creator } = await findPageById(pageId, projectId)
-      if (!pageObject) {
+      const { page, creator } = await findPageById(pageId, projectId)
+      if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
-      if (pageObject.id?.startsWith(process.env.RERUMIDPREFIX)) {
+      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // If the page is a RERUM document, we need to fetch it from the server
-        const pageFromRerum = await fetch(pageObject.id).then(res => res.json())
+        const pageFromRerum = await fetch(page.id).then(res => res.json())
         if (pageFromRerum) {
           res.status(200).json(pageFromRerum)
           return
@@ -34,17 +34,17 @@ router.route('/:pageId')
       // build as AnnotationPage
       const pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
-        id: pageObject.id,
+        id: page.id,
         type: 'AnnotationPage',
-        label: { none: [pageObject.label] },
-        target: pageObject.target,
-        partOf: pageObject.partOf,
-        items: pageObject.items ?? [],
-        ...pageObject?.prev?.id && {
-          prev: pageObject.prev.id
+        label: { none: [page.label] },
+        target: page.target,
+        partOf: page.partOf,
+        items: page.items ?? [],
+        ...page?.prev?.id && {
+          prev: page.prev.id
         },
-        ...pageObject?.next?.id && {
-          next: pageObject.next.id
+        ...page?.next?.id && {
+          next: page.next.id
         },
         creator: await fetchUserAgent(creator),
       }
@@ -80,37 +80,37 @@ router.route('/:pageId')
 
     try {
       // Find the page object
-      const { pageObject, creator } = await findPageById(pageId, projectId)
-      pageObject.creator = user.agent.split('/').pop()
-      pageObject.partOf = layerId
-      if (pageObject?.prev?.id) {
-        pageObject.prev = pageObject.prev.id
+      const { page, creator } = await findPageById(pageId, projectId)
+      page.creator = user.agent.split('/').pop()
+      page.partOf = layerId
+      if (page?.prev?.id) {
+        page.prev = page.prev.id
       } else {
-        delete pageObject.prev
+        delete page.prev
       }
 
-      if (pageObject?.next?.id) {
-        pageObject.next = pageObject.next.id
+      if (page?.next?.id) {
+        page.next = page.next.id
       } else {
-        delete pageObject.next
+        delete page.next
       }
-      if (!pageObject) {
+      if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
       // Only update top-level properties that are present in the request
       Object.keys(update ?? {}).forEach(key => {
-        pageObject[key] = update[key]
+        page[key] = update[key]
       })
-      Object.keys(pageObject).forEach(key => {
-        if (pageObject[key] === undefined || pageObject[key] === null) {
+      Object.keys(page).forEach(key => {
+        if (page[key] === undefined || page[key] === null) {
           // Remove properties that are undefined or null
-          delete pageObject[key]
+          delete page[key]
         }
       })
 
       if (update.items) {
-        pageObject.items = await Promise.all(pageObject.items.map(async item => {
+        page.items = await Promise.all(page.items.map(async item => {
           const line = item.id?.startsWith?.('http')
             ? new Line(item)
             : Line.build(projectId, pageId, item, user.agent.split('/').pop())
@@ -118,10 +118,10 @@ router.route('/:pageId')
         }))
       }
 
-      await updatePageAndProject(pageObject, project, user._id)
+      await updatePageAndProject(page, project, user._id)
 
-      res.status(200).json(pageObject)
-    } catch (error) {      
+      res.status(200).json(page)
+    } catch (error) {
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
         if(res.headersSent) return
