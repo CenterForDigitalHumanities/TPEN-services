@@ -45,7 +45,8 @@ router.route('/:pageId')
         },
         ...pageObject?.next?.id && {
           next: pageObject.next.id
-        }
+        },
+        creator: await fetchUserAgent(pageObject.creator),
       }
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
