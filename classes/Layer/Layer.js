@@ -1,8 +1,8 @@
 import dbDriver from "../../database/driver.js"
 import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
-const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
 
 export default class Layer {
@@ -18,7 +18,7 @@ export default class Layer {
      * @param {Array} pages The pages in the layer by reference.
      * @seeAlso {@link Layer.build}
      */
-    constructor(projectId, { id, label, pages }) {
+    constructor(projectId, { id, label, pages, creator = null }) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Layer instance.")
         }
@@ -28,6 +28,7 @@ export default class Layer {
         this.projectId = projectId
         this.id = id
         this.label = label
+        this.creator = creator
         this.pages = pages
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
@@ -36,7 +37,7 @@ export default class Layer {
     }
 
     // Static Methods
-    static build(projectId, label, canvases, projectLabel = "Default") {
+    static build(projectId, label, canvases, creator, projectLabel = "Default") {
         if (!Array.isArray(canvases)) {
             if (!canvases) {
                 throw new Error("At least one Canvas must be included.")
@@ -47,14 +48,17 @@ export default class Layer {
         const thisLayer = {
             projectId,
             label: label ?? `${projectLabel} - Layer ${Date.now()}`,
+            creator,
             id: `${process.env.SERVERURL}project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
         }
         const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c).asProjectPage())
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
             if (index < pages.length - 1) page.next = pages[index + 1].id
+            page.partOf = thisLayer.id
+            page.creator = thisLayer.creator
         })
-        return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages })
+        return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages, creator: thisLayer.creator })
     }
 
     // Public Methods
@@ -109,9 +113,16 @@ export default class Layer {
             id: this.id,
             type: "AnnotationCollection",
             label: { "none": [this.label] },
+            creator: await fetchUserAgent(this.creator),
             total: this.pages.length,
             first: this.pages.at(0).id,
-            last: this.pages.at(-1).id
+            last: this.pages.at(-1).id,
+            items: this.pages.map(page => ({
+                id: page.id,
+                type: "AnnotationPage",
+                label: { "none": [page.label] },
+                target: page.target
+            }))
         }
 
         if (this.#tinyAction === 'create') {

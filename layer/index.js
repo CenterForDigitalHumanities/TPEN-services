@@ -6,6 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
+import { fetchUserAgent } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -17,13 +18,14 @@ router.route('/:layerId')
         const { projectId, layerId } = req.params
 
         try {
-            const layer = await findLayerById(layerId, projectId)
+            const { layer, creator } = await findLayerById(layerId, projectId)
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
                 id: layer.id,
                 type: 'AnnotationCollection',
                 label: { none: [layer.label] },
+                creator: await fetchUserAgent(creator),
                 total: layer.pages.length,
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id
@@ -57,8 +59,8 @@ router.route('/:layerId')
             label ??= label ?? layer.label
             if(canvases?.length === 0) canvases = undefined
             const updatedLayer = canvases ?
-                Layer.build(projectId, label, canvases)
-                : new Layer(projectId, {id:layer.id, label, pages:layer.pages})
+                Layer.build(projectId, label, canvases, req.agent.split('/').pop())
+                : new Layer(projectId, {id:layer.id, label, pages:layer.pages, creator: req.agent.split('/').pop()})
 
             await updatedLayer.update()
             project.updateLayer(updatedLayer.asProjectLayer(), layerId)
@@ -129,5 +131,5 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         throw error
     }
     
-    return layer
+    return { layer, creator: p.creator }
 }

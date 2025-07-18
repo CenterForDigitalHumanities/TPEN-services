@@ -48,7 +48,28 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     try {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
-        user._id,
+        user.agent.split('/').pop(),
+      )
+      res.status(201).json(result)
+    } catch (error) {
+      res.status(error.status ?? 500).json({
+        status: error.status ?? 500,
+        message: error.message,
+        data: error.resolvedPayload
+      })
+    }
+  } else if (createFrom === "tpen28url") {
+    const manifestURL = req?.body?.url
+    let checkURL = await validateURL(manifestURL)
+    if (!checkURL.valid)
+      return res.status(checkURL.status).json({
+        message: checkURL.message,
+        resolvedPayload: checkURL.resolvedPayload
+      })
+    try {
+      const result = await ProjectFactory.fromManifestURL(
+        manifestURL,
+        user.agent.split('/').pop(),
         true
       )
       res.status(201).json(result)
@@ -76,7 +97,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
     if (!imageUrl || !projectLabel) {
       return respondWithError(res, 400, "Image URL and project label are required")
     }
-    const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user._id)
+    const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user.agent.split('/').pop())
     res.status(201).json(project)
   } catch (error) {
     respondWithError(

@@ -5,7 +5,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, fetchUserAgent } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -18,14 +18,14 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const pageObject = await findPageById(pageId, projectId)
-      if (!pageObject) {
+      const { page, creator } = await findPageById(pageId, projectId)
+      if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
-      if (pageObject.id?.startsWith(process.env.RERUMIDPREFIX)) {
+      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // If the page is a RERUM document, we need to fetch it from the server
-        const pageFromRerum = await fetch(pageObject.id).then(res => res.json())
+        const pageFromRerum = await fetch(page.id).then(res => res.json())
         if (pageFromRerum) {
           res.status(200).json(pageFromRerum)
           return
@@ -34,14 +34,19 @@ router.route('/:pageId')
       // build as AnnotationPage
       const pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
-        id: pageObject.id,
+        id: page.id,
         type: 'AnnotationPage',
-        label: { none: [pageObject.label] },
-        target: pageObject.target,
-        partOf: pageObject.partOf,
-        items: pageObject.items ?? [],
-        prev: pageObject.prev ?? null,
-        next: pageObject.next ?? null
+        label: { none: [page.label] },
+        target: page.target,
+        partOf: page.partOf,
+        items: page.items ?? [],
+        ...page?.prev?.id && {
+          prev: page.prev.id
+        },
+        ...page?.next?.id && {
+          next: page.next.id
+        },
+        creator: await fetchUserAgent(creator),
       }
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
@@ -75,35 +80,48 @@ router.route('/:pageId')
 
     try {
       // Find the page object
-      const pageObject = await findPageById(pageId, projectId)
-      if (!pageObject) {
+      const { page, creator } = await findPageById(pageId, projectId)
+      page.creator = user.agent.split('/').pop()
+      page.partOf = layerId
+      if (page?.prev?.id) {
+        page.prev = page.prev.id
+      } else {
+        delete page.prev
+      }
+
+      if (page?.next?.id) {
+        page.next = page.next.id
+      } else {
+        delete page.next
+      }
+      if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
       // Only update top-level properties that are present in the request
       Object.keys(update ?? {}).forEach(key => {
-        pageObject[key] = update[key]
+        page[key] = update[key]
       })
-      Object.keys(pageObject).forEach(key => {
-        if (pageObject[key] === undefined || pageObject[key] === null) {
+      Object.keys(page).forEach(key => {
+        if (page[key] === undefined || page[key] === null) {
           // Remove properties that are undefined or null
-          delete pageObject[key]
+          delete page[key]
         }
       })
 
       if (update.items) {
-        pageObject.items = await Promise.all(pageObject.items.map(async item => {
+        page.items = await Promise.all(page.items.map(async item => {
           const line = item.id?.startsWith?.('http')
             ? new Line(item)
-            : Line.build(projectId, pageId, item)
+            : Line.build(projectId, pageId, item, user.agent.split('/').pop())
           return await line.update()
         }))
       }
 
-      await updatePageAndProject(pageObject, project, user._id)
+      await updatePageAndProject(page, project, user._id)
 
-      res.status(200).json(pageObject)
-    } catch (error) {      
+      res.status(200).json(page)
+    } catch (error) {
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
         if(res.headersSent) return

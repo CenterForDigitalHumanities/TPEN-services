@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 export default class Line {
@@ -11,12 +12,13 @@ export default class Line {
         return this
     }
 
-    constructor({ id, target, body, motivation, label, type }) {
+    constructor({ id, target, body, motivation, label, type, creator = null }) {
         if (!id || !target) 
             throw new Error('Line data is malformed.')
         this.id = id // Ensure the id is assigned
         this.body = body
         this.target = target
+        this.creator = creator
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -26,10 +28,10 @@ export default class Line {
         return this
     }
 
-    static build(projectId, pageId, { body, target, motivation, label, type }) {
+    static build(projectId, pageId, { body, target, motivation, label, type }, creator) {
         // TODO: Should this have a space for an id that is sent in?
         const id = `${process.env.SERVERURL}project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
-        return new Line({ id, body, target, motivation, label, type })
+        return new Line({ id, body, target, motivation, label, type, creator })
     }
 
     async #saveLineToRerum() {
@@ -39,6 +41,7 @@ export default class Line {
             type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
+            creator: await fetchUserAgent(this.creator.split('/').pop()),
             body: this.body
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }

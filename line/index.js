@@ -61,7 +61,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     let newLine
     // This feels like a use case for /bulkCreate in RERUM.  Make all these lines with one call.
     for (const lineData of inputLines) {
-      newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
+      newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData }, user.agent.split('/').pop())
 
       const existingLine = findLineInPage(page, newLine.id, res)
       if (existingLine) {
@@ -98,7 +98,7 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     const project = await getProjectById(req.params.projectId)
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -150,7 +150,7 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       return
     }
     const project = await getProjectById(req.params.projectId)
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -201,7 +201,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       return
     }
     const project = await getProjectById(req.params.projectId)
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.line}' not found in page '${req.params.pageId}'`)

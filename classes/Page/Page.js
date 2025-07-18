@@ -1,5 +1,6 @@
 import dbDriver from "../../database/driver.js"
 import { handleVersionConflict } from "../../utilities/shared.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -22,18 +23,18 @@ export default class Page {
      * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, items = [] }) {
+    constructor(layerId, { id, label, target, items = [], creator = null, partOf = null, prev = null, next = null }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId, items })
+        Object.assign(this, { id, label, target, partOf: partOf ?? layerId, items, creator, prev, next })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, prev, next, items = []) {
+    static build(projectId, layerId, canvas, creator, partOf, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -58,7 +59,8 @@ export default class Page {
                 type: "AnnotationPage",
                 label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
-                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                creator: creator,
+                partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
                 items,
                 prev,
                 next
@@ -74,11 +76,16 @@ export default class Page {
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
-            target: this.target,
-            partOf: this.partOf,
             items: this.items ?? [],
-            prev: this.prev ?? null,
-            next: this.next ?? null
+            ...this?.prev && {
+              prev: this.prev
+            },
+            ...this?.next && {
+              next: this.next
+            },
+            creator: await fetchUserAgent(this.creator),
+            target: this.target,
+            partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(pageAsAnnotationPage)
