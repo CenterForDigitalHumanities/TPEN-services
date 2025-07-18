@@ -12,7 +12,6 @@ import Hotkeys from "../HotKeys/Hotkeys.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
 
 const database = new dbDriver("mongo")
-const databaseTiny = new dbDriver("tiny")
 
 export default class ProjectFactory {
   constructor(data) {
