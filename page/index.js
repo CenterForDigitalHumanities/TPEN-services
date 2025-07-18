@@ -5,7 +5,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, fetchUserAgent } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
