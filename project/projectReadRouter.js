@@ -35,6 +35,24 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
   respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
+router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) => {
+  const { id } = req.params
+  if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
+  if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
+  try {
+    const status = await ProjectFactory.checkManifestUploadAndDeployment(id)
+    res.status(200).json(status)
+  } catch (error) {
+    return respondWithError(
+      res,
+      error.status || error.code || 500,
+      error.message ?? "An error occurred while checking the deployment status."
+    )
+  }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use GET instead")
+})
+
 router.route("/:id").get(auth0Middleware(), async (req, res) => {
   const user = req.user
   let id = req.params.id

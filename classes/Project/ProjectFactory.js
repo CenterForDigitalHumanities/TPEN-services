@@ -767,7 +767,7 @@ export default class ProjectFactory {
               })
             })
           )
-          annotationPages.length > 0 && (canvasItems.annotations = annotationPages)
+          annotationPages.length > 0 && (canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages }))
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
@@ -899,6 +899,87 @@ export default class ProjectFactory {
     } catch (error) {
       console.error(`Failed to upload ${projectId}/${fileName}:`, error)
     }
+  }
+
+  static async checkManifestUploadAndDeployment(projectId) {
+    const filePath = `${projectId}/manifest.json`
+    const url = `${process.env.TPENSTATIC}/${projectId}/manifest.json`
+    const token = process.env.GITHUB_TOKEN
+    const headers = {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+    }
+
+    const commitsUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/commits?path=${filePath}&per_page=1`
+    const commitsRes = await fetch(commitsUrl, { headers })
+    const commits = await commitsRes.json()
+    if (!commits.length) {
+        return {status: true, message: 'No manifest found'}
+    }
+    const commitMessage = commits[0].commit?.message.split(' ')
+
+    if (commitMessage[0] === 'Delete') {
+        return {status: true, message: 'No manifest found'}
+    }
+
+    const latestSha = commits[0].sha
+    const deployments = await this.getAllDeployments(token)
+    const deployment = deployments.find(dep => dep.sha === latestSha)
+    
+    if (!deployment) {
+      if (await this.checkUrlExists(url)){
+        if(new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
+          return {status: true, message: 'Manifest found, Recently Committed'}
+        }
+        else {
+          return {status: true, message: 'Manifest found but no deployment'}
+        }
+      }
+      return {status: false, message: 'No deployment found'}
+    }
+
+    const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment.id}/statuses`
+    const statusRes = await fetch(statusUrl, { headers })
+    const statuses = await statusRes.json()
+
+    if (!statuses.length) {
+        return {status: false, message: 'No deployment status found'}
+    }
+
+    const latestStatus = statuses[0]
+    const state = latestStatus.state
+
+    if (state === 'success') {
+        return {status: true, message: 'Deployment successful'}
+    } else if (['queued', 'in_progress', 'pending'].includes(state)) {
+        return {status: false, message: 'Deployment in progress'}
+    } else if (state === 'inactive') {
+        return {status: true, message: 'Deployment inactive'}
+    } else {
+        return {status: false, message: 'Unknown deployment status'}
+    }
+  }
+
+  static async checkUrlExists(url) {
+    try {
+      const response = await fetch(url, { method: 'HEAD' })
+      return response.ok
+    } catch (error) {
+      return false
+    }
+  }
+
+  static async getAllDeployments(token) {
+    let page = 1, all = [], done = false
+    const headers = { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    while (!done) {
+      const res = await fetch(`https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments?per_page=100&page=${page}`, { headers })
+      const data = await res.json()
+      all.push(...data)
+      done = data.length < 100
+      page++
+    }
+    return all
   }
 
   static async loadAsUser(project_id, user_id) {
