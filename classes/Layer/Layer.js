@@ -74,8 +74,6 @@ export default class Layer {
     }
 
     async update(saveFirst=false) {
-        console.log("update().  Save first? "+saveFirst)
-        console.log("tiny action? "+this.#tinyAction)
         if (saveFirst) {
             console.log("Have to save collection to rerum because it is temp.")
             this.#setRerumId()
