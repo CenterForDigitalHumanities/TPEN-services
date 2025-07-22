@@ -44,17 +44,17 @@ router.route('/:layerId')
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
         try {
             const project = new Project(projectId)
-            if (!project?._id) return utils.respondWithError(res, 404, 'Project does not exist')
+            if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
             const layer = await findLayerById(layerId, projectId, true)
-            if (!layer?.id) return utils.respondWithError(res, 404, 'Layer not found in project')
+            if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
             label ??= label ?? layer.label
             if (providedPages?.length === 0) providedPages = undefined
             let pages = []
             if (providedPages && providedPages.length) {
                 for await (const p of providedPages) {
-                    pages.push(await findPageById(p.split("/").pop(), projectId))
+                    const resolvedPage = await findPageById(p.split("/").pop(), projectId)
+                    pages.push(resolvedPage.page)
                 }
-                pages = pages.map(p => p.page)
             }
             else{
                 pages = layer.pages
