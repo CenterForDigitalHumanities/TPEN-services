@@ -313,10 +313,9 @@ export default class Project {
     return project
   }
 
-  updateLayer(layer, previousId) {
-    if (!this.data?.layers) {
-      throw new Error("Project does not have layers.")
-    }
+  async updateLayer(layer, previousId) {
+    if (!this.data?.layers) await this.#load()
+    if (!this.data?.layers) throw new Error("Project does not have layers.")
     previousId ??= layer.id
     const layerIndex = this.data.layers.findIndex(l => l.id.split('/').pop() === previousId.split('/').pop())
     if (layerIndex < 0) {
@@ -349,6 +348,8 @@ export default class Project {
 }
 
 function isValidLayer(layer) {
+  console.log("IS THIS LAYER VALID")
+  console.log(layer)
   if (typeof layer?.label !== 'string' || !layer?.id?.startsWith('http') || !Array.isArray(layer?.pages)) {
     return false
   }

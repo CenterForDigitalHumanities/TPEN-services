@@ -6,7 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { fetchUserAgent } from '../utilities/shared.js'
+import { fetchUserAgent, findPageById } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -16,9 +16,8 @@ router.use(cors(common_cors))
 router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
-
         try {
-            const { layer, creator } = await findLayerById(layerId, projectId)
+            const layer = await findLayerById(layerId, projectId)
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -39,31 +38,34 @@ router.route('/:layerId')
     })
     .put(auth0Middleware(), async (req, res) => {
         const { projectId, layerId } = req.params
-        let { label, canvases } = req.body
-
+        let label = req.body?.label
+        const providedPages = req.body?.pages
+        const user = req.user
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
 
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
 
-
         try {
             const project = new Project(projectId)
-            const layers = await project.loadProject()
-
-            if (!layers) return utils.respondWithError(res, 404, 'Project does not exist')
-
+            if (!project?._id) return utils.respondWithError(res, 404, 'Project does not exist')
             const layer = await findLayerById(layerId, projectId, true)
-
-            if (!layer) return utils.respondWithError(res, 404, 'Layer not found in project')
-
+            if (!layer?.id) return utils.respondWithError(res, 404, 'Layer not found in project')
             label ??= label ?? layer.label
-            if(canvases?.length === 0) canvases = undefined
-            const updatedLayer = canvases ?
-                Layer.build(projectId, label, canvases, req.agent.split('/').pop())
-                : new Layer(projectId, {id:layer.id, label, pages:layer.pages, creator: req.agent.split('/').pop()})
-
-            await updatedLayer.update()
-            project.updateLayer(updatedLayer.asProjectLayer(), layerId)
+            if(providedPages?.length === 0) providedPages = undefined
+            let pages = []
+            if(providedPages && providedPages.length) {
+                for await (const p of providedPages) {
+                    pages.push(await findPageById(p.split("/").pop(), projectId))
+                }
+                pages = pages.map(p => p.page)
+            }
+            else{
+                pages = layer.pages
+            }
+            const updatedLayer = new Layer(projectId, {id:layer.id, label, pages, creator: user.agent.split('/').pop()})
+            const saveFirst = (providedPages !== undefined && !layer.id.startsWith(process.env.RERUMIDPREFIX))
+            await updatedLayer.update(saveFirst)
+            await project.updateLayer(updatedLayer, layerId)
             await project.update()
 
             res.status(200).json(project.data)
@@ -107,6 +109,7 @@ router.use('/:layerId/page', pageRouter)
 export default router
 
 async function findLayerById(layerId, projectId, skipLookup = false) {
+    //
     if (!skipLookup && layerId.startsWith(process.env.RERUMIDPREFIX)) {
         return fetch(layerId).then(res => res.json())
     }
@@ -130,6 +133,6 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         error.status = 422
         throw error
     }
-    
-    return { layer, creator: p.creator }
+    layer.creator = p.creator
+    return layer
 }
