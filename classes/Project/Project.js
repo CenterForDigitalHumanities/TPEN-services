@@ -131,8 +131,8 @@ export default class Project {
     if (typeof label !== "string" || label.trim() === "") {
       throw new Error("Label must be a non-empty string")
     }
-    if(!this?.data?.label) await this.#load()
-    if(this.data.label.trim() === label.trim()) return this.data
+    if (!this?.data?.label) await this.#load()
+    if (this.data.label.trim() === label.trim()) return this.data
     this.data.label = label.trim()
     return await this.update()
   }
@@ -207,7 +207,7 @@ export default class Project {
       // Don't leave orphaned invitees in the db.
       const member = new User(userId)
       const memberData = await member.getSelf()
-      if(memberData?.inviteCode) member.delete()
+      if (memberData?.inviteCode) member.delete()
       return this
     } catch (error) {
       throw {
@@ -234,9 +234,9 @@ export default class Project {
   async updateTools(selectedValues) {
     // Guard invalid input
     if (!Array.isArray(selectedValues)) return
-    if(!this?.data?.tools) await this.#load()
+    if (!this?.data?.tools) await this.#load()
     // Guard existing data in corrupted state
-    if(!this.data?.tools) this.data.tools = []
+    if (!this.data?.tools) this.data.tools = []
     
     this.data.tools = this.data.tools.map(tool => {
       const match = selectedValues.find(t => {
@@ -256,9 +256,9 @@ export default class Project {
 
     // Guard invalid input
     if (!Array.isArray(tools)) return
-    if(!this?.data?.tools) await this.#load()
+    if (!this?.data?.tools) await this.#load()
     // Guard existing data in corrupted state
-    if(!this.data?.tools) this.data.tools = []
+    if (!this.data?.tools) this.data.tools = []
 
     for (let newTool of tools) {
       const name = newTool.name.trim()
@@ -353,7 +353,7 @@ function isValidLayer(layer) {
   }
 
   for (const page of layer.pages) {
-    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http') || !page.label ) {
+    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http') || !page.label) {
       return false
     }
   }
