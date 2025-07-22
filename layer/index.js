@@ -63,7 +63,11 @@ router.route('/:layerId')
                 pages = layer.pages
             }
             const updatedLayer = new Layer(projectId, {id:layer.id, label, pages, creator: user.agent.split('/').pop()})
+            console.log("save first?")
+            console.log(providedPages)
+            console.log(layer.id)
             const saveFirst = (providedPages !== undefined && !layer.id.startsWith(process.env.RERUMIDPREFIX))
+            console.log(saveFirst)
             await updatedLayer.update(saveFirst)
             await project.updateLayer(updatedLayer, layerId)
             await project.update()

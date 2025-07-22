@@ -348,8 +348,6 @@ export default class Project {
 }
 
 function isValidLayer(layer) {
-  console.log("IS THIS LAYER VALID")
-  console.log(layer)
   if (typeof layer?.label !== 'string' || !layer?.id?.startsWith('http') || !Array.isArray(layer?.pages)) {
     return false
   }
