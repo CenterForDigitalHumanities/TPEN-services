@@ -75,7 +75,6 @@ export default class Layer {
 
     async update(saveFirst=false) {
         if (saveFirst) {
-            console.log("Have to save collection to rerum because it is temp.")
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
