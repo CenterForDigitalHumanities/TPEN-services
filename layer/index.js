@@ -51,10 +51,8 @@ router.route('/:layerId')
             if (providedPages?.length === 0) providedPages = undefined
             let pages = []
             if (providedPages && providedPages.length) {
-                for await (const p of providedPages) {
-                    const resolvedPage = await findPageById(p.split("/").pop(), projectId)
-                    pages.push(resolvedPage.page)
-                }
+                const resolvedPages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop()+"aaa", projectId) ))
+                pages = resolvedPages.map(p => p.page)
             }
             else{
                 pages = layer.pages
