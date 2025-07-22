@@ -10,6 +10,7 @@ import imageSize from 'image-size'
 import mime from 'mime-types'
 import Hotkeys from "../HotKeys/Hotkeys.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
+import { checkIfUrlExists } from "../../utilities/checkIfUrlExists.js"
 
 const database = new dbDriver("mongo")
 
@@ -901,6 +902,17 @@ export default class ProjectFactory {
     }
   }
 
+  /**
+    * Checks if the IIIF manifest has been exported and deployed to github for a specific project.
+    * 
+    * @param {string} projectId - The ID of the project to check.
+    * @returns {Object} - Returns an object with status and message indicating the deployment status.
+    * 
+    * This method checks if the manifest.json file for a given project ID exists in the GitHub repository,
+    * and if it has been successfully deployed. It retrieves the latest commit for the manifest file,
+    * checks if it has been deployed, and returns the status of the deployment.
+    */
+
   static async checkManifestUploadAndDeployment(projectId) {
     const filePath = `${projectId}/manifest.json`
     const url = `${process.env.TPENSTATIC}/${projectId}/manifest.json`
@@ -927,7 +939,7 @@ export default class ProjectFactory {
     const deployment = deployments.find(dep => dep.sha === latestSha)
     
     if (!deployment) {
-      if (await this.checkUrlExists(url)){
+      if (await checkIfUrlExists(url)){
         if(new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
           return {status: true, message: 'Manifest found, Recently Committed'}
         }
@@ -960,14 +972,15 @@ export default class ProjectFactory {
     }
   }
 
-  static async checkUrlExists(url) {
-    try {
-      const response = await fetch(url, { method: 'HEAD' })
-      return response.ok
-    } catch (error) {
-      return false
-    }
-  }
+  /**
+   * Fetches all deployments for the repository.
+   * 
+   * @param {string} token - GitHub API token for authentication.
+   * @returns {Array} - Returns an array of deployment objects.
+   * 
+   * This method retrieves all deployments for the repository by making paginated requests to the GitHub API.
+   * It continues fetching until all pages are retrieved, collecting the deployments in an array.
+   */
 
   static async getAllDeployments(token) {
     let page = 1, all = [], done = false
