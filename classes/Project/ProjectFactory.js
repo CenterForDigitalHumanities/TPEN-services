@@ -911,6 +911,14 @@ export default class ProjectFactory {
     * This method checks if the manifest.json file for a given project ID exists in the GitHub repository,
     * and if it has been successfully deployed. It retrieves the latest commit for the manifest file,
     * checks if it has been deployed, and returns the status of the deployment.
+    * status: 1 is No manifest found
+    * status: 2 is Manifest found, Recently Committed
+    * status: 3 is Manifest found but no deployment
+    * status: 4 is Deployment successful
+    * status: 5 is Deployment in progress
+    * status: 6 is Deployment inactive
+    * status: 7 is Unknown deployment status
+    * status: 8 is No deployment found
     */
 
   static async checkManifestUploadAndDeployment(projectId) {
@@ -926,28 +934,29 @@ export default class ProjectFactory {
     const commitsRes = await fetch(commitsUrl, { headers })
     const commits = await commitsRes.json()
     if (!commits.length) {
-        return {status: true, message: 'No manifest found'}
+        return {status: 1}
     }
     const commitMessage = commits[0].commit?.message.split(' ')
 
     if (commitMessage[0] === 'Delete') {
-        return {status: true, message: 'No manifest found'}
+        return {status: 1}
     }
 
     const latestSha = commits[0].sha
-    const deployments = await this.getAllDeployments(token)
-    const deployment = deployments.find(dep => dep.sha === latestSha)
-    
+    const deployments = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments?sha=${latestSha}`
+    const deploymentRes = await fetch(deployments, { headers })
+    const deployment = await deploymentRes.json()
+
     if (!deployment) {
       if (await checkIfUrlExists(url)){
         if(new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
-          return {status: true, message: 'Manifest found, Recently Committed'}
+          return {status: 2}
         }
         else {
-          return {status: true, message: 'Manifest found but no deployment'}
+          return {status: 3}
         }
       }
-      return {status: false, message: 'No deployment found'}
+      return {status: 8}
     }
 
     const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment.id}/statuses`
@@ -955,44 +964,21 @@ export default class ProjectFactory {
     const statuses = await statusRes.json()
 
     if (!statuses.length) {
-        return {status: false, message: 'No deployment status found'}
+        return {status: 7}
     }
 
     const latestStatus = statuses[0]
     const state = latestStatus.state
 
     if (state === 'success') {
-        return {status: true, message: 'Deployment successful'}
+        return {status: 4}
     } else if (['queued', 'in_progress', 'pending'].includes(state)) {
-        return {status: false, message: 'Deployment in progress'}
+        return {status: 5}
     } else if (state === 'inactive') {
-        return {status: true, message: 'Deployment inactive'}
+        return {status: 6}
     } else {
-        return {status: false, message: 'Unknown deployment status'}
+        return {status: 7}
     }
-  }
-
-  /**
-   * Fetches all deployments for the repository.
-   * 
-   * @param {string} token - GitHub API token for authentication.
-   * @returns {Array} - Returns an array of deployment objects.
-   * 
-   * This method retrieves all deployments for the repository by making paginated requests to the GitHub API.
-   * It continues fetching until all pages are retrieved, collecting the deployments in an array.
-   */
-
-  static async getAllDeployments(token) {
-    let page = 1, all = [], done = false
-    const headers = { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-    while (!done) {
-      const res = await fetch(`https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments?per_page=100&page=${page}`, { headers })
-      const data = await res.json()
-      all.push(...data)
-      done = data.length < 100
-      page++
-    }
-    return all
   }
 
   static async loadAsUser(project_id, user_id) {
