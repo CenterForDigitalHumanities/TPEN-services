@@ -947,7 +947,7 @@ export default class ProjectFactory {
     const deploymentRes = await fetch(deployments, { headers })
     const deployment = await deploymentRes.json()
 
-    if (!deployment) {
+    if (deployment.length === 0) {
       if (await checkIfUrlExists(url)){
         if(new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
           return {status: 2}
@@ -959,7 +959,7 @@ export default class ProjectFactory {
       return {status: 8}
     }
 
-    const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment.id}/statuses`
+    const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment[0].id}/statuses`
     const statusRes = await fetch(statusUrl, { headers })
     const statuses = await statusRes.json()
 
