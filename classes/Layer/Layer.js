@@ -73,8 +73,8 @@ export default class Layer {
         return true
     }
 
-    async update(saveFirst=false) {
-        if (saveFirst) {
+    async update() {
+        if (this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
