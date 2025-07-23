@@ -6,7 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { fetchUserAgent, findPageById } from '../utilities/shared.js'
+import { fetchUserAgent } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -16,8 +16,9 @@ router.use(cors(common_cors))
 router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
+
         try {
-            const layer = await findLayerById(layerId, projectId)
+            const { layer, creator } = await findLayerById(layerId, projectId)
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -29,6 +30,7 @@ router.route('/:layerId')
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id
             }
+
             return res.status(200).json(layerAsCollection)
         } catch (error) {
             console.error(error)
@@ -37,34 +39,35 @@ router.route('/:layerId')
     })
     .put(auth0Middleware(), async (req, res) => {
         const { projectId, layerId } = req.params
-        let label = req.body?.label
-        const providedPages = req.body?.pages
-        const user = req.user
+        let { label, canvases } = req.body
+
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
+
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
+
+
         try {
             const project = new Project(projectId)
-            if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
+            const layers = await project.loadProject()
+
+            if (!layers) return utils.respondWithError(res, 404, 'Project does not exist')
+
             const layer = await findLayerById(layerId, projectId, true)
-            if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
+
+            if (!layer) return utils.respondWithError(res, 404, 'Layer not found in project')
+
             label ??= label ?? layer.label
-            if (providedPages?.length === 0) providedPages = undefined
-            let pages = []
-            if (providedPages && providedPages.length) {
-                const resolvedPages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
-                pages = resolvedPages.map(p => p.page)
-            }
-            else{
-                pages = layer.pages
-            }
-            const updatedLayer = new Layer(projectId, {id:layer.id, label, pages, creator: user.agent.split('/').pop()})
-            const saveFirst = (providedPages !== undefined && !layer.id.startsWith(process.env.RERUMIDPREFIX))
-            await updatedLayer.update(saveFirst)
-            await project.updateLayer(updatedLayer, layerId)
+            if(canvases?.length === 0) canvases = undefined
+            const updatedLayer = canvases ?
+                Layer.build(projectId, label, canvases, req.agent.split('/').pop())
+                : new Layer(projectId, {id:layer.id, label, pages:layer.pages, creator: req.agent.split('/').pop()})
+
+            await updatedLayer.update()
+            project.updateLayer(updatedLayer.asProjectLayer(), layerId)
             await project.update()
+
             res.status(200).json(project.data)
         } catch (error) {
-            console.error(error)
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
         }
     })
@@ -76,19 +79,24 @@ router.route('/:layerId')
 router.route('/').post(auth0Middleware(), async (req, res) => {
     const { projectId } = req.params
     const { label, canvases } = req.body
+
     if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
+
     if (!label || !Array.isArray(canvases) || canvases.length === 0) {
         return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
     }
+
     try {
         const project = await Project.getById(projectId)
+
         if (!project) return utils.respondWithError(res, 404, 'Project does not exist')
+
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()
+
         res.status(201).json(project.data)
     } catch (error) {
-        console.error(error)
         return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error creating layer')
     }
 })
@@ -122,6 +130,6 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         error.status = 422
         throw error
     }
-    layer.creator = p.creator
-    return layer
+    
+    return { layer, creator: p.creator }
 }
