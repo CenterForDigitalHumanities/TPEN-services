@@ -30,6 +30,7 @@ export default class Layer {
         this.label = label
         this.creator = creator
         this.pages = pages
+        // this.pages = pages.map(p => p.asProjectPage())
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -73,8 +74,8 @@ export default class Layer {
         return true
     }
 
-    async update(saveFirst=false) {
-        if (saveFirst) {
+    async update(rerum = false) {
+        if (rerum || this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
@@ -95,16 +96,16 @@ export default class Layer {
 
     #updateCollectionForProject() {
         return {
-            label: this.label,
             id: this.id,
+            label: this.label,
             pages: this.pages.map(this.#getPageReference)
         }
     }
 
-    #getPageReference({ id, label, target }) {
+    #getPageReference({ id, label, target, items }) {
         label ??= id.split("/").pop()
         const resolvedLabel = label.none?.join(", ") ?? label.en?.join(", ") ?? label
-        return { id, label: resolvedLabel, target }
+        return { id, label: resolvedLabel, target , items }
     }
 
     async #saveCollectionToRerum() {

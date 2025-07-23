@@ -63,8 +63,8 @@ export const getProjectById = async (projectId, res) => {
 
 // Fetch a page by ID
 export const getPageById = async (pageId, projectId, res) => {
-   const { page, creator } = await findPageById(pageId, projectId)
-   if (!page) {
+   const page = await findPageById(pageId, projectId)
+   if (!page?.id) {
       respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
       return null
    }
@@ -80,8 +80,44 @@ export const findLineInPage = (page, lineId) => {
    return line
 }
 
+export const rebuildPageOrder = async (pages) => {
+   if (!pages || !Array.isArray(pages)) new Error(`Cannot rebuild page order without an array of pages`)
+   for await (const [index, page] of pages.entries()) {
+      const thisPageNext = index < pages.length - 1 ? pages[index + 1].id : null
+      const thisPagePrev = index > 0 ? pages[index - 1].id : null
+      const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
+      if (page?.next !== thisPageNext) page.next = thisPageNext
+      if (page?.prev !== thisPagePrev) page.prev = thisPagePrev
+      const rerumToo = page.id.startsWith(process.env.RERUMIDPREFIX) && pageChanged
+      await page.update(rerumToo)
+   }
+}
+
+
+// Update a Layer, its Pages, and the Project is belongs to.
+export const updateLayerAndProject = async (layer, originalPages, project, userId) => {
+   // If the Pages are in a different order then we have to update the Pages' prev and next
+   let pagesChanged = false
+   const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
+   const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
+   if(providedPageOrder !== originalPageOrder) {
+      // The Pages need updated so that they have the correct prev and next
+      pagesChanged = true
+      await rebuildPageOrder(layer.pages)
+   }
+   const rerumToo = (pagesChanged && !layer.id.startsWith(process.env.RERUMIDPREFIX))
+   if (!layer.creator) layer.creator = userId
+   await layer.update(rerumToo)
+   let updatedLayer = layer.asProjectLayer()
+   await project.updateLayer(updatedLayer)
+   const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
+   project.data.layers[layerIndex] = updatedLayer
+   await project.update()
+}
+
 // Update a page and its project
 export const updatePageAndProject = async (page, project, userId) => {
+   if (!page.creator) page.creator = userId
    await page.update()
    const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
@@ -163,7 +199,7 @@ export async function findPageById(pageId, projectId) {
    page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
    page.next = layerContainingPage.pages[pageIndex + 1] ?? null
 
-   return { page: new Page(layerContainingPage.id, page), creator: projectData.creator }
+   return new Page(layerContainingPage.id, page)
 }
 
 /**
@@ -230,7 +266,7 @@ export const fetchUserAgent = async (userId) => {
    }
    try {
       let user = new User(userId)
-      user =await user.getSelf()
+      user = await user.getSelf()
       if (!user) {
          throw new Error(`User with ID '${userId}' not found`)
       }

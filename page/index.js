@@ -18,7 +18,7 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const { page, creator } = await findPageById(pageId, projectId)
+      const page = await findPageById(pageId, projectId)
       if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
@@ -80,7 +80,7 @@ router.route('/:pageId')
 
     try {
       // Find the page object
-      const { page, creator } = await findPageById(pageId, projectId)
+      const page = await findPageById(pageId, projectId)
       page.creator = user.agent.split('/').pop()
       page.partOf = layerId
       if (page?.prev?.id) {

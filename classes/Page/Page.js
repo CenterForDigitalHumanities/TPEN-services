@@ -119,8 +119,8 @@ export default class Page {
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
-    async update() {
-        if (this.#tinyAction === 'update' || this.items.length) {
+    async update(rerum = false) {
+        if (rerum || this.#tinyAction === 'update' || this.items.length) {
             this.#setRerumId()
             await this.#savePageToRerum()
         }

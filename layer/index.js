@@ -6,7 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { fetchUserAgent, findPageById } from '../utilities/shared.js'
+import { fetchUserAgent, findPageById, updateLayerAndProject } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -43,26 +43,24 @@ router.route('/:layerId')
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
         try {
-            const project = new Project(projectId)
+            const project = await Project.getById(projectId)
             if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
             const layer = await findLayerById(layerId, projectId, true)
+            const originalPages = layer.pages ?? []
             if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
             label ??= label ?? layer.label
             if (providedPages?.length === 0) providedPages = undefined
             let pages = []
             if (providedPages && providedPages.length) {
-                const resolvedPages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
-                pages = resolvedPages.map(p => p.page)
+                pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
             }
             else{
                 pages = layer.pages
             }
-            const updatedLayer = new Layer(projectId, {id:layer.id, label, pages, creator: user.agent.split('/').pop()})
-            const saveFirst = (providedPages !== undefined && !layer.id.startsWith(process.env.RERUMIDPREFIX))
-            await updatedLayer.update(saveFirst)
-            await project.updateLayer(updatedLayer, layerId)
-            await project.update()
-            res.status(200).json(project.data)
+            layer.pages = pages
+            //const updatedLayer = new Layer(projectId, {id:layer.id, label, pages})
+            await updateLayerAndProject(layer, originalPages, project, user._id)
+            res.status(200).json(layer)
         } catch (error) {
             console.error(error)
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
@@ -122,6 +120,7 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         error.status = 422
         throw error
     }
-    layer.creator = p.creator
-    return layer
+    //layer.creator = p.creator
+    // return layer
+    return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
 }
