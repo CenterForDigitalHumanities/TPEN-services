@@ -911,14 +911,14 @@ export default class ProjectFactory {
     * This method checks if the manifest.json file for a given project ID exists in the GitHub repository,
     * and if it has been successfully deployed. It retrieves the latest commit for the manifest file,
     * checks if it has been deployed, and returns the status of the deployment.
-    * status: 1 is No manifest found - true
-    * status: 2 is Manifest found, Recently Committed - true
-    * status: 3 is Manifest found but no deployment - true
-    * status: 4 is Deployment successful - true
-    * status: 5 is Deployment in progress - false
-    * status: 6 is Deployment inactive - true
-    * status: 7 is Unknown deployment status - false
-    * status: 8 is No deployment found - false
+    * status: 1 is No manifest found
+    * status: 2 is Manifest found, Recently Committed
+    * status: 3 is Manifest found but no deployment
+    * status: 4 is Deployment successful
+    * status: 5 is Deployment in progress
+    * status: 6 is Deployment inactive
+    * status: 7 is Unknown deployment status
+    * status: 8 is No deployment found
     */
 
   static async checkManifestUploadAndDeployment(projectId) {
