@@ -97,7 +97,7 @@ router.route('/:pageId')
           delete page[key]
         }
       })
-      let pageContentChanged = update?.hasOwnProperty("items")
+      let pageContentChanged = update && update.hasOwnProperty("items")
       if (update.items) {
         page.items = await Promise.all(page.items.map(async item => {
           const line = item.id?.startsWith?.('http')
