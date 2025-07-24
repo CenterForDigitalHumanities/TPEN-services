@@ -28,7 +28,6 @@ router.route('/:pageId')
         // If the page is a RERUM document, we need to fetch it from the server
         const pageFromRerum = await fetch(page.id).then(res => res.json())
         if (pageFromRerum) {
-          creator = pageFromRerum.creator
           res.status(200).json(pageFromRerum)
           return
         }

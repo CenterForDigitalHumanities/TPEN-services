@@ -18,6 +18,18 @@ router.route('/:layerId')
         const { projectId, layerId } = req.params
         try {
             const layer = await findLayerById(layerId, projectId)
+            if (!layer) {
+                respondWithError(res, 404, 'No layer found with that ID.')
+                return
+            }
+            if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
+                // If the page is a RERUM document, we need to fetch it from the server
+                const layerFromRerum = await fetch(layer.id).then(res => res.json())
+                if (layerFromRerum) {
+                  res.status(200).json(pageFromRerum)
+                  return
+                }
+              }
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -119,7 +131,5 @@ async function findLayerById(layerId, projectId, skipLookup = false) {
         error.status = 422
         throw error
     }
-    //layer.creator = p.creator
-    // return layer
     return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
 }
