@@ -914,7 +914,7 @@ export default class ProjectFactory {
     * status: -1 A server or service error has occurred.
     * status: 1 is No manifest found
     * status: 2 is Manifest found, Recently Committed
-    * status: 3 is Manifest found but no deployment
+    * status: 3 is Manifest found but no recent commit
     * status: 4 is Deployment successful
     * status: 5 is Deployment in progress
     * status: 6 is Deployment inactive

@@ -40,7 +40,13 @@ router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) =>
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
-    const status = await ProjectFactory.checkManifestUploadAndDeployment(id)
+    const { status } = await ProjectFactory.checkManifestUploadAndDeployment(id)
+    if (!status) {
+      return respondWithError(res, 404, `No deployment status found for project with ID '${id}'`)
+    }
+    if (status === -1) {
+      return respondWithError(res, 503, "Invalid deployment status.")
+    }
     res.status(200).json(status)
   } catch (error) {
     return respondWithError(
