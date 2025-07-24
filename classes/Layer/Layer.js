@@ -79,11 +79,11 @@ export default class Layer {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
-        return this.#updateCollectionForProject()
+        return this.#formatCollectionForProject()
     }
 
     asProjectLayer() {
-        return this.#updateCollectionForProject()
+        return this.#formatCollectionForProject()
     }
 
     // Private Methods
@@ -94,7 +94,7 @@ export default class Layer {
         return this
     }
 
-    #updateCollectionForProject() {
+    #formatCollectionForProject() {
         return {
             id: this.id,
             label: this.label,

@@ -120,24 +120,18 @@ export default class Page {
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
     async update(rerum = false) {
-        if (rerum || this.#tinyAction === 'update' || this.items.length) {
+        if (rerum || this.#tinyAction === 'update' || this.items?.length) {
             this.#setRerumId()
             await this.#savePageToRerum()
         }
-        return this.#updatePageForProject()
+        return this.#formatPageForProject()
     }
 
     asProjectPage() {
-        return this.#updatePageForProject()
+        return this.#formatPageForProject()
     }
 
-    #updatePageForProject() {
-        // Page in local MongoDB is in the Project.layers.pages Array and looks like:
-        // { 
-        //   id: "https://api.t-pen.org/layer/layerID/page/pageID", 
-        //   label: "Page 1", 
-        //   target: "https://canvas.uri" 
-        // }
+    #formatPageForProject() {
         return {
             id: this.id,
             label: this.label,
