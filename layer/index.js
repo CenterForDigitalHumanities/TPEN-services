@@ -6,7 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { fetchUserAgent, findPageById, updateLayerAndProject } from '../utilities/shared.js'
+import { findPageById, updateLayerAndProject } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -24,11 +24,11 @@ router.route('/:layerId')
                 id: layer.id,
                 type: 'AnnotationCollection',
                 label: { none: [layer.label] },
-                creator: await fetchUserAgent(creator),
                 total: layer.pages.length,
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id
             }
+            if (layer.creator) layerAsCollection.creator = layer.creator
             return res.status(200).json(layerAsCollection)
         } catch (error) {
             console.error(error)

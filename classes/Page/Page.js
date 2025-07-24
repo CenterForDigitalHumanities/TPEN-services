@@ -1,6 +1,5 @@
 import dbDriver from "../../database/driver.js"
-import { handleVersionConflict } from "../../utilities/shared.js"
-import { fetchUserAgent } from "../../utilities/shared.js"
+import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -117,6 +116,9 @@ export default class Page {
 
     /**
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+      * FIXME: This will save to RERUM even if there has been no content change
+      * The rerum variable below is true if the content has changed.
+      *
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
     async update(rerum = false) {

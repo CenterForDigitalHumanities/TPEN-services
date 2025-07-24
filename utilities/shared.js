@@ -80,16 +80,17 @@ export const findLineInPage = (page, lineId) => {
    return line
 }
 
-export const rebuildPageOrder = async (pages) => {
+export const rebuildPageOrder = async (pages, userId) => {
    if (!pages || !Array.isArray(pages)) new Error(`Cannot rebuild page order without an array of pages`)
    for await (const [index, page] of pages.entries()) {
       const thisPageNext = index < pages.length - 1 ? pages[index + 1].id : null
       const thisPagePrev = index > 0 ? pages[index - 1].id : null
       const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
+      // Reording pages counts as a content change
+      if (!page.creator) page.creator = await fetchUserAgent(userId)
       if (page?.next !== thisPageNext) page.next = thisPageNext
       if (page?.prev !== thisPagePrev) page.prev = thisPagePrev
-      const rerumToo = page.id.startsWith(process.env.RERUMIDPREFIX) && pageChanged
-      await page.update(rerumToo)
+      await page.update(pageChanged)
    }
 }
 
@@ -103,11 +104,10 @@ export const updateLayerAndProject = async (layer, originalPages, project, userI
    if(providedPageOrder !== originalPageOrder) {
       // The Pages need updated so that they have the correct prev and next
       pagesChanged = true
-      await rebuildPageOrder(layer.pages)
+      await rebuildPageOrder(layer.pages, userId)
    }
-   const rerumToo = (pagesChanged && !layer.id.startsWith(process.env.RERUMIDPREFIX))
-   if (!layer.creator) layer.creator = userId
-   await layer.update(rerumToo)
+   if (!layer.creator) layer.creator = await fetchUserAgent(userId)
+   await layer.update(pagesChanged)
    let updatedLayer = layer.asProjectLayer()
    await project.updateLayer(updatedLayer)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
@@ -116,9 +116,9 @@ export const updateLayerAndProject = async (layer, originalPages, project, userI
 }
 
 // Update a page and its project
-export const updatePageAndProject = async (page, project, userId) => {
-   if (!page.creator) page.creator = userId
-   await page.update()
+export const updatePageAndProject = async (page, project, userId, contentChanged = false) => {
+   if (!page.creator) page.creator = await fetchUserAgent(userId)
+   await page.update(contentChanged)
    const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    layer.pages[pageIndex] = page.asProjectPage()
@@ -196,8 +196,8 @@ export async function findPageById(pageId, projectId) {
    }
 
    const page = layerContainingPage.pages[pageIndex]
-   page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
-   page.next = layerContainingPage.pages[pageIndex + 1] ?? null
+   page.prev = layerContainingPage.pages[pageIndex - 1]?.id ?? null
+   page.next = layerContainingPage.pages[pageIndex + 1]?.id ?? null
 
    return new Page(layerContainingPage.id, page)
 }
@@ -264,6 +264,7 @@ export const fetchUserAgent = async (userId) => {
    if (!userId) {
       throw new Error('User ID is required to fetch user agent')
    }
+   if(userId && typeof userId === "string" && userId.startsWith("http")) return userId
    try {
       let user = new User(userId)
       user = await user.getSelf()

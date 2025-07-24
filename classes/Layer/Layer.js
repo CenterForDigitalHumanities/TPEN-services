@@ -74,6 +74,8 @@ export default class Layer {
         return true
     }
 
+    // FIXME: This will save to RERUM even if there has been no content change
+    // The rerum variable below is true if the content has changed.
     async update(rerum = false) {
         if (rerum || this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
             this.#setRerumId()
