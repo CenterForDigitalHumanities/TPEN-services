@@ -911,6 +911,7 @@ export default class ProjectFactory {
     * This method checks if the manifest.json file for a given project ID exists in the GitHub repository,
     * and if it has been successfully deployed. It retrieves the latest commit for the manifest file,
     * checks if it has been deployed, and returns the status of the deployment.
+    * status: -1 A server or service error has occurred.
     * status: 1 is No manifest found - true
     * status: 2 is Manifest found, Recently Committed - true
     * status: 3 is Manifest found but no deployment - true
@@ -926,13 +927,27 @@ export default class ProjectFactory {
     const url = `${process.env.TPENSTATIC}/${projectId}/manifest.json`
     const token = process.env.GITHUB_TOKEN
     const headers = {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github.v3+json',
     }
 
     const commitsUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/commits?path=${filePath}&per_page=1`
-    const commitsRes = await fetch(commitsUrl, { headers })
-    const commits = await commitsRes.json()
+    const commits = await fetch(commitsUrl, { headers })
+      .then(async (resp) => {
+          if(resp.ok) return resp.json()
+          const errText = await resp.text()
+          return [{state: -1, "message": `${resp.status} - ${errText}`}]
+      })
+      .catch(err => {
+        console.error(err)
+        return [{state: -1, "message": `TPEN Services Internal Server Error`}]
+      })
+
+    if(commits?.length && commits[0].state === -1) {
+      console.error(commits[0])
+      return {status: -1, message: commits[0].message}
+    }
+
     if (!commits.length) {
         return {status: 1}
     }
@@ -944,8 +959,21 @@ export default class ProjectFactory {
 
     const latestSha = commits[0].sha
     const deployments = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments?sha=${latestSha}`
-    const deploymentRes = await fetch(deployments, { headers })
-    const deployment = await deploymentRes.json()
+    const deployment = await fetch(deployments, { headers })
+      .then(async (resp) => {
+            if(resp.ok) return resp.json()
+            const errText = await resp.text()
+            return [{state: -1, "message": `${resp.status} - ${errText}`}]
+      })
+      .catch(err => {
+        console.error(err)
+        return [{state: -1, "message": `TPEN Services Internal Server Error`}]
+      })
+
+    if(deployment?.length && deployment[0].state === -1) {
+      console.error(deployment[0])
+      return {status: -1, message: deployment[0].message}
+    }
 
     if (deployment.length === 0) {
       if (await checkIfUrlExists(url)){
@@ -960,8 +988,21 @@ export default class ProjectFactory {
     }
 
     const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment[0].id}/statuses`
-    const statusRes = await fetch(statusUrl, { headers })
-    const statuses = await statusRes.json()
+    const statuses = await fetch(statusUrl, { headers })
+      .then(async (resp) => {
+          if(resp.ok) return resp.json()
+          const errText = await resp.text()
+          return [{state: -1, "message": `${resp.status} - ${errText}`}]
+      })
+      .catch(err => {
+        console.error(err)
+        return [{state: -1, "message": `TPEN Services Internal Server Error`}]
+      })
+
+    if (statuses?.length && statuses[0].state === -1) {
+      console.error(status[0])
+      return {status: -1, message: stauses[0].message}
+    }
 
     if (!statuses.length) {
         return {status: 7}
