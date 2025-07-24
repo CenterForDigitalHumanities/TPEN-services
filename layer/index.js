@@ -58,7 +58,6 @@ router.route('/:layerId')
                 pages = layer.pages
             }
             layer.pages = pages
-            //const updatedLayer = new Layer(projectId, {id:layer.id, label, pages})
             await updateLayerAndProject(layer, originalPages, project, user._id)
             res.status(200).json(layer)
         } catch (error) {

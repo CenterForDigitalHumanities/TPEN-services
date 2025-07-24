@@ -101,7 +101,7 @@ export const updateLayerAndProject = async (layer, originalPages, project, userI
    let pagesChanged = false
    const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
    const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
-   if(providedPageOrder !== originalPageOrder) {
+   if(providedPageOrder.join() !== originalPageOrder.join()) {
       // The Pages need updated so that they have the correct prev and next
       pagesChanged = true
       await rebuildPageOrder(layer.pages, userId)
