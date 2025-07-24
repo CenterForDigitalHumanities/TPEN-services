@@ -94,7 +94,6 @@ export const rebuildPageOrder = async (pages, userId) => {
    }
 }
 
-
 // Update a Layer, its Pages, and the Project is belongs to.
 export const updateLayerAndProject = async (layer, originalPages, project, userId) => {
    // If the Pages are in a different order then we have to update the Pages' prev and next
