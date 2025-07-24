@@ -30,7 +30,6 @@ export default class Layer {
         this.label = label
         this.creator = creator
         this.pages = pages
-        // this.pages = pages.map(p => p.asProjectPage())
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }

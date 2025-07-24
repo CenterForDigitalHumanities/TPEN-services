@@ -81,7 +81,7 @@ router.route('/:pageId')
     try {
       // Find the page object
       const page = await findPageById(pageId, projectId)
-      page.creator = user.agent?.split('/').pop()
+      page.creator = user.agent.split('/').pop()
       page.partOf = layerId
       if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
