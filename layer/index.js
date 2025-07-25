@@ -6,7 +6,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { findPageById, updateLayerAndProject } from '../utilities/shared.js'
+import { findPageById, findLayerById, updateLayerAndProject } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -17,6 +17,8 @@ router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
         try {
+            console.log("AAAAAAA")
+            console.log(projectId)
             const layer = await findLayerById(layerId, projectId)
             if (!layer) {
                 respondWithError(res, 404, 'No layer found with that ID.')
@@ -57,6 +59,8 @@ router.route('/:layerId')
         try {
             const project = await Project.getById(projectId)
             if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
+            console.log("BBBB")
+        console.log(projectId)
             const layer = await findLayerById(layerId, projectId, true)
             const originalPages = layer.pages ?? []
             if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
@@ -70,7 +74,7 @@ router.route('/:layerId')
                 pages = layer.pages
             }
             layer.pages = pages
-            await updateLayerAndProject(layer, originalPages, project, user._id)
+            await updateLayerAndProject(layer, project, user._id, originalPages)
             res.status(200).json(layer)
         } catch (error) {
             console.error(error)
@@ -106,30 +110,3 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 router.use('/:layerId/page', pageRouter)
 
 export default router
-
-async function findLayerById(layerId, projectId, skipLookup = false) {
-    if (!skipLookup && layerId.startsWith(process.env.RERUMIDPREFIX)) {
-        return fetch(layerId).then(res => res.json())
-    }
-    const p = (await Project.getById(projectId)).data
-    if (!p) {
-        const error = new Error(`Project with ID '${projectId}' not found`)
-        error.status = 404
-        throw error
-    }
-    const layer = layerId.length < 6
-        ? p.layers[parseInt(layerId) + 1]
-        : p.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
-    if (!layer) {
-        const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
-        error.status = 404
-        throw error
-    }
-    // Ensure the layer has pages and is not malformed
-    if (!layer.pages || layer.pages.length === 0) {
-        const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
-        error.status = 422
-        throw error
-    }
-    return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
-}
