@@ -80,17 +80,20 @@ export const findLineInPage = (page, lineId) => {
    return line
 }
 
-export const rebuildPageOrder = async (pages, userId) => {
+export const rebuildPageOrder = async (project, pages, userId) => {
    if (!pages || !Array.isArray(pages)) new Error(`Cannot rebuild page order without an array of pages`)
    for await (const [index, page] of pages.entries()) {
       const thisPageNext = index < pages.length - 1 ? pages[index + 1].id : null
       const thisPagePrev = index > 0 ? pages[index - 1].id : null
       const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
-      // Reording pages counts as a content change
       if (!page.creator) page.creator = await fetchUserAgent(userId)
       if (page?.next !== thisPageNext) page.next = thisPageNext
       if (page?.prev !== thisPagePrev) page.prev = thisPagePrev
-      if (pagedChanged) await page.update(pageChanged)
+      if (pagedChanged) {
+         // A reordered page counts as a content change
+         await recordModification(project, page.id, userId)
+         await page.update(pageChanged)
+      }
    }
 }
 
@@ -103,7 +106,7 @@ export const updateLayerAndProject = async (layer, originalPages, project, userI
    if(providedPageOrder.join() !== originalPageOrder.join()) {
       // The Pages need updated so that they have the correct prev and next
       pagesChanged = true
-      await rebuildPageOrder(layer.pages, userId)
+      await rebuildPageOrder(project, layer.pages, userId)
    }
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    await layer.update(pagesChanged)
