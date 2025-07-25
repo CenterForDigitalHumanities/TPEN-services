@@ -151,16 +151,14 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    if (!page.creator) page.creator = useragent
    let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   const layer = await findLayerById(data_layer.id, project._id, true)
-   if (contentChanged) {
-      if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
-      if (!layer.creator) layer.creator = useragent
-      await recordModification(project, page.id, userId)
-   }
+   if (contentChanged) await recordModification(project, page.id, userId)
    await page.update(contentChanged)
    const pageIndex = data_layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    data_layer.pages[pageIndex] = page.asProjectPage()
    if (contentChanged) {
+      const layer = await findLayerById(data_layer.id, project._id, true)
+      if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
+      if (!layer.creator) layer.creator = useragent
       layer.pages[pageIndex] = page.asProjectPage()
       data_layer = await layer.update(true)
    }
