@@ -132,7 +132,7 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    }
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    await layer.update(pagesChanged)
-   let updatedLayer = layer.asProjectLayer()
+   const updatedLayer = layer.asProjectLayer()
    await project.updateLayer(updatedLayer)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
    project.data.layers[layerIndex] = updatedLayer
@@ -147,23 +147,22 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   let useragent = await fetchUserAgent(userId)
+   const useragent = await fetchUserAgent(userId)
    if (!page.creator) page.creator = useragent
-   let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   let layer
+   const data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
+   const layer = await findLayerById(data_layer.id, project._id, true)
    if (contentChanged) {
-      layer = await findLayerById(data_layer.id, project._id, true)
       if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
       if (!layer.creator) layer.creator = useragent
       await recordModification(project, page.id, userId)
    }
    await page.update(contentChanged)
-   const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
+   const pageIndex = data_layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    data_layer.pages[pageIndex] = page.asProjectPage()
    if (contentChanged) {
-      const updatedLayer = await layer.update(true)
-      data_layer.id = updatedLayer.id
+      layer.pages[pageIndex] = page.asProjectPage()
+      data_layer = await layer.update(true)
    }
    project.data.layers[layerIndex] = data_layer
    await project.update()
