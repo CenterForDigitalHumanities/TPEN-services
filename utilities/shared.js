@@ -90,7 +90,7 @@ export const rebuildPageOrder = async (pages, userId) => {
       if (!page.creator) page.creator = await fetchUserAgent(userId)
       if (page?.next !== thisPageNext) page.next = thisPageNext
       if (page?.prev !== thisPagePrev) page.prev = thisPagePrev
-      await page.update(pageChanged)
+      if (pagedChanged) await page.update(pageChanged)
    }
 }
 
