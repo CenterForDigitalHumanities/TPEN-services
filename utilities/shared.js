@@ -161,7 +161,6 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    await page.update(contentChanged)
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    data_layer.pages[pageIndex] = page.asProjectPage()
-   // FIXME we are getting duplicate key errors here.  layer.update() must be messed up.
    if (contentChanged) {
       const updatedLayer = await layer.update(true)
       data_layer.id = updatedLayer.id
