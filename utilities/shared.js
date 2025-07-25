@@ -263,7 +263,7 @@ export const fetchUserAgent = async (userId) => {
    if (!userId) {
       throw new Error('User ID is required to fetch user agent')
    }
-   if(typeof userId === "string" && userId.startsWith("http")) return userId
+   if (typeof userId === "string" && userId.startsWith("http")) return userId
    try {
       let user = new User(userId)
       user = await user.getSelf()
