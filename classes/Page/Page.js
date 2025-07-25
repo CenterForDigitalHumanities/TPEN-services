@@ -70,18 +70,16 @@ export default class Page {
     }
 
     async #savePageToRerum() {
+        const prev = this.prev ?? null
+        const next = this.next ?? null
         const pageAsAnnotationPage = {
             "@context": "http://www.w3.org/ns/anno.jsonld",
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
             items: this.items ?? [],
-            ...this?.prev && {
-              prev: this.prev
-            },
-            ...this?.next && {
-              next: this.next
-            },
+            prev,
+            next,
             creator: await fetchUserAgent(this.creator),
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]

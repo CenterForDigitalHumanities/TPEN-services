@@ -87,9 +87,9 @@ export const rebuildPageOrder = async (project, pages, userId) => {
       const thisPagePrev = index > 0 ? pages[index - 1].id : null
       const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
       if (!page.creator) page.creator = await fetchUserAgent(userId)
-      if (page?.next !== thisPageNext) page.next = thisPageNext
-      if (page?.prev !== thisPagePrev) page.prev = thisPagePrev
-      if (pagedChanged) {
+      if (page.next !== thisPageNext) page.next = thisPageNext
+      if (page.prev !== thisPagePrev) page.prev = thisPagePrev
+      if (pageChanged) {
          // A reordered page counts as a content change
          await recordModification(project, page.id, userId)
          await page.update(pageChanged)
