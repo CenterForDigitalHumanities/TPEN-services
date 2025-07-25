@@ -149,7 +149,7 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    if (!userId) throw new Error(`Must know user id to update layer`)
    const useragent = await fetchUserAgent(userId)
    if (!page.creator) page.creator = useragent
-   const data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
+   let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const layer = await findLayerById(data_layer.id, project._id, true)
    if (contentChanged) {
