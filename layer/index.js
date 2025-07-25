@@ -26,7 +26,7 @@ router.route('/:layerId')
                 // If the page is a RERUM document, we need to fetch it from the server
                 const layerFromRerum = await fetch(layer.id).then(res => res.json())
                 if (layerFromRerum) {
-                  res.status(200).json(pageFromRerum)
+                  res.status(200).json(layerFromRerum)
                   return
                 }
               }
