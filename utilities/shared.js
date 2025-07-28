@@ -73,7 +73,7 @@ export const findLineInPage = (page, lineId) => {
 }
 
 /**
- * Pages have been reordered upstream.  They prev/next relationships are not right.
+ * Pages have been reordered upstream.  Their prev/next relationships are not right.
  * Go through the Pages and update them if their prev/next has changed.
  * Record the Page modification as a content change, and make sure it is attributed.
  *
@@ -109,8 +109,10 @@ export const rebuildPageOrder = async (project, layer, userId) => {
  * Content has changed if the organization of layer.pages has been altered.
  * 
  * @param layer - A Layer class object with changes applied to it
+ * @param project - A Project class object that will need to update
+ * @param userId - The TPEN3 User hash id performing the action
  * @param originalPages - An Array of Page _ids that represent the original upstream Layer.pages organization before any modifications.
-*/
+ */
 export const updateLayerAndProject = async (layer, project, userId, originalPages = null) => {
    if (!project) throw new Error(`Must know project to update Layer`)
    if (layer === null || layer === undefined) throw new Error("A Layer must be provided in order to update")
@@ -133,8 +135,13 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
 
 /**
  * Update a Page and its Project as well as the Layer containing the Page if necessary.
- * Content has changed if page.items have changed in any way
-*/
+ * Content has changed if page.items have changed in any way.
+ *
+ * @param page - A Page class object with changes applied to it.
+ * @param project - A Project class object that will need to be updated.
+ * @param userId - The TPEN3 user hash id performing the action
+ * @param contentChanged - A boolean representing whether or not there were changes to page content.
+ */
 export const updatePageAndProject = async (page, project, userId, contentChanged = false) => {
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
