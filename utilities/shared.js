@@ -81,8 +81,9 @@ export const findLineInPage = (page, lineId) => {
  * @param pages - An Array of Page class objects
  * @param userId - The userId hash that caused the reoder
  */
-export const rebuildPageOrder = async (project, pages, userId) => {
+export const rebuildPageOrder = async (project, layer, userId) => {
    if (!project) throw new Error(`Must know project to rebuild Page order`)
+   const pages = layer?.pages
    if (!pages || !Array.isArray(pages)) throw new Error(`Cannot rebuild page order without an array of pages`)
    if (!userId) throw new Error(`Must know user id`)
    for await (const [index, page] of pages.entries()) {
@@ -98,7 +99,8 @@ export const rebuildPageOrder = async (project, pages, userId) => {
       // FIXME: If there is an error upgrading the referenced page downstream, the rerum ID made here might not resolve.
       if (page.next !== thisPageNext) page.next = thisPageNext ? process.env.RERUMIDPREFIX + thisPageNext.split("/").pop() : null
       if (page.prev !== thisPagePrev) page.prev = thisPagePrev ? process.env.RERUMIDPREFIX + thisPagePrev.split("/").pop() : null
-      // It is possible that the page.next is still 
+      // It is possible the Layer is still temp.  It will be upgraded, so partOf should be the upgraded RERUM ID
+      page.partOf = process.env.RERUMIDPREFIX + layer.id.split("/").pop()
       await recordModification(project, page.id, userId)
       await page.update(pageChanged)
    }
@@ -124,7 +126,7 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    if(providedPageOrder.join() !== originalPageOrder.join()) {
       // The Pages need updated so that they have the correct prev and next
       pagesChanged = true
-      await rebuildPageOrder(project, layer.pages, userId)
+      await rebuildPageOrder(project, layer, userId)
    }
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const updatedLayer = await layer.update(pagesChanged)
