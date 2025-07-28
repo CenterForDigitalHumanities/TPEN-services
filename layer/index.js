@@ -17,21 +17,16 @@ router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
         try {
-            console.log("AAAAAAA")
-            console.log(projectId)
-            const layer = await findLayerById(layerId, projectId)
+            const layer = await findLayerById(layerId, projectId, true)
             if (!layer) {
                 respondWithError(res, 404, 'No layer found with that ID.')
                 return
             }
             if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
                 // If the page is a RERUM document, we need to fetch it from the server
-                const layerFromRerum = await fetch(layer.id).then(res => res.json())
-                if (layerFromRerum) {
-                  res.status(200).json(layerFromRerum)
-                  return
-                }
-              }
+                res.status(200).json(layerFromRerum)
+                return
+            }
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -59,9 +54,7 @@ router.route('/:layerId')
         try {
             const project = await Project.getById(projectId)
             if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
-            console.log("BBBB")
-        console.log(projectId)
-            const layer = await findLayerById(layerId, projectId, true)
+            const layer = await findLayerById(layerId, projectId)
             const originalPages = layer.pages ?? []
             if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
             label ??= label ?? layer.label

@@ -77,6 +77,7 @@ export default class Layer {
     // The rerum variable below is true if the content has changed.
     async update(rerum = false) {
         if (rerum || this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
+            console.log("LAYER CONTENT HAS CHANGED, SO LAYER DATA IN RERUM NEEDS OVERWRITTEN")
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
@@ -99,14 +100,14 @@ export default class Layer {
         return {
             id: this.id,
             label: this.label,
-            pages: this.pages.map(this.#getPageReference)
+            pages: this.pages.map(p => new Page(this.id, p).asProjectPage())
         }
     }
 
-    #getPageReference({ id, label, target, items }) {
+    #getPageReference({ id, label, target }) {
         label ??= id.split("/").pop()
         const resolvedLabel = label.none?.join(", ") ?? label.en?.join(", ") ?? label
-        return { id, label: resolvedLabel, target , items }
+        return { id, label: resolvedLabel, target }
     }
 
     async #saveCollectionToRerum() {

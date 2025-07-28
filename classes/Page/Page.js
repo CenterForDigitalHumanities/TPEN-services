@@ -121,6 +121,7 @@ export default class Page {
       */
     async update(rerum = false) {
         if (rerum || this.#tinyAction === 'update' || this.items?.length) {
+            console.log("PAGE CONTENT HAS CHANGED, SO PAGE DATA IN RERUM NEEDS OVERWRITTEN")
             this.#setRerumId()
             await this.#savePageToRerum()
         }

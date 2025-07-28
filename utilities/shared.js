@@ -63,16 +63,6 @@ export const getProjectById = async (projectId, res) => {
    return project
 }
 
-// Fetch a page by ID
-export const getPageById = async (pageId, projectId, res) => {
-   const page = await findPageById(pageId, projectId)
-   if (!page?.id) {
-      respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
-      return null
-   }
-   return page
-}
-
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
    const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
@@ -104,6 +94,8 @@ export const rebuildPageOrder = async (project, pages, userId) => {
       if (page.prev !== thisPagePrev) page.prev = thisPagePrev
       if (pageChanged) {
          // A reordered page counts as a content change
+         console.log("UPDATE THIS PAGE FOR ORDER")
+         console.log(page)
          await recordModification(project, page.id, userId)
          await page.update(pageChanged)
       }
@@ -122,6 +114,8 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    if (layer === null || layer === undefined) throw new Error("A Layer must be provided in order to update")
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (originalPages === null || originalPages === undefined || !Array.isArray(originalPages)) originalPages = await findLayerById(layer.id, project._id, true)?.pages
+   console.log("UPDATE THIS LAYER")
+   console.log(layer)
    let pagesChanged = false
    const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
    const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
@@ -146,23 +140,25 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
+   console.log("UPDATE THIS PAGE")
+   console.log(page)
    const useragent = await fetchUserAgent(userId)
    if (!page.creator) page.creator = useragent
    let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    let layer
    if (contentChanged) {
-      layer = await findLayerById(data_layer.id, project._id, true)
+      layer = await findLayerById(data_layer.id, project._id)
       if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
       if (!layer.creator) layer.creator = useragent
       await recordModification(project, page.id, userId)
    }
-   await page.update(contentChanged)
+   const updatedPage = await page.update(contentChanged)
    const pageIndex = data_layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
    data_layer.pages[pageIndex] = page.asProjectPage()
    if (contentChanged) {
       // We don't strictly have to update the Layer if the content change was only text.
-      layer.pages[pageIndex] = page.asProjectPage()
+      layer.pages[pageIndex] = updatedPage
       data_layer = await layer.update(true)
    }
    project.data.layers[layerIndex] = data_layer
@@ -210,8 +206,8 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
-export async function findPageById(pageId, projectId) {
-   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
+export async function findPageById(pageId, projectId, rerum) {
+   if (rerum && pageId?.startsWith(process.env.RERUMIDPREFIX)) {
       return fetch(pageId).then(res => res.json())
    }
    const projectData = (await getProjectById(projectId))?.data
@@ -245,8 +241,8 @@ export async function findPageById(pageId, projectId) {
    return new Page(layerContainingPage.id, page)
 }
 
-export async function findLayerById(layerId, projectId, skipLookup = false) {
-    if (!skipLookup && layerId.startsWith(process.env.RERUMIDPREFIX)) {
+export async function findLayerById(layerId, projectId, rerum = false) {
+    if (rerum && layerId.startsWith(process.env.RERUMIDPREFIX)) {
         return fetch(layerId).then(res => res.json())
     }
     const p = await Project.getById(projectId)

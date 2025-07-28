@@ -18,18 +18,15 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const page = await findPageById(pageId, projectId)
+      const page = await findPageById(pageId, projectId, true)
       if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // If the page is a RERUM document, we need to fetch it from the server
-        const pageFromRerum = await fetch(page.id).then(res => res.json())
-        if (pageFromRerum) {
-          res.status(200).json(pageFromRerum)
-          return
-        }
+        res.status(200).json(pageFromRerum)
+        return
       }
       // build as AnnotationPage
       const pageAsAnnotationPage = {
@@ -92,8 +89,9 @@ router.route('/:pageId')
       })
       Object.keys(page).forEach(key => {
         if (page[key] === undefined || page[key] === null) {
-          // Remove properties that are undefined or null
-          delete page[key]
+          // Remove properties that are undefined or null.  prev and next can be null
+          if (key !== "prev" && key !== "next") delete page[key]
+          else page[key] = null
         }
       })
       const pageContentChanged = update && update.hasOwnProperty("items")

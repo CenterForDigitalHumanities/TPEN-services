@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
-import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
+import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
 
 const router = express.Router({ mergeParams: true })
@@ -54,7 +54,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
   try {
     const project = await getProjectById(req.params.projectId, res)
     if (!project) return
-    const page = await getPageById(req.params.pageId, req.params.projectId, res)
+    const page = await findPageById(req.params.pageId, req.params.projectId)
     if (!page) return
 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
