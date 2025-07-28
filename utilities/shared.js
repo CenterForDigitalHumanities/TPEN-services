@@ -213,7 +213,15 @@ export async function findPageById(pageId, projectId, rerum) {
       if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
          pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
       }
-      return fetch(pageId).then(res => res.json())
+      const rerum_obj = await fetch(pageId).then(res => {
+         if (res.ok) return res.json()
+         if (!res.ok) return {}
+      })
+      .catch(err => {
+         console.error("Network error with rerum")
+         throw err
+      })
+      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {
@@ -251,7 +259,15 @@ export async function findLayerById(layerId, projectId, rerum = false) {
       if (!layerId?.startsWith(process.env.RERUMIDPREFIX)) {
          layerId = process.env.RERUMIDPREFIX + layerId.split("/").pop()
       }
-      return fetch(layerId).then(res => res.json())
+      const rerum_obj = await fetch(layerId).then(res => {
+         if (res.ok) return res.json()
+         if (!res.ok) return {}
+      })
+      .catch(err => {
+         console.error("Network error with rerum")
+         throw err
+      })
+      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const p = await Project.getById(projectId)
    if (!p) {
