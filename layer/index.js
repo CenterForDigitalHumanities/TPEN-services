@@ -24,7 +24,7 @@ router.route('/:layerId')
             }
             if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
                 // If the page is a RERUM document, we need to fetch it from the server
-                res.status(200).json(layerFromRerum)
+                res.status(200).json(layer)
                 return
             }
             // Make this internal Layer look more like a RERUM AnnotationCollection
