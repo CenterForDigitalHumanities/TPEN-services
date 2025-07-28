@@ -25,7 +25,7 @@ router.route('/:pageId')
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // If the page is a RERUM document, we need to fetch it from the server
-        res.status(200).json(pageFromRerum)
+        res.status(200).json(page)
         return
       }
       // build as AnnotationPage

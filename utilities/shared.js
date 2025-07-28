@@ -209,7 +209,10 @@ export const getLayerContainingPage = (project, pageId) => {
 
 // Find a page by ID (moved from page/index.js)
 export async function findPageById(pageId, projectId, rerum) {
-   if (rerum && pageId?.startsWith(process.env.RERUMIDPREFIX)) {
+   if (rerum) {
+      if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
+         pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
+      }
       return fetch(pageId).then(res => res.json())
    }
    const projectData = (await getProjectById(projectId))?.data
@@ -244,30 +247,33 @@ export async function findPageById(pageId, projectId, rerum) {
 }
 
 export async function findLayerById(layerId, projectId, rerum = false) {
-    if (rerum && layerId.startsWith(process.env.RERUMIDPREFIX)) {
-        return fetch(layerId).then(res => res.json())
-    }
-    const p = await Project.getById(projectId)
-    if (!p) {
-        const error = new Error(`Project with ID '${projectId}' not found`)
-        error.status = 404
-        throw error
-    }
-    const layer = layerId.length < 6
-        ? p.data.layers[parseInt(layerId) + 1]
-        : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
-    if (!layer) {
-        const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
-        error.status = 404
-        throw error
-    }
-    // Ensure the layer has pages and is not malformed
-    if (!layer.pages || layer.pages.length === 0) {
-        const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
-        error.status = 422
-        throw error
-    }
-    return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
+   if (rerum) {
+      if (!layerId?.startsWith(process.env.RERUMIDPREFIX)) {
+         layerId = process.env.RERUMIDPREFIX + layerId.split("/").pop()
+      }
+      return fetch(layerId).then(res => res.json())
+   }
+   const p = await Project.getById(projectId)
+   if (!p) {
+     const error = new Error(`Project with ID '${projectId}' not found`)
+     error.status = 404
+     throw error
+   }
+   const layer = layerId.length < 6
+     ? p.data.layers[parseInt(layerId) + 1]
+     : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+   if (!layer) {
+     const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
+     error.status = 404
+     throw error
+   }
+   // Ensure the layer has pages and is not malformed
+   if (!layer.pages || layer.pages.length === 0) {
+     const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
+     error.status = 422
+     throw error
+   }
+   return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
 }
 
 /**
