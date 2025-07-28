@@ -129,7 +129,6 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    }
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const updatedLayer = await layer.update(pagesChanged)
-   await project.updateLayer(updatedLayer)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
    project.data.layers[layerIndex] = updatedLayer
    await project.update()
