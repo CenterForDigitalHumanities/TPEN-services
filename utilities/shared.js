@@ -148,6 +148,7 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    let layer
    if (contentChanged) {
+      console.log("PAGE CONTENT HAS CHANGED")
       layer = await findLayerById(data_layer.id, project._id)
       if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
       if (!layer.creator) layer.creator = useragent
@@ -158,6 +159,7 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    data_layer.pages[pageIndex] = page.asProjectPage()
    if (contentChanged) {
       // We don't strictly have to update the Layer if the content change was only text.
+      console.log("PAGE CONTENT HAS CHANGED, SO LAYER NEEDS UPDATED")
       layer.pages[pageIndex] = updatedPage
       data_layer = await layer.update(true)
    }
