@@ -47,7 +47,8 @@ router.route('/:layerId')
     .put(auth0Middleware(), async (req, res) => {
         const { projectId, layerId } = req.params
         let label = req.body?.label
-        const providedPages = req.body?.pages
+        const update = req.body
+        const providedPages = update?.pages
         const user = req.user
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
@@ -57,7 +58,17 @@ router.route('/:layerId')
             const layer = await findLayerById(layerId, projectId)
             const originalPages = layer.pages ?? []
             if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
-            label ??= label ?? layer.label
+            // Only update top-level properties that are present in the request
+            Object.keys(update ?? {}).forEach(key => {
+                layer[key] = update[key]
+            })
+            Object.keys(layer).forEach(key => {
+                if (layer[key] === undefined || layer[key] === null) {
+                  // Remove properties that are undefined or null.  prev and next can be null
+                  if (layer !== "first" && layer !== "last") delete layer[key]
+                  else layer[key] = null
+                }
+            })
             if (providedPages?.length === 0) providedPages = undefined
             let pages = []
             if (providedPages && providedPages.length) {
