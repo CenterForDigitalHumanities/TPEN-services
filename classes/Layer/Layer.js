@@ -119,13 +119,7 @@ export default class Layer {
             creator: await fetchUserAgent(this.creator),
             total: this.pages.length,
             first: this.pages.at(0).id,
-            last: this.pages.at(-1).id,
-            items: this.pages.map(page => ({
-                id: page.id,
-                type: "AnnotationPage",
-                label: { "none": [page.label] },
-                target: page.target
-            }))
+            last: this.pages.at(-1).id
         }
 
         if (this.#tinyAction === 'create') {
