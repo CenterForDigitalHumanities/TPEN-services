@@ -17,7 +17,6 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
-    let creator
     try {
       const page = await findPageById(pageId, projectId)
       if (!page) {

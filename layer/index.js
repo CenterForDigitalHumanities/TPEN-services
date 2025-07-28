@@ -69,11 +69,8 @@ router.route('/:layerId')
             let pages = []
             if (providedPages && providedPages.length) {
                 pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
+                layer.pages = pages
             }
-            else{
-                pages = layer.pages
-            }
-            layer.pages = pages
             await updateLayerAndProject(layer, project, user._id, originalPages)
             res.status(200).json(layer)
         } catch (error) {
