@@ -77,7 +77,6 @@ export default class Layer {
     // The rerum variable below is true if the content has changed.
     async update(rerum = false) {
         if (rerum || this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
-            console.log("LAYER CONTENT HAS CHANGED, SO LAYER DATA IN RERUM NEEDS OVERWRITTEN")
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }

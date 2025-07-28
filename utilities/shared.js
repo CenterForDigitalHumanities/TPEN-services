@@ -78,7 +78,7 @@ export const findLineInPage = (page, lineId) => {
  * Record the Page modification as a content change, and make sure it is attributed.
  *
  * @param project - A Project class object
- * @param pages - An Array of Page class objects
+ * @param layer - A Layer class object with page changes applied to layer.pages
  * @param userId - The userId hash that caused the reoder
  */
 export const rebuildPageOrder = async (project, layer, userId) => {
@@ -92,8 +92,6 @@ export const rebuildPageOrder = async (project, layer, userId) => {
       const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
       if (!pageChanged) continue
       // A reordered page counts as a content change
-      console.log("UPDATE THIS PAGE FOR ORDER")
-      console.log(page)
       if (!page.creator) page.creator = await fetchUserAgent(userId)
       // We know these values will be upgraded to RERUM ids, so force it and make sure not to leave temp ids.
       // FIXME: If there is an error upgrading the referenced page downstream, the rerum ID made here might not resolve.
@@ -118,8 +116,6 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    if (layer === null || layer === undefined) throw new Error("A Layer must be provided in order to update")
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (originalPages === null || originalPages === undefined || !Array.isArray(originalPages)) originalPages = await findLayerById(layer.id, project._id, true)?.pages
-   console.log("UPDATE THIS LAYER")
-   console.log(layer)
    let pagesChanged = false
    const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
    const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
@@ -143,15 +139,12 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   console.log("UPDATE THIS PAGE")
-   console.log(page)
    const useragent = await fetchUserAgent(userId)
    if (!page.creator) page.creator = useragent
    let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    let layer
    if (contentChanged) {
-      console.log("PAGE CONTENT HAS CHANGED")
       layer = await findLayerById(data_layer.id, project._id)
       if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
       if (!layer.creator) layer.creator = useragent
@@ -162,7 +155,6 @@ export const updatePageAndProject = async (page, project, userId, contentChanged
    data_layer.pages[pageIndex] = page.asProjectPage()
    if (contentChanged) {
       // We don't strictly have to update the Layer if the content change was only text.
-      console.log("PAGE CONTENT HAS CHANGED, SO LAYER NEEDS UPDATED")
       layer.pages[pageIndex] = updatedPage
       data_layer = await layer.update(true)
    }
