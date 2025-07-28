@@ -89,19 +89,18 @@ export const rebuildPageOrder = async (project, pages, userId) => {
       const thisPageNext = index < pages.length - 1 ? pages[index + 1].id : null
       const thisPagePrev = index > 0 ? pages[index - 1].id : null
       const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
+      if (!pageChanged) continue
+      // A reordered page counts as a content change
+      console.log("UPDATE THIS PAGE FOR ORDER")
+      console.log(page)
       if (!page.creator) page.creator = await fetchUserAgent(userId)
       // We know these values will be upgraded to RERUM ids, so force it and make sure not to leave temp ids.
       // FIXME: If there is an error upgrading the referenced page downstream, the rerum ID made here might not resolve.
-      if (page.next !== thisPageNext) page.next = process.env.RERUMIDPREFIX + thisPageNext.split("/").pop()
-      if (page.prev !== thisPagePrev) page.prev = process.env.RERUMIDPREFIX + thisPagePrev.split("/").pop()
-      if (pageChanged) {
-         // A reordered page counts as a content change
-         console.log("UPDATE THIS PAGE FOR ORDER")
-         console.log(page)
-         // It is possible that the page.next is still 
-         await recordModification(project, page.id, userId)
-         await page.update(pageChanged)
-      }
+      if (page.next !== thisPageNext) page.next = thisPageNext ? process.env.RERUMIDPREFIX + thisPageNext.split("/").pop() : null
+      if (page.prev !== thisPagePrev) page.prev = thisPagePrev ? process.env.RERUMIDPREFIX + thisPagePrev.split("/").pop() : null
+      // It is possible that the page.next is still 
+      await recordModification(project, page.id, userId)
+      await page.update(pageChanged)
    }
 }
 
