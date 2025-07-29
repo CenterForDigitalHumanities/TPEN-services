@@ -467,8 +467,8 @@ export default class ProjectFactory {
                 items: page.items,
                 creator: creator,
                 partOf: newLayer.id,
-                prev: newPages[newPages.indexOf(page) - 1]?.id,
-                next: newPages[newPages.indexOf(page) + 1]?.id
+                prev: newPages[newPages.indexOf(page) - 1]?.id ?? null,
+                next: newPages[newPages.indexOf(page) + 1]?.id ?? null
               })
             await updatedPage.update()
           }
