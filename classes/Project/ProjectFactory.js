@@ -948,8 +948,9 @@ export default class ProjectFactory {
     * status: 4 is Deployment successful
     * status: 5 is Deployment in progress
     * status: 6 is Deployment inactive
-    * status: 7 is Unknown deployment status
-    * status: 8 is No deployment found
+    * status: 7 is Deployment status failed
+    * status: 8 is Unknown deployment status
+    * status: 9 is No deployment found
     */
 
   static async checkManifestUploadAndDeployment(projectId) {
@@ -1014,7 +1015,7 @@ export default class ProjectFactory {
           return {status: 3}
         }
       }
-      return {status: 8}
+      return {status: 9}
     }
 
     const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment[0].id}/statuses`
@@ -1030,12 +1031,12 @@ export default class ProjectFactory {
       })
 
     if (statuses?.length && statuses[0].state === -1) {
-      console.error(status[0])
-      return {status: -1, message: stauses[0].message}
+      console.error(statuses[0])
+      return {status: -1, message: statuses[0].message}
     }
 
     if (!statuses.length) {
-        return {status: 7}
+        return {status: 8}
     }
 
     const latestStatus = statuses[0]
@@ -1047,8 +1048,10 @@ export default class ProjectFactory {
         return {status: 5}
     } else if (state === 'inactive') {
         return {status: 6}
-    } else {
+    } else if (state === 'error') {
         return {status: 7}
+    } else {
+        return {status: 8}
     }
   }
 
