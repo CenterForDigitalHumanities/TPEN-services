@@ -73,16 +73,18 @@ export default class Layer {
         return true
     }
 
-    async update() {
-        if (this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
+    // FIXME: This will save to RERUM even if there has been no content change
+    // The rerum variable below is true if the content has changed.
+    async update(rerum = false) {
+        if (rerum || this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
-        return this.#updateCollectionForProject()
+        return this.#formatCollectionForProject()
     }
 
     asProjectLayer() {
-        return this.#updateCollectionForProject()
+        return this.#formatCollectionForProject()
     }
 
     // Private Methods
@@ -93,11 +95,11 @@ export default class Layer {
         return this
     }
 
-    #updateCollectionForProject() {
+    #formatCollectionForProject() {
         return {
-            label: this.label,
             id: this.id,
-            pages: this.pages.map(this.#getPageReference)
+            label: this.label,
+            pages: this.pages.map(p => new Page(this.id, p).asProjectPage())
         }
     }
 
@@ -116,13 +118,7 @@ export default class Layer {
             creator: await fetchUserAgent(this.creator),
             total: this.pages.length,
             first: this.pages.at(0).id,
-            last: this.pages.at(-1).id,
-            items: this.pages.map(page => ({
-                id: page.id,
-                type: "AnnotationPage",
-                label: { "none": [page.label] },
-                target: page.target
-            }))
+            last: this.pages.at(-1).id
         }
 
         if (this.#tinyAction === 'create') {

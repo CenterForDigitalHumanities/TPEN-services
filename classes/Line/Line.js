@@ -41,7 +41,7 @@ export default class Line {
             type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
-            creator: await fetchUserAgent(this.creator.split('/').pop()),
+            creator: await fetchUserAgent(this.creator),
             body: this.body
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }
