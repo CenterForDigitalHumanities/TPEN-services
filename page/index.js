@@ -35,14 +35,13 @@ router.route('/:pageId')
         type: 'AnnotationPage',
         label: { none: [page.label] },
         target: page.target,
-        partOf: page.partOf,
+        partOf: [{
+          id: page.partOf,
+          type: "AnnotationCollection"
+        }],
         items: page.items ?? [],
-        ...page?.prev && {
-          prev: page.prev
-        },
-        ...page?.next && {
-          next: page.next
-        }
+        prev: page.prev ?? null,
+        next: page.next ?? null
       }
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
