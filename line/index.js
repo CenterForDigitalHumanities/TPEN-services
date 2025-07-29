@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
-import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
+import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
 
 const router = express.Router({ mergeParams: true })
@@ -54,7 +54,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
   try {
     const project = await getProjectById(req.params.projectId, res)
     if (!project) return
-    const page = await getPageById(req.params.pageId, req.params.projectId, res)
+    const page = await findPageById(req.params.pageId, req.params.projectId)
     if (!page) return
 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
@@ -98,7 +98,7 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     const project = await getProjectById(req.params.projectId)
-    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -150,7 +150,7 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       return
     }
     const project = await getProjectById(req.params.projectId)
-    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -201,7 +201,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       return
     }
     const project = await getProjectById(req.params.projectId)
-    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.line}' not found in page '${req.params.pageId}'`)

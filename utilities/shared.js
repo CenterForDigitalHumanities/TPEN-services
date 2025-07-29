@@ -1,7 +1,9 @@
 import DatabaseController from "../database/mongo/controller.js"
 import Project from '../classes/Project/Project.js'
+import Layer from '../classes/Layer/Layer.js'
 import Page from '../classes/Page/Page.js'
 import User from '../classes/User/User.js'
+
 /**
  * Check if the supplied input is valid JSON or not.
  * @param input A string or Object that should be JSON conformant.
@@ -61,16 +63,6 @@ export const getProjectById = async (projectId, res) => {
    return project
 }
 
-// Fetch a page by ID
-export const getPageById = async (pageId, projectId, res) => {
-   const { page, creator } = await findPageById(pageId, projectId)
-   if (!page) {
-      respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
-      return null
-   }
-   return page
-}
-
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
    const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
@@ -80,13 +72,100 @@ export const findLineInPage = (page, lineId) => {
    return line
 }
 
-// Update a page and its project
-export const updatePageAndProject = async (page, project, userId) => {
-   await page.update()
-   const layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
-   layer.pages[pageIndex] = page.asProjectPage()
-   await recordModification(project, page.id, userId)
+/**
+ * Pages have been reordered upstream.  Their prev/next relationships are not right.
+ * Go through the Pages and update them if their prev/next has changed.
+ * Record the Page modification as a content change, and make sure it is attributed.
+ *
+ * @param project - A Project class object
+ * @param layer - A Layer class object with page changes applied to layer.pages
+ * @param userId - The userId hash that caused the reoder
+ */
+export const rebuildPageOrder = async (project, layer, userId) => {
+   if (!project) throw new Error(`Must know project to rebuild Page order`)
+   const pages = layer?.pages
+   if (!pages || !Array.isArray(pages)) throw new Error(`Cannot rebuild page order without an array of pages`)
+   if (!userId) throw new Error(`Must know user id`)
+   for await (const [index, page] of pages.entries()) {
+      const thisPageNext = index < pages.length - 1 ? pages[index + 1].id : null
+      const thisPagePrev = index > 0 ? pages[index - 1].id : null
+      const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
+      if (!pageChanged) continue
+      // A reordered page counts as a content change
+      if (!page.creator) page.creator = await fetchUserAgent(userId)
+      // We know these values will be upgraded to RERUM ids, so force it and make sure not to leave temp ids.
+      // FIXME: If there is an error upgrading the referenced page downstream, the rerum ID made here might not resolve.
+      if (page.next !== thisPageNext) page.next = thisPageNext ? process.env.RERUMIDPREFIX + thisPageNext.split("/").pop() : null
+      if (page.prev !== thisPagePrev) page.prev = thisPagePrev ? process.env.RERUMIDPREFIX + thisPagePrev.split("/").pop() : null
+      // It is possible the Layer is still temp.  It will be upgraded, so partOf should be the upgraded RERUM ID
+      page.partOf = process.env.RERUMIDPREFIX + layer.id.split("/").pop()
+      await recordModification(project, page.id, userId)
+      await page.update(pageChanged)
+   }
+}
+
+/**
+ * Update a Layer, its Pages, and the Project it belongs to.
+ * Content has changed if the organization of layer.pages has been altered.
+ * 
+ * @param layer - A Layer class object with changes applied to it
+ * @param project - A Project class object that will need to update
+ * @param userId - The TPEN3 User hash id performing the action
+ * @param originalPages - An Array of Page _ids that represent the original upstream Layer.pages organization before any modifications.
+ */
+export const updateLayerAndProject = async (layer, project, userId, originalPages = null) => {
+   if (!project) throw new Error(`Must know project to update Layer`)
+   if (layer === null || layer === undefined) throw new Error("A Layer must be provided in order to update")
+   if (!userId) throw new Error(`Must know user id to update layer`)
+   if (originalPages === null || originalPages === undefined || !Array.isArray(originalPages)) originalPages = await findLayerById(layer.id, project._id, true)?.pages
+   let pagesChanged = false
+   const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
+   const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
+   if(providedPageOrder.join() !== originalPageOrder.join()) {
+      // The Pages need updated so that they have the correct prev and next
+      pagesChanged = true
+      await rebuildPageOrder(project, layer, userId)
+   }
+   if (!layer.creator) layer.creator = await fetchUserAgent(userId)
+   const updatedLayer = await layer.update(pagesChanged)
+   const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
+   project.data.layers[layerIndex] = updatedLayer
+   await project.update()
+}
+
+/**
+ * Update a Page and its Project as well as the Layer containing the Page if necessary.
+ * Content has changed if page.items have changed in any way.
+ *
+ * @param page - A Page class object with changes applied to it.
+ * @param project - A Project class object that will need to be updated.
+ * @param userId - The TPEN3 user hash id performing the action
+ * @param contentChanged - A boolean representing whether or not there were changes to page content.
+ */
+export const updatePageAndProject = async (page, project, userId, contentChanged = false) => {
+   if (!project) throw new Error(`Must know project to update Page`)
+   if (!page) throw new Error(`A Page must be provided to update`)
+   if (!userId) throw new Error(`Must know user id to update layer`)
+   const useragent = await fetchUserAgent(userId)
+   if (!page.creator) page.creator = useragent
+   let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
+   const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
+   let layer
+   if (contentChanged) {
+      layer = await findLayerById(data_layer.id, project._id)
+      if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
+      if (!layer.creator) layer.creator = useragent
+      await recordModification(project, page.id, userId)
+   }
+   const updatedPage = await page.update(contentChanged)
+   const pageIndex = data_layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
+   data_layer.pages[pageIndex] = page.asProjectPage()
+   if (contentChanged) {
+      // We don't strictly have to update the Layer if the content change was only text.
+      layer.pages[pageIndex] = updatedPage
+      data_layer = await layer.update(true)
+   }
+   project.data.layers[layerIndex] = data_layer
    await project.update()
 }
 
@@ -131,9 +210,20 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
-export async function findPageById(pageId, projectId) {
-   if (pageId?.startsWith(process.env.RERUMIDPREFIX)) {
-      return fetch(pageId).then(res => res.json())
+export async function findPageById(pageId, projectId, rerum) {
+   if (rerum) {
+      if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
+         pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
+      }
+      const rerum_obj = await fetch(pageId).then(res => {
+         if (res.ok) return res.json()
+         if (!res.ok) return {}
+      })
+      .catch(err => {
+         console.error("Network error with rerum")
+         throw err
+      })
+      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {
@@ -160,10 +250,48 @@ export async function findPageById(pageId, projectId) {
    }
 
    const page = layerContainingPage.pages[pageIndex]
-   page.prev = layerContainingPage.pages[pageIndex - 1] ?? null
-   page.next = layerContainingPage.pages[pageIndex + 1] ?? null
+   page.prev = layerContainingPage.pages[pageIndex - 1]?.id ?? null
+   page.next = layerContainingPage.pages[pageIndex + 1]?.id ?? null
 
-   return { page: new Page(layerContainingPage.id, page), creator: projectData.creator }
+   return new Page(layerContainingPage.id, page)
+}
+
+export async function findLayerById(layerId, projectId, rerum = false) {
+   if (rerum) {
+      if (!layerId?.startsWith(process.env.RERUMIDPREFIX)) {
+         layerId = process.env.RERUMIDPREFIX + layerId.split("/").pop()
+      }
+      const rerum_obj = await fetch(layerId).then(res => {
+         if (res.ok) return res.json()
+         if (!res.ok) return {}
+      })
+      .catch(err => {
+         console.error("Network error with rerum")
+         throw err
+      })
+      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
+   }
+   const p = await Project.getById(projectId)
+   if (!p) {
+     const error = new Error(`Project with ID '${projectId}' not found`)
+     error.status = 404
+     throw error
+   }
+   const layer = layerId.length < 6
+     ? p.data.layers[parseInt(layerId) + 1]
+     : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+   if (!layer) {
+     const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
+     error.status = 404
+     throw error
+   }
+   // Ensure the layer has pages and is not malformed
+   if (!layer.pages || layer.pages.length === 0) {
+     const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
+     error.status = 422
+     throw error
+   }
+   return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
 }
 
 /**
@@ -228,9 +356,10 @@ export const fetchUserAgent = async (userId) => {
    if (!userId) {
       throw new Error('User ID is required to fetch user agent')
    }
+   if (typeof userId === "string" && userId.startsWith("http")) return userId
    try {
       let user = new User(userId)
-      user =await user.getSelf()
+      user = await user.getSelf()
       if (!user) {
          throw new Error(`User with ID '${userId}' not found`)
       }

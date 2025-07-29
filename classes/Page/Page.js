@@ -1,6 +1,5 @@
 import dbDriver from "../../database/driver.js"
-import { handleVersionConflict } from "../../utilities/shared.js"
-import { fetchUserAgent } from "../../utilities/shared.js"
+import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -71,18 +70,16 @@ export default class Page {
     }
 
     async #savePageToRerum() {
+        const prev = this.prev ?? null
+        const next = this.next ?? null
         const pageAsAnnotationPage = {
             "@context": "http://www.w3.org/ns/anno.jsonld",
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
             items: this.items ?? [],
-            ...this?.prev && {
-              prev: this.prev
-            },
-            ...this?.next && {
-              next: this.next
-            },
+            prev,
+            next,
             creator: await fetchUserAgent(this.creator),
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
@@ -117,27 +114,24 @@ export default class Page {
 
     /**
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+      * FIXME: This will save to RERUM even if there has been no content change
+      * The rerum variable below is true if the content has changed.
+      *
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
-    async update() {
-        if (this.#tinyAction === 'update' || this.items.length) {
+    async update(rerum = false) {
+        if (rerum || this.#tinyAction === 'update' || this.items?.length) {
             this.#setRerumId()
             await this.#savePageToRerum()
         }
-        return this.#updatePageForProject()
+        return this.#formatPageForProject()
     }
 
     asProjectPage() {
-        return this.#updatePageForProject()
+        return this.#formatPageForProject()
     }
 
-    #updatePageForProject() {
-        // Page in local MongoDB is in the Project.layers.pages Array and looks like:
-        // { 
-        //   id: "https://api.t-pen.org/layer/layerID/page/pageID", 
-        //   label: "Page 1", 
-        //   target: "https://canvas.uri" 
-        // }
+    #formatPageForProject() {
         return {
             id: this.id,
             label: this.label,
