@@ -245,7 +245,7 @@ export default class ProjectFactory {
   static async cloneLayers(project, copiedProject, creator, database, withAnnotations = true) {
     for (const layer of project.layers) {
       let newLayer = {
-        id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+        id: layer.pages.map(page => Array.isArray(page.items) && page.items.length > 0).some(Boolean) ? `${process.env.RERUMIDPREFIX}${database.reserveId()}` : `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
         label: layer.label,
         pages: []
       }
@@ -264,6 +264,14 @@ export default class ProjectFactory {
         await updatedPage.update()
       }
       newLayer.pages.push(...newPages)
+      if (newLayer.id.startsWith(process.env.RERUMIDPREFIX)) {
+        await new Layer(copiedProject._id, {
+          id: newLayer.id.split('/').pop(),
+          label: newLayer.label,
+          pages: newLayer.pages,
+          creator: creator
+        }).update(true)
+      }
       copiedProject.layers.push(newLayer)
     }
   }
@@ -282,7 +290,8 @@ export default class ProjectFactory {
     return {
       id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
       label: page.label,
-      target: page.target
+      target: page.target,
+      items: []
     }
   }
 
@@ -291,7 +300,8 @@ export default class ProjectFactory {
       return {
         id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
         label: page.label,
-        target: page.target
+        target: page.target,
+        items: []
       }
     }
     else {
@@ -441,7 +451,7 @@ export default class ProjectFactory {
         }
 
         const newLayer = {
-          id: `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
+          id: result[layer.id] && layer.pages.map(page => Array.isArray(page.items) && page.items.length > 0).some(Boolean) ? `${process.env.RERUMIDPREFIX}${database.reserveId()}` : `${process.env.SERVERURL}project/${copiedProject._id}/layer/${database.reserveId()}`,
           label: layer.label,
           pages: []
         }
@@ -449,13 +459,33 @@ export default class ProjectFactory {
         let newPages = []
 
         if(result[layer.id]) {
-          newPages = await this.clonePages(layer, copiedProject, database, true)
+          newPages = await this.clonePages(layer, copiedProject, creator, database, true)
+          for (const page of newPages) {
+            const updatedPage = new Page(
+              newLayer.id,
+              { id: page.id, label: page.label, target: page.target,
+                items: page.items,
+                creator: creator,
+                partOf: newLayer.id,
+                prev: newPages[newPages.indexOf(page) - 1]?.id,
+                next: newPages[newPages.indexOf(page) + 1]?.id
+              })
+            await updatedPage.update()
+          }
           newLayer.pages.push(...newPages)
+          if (newLayer.id.startsWith(process.env.RERUMIDPREFIX)) {
+            await new Layer(copiedProject._id, {
+              id: newLayer.id.split('/').pop(),
+              label: newLayer.label,
+              pages: newLayer.pages,
+              creator: creator
+            }).update(true)
+          }
           copiedProject.layers.push(newLayer)
         }
 
         if(!result[layer.id]) {
-          newPages = await this.clonePages(layer, copiedProject, database, false)
+          newPages = await this.clonePages(layer, copiedProject, creator, database, false)
           newLayer.pages.push(...newPages)
           copiedProject.layers.push(newLayer)
         }  
@@ -467,7 +497,7 @@ export default class ProjectFactory {
         label: project.layers[0].label,
         pages: []
       }
-      const newPages = await this.clonePages(project.layers[0], copiedProject, database, false)
+      const newPages = await this.clonePages(project.layers[0], copiedProject, creator, database, false)
       newLayer.pages.push(...newPages)
       copiedProject.layers.push(newLayer)
     }
