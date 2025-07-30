@@ -134,8 +134,10 @@ export default class ProjectFactory {
   }
 
   static async fromManifestURL(manifestId, creator, importTPEN28 = false) {
+    console.log("Loading manifest from URL:", manifestId)
     return vault.loadManifest(manifestId)
       .then(async (manifest) => {
+        console.log("Manifest loaded successfully:", manifest)
         return await ProjectFactory.DBObjectFromManifest(manifest, creator, importTPEN28)
       })
       .then(async (project) => {
