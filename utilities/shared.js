@@ -320,18 +320,14 @@ export const handleVersionConflict = (res, error) => {
  * @returns {Promise} The result of the operation or throws the final error
  */
 export const withOptimisticLocking = async (operation, retryFn, maxRetries = 2) => {
-   console.log(typeof operation)
-   console.log(operation)
    let lastError
 
    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-         console.log("Priyal")
          let currentVersion = lastError?.currentVersion || null
          console.log(currentVersion ? `Retrying operation due to error: ${currentVersion}` : 'Executing operation')
          return await (attempt === 0 ? operation() : retryFn(currentVersion))
       } catch (error) {
-         console.error(error)
          lastError = error
 
          // Only retry on version conflicts
