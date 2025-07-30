@@ -71,13 +71,12 @@ export default class Page {
                 next
             }
         }
-
+        console.log("What is page data to construct with")
+        console.log(page.data)
         return new Page(layerId, page.data)
     }
 
     async #savePageToRerum() {
-        console.log("saving page to RERUM.  What is this?")
-        console.log(this)
         const prev = this.prev ?? null
         const next = this.next ?? null
         const pageAsAnnotationPage = {
