@@ -72,12 +72,14 @@ router.post('/', auth0Middleware(), async (req, res) => {
       const savedLine = await newLine.update()
       page.items.push(savedLine)
     }
-    await withOptimisticLocking(updatePageAndProject(page, project, user._id),(currentVersion) => {
-      if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-        respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
-        return
-      }
-      currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
+    await withOptimisticLocking(
+      () => updatePageAndProject(page, project, user._id),
+      (currentVersion) => {
+        if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+          return
+        }
+        currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
       Object.assign(page, currentVersion)
       return updatePageAndProject(page, project, user._id)
      })
