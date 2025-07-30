@@ -24,6 +24,8 @@ export default class Page {
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target, items = [], creator = null, partOf = null, prev = null, next = null }) {
+        console.log("constructing new page with label")
+        console.log(label)
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
@@ -31,6 +33,8 @@ export default class Page {
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
+        console.log("constructed page is")
+        console.log(this)
         return this
     }
 
