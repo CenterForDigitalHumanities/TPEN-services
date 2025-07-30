@@ -129,6 +129,8 @@ export default class ProjectFactory {
   }
 
   static getLabelAsString(label) {
+    console.log("Checking labels")
+    console.log(label)
     const defaultLanguage = typeof label === 'object' ? Object.keys(label)[0] : 'none'
     return label[defaultLanguage]?.join(", ") ?? label.none?.join(",")
   }
