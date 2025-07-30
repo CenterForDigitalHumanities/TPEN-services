@@ -1,7 +1,7 @@
 name: TPEN3 Services end to end tests on PR to development
 on:
   pull_request:
-    branches: development
+    branches: development-import28-testing
 jobs:
   test:
     runs-on: ubuntu-latest
