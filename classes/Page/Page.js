@@ -57,7 +57,7 @@ export default class Page {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${canvas.id.split('/').pop()}`,
+                label: ProjectFactory.getLabelAsString(canvas.label ?? `Page ${canvas.id.split('/').pop()}`),
                 target: canvas.id,
                 creator: creator,
                 partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,

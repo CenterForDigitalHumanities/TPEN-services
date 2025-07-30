@@ -72,12 +72,15 @@ router.post('/', auth0Middleware(), async (req, res) => {
       const savedLine = await newLine.update()
       page.items.push(savedLine)
     }
-    await withOptimisticLocking(updatePageAndProject(page, project, user._id),(currentVersion) => {
-      if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-        respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
-        return
-      }
-      currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
+    const ifNewContent = (page.items && page.items.length)
+    await withOptimisticLocking(
+      () => updatePageAndProject(page, project, user._id, ifNewContent),
+      (currentVersion) => {
+        if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+          return
+        }
+        currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
       Object.assign(page, currentVersion)
       return updatePageAndProject(page, project, user._id)
      })
@@ -115,7 +118,7 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id),
+      () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
@@ -161,7 +164,7 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id),
+      () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           if(res.headersSent) return
@@ -212,7 +215,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id),
+      () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
