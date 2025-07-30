@@ -129,15 +129,13 @@ export default class ProjectFactory {
   }
 
   static getLabelAsString(label) {
-    const defaultLanguage = typeof label === 'object' ? Object.keys(label)[0] : 'en'
+    const defaultLanguage = typeof label === 'object' ? Object.keys(label)[0] : 'none'
     return label[defaultLanguage]?.join(", ") ?? label.none?.join(",")
   }
 
   static async fromManifestURL(manifestId, creator, importTPEN28 = false) {
-    console.log("Loading manifest from URL:", manifestId)
     return vault.loadManifest(manifestId)
       .then(async (manifest) => {
-        console.log("Manifest loaded successfully:", manifest)
         return await ProjectFactory.DBObjectFromManifest(manifest, creator, importTPEN28)
       })
       .then(async (project) => {
