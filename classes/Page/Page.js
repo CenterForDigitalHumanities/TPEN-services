@@ -57,16 +57,15 @@ export default class Page {
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
         console.log("building page.  What is canvas?")
         console.log(canvas)
-
+        let canvasLabel = canvas.label ?? `Page ${canvas.id.split('/').pop()}`
         console.log("What will project factory say the label is")
-        console.log(ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${canvas.id.split('/').pop()}`)
-
+        console.log(ProjectFactory.getLabelAsString(canvasLabel))
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${canvas.id.split('/').pop()}`,
+                label: ProjectFactory.getLabelAsString(canvasLabel),
                 target: canvas.id,
                 creator: creator,
                 partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
