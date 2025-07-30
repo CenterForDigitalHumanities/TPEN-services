@@ -2,6 +2,7 @@ import dbDriver from "../../database/driver.js"
 import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
+import ProjectFactory from "../Project/ProjectFactory.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -47,7 +48,7 @@ export default class Layer {
 
         const thisLayer = {
             projectId,
-            label: label ?? `${projectLabel} - Layer ${Date.now()}`,
+            label: ProjectFactory.getLabelAsString(label) ?? `${projectLabel} - Layer ${Date.now()}`,
             creator,
             id: `${process.env.SERVERURL}project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
         }
