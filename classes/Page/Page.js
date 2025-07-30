@@ -51,7 +51,8 @@ export default class Page {
         const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
-
+        console.log("building page.  What is canvas?")
+        console.log(canvas)
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -71,6 +72,8 @@ export default class Page {
     }
 
     async #savePageToRerum() {
+        console.log("saving page to RERUM.  What is this?")
+        console.log(this)
         const prev = this.prev ?? null
         const next = this.next ?? null
         const pageAsAnnotationPage = {
@@ -85,6 +88,8 @@ export default class Page {
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
+        console.log("What is the AnnotationPage?")
+        console.log(pageAsAnnotationPage)
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
