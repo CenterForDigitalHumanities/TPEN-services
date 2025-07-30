@@ -1,5 +1,6 @@
 import dbDriver from "../../database/driver.js"
 import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
+import ProjectFactory from "../Project/ProjectFactory.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -56,7 +57,7 @@ export default class Page {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
+                label: ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 creator: creator,
                 partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
