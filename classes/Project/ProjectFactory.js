@@ -131,8 +131,13 @@ export default class ProjectFactory {
   }
 
   static getLabelAsString(label) {
-    const defaultLanguage = typeof label === 'object' ? Object.keys(label)[0] : 'none'
-    return label[defaultLanguage]?.join(", ") ?? label.none?.join(",")
+    if (label === null || label === undefined) return "" 
+    if (typeof label === "string") return label
+    if (typeof label !== "object") return ""
+    const lang = Object.keys(label).length ? Object.keys(label)[0] : null
+    if (!lang) return ""
+    if (!label[lang] || !Array.isArray(label[lang])) return ""
+    return label[lang].join(", ")
   }
 
   static async fromManifestURL(manifestId, creator, importTPEN28 = false) {

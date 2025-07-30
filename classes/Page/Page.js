@@ -58,6 +58,8 @@ export default class Page {
         console.log("building page.  What is canvas?")
         console.log(canvas)
         let canvasLabel = canvas.label ?? `Page ${canvas.id.split('/').pop()}`
+        console.log("This is the canvas label")
+        console.log(canvasLabel)
         console.log("What will project factory say the label is")
         console.log(ProjectFactory.getLabelAsString(canvasLabel))
         const page = {
@@ -74,8 +76,6 @@ export default class Page {
                 next
             }
         }
-        console.log("Does the page data have the label that ProjectFactory said it would?")
-        console.log(page.data)
         return new Page(layerId, page.data)
     }
 
@@ -94,8 +94,6 @@ export default class Page {
             target: this.target,
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
-        console.log("What is the AnnotationPage?")
-        console.log(pageAsAnnotationPage)
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
