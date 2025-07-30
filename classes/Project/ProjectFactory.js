@@ -106,8 +106,6 @@ export default class ProjectFactory {
         message: err.message ?? "No manifest found. Cannot process empty object"
       }
     }
-    console.log("DB Object from manifest has this manifest")
-    console.log(manifest)
     const _id = database.reserveId()
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now

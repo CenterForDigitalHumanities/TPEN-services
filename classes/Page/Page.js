@@ -24,8 +24,6 @@ export default class Page {
      * @seeAlso {@link Page.build}
      */
     constructor(layerId, { id, label, target, items = [], creator = null, partOf = null, prev = null, next = null }) {
-        console.log("constructing new page with label")
-        console.log(label)
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
@@ -33,8 +31,6 @@ export default class Page {
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
-        console.log("constructed page is")
-        console.log(this)
         return this
     }
 
@@ -55,13 +51,7 @@ export default class Page {
         const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
-        console.log("building page.  What is canvas?")
-        console.log(canvas)
         let canvasLabel = canvas.label ?? `Page ${canvas.id.split('/').pop()}`
-        console.log("This is the canvas label")
-        console.log(canvasLabel)
-        console.log("What will project factory say the label is")
-        console.log(ProjectFactory.getLabelAsString(canvasLabel))
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
