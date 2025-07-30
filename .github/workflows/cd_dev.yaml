@@ -70,7 +70,7 @@ jobs:
           cd /srv/node/tpen-services/
           pm2 stop tpen3_services
           git stash
-          git checkout development
+          git checkout development-import28-testing
           git pull
           npm install
           pm2 -s start -i max bin/tpen3_services.js
