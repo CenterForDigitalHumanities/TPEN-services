@@ -57,6 +57,10 @@ export default class Page {
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
         console.log("building page.  What is canvas?")
         console.log(canvas)
+
+        console.log("What will project factory say the label is")
+        console.log(ProjectFactory.getLabelAsString(canvas.label ?? `Page ${canvas.id.split('/').pop()}`))
+
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
@@ -71,7 +75,7 @@ export default class Page {
                 next
             }
         }
-        console.log("What is page data to construct with")
+        console.log("Does the page data have the label that ProjectFactory said it would?")
         console.log(page.data)
         return new Page(layerId, page.data)
     }
