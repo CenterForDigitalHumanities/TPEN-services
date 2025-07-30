@@ -59,14 +59,14 @@ export default class Page {
         console.log(canvas)
 
         console.log("What will project factory say the label is")
-        console.log(ProjectFactory.getLabelAsString(canvas.label ?? `Page ${canvas.id.split('/').pop()}`))
+        console.log(ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${canvas.id.split('/').pop()}`)
 
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: ProjectFactory.getLabelAsString(canvas.label ?? `Page ${canvas.id.split('/').pop()}`),
+                label: ProjectFactory.getLabelAsString(canvas.label) ?? `Page ${canvas.id.split('/').pop()}`,
                 target: canvas.id,
                 creator: creator,
                 partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
