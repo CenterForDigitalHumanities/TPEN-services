@@ -4,7 +4,7 @@ on:
     branches:
       - '*'
       - '!main'
-      - '!development-import28-testing'
+      - '!development'
 jobs:
   check_for_open_pr:
     runs-on: ubuntu-latest
