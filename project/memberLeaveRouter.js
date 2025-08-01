@@ -12,8 +12,9 @@ const router = express.Router({ mergeParams: true })
  *
  * @param projectId - The project a user it attempting to leave
  */
-router.route("/:projectId/leave").get(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/leave").post(auth0Middleware(), async (req, res) => {
   const user = req.user
+  const name = user.profile.displayName ?? user.email ?? user._id
   const { projectId  } = req.params
   if (!projectId) return respondWithError(res, 400, "Not all data was provided.")
   try {
@@ -27,16 +28,17 @@ router.route("/:projectId/leave").get(auth0Middleware(), async (req, res) => {
       memberIdList.push(key)
       if (members[key].roles.includes("LEADER")) leaderCount++
     }
+    // Guarded members list conditions.
     if (!memberIdList.includes(user._id))
-      return res.status(200).send(`User '${name}' already isn't a member of the project.`)
+      return respondWithError(res, 400, `User '${name}' already isn't a member of the project.`)
     if (members[user._id].roles.includes("OWNER")) 
       return respondWithError(res, 403, "You are the owner.  You must transfer ownership before you leave.")
     if (members[user._id].roles.includes("LEADER") && leaderCount === 1) 
       return respondWithError(res, 403, "You are the last remaining leader.  You must appoint another leader before you leave.")
     await project.removeMember(user._id)
-    const name = user.profile.displayName ?? user.email ?? user._id
     res.status(200).send(`User '${name}' successfully left the project.`)
   } catch (error) {
+    console.error(error)
     return respondWithError(
       res,
       error.status || error.code || 500,
@@ -44,7 +46,7 @@ router.route("/:projectId/leave").get(auth0Middleware(), async (req, res) => {
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 export default router
