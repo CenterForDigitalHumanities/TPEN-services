@@ -281,7 +281,20 @@ export default class Project {
       this.data.tools.push({ name, value, url, state })
     }
     return await this.update()
-  }  
+  }
+
+  async removeTool(toolValue) {
+    if (!this?.data?.tools) await this.#load()
+    if (!this.data?.tools) throw new Error("Project does not have tools.")
+
+    const toolIndex = this.data.tools.findIndex(tool => tool.value === toolValue)
+    if (toolIndex < 0) {
+      throw new Error("Tool not found in project.")
+    }
+
+    this.data.tools.splice(toolIndex, 1)
+    return await this.update()
+  }
 
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
