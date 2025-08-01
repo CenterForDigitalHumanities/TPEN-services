@@ -34,7 +34,6 @@ router.route("/:projectId/tools").post(async (req, res) => {
     const project = new Project(projectId)
     await project.addTools(tools)
     res.status(201).json("Tools added successfully")
-    return
   } catch (error) {
     console.error(error)
     respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
