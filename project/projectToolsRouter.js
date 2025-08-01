@@ -82,9 +82,8 @@ router.route("/:projectId/tools").post(async (req, res) => {
     const project = new Project(projectId)
     await project.removeTool(tool)
     res.status(200).json("Tools removed successfully")
-    return
   } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message.toString())
+    respondWithError(res, error.status ?? 500, error.message.toString())
   }
 }).all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use PUT instead")
