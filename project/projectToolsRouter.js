@@ -36,7 +36,8 @@ router.route("/:projectId/tools").post(async (req, res) => {
     res.status(201).json("Tools added successfully")
     return
   } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message.toString())
+    console.error(error)
+    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
   }
 }).put(async (req, res) => {
   const { projectId } = req.params
@@ -62,9 +63,9 @@ router.route("/:projectId/tools").post(async (req, res) => {
     const project = new Project(projectId)
     await project.updateTools(tools)
     res.status(200).json("Tools updated successfully")
-    return
   } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message.toString())
+    console.error(error)
+    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
   }
 }).delete(async (req, res) => {
   const { projectId } = req.params
@@ -83,7 +84,8 @@ router.route("/:projectId/tools").post(async (req, res) => {
     await project.removeTool(tool)
     res.status(200).json("Tools removed successfully")
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message.toString())
+    console.error(error)
+    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
   }
 }).all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use PUT instead")
