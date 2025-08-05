@@ -5,6 +5,7 @@ import scrubDefaultRoles from "../utilities/isDefaultRole.js"
 import Project from "../classes/Project/Project.js"
 import Group from "../classes/Group/Group.js"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
+import ProjectFactory from "../classes/Project/ProjectFactory.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -35,21 +36,21 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
 // Set custom roles
 router.put('/:projectId/setCustomRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  let newCustomRoles = req.body.roles ?? req.body
+  let roles = req.body.roles ?? req.body
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
-  if (!Object.keys(newCustomRoles).length) {
+  if (!Object.keys(roles).length) {
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
   try {
-    newCustomRoles = scrubDefaultRoles(newCustomRoles)
-    if (!newCustomRoles) return respondWithError(res, 400, `No custom roles provided.`)
+    roles = scrubDefaultRoles(roles)
+    if (!roles) return respondWithError(res, 400, `No custom roles provided.`)
     const project = new Project(projectId)
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE))) {
       return respondWithError(res, 403, "You do not have permission to set custom roles.")
     }
     const group = new Group(project.data.group)
-    await group.setCustomRoles(newCustomRoles)
+    await group.updateCustomRoles(roles)
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
     respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
@@ -81,7 +82,7 @@ router.post('/:projectId/removeCustomRoles', auth0Middleware(), async (req, res)
       return respondWithError(res, 403, "You do not have permission to remove custom roles.")
     }
     const group = new Group(project.data.group)
-    await (await group.removeCustomRoles(rolesToRemove)).update()
+    await group.removeCustomRoles(rolesToRemove)
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
     respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')

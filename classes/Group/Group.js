@@ -180,14 +180,14 @@ export default class Group {
         return true
     }
 
-    async setCustomRoles(roles) {
+    async updateCustomRoles(roles) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
-        this.data.customRoles = roles
-        this.update()
+        this.data.customRoles[Object.keys(roles)[0]] = Object.values(roles)[0]
+        await this.update()
     }
 
     async addCustomRoles(roleMap) {
@@ -197,34 +197,20 @@ export default class Group {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        this.update()
+        console.log("Adding custom roles", this.data.customRoles)
+        await this.update()
     }
 
-    async removeCustomRoles(roleMap) {
+    async removeCustomRoles(roleName) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
-
-        if (!Array.isArray(roleMap)) {
-
-            if (this.isValidRolesMap(roleMap)) {
-                for (const role in roleMap) {
-                    delete this.data.customRoles[role]
-                }
-                return this.update()
-            }
-            if (typeof roleMap !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles. Must be an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
-                }
-            }
-            roleMap = roleMap.toUpperCase().split(" ")
-
+        if (!this.data.customRoles[roleName]) {
+            throw new Error("Role not found")
         }
-
-        roleMap.map(role => delete this.data.customRoles[role])
-        return this.update()
+        delete this.data.customRoles[roleName]
+        console.log("Removing custom roles", this.data.customRoles)
+        await this.update()
     }
 
     async save() {
