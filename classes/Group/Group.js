@@ -40,6 +40,13 @@ export default class Group {
         return Object.fromEntries(roles.map(role => [role, allRoles[role]]))
     }
 
+    async getCustomRoles() {
+        if (Object.keys(this.data.members).length === 0) {
+            await this.#loadFromDB()
+        }
+        return this.data.customRoles
+    }
+
     getPermissions(role) {
         return Object.assign(Group.defaultRoles, this.data.customRoles)[role] ?? "x_x_x"
     }
@@ -186,7 +193,7 @@ export default class Group {
         }
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
-        this.data.customRoles[Object.keys(roles)[0]] = Object.values(roles)[0]
+        this.data.customRoles[Object.keys(roles)[0]] = roles[Object.keys(roles)[0]]
         await this.update()
     }
 
@@ -197,7 +204,6 @@ export default class Group {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        console.log("Adding custom roles", this.data.customRoles)
         await this.update()
     }
 
@@ -205,11 +211,8 @@ export default class Group {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
-        if (!this.data.customRoles[roleName]) {
-            throw new Error("Role not found")
-        }
+
         delete this.data.customRoles[roleName]
-        console.log("Removing custom roles", this.data.customRoles)
         await this.update()
     }
 
