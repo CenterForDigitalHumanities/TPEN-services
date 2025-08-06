@@ -124,6 +124,9 @@ export default class Line {
             const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
             if (currentValue === text) return this
             Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
+            // Apply options directly to the Annotation
+            if (options.creator) this.creator = options.creator
+            if (options.generator) this.generator = options.generator
             // discard Annotation-level options if only one body entry is modified.
             return this.update()
         }
