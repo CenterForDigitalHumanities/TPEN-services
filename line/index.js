@@ -150,14 +150,14 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       return
     }
     const project = await getProjectById(req.params.projectId)
-    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
+    const { page } = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
     const line = new Line(oldLine)
-    const updatedLine = await line.updateText(req.body)
+    const updatedLine = await line.updateText(req.body, { creator: user._id })
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
     await withOptimisticLocking(
@@ -201,14 +201,14 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       return
     }
     const project = await getProjectById(req.params.projectId)
-    const { page, creator } = await findPageById(req.params.pageId, req.params.projectId)
+    const { page } = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.line}' not found in page '${req.params.pageId}'`)
       return
     }
     const line = new Line(oldLine)
-    const updatedLine = await line.updateBounds(req.body)
+    const updatedLine = await line.updateBounds(req.body, { creator: user._id })
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
     await withOptimisticLocking(
