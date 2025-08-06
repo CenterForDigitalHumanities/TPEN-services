@@ -29,9 +29,9 @@ async function validateURL(url) {
       }
     }
 
-    return { valid: true }
-  } catch {
-    return { valid: false, message: "URL is not reachable", status: 500 }
+    return {valid: true}
+  } catch (_error) {
+    return {valid: false, message: "URL is not reachable", status: 500}
   }
 }
 
