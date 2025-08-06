@@ -1,7 +1,9 @@
 import dbDriver from "../../database/driver.js"
+import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
+import ProjectFactory from "../Project/ProjectFactory.js"
 
-const database = new dbDriver("mongo")
 const databaseTiny = new dbDriver("tiny")
 
 export default class Layer {
@@ -17,7 +19,7 @@ export default class Layer {
      * @param {Array} pages The pages in the layer by reference.
      * @seeAlso {@link Layer.build}
      */
-    constructor(projectId, { id, label, pages }) {
+    constructor(projectId, { id, label, pages, creator = null }) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Layer instance.")
         }
@@ -27,6 +29,7 @@ export default class Layer {
         this.projectId = projectId
         this.id = id
         this.label = label
+        this.creator = creator
         this.pages = pages
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
@@ -35,7 +38,7 @@ export default class Layer {
     }
 
     // Static Methods
-    static build(projectId, label, canvases, projectLabel = "Default") {
+    static build(projectId, label, canvases, creator, projectLabel = "Default") {
         if (!Array.isArray(canvases)) {
             if (!canvases) {
                 throw new Error("At least one Canvas must be included.")
@@ -45,15 +48,18 @@ export default class Layer {
 
         const thisLayer = {
             projectId,
-            label: label ?? `${projectLabel} - Layer ${Date.now()}`,
+            label: ProjectFactory.getLabelAsString(label) ?? `${projectLabel} - Layer ${Date.now()}`,
+            creator,
             id: `${process.env.SERVERURL}project/${projectId.split('/').pop()}/layer/${databaseTiny.reserveId()}`
         }
         const pages = canvases.map(c => Page.build(projectId, thisLayer.id, c).asProjectPage())
         pages.forEach((page, index) => {
             if (index > 0) page.prev = pages[index - 1].id
             if (index < pages.length - 1) page.next = pages[index + 1].id
+            page.partOf = thisLayer.id
+            page.creator = thisLayer.creator
         })
-        return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages })
+        return new Layer(projectId, { id: thisLayer.id, label: thisLayer.label, pages, creator: thisLayer.creator })
     }
 
     // Public Methods
@@ -68,16 +74,18 @@ export default class Layer {
         return true
     }
 
-    async update() {
-        if (this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
+    // FIXME: This will save to RERUM even if there has been no content change
+    // The rerum variable below is true if the content has changed.
+    async update(rerum = false) {
+        if (rerum || this.#tinyAction === 'update' || this.pages.some(page => page.id.startsWith(process.env.RERUMIDPREFIX))) {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
-        return this.#updateCollectionForProject()
+        return this.#formatCollectionForProject()
     }
 
     asProjectLayer() {
-        return this.#updateCollectionForProject()
+        return this.#formatCollectionForProject()
     }
 
     // Private Methods
@@ -88,11 +96,11 @@ export default class Layer {
         return this
     }
 
-    #updateCollectionForProject() {
+    #formatCollectionForProject() {
         return {
-            label: this.label,
             id: this.id,
-            pages: this.pages.map(this.#getPageReference)
+            label: this.label,
+            pages: this.pages.map(p => new Page(this.id, p).asProjectPage())
         }
     }
 
@@ -108,6 +116,7 @@ export default class Layer {
             id: this.id,
             type: "AnnotationCollection",
             label: { "none": [this.label] },
+            creator: await fetchUserAgent(this.creator),
             total: this.pages.length,
             first: this.pages.at(0).id,
             last: this.pages.at(-1).id
@@ -127,7 +136,16 @@ export default class Layer {
             throw new Error(`Layer not found in RERUM: ${this.id}`)
         }
         const updatedLayer = { ...existingLayer, ...layerAsCollection }
-        await databaseTiny.overwrite(updatedLayer)
-        return this
+        
+        // Handle optimistic locking version if available        
+        try {
+            await databaseTiny.overwrite(updatedLayer)
+            return this
+        } catch (err) {
+            if (err.status === 409) {
+                throw handleVersionConflict(null, err)
+            }
+            throw err
+        }
     }
 }

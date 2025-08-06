@@ -12,6 +12,8 @@ import metadataRouter from "./metadataRouter.js"
 import projectToolsRouter from "./projectToolsRouter.js"
 import memberUpgradeRouter from "./memberUpgradeRouter.js"
 import memberDeclineInviteRouter from "./memberDeclineInviteRouter.js"
+import memberLeaveRouter from "./memberLeaveRouter.js"
+import projectCopyRouter from "./projectCopyRouter.js"
 
 const router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
@@ -19,6 +21,7 @@ router.use(cors(common_cors))
 // Use split routers
 router.use(memberUpgradeRouter) // Contains unauthenticated route!
 router.use(memberDeclineInviteRouter) // Contains unauthenticated route!
+router.use(memberLeaveRouter)
 router.use(projectCreateRouter)
 router.use(import28Router)
 router.use(projectReadRouter)
@@ -27,6 +30,7 @@ router.use(customRolesRouter)
 router.use(hotkeysRouter)
 router.use(metadataRouter)
 router.use(projectToolsRouter)
+router.use(projectCopyRouter)
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)
