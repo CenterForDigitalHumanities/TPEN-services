@@ -210,6 +210,8 @@ function determineDataType(data, override) {
  if (data._sub) return "User"
  if (data.members) return "Group"
  if (data.group) return "Project"
+ if (data.total && data.first && data.last) return "Layer"
+ if (data.items && data.items[0] && data.items[0].items && data.items[0].items[0] && data.items[0].items[0].target) return "Canvas"
  if (data.target && data.items) return "Page"
  if (data.target && data.body) return "Line"
  return override ?? data["@type"] ?? data.type
@@ -226,6 +228,8 @@ function discernCollectionFromType(type) {
   
   switch (type) {
     case "Project":
+    case "Canvas":
+    case "Layer":
     case "Page":
     case "Line":
       return process.env.TPENPROJECTS

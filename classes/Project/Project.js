@@ -127,6 +127,16 @@ export default class Project {
     return this.data?.label ?? `No Label`
   }
 
+  async setLabel(label) {
+    if (typeof label !== "string" || label.trim() === "") {
+      throw new Error("Label must be a non-empty string")
+    }
+    if (!this?.data?.label) await this.#load()
+    if (this.data.label.trim() === label.trim()) return this.data
+    this.data.label = label.trim()
+    return await this.update()
+  }
+
   getCombinedPermissions(roles) {
     return [...new Set(Object.keys(roles).map(r => roles[r]).flat())]
   }
@@ -197,7 +207,7 @@ export default class Project {
       // Don't leave orphaned invitees in the db.
       const member = new User(userId)
       const memberData = await member.getSelf()
-      if(memberData?.inviteCode) member.delete()
+      if (memberData?.inviteCode) member.delete()
       return this
     } catch (error) {
       throw {
@@ -222,11 +232,11 @@ export default class Project {
  */
 
   async updateTools(selectedValues) {
-    await this.#load()
     // Guard invalid input
     if (!Array.isArray(selectedValues)) return
+    if (!this?.data?.tools) await this.#load()
     // Guard existing data in corrupted state
-    if(!this.data?.tools) this.data.tools = []
+    if (!this.data?.tools) this.data.tools = []
     
     this.data.tools = this.data.tools.map(tool => {
       const match = selectedValues.find(t => {
@@ -246,10 +256,9 @@ export default class Project {
 
     // Guard invalid input
     if (!Array.isArray(tools)) return
-
-    await this.#load()
+    if (!this?.data?.tools) await this.#load()
     // Guard existing data in corrupted state
-    if(!this.data?.tools) this.data.tools = []
+    if (!this.data?.tools) this.data.tools = []
 
     for (let newTool of tools) {
       const name = newTool.name.trim()
@@ -272,7 +281,20 @@ export default class Project {
       this.data.tools.push({ name, value, url, state })
     }
     return await this.update()
-  }  
+  }
+
+  async removeTool(toolValue) {
+    if (!this?.data?.tools) await this.#load()
+    if (!this.data?.tools) throw new Error("Project does not have tools.")
+
+    const toolIndex = this.data.tools.findIndex(tool => tool.value === toolValue)
+    if (toolIndex < 0) {
+      throw new Error("Tool not found in project.")
+    }
+
+    this.data.tools.splice(toolIndex, 1)
+    return await this.update()
+  }
 
   async updateMetadata(newMetadata) {
     this.data.metadata = newMetadata
@@ -304,10 +326,9 @@ export default class Project {
     return project
   }
 
-  updateLayer(layer, previousId) {
-    if (!this.data?.layers) {
-      throw new Error("Project does not have layers.")
-    }
+  async updateLayer(layer, previousId) {
+    if (!this.data?.layers) await this.#load()
+    if (!this.data?.layers) throw new Error("Project does not have layers.")
     previousId ??= layer.id
     const layerIndex = this.data.layers.findIndex(l => l.id.split('/').pop() === previousId.split('/').pop())
     if (layerIndex < 0) {
@@ -345,7 +366,7 @@ function isValidLayer(layer) {
   }
 
   for (const page of layer.pages) {
-    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http') || !page.label ) {
+    if (!page?.id?.startsWith('http') || !page?.target?.startsWith('http') || !page.label) {
       return false
     }
   }
