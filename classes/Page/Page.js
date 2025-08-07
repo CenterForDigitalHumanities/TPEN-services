@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import upgradeReferences from '../../utilities/shared.js'
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -29,7 +30,7 @@ export default class Page {
         Object.assign(this, { id, label, target, partOf: layerId })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
-            upgradeReferences(this)
+            upgradeReferences(this, ['partOf'])
         }
         return this
     }
@@ -137,19 +138,4 @@ export default class Page {
         }
         return true
     }
-}
-
-function upgradeReferences(page, alsoUpgrade = []) {
-    if (!(page instanceof Page)) {
-        // silent fail to just continue - we will break somewhere else
-        return page
-    }
-    const upgradeKeys = ['partOf', ...alsoUpgrade.filter(key => typeof key === 'string' && /^[a-zA-Z_$][\w$]*$/.test(key))]
-    upgradeKeys.forEach(key => {
-        if (!page[key]) return
-        const hexString = page[key].split('/').pop()
-        if(!hexString) return
-        page[key] = `${process.env.RERUMIDPREFIX}${hexString}`
-    })
-    return page
 }
