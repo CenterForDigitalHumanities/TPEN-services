@@ -53,7 +53,7 @@ router.route('/:pageId')
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
     const { projectId, pageId } = req.params
     const update = req.body
-    if (!update) {
+    if (!update || typeof update !== 'object' || Object.keys(update).length === 0) {
       respondWithError(res, 400, 'No update data provided.')
       return
     }
@@ -62,12 +62,7 @@ router.route('/:pageId')
       respondWithError(res, 404, `Project with ID '${projectId}' not found`)
       return
     }
-    const layer = getLayerContainingPage(project, pageId)
-    if (!layer) {
-      respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
-      return
-    }
-    const layerId = layer.id
+    const layerId = getLayerContainingPage(project, pageId)?.id
     if (!layerId) {
       respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
       return
@@ -83,7 +78,7 @@ router.route('/:pageId')
         return
       }
       // Only update top-level properties that are present in the request
-      Object.keys(update ?? {}).forEach(key => {
+      Object.keys(update).forEach(key => {
         page[key] = update[key]
       })
       Object.keys(page).forEach(key => {
@@ -93,7 +88,6 @@ router.route('/:pageId')
           else page[key] = null
         }
       })
-      const pageContentChanged = update && update.hasOwnProperty("items")
       if (update.items) {
         page.items = await Promise.all(page.items.map(async item => {
           const line = item.id?.startsWith?.('http')
@@ -102,7 +96,7 @@ router.route('/:pageId')
           return await line.update()
         }))
       }
-      await updatePageAndProject(page, project, user._id, pageContentChanged)
+      await updatePageAndProject(page, project, user._id)
       res.status(200).json(page)
     } catch (error) {
       // Handle version conflicts with optimistic locking

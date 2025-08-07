@@ -91,6 +91,7 @@ export default class Line {
 #updateLineForPage() {
     return {
         id: this.id,
+        type: this.type ?? "Annotation",
         target: this.target
     }
 }

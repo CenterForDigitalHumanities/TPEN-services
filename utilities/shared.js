@@ -121,7 +121,7 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    let pagesChanged = false
    const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
    const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
-   if(providedPageOrder.join() !== originalPageOrder.join()) {
+   if (providedPageOrder.join() !== originalPageOrder.join()) {
       // The Pages need updated so that they have the correct prev and next
       pagesChanged = true
       await rebuildPageOrder(project, layer, userId)
@@ -140,32 +140,24 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
  * @param page - A Page class object with changes applied to it.
  * @param project - A Project class object that will need to be updated.
  * @param userId - The TPEN3 user hash id performing the action
- * @param contentChanged - A boolean representing whether or not there were changes to page content.
  */
-export const updatePageAndProject = async (page, project, userId, contentChanged = false) => {
+export const updatePageAndProject = async (page, project, userId) => {
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   const useragent = await fetchUserAgent(userId)
-   if (!page.creator) page.creator = useragent
-   let data_layer = project.data.layers.find(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
+   page.creator ??= await fetchUserAgent(userId)
+   const updatedPage = await page.update(contentChanged)
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   let layer
-   if (contentChanged) {
-      layer = await findLayerById(data_layer.id, project._id)
-      if (!layer) throw new Error("Cannot update Page.  Its Layer was not found.")
-      if (!layer.creator) layer.creator = useragent
+   if (!layerIndex) throw new Error("Cannot update Page.  Its Layer was not found.")
+   const layer = project.data.layers[layerIndex]
+   const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
+   layer.pages[pageIndex] = updatedPage
+   if (updatedPage.id.startsWith(process.env.RERUMIDPREFIX)) {
+      // If Page id has changed, we need to update the Layer (and the Project)
+      const updatedLayer = new Layer(project._id, layer)
+      project.data.layers[layerIndex] = await updatedLayer.update()
       await recordModification(project, page.id, userId)
    }
-   const updatedPage = await page.update(contentChanged)
-   const pageIndex = data_layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
-   data_layer.pages[pageIndex] = page.asProjectPage()
-   if (contentChanged) {
-      // We don't strictly have to update the Layer if the content change was only text.
-      layer.pages[pageIndex] = updatedPage
-      data_layer = await layer.update(true)
-   }
-   project.data.layers[layerIndex] = data_layer
    await project.update()
 }
 
@@ -204,7 +196,7 @@ const recordModification = async (project, pageId, userId) => {
 
 // Get a Layer that contains a PageId
 export const getLayerContainingPage = (project, pageId) => {
-   return project.data.layers.find(layer =>
+   return project.data?.layers.find(layer =>
       layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
    )
 }
@@ -219,11 +211,11 @@ export async function findPageById(pageId, projectId, rerum) {
          if (res.ok) return res.json()
          if (!res.ok) return {}
       })
-      .catch(err => {
-         console.error("Network error with rerum")
-         throw err
-      })
-      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
+         .catch(err => {
+            console.error("Network error with rerum")
+            throw err
+         })
+      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {
@@ -265,33 +257,33 @@ export async function findLayerById(layerId, projectId, rerum = false) {
          if (res.ok) return res.json()
          if (!res.ok) return {}
       })
-      .catch(err => {
-         console.error("Network error with rerum")
-         throw err
-      })
-      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
+         .catch(err => {
+            console.error("Network error with rerum")
+            throw err
+         })
+      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const p = await Project.getById(projectId)
    if (!p) {
-     const error = new Error(`Project with ID '${projectId}' not found`)
-     error.status = 404
-     throw error
+      const error = new Error(`Project with ID '${projectId}' not found`)
+      error.status = 404
+      throw error
    }
    const layer = layerId.length < 6
-     ? p.data.layers[parseInt(layerId) + 1]
-     : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+      ? p.data.layers[parseInt(layerId) + 1]
+      : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
    if (!layer) {
-     const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
-     error.status = 404
-     throw error
+      const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
+      error.status = 404
+      throw error
    }
    // Ensure the layer has pages and is not malformed
    if (!layer.pages || layer.pages.length === 0) {
-     const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
-     error.status = 422
-     throw error
+      const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
+      error.status = 422
+      throw error
    }
-   return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
+   return new Layer(projectId, { "id": layer.id, "label": layer.label, "pages": layer.pages })
 }
 
 /**
