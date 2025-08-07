@@ -111,6 +111,24 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
+/**
+ * Here a client may have input any JSON object (any keys, any values).
+ * They are changing a Project Label by providing free-typed text.
+ *
+ * Less is more - avoid processing a malicious foreign key we don't even care about.
+ * In this case we only care about req.body.label
+ * 
+ * Free typed strings may be malicious or rude.  No script injection allowed for things that end up in the dbs.
+ * The key 'label' is not malicious but the value req.body.label could be.
+ *
+ */
+
+/**
+ * This utility import is specifically for this POC.
+ * I've collected together whatever scrubbying or validating functions we had available.
+ * I've added some ideas into it at the  bottom.
+ */
+import * from "../utilities/POC.js"
 router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
