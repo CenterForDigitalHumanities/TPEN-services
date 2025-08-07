@@ -128,7 +128,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
  * I've collected together whatever scrubbying or validating functions we had available.
  * I've added some ideas into it at the  bottom.
  */
-import * from "../utilities/POC.js"
+import * as poc from "../utilities/POC.js"
 router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
@@ -139,7 +139,9 @@ router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   try {
     let project = new Project(projectId)
     if (!project) return respondWithError(res, 404, "Project not found")
-    project = await project.setLabel(label)
+    console.log("check if label is suspicious in any way")
+    poc.checkJSONForSuspiciousInput(label)
+    //project = await project.setLabel(label)
     res.status(200).json(project)
   } catch (error) {
     respondWithError(

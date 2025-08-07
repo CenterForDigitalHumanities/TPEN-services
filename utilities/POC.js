@@ -172,14 +172,14 @@ done
 
 */
 
-export function checkJSONForMaliciousInput(obj, specific_keys = []) {
+export function checkJSONForSuspiciousInput(obj, specific_keys = []) {
   if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
   const common_keys = ["label", "name", "displayName", "value", "body", "target"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   for (const key of allKeys) {
-    if (isMaliciousValueString(getValueString(obj[key]))) {
+    if (isSuspicousValueString(getValueString(obj[key]))) {
       warnings[key] = obj[key]
     }
   }
@@ -192,7 +192,8 @@ export function checkJSONForMaliciousInput(obj, specific_keys = []) {
   return false
 }
 
-export function isMaliciousValueString(valString) {
+export function isSuspicousValueString(valString) {
+  // If we can't process it, so technically is isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
   const noCode = new RegExp(
     /[<>{}()[\];'"`]|script|on\w+=|javascript:/i
@@ -202,6 +203,7 @@ export function isMaliciousValueString(valString) {
   return containsCode || containsOther
 }
 
+// data is an Array, JSON Object, number, string, null, or undefined.  Get string value from it we can test.
 export function getValueString(data) {
   if (data === null || data === undefined) return null
   if (typeof data === "string") return data
