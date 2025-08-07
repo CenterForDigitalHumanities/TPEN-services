@@ -87,6 +87,15 @@ export default class User {
     return user.save()
   }
 
+  static async setLastModified(userId, lastModified) {
+    const user = await database.getById(userId, "users")
+    if (!user) {
+      throw new Error(`User with _id ${userId} not found`)
+    }
+    user._lastModified = lastModified
+    return database.update(user, "users")
+  }
+
   async save() {
     // validate before save
     if (!this._id) {
@@ -102,6 +111,11 @@ export default class User {
     return database.save({ _id: this._id, ...this.data }, "users")
   }
 
+  async delete() {
+    // delete user from database
+    return database.delete({ _id: this._id}, "users")
+  }
+
   /**
    *  this assumes that the project object includes the following properties
     {
@@ -114,6 +128,15 @@ export default class User {
    */
 
   async update(){
+    if (!this._id) {
+      throw new Error("User must have an _id")
+    }
+    if (!this.data.email) {
+      throw new Error("User must have an email")
+    }
+    if (!this.data.profile?.displayName) {
+      throw new Error("User must have a profile with a displayName")
+    }
     return database.update(this.data, "users")
   }
 
@@ -142,7 +165,10 @@ export default class User {
             _id: 1,                        // Project ID
             title: 1,                      // Project title
             label: 1,                      // Project label
-            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] }  // User roles within the group
+            roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] },  // User roles within the group
+            _lastModified: 1, // Last modified page
+            _createdAt: 1,    // Creation date
+            _modifiedAt: 1 // Last modified date
           }
         }
       ]).toArray()

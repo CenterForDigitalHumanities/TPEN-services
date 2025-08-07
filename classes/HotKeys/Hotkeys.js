@@ -1,7 +1,6 @@
 import dbDriver from "../../database/driver.js"
 const database = new dbDriver("mongo")
 
-
 /**
  * Class representing a hotkey.
  * @class Hotkeys

@@ -115,7 +115,21 @@ class dbDriver {
     async delete(data, collection) {
         collection ??= resolveCollection(data)
         if (!collection) throw new Error("Cannot determine collection for delete operation")
-        return this.controller.remove(data, collection)
+        const id = data["@id"] ?? data.id ?? data._id ?? data
+        return this.controller.remove(id, collection)
+    }
+
+    /**
+     * Overwrite an existing object in the database
+     * @param data JSON from an HTTP POST request. It must contain an id.
+     * @param collection Optional collection override
+     * @return The updated document JSON or error JSON
+     */
+    async overwrite(data, collection) {
+        data._modifiedAt = new Date()
+        collection ??= resolveCollection(data)
+        if (!collection) throw new Error("Cannot determine collection for overwrite operation")
+        return this.controller.overwrite(data, collection)
     }
 
     /**
@@ -196,6 +210,8 @@ function determineDataType(data, override) {
  if (data._sub) return "User"
  if (data.members) return "Group"
  if (data.group) return "Project"
+ if (data.total && data.first && data.last) return "Layer"
+ if (data.items && data.items[0] && data.items[0].items && data.items[0].items[0] && data.items[0].items[0].target) return "Canvas"
  if (data.target && data.items) return "Page"
  if (data.target && data.body) return "Line"
  return override ?? data["@type"] ?? data.type
@@ -212,6 +228,8 @@ function discernCollectionFromType(type) {
   
   switch (type) {
     case "Project":
+    case "Canvas":
+    case "Layer":
     case "Page":
     case "Line":
       return process.env.TPENPROJECTS

@@ -121,7 +121,7 @@ export const updateLayerAndProject = async (layer, project, userId, originalPage
    let pagesChanged = false
    const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
    const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
-   if (providedPageOrder.join() !== originalPageOrder.join()) {
+   if(providedPageOrder.join() !== originalPageOrder.join()) {
       // The Pages need updated so that they have the correct prev and next
       pagesChanged = true
       await rebuildPageOrder(project, layer, userId)
@@ -219,11 +219,11 @@ export async function findPageById(pageId, projectId, rerum) {
          if (res.ok) return res.json()
          if (!res.ok) return {}
       })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
+      .catch(err => {
+         console.error("Network error with rerum")
+         throw err
+      })
+      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {
@@ -265,33 +265,33 @@ export async function findLayerById(layerId, projectId, rerum = false) {
          if (res.ok) return res.json()
          if (!res.ok) return {}
       })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
+      .catch(err => {
+         console.error("Network error with rerum")
+         throw err
+      })
+      if(rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const p = await Project.getById(projectId)
    if (!p) {
-      const error = new Error(`Project with ID '${projectId}' not found`)
-      error.status = 404
-      throw error
+     const error = new Error(`Project with ID '${projectId}' not found`)
+     error.status = 404
+     throw error
    }
    const layer = layerId.length < 6
-      ? p.data.layers[parseInt(layerId) + 1]
-      : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+     ? p.data.layers[parseInt(layerId) + 1]
+     : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
    if (!layer) {
-      const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
-      error.status = 404
-      throw error
+     const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
+     error.status = 404
+     throw error
    }
    // Ensure the layer has pages and is not malformed
    if (!layer.pages || layer.pages.length === 0) {
-      const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
-      error.status = 422
-      throw error
+     const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
+     error.status = 422
+     throw error
    }
-   return new Layer(projectId, { "id": layer.id, "label": layer.label, "pages": layer.pages })
+   return new Layer(projectId, {"id":layer.id, "label":layer.label, "pages":layer.pages})
 }
 
 /**
@@ -367,24 +367,4 @@ export const fetchUserAgent = async (userId) => {
    } catch (error) {
       throw new Error(`Error fetching user agent: ${error.message}`)
    }
-}
-
-/**
- * Upgrade references in an object to use the RERUMIDPREFIX for specified keys.
- * For each key, if the value is a string containing a "/", the prefix is replaced with process.env.RERUMIDPREFIX and the last segment.
- * For the key 'pages', if it is an array, each page object with an 'id' will have its id upgraded similarly.
- *
- * @param {object} obj - The object whose references should be upgraded.
- * @param {string[]} [keys=["partOf", "next", "prev", "target", "pages"]] - The keys to upgrade. Must be valid JS object keys.
- * @returns {object} The upgraded object.
- */
-export function upgradeReferences(obj, keys = []) {
-   if (!obj || typeof obj !== 'object') return obj
-   keys.filter(key => typeof key === 'string' && /^[a-zA-Z_$][\w$]*$/.test(key)).forEach(key => {
-      if (!obj[key]) return
-      const hexString = obj[key].split('/').pop()
-      if (!hexString) return
-      obj[key] = `${process.env.RERUMIDPREFIX}${hexString}`
-   })
-   return obj
 }
