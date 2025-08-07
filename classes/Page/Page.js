@@ -86,7 +86,7 @@ export default class Page {
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
         if (this.#tinyAction === 'create') {
-            await databaseTiny.save(pageAsAnnotationPage)
+            const saved = await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
                     console.error(err, pageAsAnnotationPage)
                     throw new Error(`Failed to save Page to RERUM: ${err.message}`)
@@ -120,8 +120,9 @@ export default class Page {
       *
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
-    async update(rerum = false) {
-        if (rerum || this.#tinyAction === 'update' || this.items?.length) {
+    async update() {
+        const hasContent = this.items?.length || this.items?.some?.(item => item && typeof item === 'object' && 'body' in item)
+        if (this.#tinyAction === 'update' || hasContent) {
             this.#setRerumId()
             await this.#savePageToRerum()
         }
