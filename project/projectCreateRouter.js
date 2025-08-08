@@ -139,8 +139,11 @@ router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   try {
     let project = new Project(projectId)
     if (!project) return respondWithError(res, 404, "Project not found")
-    console.log("check if label is suspicious in any way")
-    poc.checkJSONForSuspiciousInput(label)
+    console.log("check if req body is suspicious in any way")
+    console.log(req.body)
+    poc.checkJSONForSuspiciousInput(req.body)
+    console.log("check if label is suspicious is any way")
+    poc.isSuspicousValueString(label)
     //project = await project.setLabel(label)
     res.status(200).json(project)
   } catch (error) {

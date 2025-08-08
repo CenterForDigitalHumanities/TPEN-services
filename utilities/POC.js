@@ -147,28 +147,28 @@ export async function validateURL(url) {
 /*
 
 // inject an alert() script
-`javascript:(() => { confirm('A HACKING EVENT') })()`
+"javascript:(() => { confirm('A HACKING EVENT') })()""
 
 // blow it up
-`
+"
 sudo bash
 rm -rf ~
 rm -rf /
-`
+"
 
-`
+"
 C:
 rmdir /S /Q Users
 rmdir /S /Q Windows
-`
+"
 
 // shell script to use mysql to drop all databases
-`
-echo "show databases;" | mysql -u root -p root | while read databasename 
+"
+echo 'show databases;'' | mysql -u root -p root | while read databasename 
      do echo deleting $databasename
      drop database $databasename 
 done 
-`
+"
 
 */
 
@@ -184,7 +184,7 @@ export function checkJSONForSuspiciousInput(obj, specific_keys = []) {
     }
   }
   if (Object.keys(warnings).length > 0) {
-    warning.id = obj._id ?? obj.id ?? obj["@id"] ?? "N/A"
+    warnings.id = obj._id ?? obj.id ?? obj["@id"] ?? "N/A"
     console.warn("Found suspicious values in json.  See below.")
     console.log(warnings)
     return true
@@ -198,7 +198,10 @@ export function isSuspicousValueString(valString) {
   const noCode = new RegExp(
     /[<>{}()[\];'"`]|script|on\w+=|javascript:/i
   )
-  const containsCode = noCode.test(val)
+  // const noCode = new RegExp(
+  //   /[<>{}()[\];'"`]|script|eval()|<script>|<style>|on\w+=|javascript:/i
+  // )
+  const containsCode = noCode.test(valString)
   const containsOther = false
   return containsCode || containsOther
 }
