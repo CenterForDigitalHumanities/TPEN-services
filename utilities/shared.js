@@ -1,4 +1,5 @@
 import DatabaseController from "../database/mongo/controller.js"
+import tiny from "../database/tiny/controller.js"
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
 import Page from '../classes/Page/Page.js'
@@ -106,30 +107,38 @@ export const rebuildPageOrder = async (project, layer, userId) => {
 
 /**
  * Update a Layer, its Pages, and the Project it belongs to.
- * Content has changed if the organization of layer.pages has been altered.
+ * Upgrade a Layer only if it contains upgraded Pages.
  * 
  * @param layer - A Layer class object with changes applied to it
  * @param project - A Project class object that will need to update
  * @param userId - The TPEN3 User hash id performing the action
  * @param originalPages - An Array of Page _ids that represent the original upstream Layer.pages organization before any modifications.
  */
-export const updateLayerAndProject = async (layer, project, userId, originalPages = null) => {
+export const updateLayerAndProject = async (layer, project, userId) => {
    if (!project) throw new Error(`Must know project to update Layer`)
    if (layer === null || layer === undefined) throw new Error("A Layer must be provided in order to update")
    if (!userId) throw new Error(`Must know user id to update layer`)
-   if (originalPages === null || originalPages === undefined || !Array.isArray(originalPages)) originalPages = await findLayerById(layer.id, project._id, true)?.pages
-   let pagesChanged = false
-   const originalPageOrder = originalPages.map(p => p.id.split("/").pop())
-   const providedPageOrder = layer.pages.map(p => p.id.split("/").pop())
-   if (providedPageOrder.join() !== originalPageOrder.join()) {
-      // The Pages need updated so that they have the correct prev and next
-      pagesChanged = true
-      await rebuildPageOrder(project, layer, userId)
-   }
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
-   const updatedLayer = await layer.update(pagesChanged)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
+   const updatedLayer = await layer.update()
+   if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
+      // update the references to the Layer in the Project
+      // Pages all have their partOf set to the Layer.id
+      const pageOverwrites = []
+      updatedLayer.pages.forEach(page => {
+         page.partOf[0].id = updatedLayer.id
+         if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
+            // overwrite the Page in RERUM
+            const oldPage = await tiny.find({_id: page.id.split("/").pop()})
+            if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
+            oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
+            pageOverwrites.push(tiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
+         }
+      })
    project.data.layers[layerIndex] = updatedLayer
+   await Promise.all(pageOverwrites).catch(err => {
+      console.error("Error overwriting pages in RERUM", err)
+   }) 
    await project.update()
 }
 
@@ -146,7 +155,8 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
    page.creator ??= await fetchUserAgent(userId)
-   const updatedPage = await page.update(contentChanged)
+   // .update() returns a Page prepped for saving to Project
+   const updatedPage = await page.update()
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    if (!layerIndex) throw new Error("Cannot update Page.  Its Layer was not found.")
    const layer = project.data.layers[layerIndex]
