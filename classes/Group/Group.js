@@ -193,7 +193,7 @@ export default class Group {
         }
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
-        this.data.customRoles[Object.keys(roles)[0]] = roles[Object.keys(roles)[0]]
+        this.data.customRoles = roles
         await this.update()
     }
 
