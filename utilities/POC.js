@@ -195,12 +195,12 @@ export function checkJSONForSuspiciousInput(obj, specific_keys = []) {
 export function isSuspicousValueString(valString) {
   // If we can't process it, so technically is isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
-  const noCode = new RegExp(
-    /[<>{}()[\];'"`]|script|on\w+=|javascript:/i
-  )
   // const noCode = new RegExp(
-  //   /[<>{}()[\];'"`]|script|eval()|<script>|<style>|on\w+=|javascript:/i
+  //   /[<>{}()[\];'"`]|script|on\w+=|javascript:/i
   // )
+  const noCode = new RegExp(
+    /[<>{}()[\];'"`]|script|eval()|<script>|<style>|on\w+=|javascript:/i
+  )
   const containsCode = noCode.test(valString)
   const containsOther = false
   return containsCode || containsOther
