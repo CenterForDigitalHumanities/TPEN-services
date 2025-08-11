@@ -1,9 +1,10 @@
-import DatabaseController from "../database/mongo/controller.js"
-import tiny from "../database/tiny/controller.js"
+import dbDriver from "../database/driver.js"
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
 import Page from '../classes/Page/Page.js'
 import User from '../classes/User/User.js'
+
+const databaseTiny = new dbDriver("tiny")
 
 /**
  * Check if the supplied input is valid JSON or not.
@@ -28,7 +29,7 @@ export function isValidJSON(input = "") {
  */
 export function validateID(id, type = "mongo") {
    if (type == "mongo") {
-      return new DatabaseController().isValidId(id)
+      return databaseTiny.isValidId(id)
    } else {
       if (!isNaN(id)) {
          try {
@@ -125,14 +126,14 @@ export const updateLayerAndProject = async (layer, project, userId) => {
       // update the references to the Layer in the Project
       // Pages all have their partOf set to the Layer.id
       const pageOverwrites = []
-      updatedLayer.pages.forEach(page => {
+      updatedLayer.pages.forEach(async page => {
          page.partOf[0].id = updatedLayer.id
          if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
             // overwrite the Page in RERUM
-            const oldPage = await tiny.find({_id: page.id.split("/").pop()})
+            const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
             if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
             oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
-            pageOverwrites.push(tiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
+            pageOverwrites.push(databaseTiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
          }
          // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
          // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
