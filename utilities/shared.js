@@ -134,6 +134,9 @@ export const updateLayerAndProject = async (layer, project, userId) => {
             oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
             pageOverwrites.push(tiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
          }
+         // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
+         // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
+         // but retains its reference to the Annotation Collection in its partOf.
       })
    project.data.layers[layerIndex] = updatedLayer
    await Promise.all(pageOverwrites).catch(err => {
