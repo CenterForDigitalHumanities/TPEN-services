@@ -139,6 +139,7 @@ export const updateLayerAndProject = async (layer, project, userId) => {
          // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
          // but retains its reference to the Annotation Collection in its partOf.
       })
+   }
    project.data.layers[layerIndex] = updatedLayer
    await Promise.all(pageOverwrites).catch(err => {
       console.error("Error overwriting pages in RERUM", err)
