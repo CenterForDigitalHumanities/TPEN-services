@@ -8,7 +8,7 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
-// Get group by project ID
+// Get custom roles from a Project's Group
 router.get('/:projectId/customRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const user = req.user
