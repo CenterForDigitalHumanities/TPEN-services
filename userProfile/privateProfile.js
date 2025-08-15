@@ -10,6 +10,19 @@ router.use(
   cors(common_cors)
 )
 
+router.route("/:id/public-profile").get(async (req, res) => {
+  const userId = req.params.id
+  if (!userId) return respondWithError(res, 400, "User ID is required")
+  try {
+    const userObj = new User(userId)
+    const publicProfile = await userObj.getPublicInfo()
+    if (!publicProfile) return respondWithError(res, 404, "User not found")
+    res.status(200).json(publicProfile)
+  } catch (error) {
+    respondWithError(res, error.status || error.code || 500, error.message ?? "An error occurred while fetching the user data.")
+  }
+}).all((req, res) => respondWithError(res, 405, "Improper request method. Use GET instead"))
+
 router.route("/profile").get(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
