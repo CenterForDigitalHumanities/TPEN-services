@@ -43,8 +43,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
   try {
-    customRoles = scrubDefaultRoles(customRoles)
-    if (!customRoles) return respondWithError(res, 400, `No custom roles provided.`)
+    if (!scrubDefaultRoles(customRoles)) return respondWithError(res, 400, `No custom roles provided.`)
     const project = new Project(projectId)
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.ROLE))) {
       return respondWithError(res, 403, "You do not have permission to add custom roles.")
@@ -67,8 +66,7 @@ router.put('/:projectId/updateCustomRoles', auth0Middleware(), async (req, res) 
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
   try {
-    roles = scrubDefaultRoles(roles)
-    if (!roles) return respondWithError(res, 400, `No custom roles provided.`)
+    if (!scrubDefaultRoles(roles)) return respondWithError(res, 400, `No custom roles provided.`)
     const project = new Project(projectId)
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.ROLE))) {
       return respondWithError(res, 403, "You do not have permission to set custom roles.")
