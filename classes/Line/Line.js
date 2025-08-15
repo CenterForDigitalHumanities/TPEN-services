@@ -124,6 +124,9 @@ export default class Line {
             const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
             if (currentValue === text) return this
             Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
+            // Apply options directly to the Annotation
+            if (options.creator) this.creator = options.creator
+            if (options.generator) this.generator = options.generator
             // discard Annotation-level options if only one body entry is modified.
             return this.update()
         }
@@ -142,7 +145,7 @@ export default class Line {
         throw new Error('Unexpected body format. Cannot update text.')
     }
 
-    async updateBounds({x, y, w, h}) {
+    async updateBounds({x, y, w, h}, options = {}) {
         if (!x || !y || !w || !h) {
             throw new Error('Bounds ({x,y,w,h}) must be provided')
         }
@@ -152,6 +155,10 @@ export default class Line {
             return this
         }
         this.target = newTarget
+        // Apply options directly to the Annotation.
+        if (options.creator) this.creator = options.creator
+        if (options.generator) this.generator = options.generator
+        // discarding unknown options
         return this.update()
     }
 
