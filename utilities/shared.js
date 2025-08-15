@@ -163,7 +163,6 @@ export const updatePageAndProject = async (page, project, userId) => {
    // .update() returns a Page prepped for saving to Project
    const updatedPage = await page.update()
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   console.log(layerIndex)
    if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) throw new Error("Cannot update Page.  Its Layer was not found.")
    const layer = project.data.layers[layerIndex]
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
