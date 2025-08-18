@@ -340,6 +340,91 @@ export default class ProjectFactory {
     }
   }
 
+  static async importTPEN28(projectTPEN28Data, projectTPEN3Data) {
+    if (!projectTPEN28Data || !projectTPEN3Data) {
+      throw {
+        status: 400,
+        message: "Invalid project data"
+      }
+    }
+
+    const symbols = projectTPEN28Data.projectButtons.map(button => String.fromCharCode(button.key))
+    const copiedHotkeys = new Hotkeys(projectTPEN3Data._id, symbols)
+    await copiedHotkeys.create()
+
+    const projectTools = projectTPEN28Data.userTool + projectTPEN28Data.projectTool
+    const toolList = projectTPEN3Data.tools.map((tool) => tool.value)
+    const selectedTools = toolList.map((tool) => ({
+        value: tool,
+        state: projectTools.includes(tool),
+    }))
+    const project = new Project(projectTPEN3Data._id)
+    await project.updateTools(selectedTools)
+
+    const allPages = projectTPEN3Data.layers[0].pages.map((page) => page.target)
+    const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
+    let manifestUrl = projectTPEN3Data.manifest[0]
+    
+    // We might add the Vault here to get the Manifest version 3
+    function transformManifestUrl(url) {
+        const parsedUrl = new URL(url)
+        parsedUrl.protocol = "https:"
+        if (parsedUrl.pathname.endsWith("/manifest.json")) {
+            parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
+        }
+        parsedUrl.search = "?version=3"
+        return parsedUrl.toString()
+    }
+    
+    manifestUrl = transformManifestUrl(manifestUrl)
+    const responseManifest = await fetch(manifestUrl)
+    if (!responseManifest.ok) {
+        throw new Error(`Failed to fetch: ${responseManifest.statusText}`)
+    }
+    
+    const manifestJson = await responseManifest.json()
+    const itemsByPage = {}
+    manifestJson.items.map((item, index) => {
+      const pageId = item.id
+      if (allPages.includes(pageId)) {
+        const annotations = item.annotations?.flatMap(
+          (annotation) =>
+            annotation.items?.flatMap((innerItems) => ({
+            body: {
+              type: innerItems.body?.type,
+              format: innerItems.body?.format,
+              value: innerItems.body?.value,
+            },
+            motivation: innerItems.motivation,
+            target: innerItems.target,
+            type: innerItems.type,
+            })) || []
+          ) || []
+        itemsByPage[allPagesIds[index]] = annotations
+      }
+    })
+    
+    for (const [endpoint, annotations] of Object.entries(itemsByPage)) {
+        try {
+          const response = await fetch(`${endpoint}/line`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${TPEN.getAuthorization()}`,
+            },
+            body: JSON.stringify(annotations),
+          })
+          if (!response.ok) {
+            throw new Error(`Failed to import annotations: ${response.statusText}`)
+          }
+      } catch (error) {
+        console.error("Error importing annotations:", error)
+      }
+    }
+
+    return projectTPEN3Data
+  }
+
   static async copyProject(projectId, creator) {
     if (!projectId) {
       throw {
