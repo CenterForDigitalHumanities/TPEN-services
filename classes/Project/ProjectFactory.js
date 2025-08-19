@@ -340,7 +340,18 @@ export default class ProjectFactory {
     }
   }
 
-  static async importTPEN28(projectTPEN28Data, projectTPEN3Data) {
+  // We might add the Vault here to get the Manifest version 3
+  static transformManifestUrl(url) {
+      const parsedUrl = new URL(url)
+      parsedUrl.protocol = "https:"
+      if (parsedUrl.pathname.endsWith("/manifest.json")) {
+          parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
+      }
+      parsedUrl.search = "?version=3"
+      return parsedUrl.toString()
+  }
+
+  static async importTPEN28(projectTPEN28Data, projectTPEN3Data, userToken) {
     if (!projectTPEN28Data || !projectTPEN3Data) {
       throw {
         status: 400,
@@ -364,18 +375,6 @@ export default class ProjectFactory {
     const allPages = projectTPEN3Data.layers[0].pages.map((page) => page.target)
     const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
-    
-    // We might add the Vault here to get the Manifest version 3
-    function transformManifestUrl(url) {
-        const parsedUrl = new URL(url)
-        parsedUrl.protocol = "https:"
-        if (parsedUrl.pathname.endsWith("/manifest.json")) {
-            parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
-        }
-        parsedUrl.search = "?version=3"
-        return parsedUrl.toString()
-    }
-    
     manifestUrl = transformManifestUrl(manifestUrl)
     const responseManifest = await fetch(manifestUrl)
     if (!responseManifest.ok) {
@@ -410,7 +409,7 @@ export default class ProjectFactory {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${TPEN.getAuthorization()}`,
+              Authorization: `Bearer ${userToken}`,
             },
             body: JSON.stringify(annotations),
           })

@@ -81,7 +81,7 @@ router.route("/import28/:uid").get(
     respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
-router.route("/import28/:selectedProjectId").post(
+router.route("/import28/selectedproject/:selectedProjectId").get(
     cors(corsOptions),
     cookieParser(),
     patchTokenFromQuery,
@@ -97,7 +97,7 @@ router.route("/import28/:selectedProjectId").post(
 
         try {
             const importResponse = await fetch(
-                `${process.env.TPEN28URL}/TPEN/getProjectTPENServlet?projectID=${selectedId}`,
+                `${process.env.TPEN28URL}/TPEN/getProjectTPENServlet?projectID=${selectedProjectId}`,
                 {
                     method: "GET",
                     headers: {
@@ -124,7 +124,7 @@ router.route("/import28/:selectedProjectId").post(
                 })
             )
 
-            const manifestURL = req?.body?.url
+            const manifestURL = `${process.env.TPEN28URL}/TPEN/manifest/${selectedProjectId}`
             let checkURL = await validateURL(manifestURL)
             let importData
             if (!checkURL.valid)
@@ -139,7 +139,7 @@ router.route("/import28/:selectedProjectId").post(
                 })
             }
 
-            await ProjectFactory.importTPEN28(parsedData, importData, user._id)
+            await ProjectFactory.importTPEN28(parsedData, importData, req.cookies.userToken)
             res.status(201).json({
                 message: "Project imported successfully",
                 project: { parsedData, importData }
