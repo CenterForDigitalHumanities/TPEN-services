@@ -99,6 +99,7 @@ router.route('/:pageId')
           const line = item.id?.startsWith?.('http')
             ? new Line(item)
             : Line.build(projectId, pageId, item, user.agent.split('/').pop())
+          line.creator ??= user.agent.split('/').pop()
           return await line.update()
         }))
       }
