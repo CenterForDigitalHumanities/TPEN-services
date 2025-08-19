@@ -262,7 +262,7 @@ TPEN-services/
 
 ## License
 
-By contributing to TPEN Services, you agree that your contributions will be licensed under the same license as the project (CC-BY).
+By contributing to TPEN Services, you agree that your contributions will be licensed under the same license as the project (MIT License).
 
 ---
 
