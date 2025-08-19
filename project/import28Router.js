@@ -139,7 +139,7 @@ router.route("/import28/:selectedProjectId").post(
                 })
             }
 
-            const importedProject = await ProjectFactory.importTPEN28(parsedData, importData, user._id)
+            await ProjectFactory.importTPEN28(parsedData, importData, user._id)
             res.status(201).json({
                 message: "Project imported successfully",
                 project: { parsedData, importData }
