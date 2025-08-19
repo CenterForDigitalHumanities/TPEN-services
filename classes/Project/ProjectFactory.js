@@ -375,7 +375,7 @@ export default class ProjectFactory {
     const allPages = projectTPEN3Data.layers[0].pages.map((page) => page.target)
     const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
-    manifestUrl = transformManifestUrl(manifestUrl)
+    manifestUrl = this.transformManifestUrl(manifestUrl)
     const responseManifest = await fetch(manifestUrl)
     if (!responseManifest.ok) {
         throw new Error(`Failed to fetch: ${responseManifest.statusText}`)
