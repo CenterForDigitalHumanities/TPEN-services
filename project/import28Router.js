@@ -149,7 +149,7 @@ router.route("/import28/selectedproject/:selectedProjectId").get(
         }
     }
 ).all((req, res) => {
-    respondWithError(res, 405, "Improper request method. Use POST instead")
+    respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 export default router
