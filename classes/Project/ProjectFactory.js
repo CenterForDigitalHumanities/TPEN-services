@@ -381,7 +381,7 @@ export default class ProjectFactory {
     if (selectedTools && selectedTools.length > 0) {
       await project.updateTools(selectedTools)
     }
-    const allPages = projectTPEN3Data.layers[0].pages.map((page) => page.target)
+    const allCanvases = projectTPEN3Data.layers[0].pages.map((page) => page.target)
     const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
     manifestUrl = this.transformManifestUrl(manifestUrl, protocol)
@@ -393,8 +393,8 @@ export default class ProjectFactory {
     const manifestJson = await responseManifest.json()
     const itemsByPage = {}
     manifestJson.items.map((item, index) => {
-      const pageId = item.id
-      if (allPages.includes(pageId)) {
+      const canvasId = item.id
+      if (allCanvases.includes(canvasId)) {
         const annotations = item.annotations?.flatMap(
           (annotation) =>
             annotation.items?.flatMap((innerItems) => ({
