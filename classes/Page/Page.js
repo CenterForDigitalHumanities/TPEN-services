@@ -1,5 +1,5 @@
 import dbDriver from "../../database/driver.js"
-import { handleVersionConflict, fetchUserAgent, upgradeReferences } from "../../utilities/shared.js"
+import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
 import ProjectFactory from "../Project/ProjectFactory.js"
 
 const databaseTiny = new dbDriver("tiny")
@@ -30,7 +30,6 @@ export default class Page {
         Object.assign(this, { id, label, target, partOf: partOf ?? layerId, items, creator, prev, next })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
-            upgradeReferences(this, ['partOf'])
         }
         return this
     }

@@ -368,23 +368,3 @@ export const fetchUserAgent = async (userId) => {
       throw new Error(`Error fetching user agent: ${error.message}`)
    }
 }
-
-/**
- * Upgrade references in an object to use the RERUMIDPREFIX for specified keys.
- * For each key, if the value is a string containing a "/", the prefix is replaced with process.env.RERUMIDPREFIX and the last segment.
- * For the key 'pages', if it is an array, each page object with an 'id' will have its id upgraded similarly.
- *
- * @param {object} obj - The object whose references should be upgraded.
- * @param {string[]} [keys=["partOf", "next", "prev", "target", "pages"]] - The keys to upgrade. Must be valid JS object keys.
- * @returns {object} The upgraded object.
- */
-export function upgradeReferences(obj, keys = []) {
-   if (!obj || typeof obj !== 'object') return obj
-   keys.filter(key => typeof key === 'string' && /^[a-zA-Z_$][\w$]*$/.test(key)).forEach(key => {
-      if (!obj[key]) return
-      const hexString = obj[key].split('/').pop()
-      if (!hexString) return
-      obj[key] = `${process.env.RERUMIDPREFIX}${hexString}`
-   })
-   return obj
-}
