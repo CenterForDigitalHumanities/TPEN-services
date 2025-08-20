@@ -360,18 +360,27 @@ export default class ProjectFactory {
     }
 
     const symbols = projectTPEN28Data.projectButtons.map(button => String.fromCharCode(button.key))
-    const copiedHotkeys = new Hotkeys(projectTPEN3Data._id, symbols)
-    await copiedHotkeys.create()
-
-    const projectTools = projectTPEN28Data.userTool + projectTPEN28Data.projectTool
+    if (symbols && symbols.length > 0) {
+      const copiedHotkeys = new Hotkeys(projectTPEN3Data._id, symbols)
+      await copiedHotkeys.create()
+    }
+    let projectTools = []
+    try {
+      projectTools = [...projectTPEN28Data.userTool, ...projectTPEN28Data.projectTool]
+    }
+    catch (err) {
+      // Just in case the spread operator didn't end up making an array due to 'undefined' or something weird.
+      projectTools = []
+    }
     const toolList = projectTPEN3Data.tools.map((tool) => tool.value)
     const selectedTools = toolList.map((tool) => ({
         value: tool,
         state: projectTools.includes(tool),
     }))
     const project = new Project(projectTPEN3Data._id)
-    await project.updateTools(selectedTools)
-
+    if (selectedTools && selectedTools.length > 0) {
+      await project.updateTools(selectedTools)
+    }
     const allPages = projectTPEN3Data.layers[0].pages.map((page) => page.target)
     const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
