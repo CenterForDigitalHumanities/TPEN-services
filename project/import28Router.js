@@ -139,7 +139,7 @@ router.route("/import28/selectedproject/:selectedProjectId").get(
                 })
             }
 
-            await ProjectFactory.importTPEN28(parsedData, importData, req.cookies.userToken)
+            await ProjectFactory.importTPEN28(parsedData, importData, req.cookies.userToken, req.protocol)
             res.status(201).json({
                 message: "Project imported successfully",
                 project: { parsedData, importData }

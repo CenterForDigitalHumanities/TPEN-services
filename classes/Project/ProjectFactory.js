@@ -341,9 +341,9 @@ export default class ProjectFactory {
   }
 
   // We might add the Vault here to get the Manifest version 3
-  static transformManifestUrl(url) {
-      let parsedUrl = new URL(url)
-      parsedUrl.protocol = window.location.protocol
+  static transformManifestUrl(url, protocol) {
+      const parsedUrl = new URL(url)
+      parsedUrl.protocol = protocol
       if (parsedUrl.pathname.endsWith("/manifest.json")) {
           parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
       }
@@ -351,7 +351,7 @@ export default class ProjectFactory {
       return parsedUrl.toString()
   }
 
-  static async importTPEN28(projectTPEN28Data, projectTPEN3Data, userToken) {
+  static async importTPEN28(projectTPEN28Data, projectTPEN3Data, userToken, protocol) {
     if (!projectTPEN28Data || !projectTPEN3Data) {
       throw {
         status: 400,
@@ -375,7 +375,7 @@ export default class ProjectFactory {
     const allPages = projectTPEN3Data.layers[0].pages.map((page) => page.target)
     const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
-    manifestUrl = this.transformManifestUrl(manifestUrl)
+    manifestUrl = this.transformManifestUrl(manifestUrl, protocol)
     const responseManifest = await fetch(manifestUrl)
     if (!responseManifest.ok) {
         throw new Error(`Failed to fetch: ${responseManifest.statusText}`)
