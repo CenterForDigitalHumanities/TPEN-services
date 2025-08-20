@@ -170,6 +170,7 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (updatedPage.id.startsWith(process.env.RERUMIDPREFIX)) {
       // If Page id has changed, we need to update the Layer (and the Project)
       const updatedLayer = new Layer(project._id, layer)
+      updatedLayer.creator ??= await fetchUserAgent(userId)
       project.data.layers[layerIndex] = await updatedLayer.update()
       await recordModification(project, page.id, userId)
    }
