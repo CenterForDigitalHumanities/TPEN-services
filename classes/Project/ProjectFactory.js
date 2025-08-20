@@ -342,7 +342,7 @@ export default class ProjectFactory {
 
   // We might add the Vault here to get the Manifest version 3
   static transformManifestUrl(url) {
-      const parsedUrl = new URL(url)
+      let parsedUrl = new URL(url)
       parsedUrl.protocol = window.location.protocol
       if (parsedUrl.pathname.endsWith("/manifest.json")) {
           parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
