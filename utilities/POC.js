@@ -172,6 +172,10 @@ done
 
 */
 
+/**
+ * Go through relevant keys on a TPEN3 JSON object that may have a value
+ * set by direct user input.
+ */ 
 export function checkJSONForSuspiciousInput(obj, specific_keys = []) {
   if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
@@ -192,18 +196,43 @@ export function checkJSONForSuspiciousInput(obj, specific_keys = []) {
   return false
 }
 
+/**
+ * For some string do some reasonable checks to see if it may contain something that seems like code.
+ */ 
 export function isSuspicousValueString(valString) {
-  // If we can't process it, so technically is isn't suspicious
+  // We can't process it, so technically is isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
-  // const noCode = new RegExp(
-  //   /[<>{}()[\];'"`]|script|on\w+=|javascript:/i
-  // )
-  const noCode = new RegExp(
-    /[<>{}()[\];'"`]|script|eval()|<script>|<style>|on\w+=|javascript:/i
+
+  const containsScriptInjection = containsScript(valString)
+  const containsMongoCommands = containsMongoCommandPattern(valString)
+
+  return containsScriptInjection || containsMongoCommands
+}
+
+/**
+ * For some string do some reasonable checks to see if it may contain something that seems like a script.
+ * Mostly concerned with script injection.  PHP, Javascript, Perl, JQuery, JSP, etc.
+ */ 
+export function containsScript(str) {
+  // We can't process it, so technically is isn't suspicious
+  if (str === null || str === undefined || typeof str !== "string") return false
+  const scriptPattern = new RegExp(
+    /[<>{}()[\];'"`]|script|eval|style|fetch|get|set|new Function|setTimeout|on\w+=|javascript:/i
   )
-  const containsCode = noCode.test(valString)
-  const containsOther = false
-  return containsCode || containsOther
+  return scriptPattern.test(str)
+}
+
+/**
+ * For some string do some reasonable checks to see if it may contain something that seems like mongo commands.
+ */ 
+export function containsMongoCommandPattern(str) {
+  // We can't process it, so technically is isn't suspicious
+  if (str === null || str === undefined || typeof str !== "string") return false
+  // Matches patterns like db.collection.method(...)
+  const commandPattern = /db\.\w+\.\w+\(/
+  // Matches common MongoDB operators
+  const operatorPattern = /\$\w+/
+  return commandPattern.test(str) || operatorPattern.test(str)
 }
 
 // data is an Array, JSON Object, number, string, null, or undefined.  Get string value from it we can test.

@@ -137,7 +137,7 @@ router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   const { label } = req.body
   if (!label) return respondWithError(res, 400, "Label is required")
   try {
-    let project = new Project(projectId)
+    let project = await new Project(projectId).loadProject()
     if (!project) return respondWithError(res, 404, "Project not found")
     console.log("check if req body is suspicious in any way")
     console.log(req.body)
