@@ -216,10 +216,60 @@ export function isSuspicousValueString(valString) {
 export function containsScript(str) {
   // We can't process it, so technically is isn't suspicious
   if (str === null || str === undefined || typeof str !== "string") return false
-  const scriptPattern = new RegExp(
-    /[<>{}()[\];'"`]|script|eval|style|fetch|get|set|new Function|setTimeout|on\w+=|javascript:/i
+  // Common webby stuff
+  const commonPatterns = new RegExp(
+    /[<>{}()[\]]|<html|<head|<style|<body|<script|new Function|<\?php|<%|%>|#!|on\w+=|javascript:/i
   )
-  return scriptPattern.test(str)
+
+  // Common scripting language built in reserve words and function syntax
+  const ifPattern = new RegExp(/if\(|if \(/)
+  const forPattern = new RegExp(/for\(|for \(|forEach\(|forEach \(/)
+  const whilePattern = new RegExp(/while\(|while \(|do{ | do {/)
+  const fetchPattern = new RegExp(/fetch\(|fetch \(/)
+  const functionPattern = new RegExp(/function\(|function \(|=>{|=> {|\){|\) {|}\)|} \)/)
+  const setPattern = new RegExp(/set\(|set \(/)
+  const getPattern = new RegExp(/get\(|get \(/)
+  const setTimeoutPattern = new RegExp(/setTimeout\(|setTimeout \(/)
+  // anything .word(
+  const dotFnPattern = new RegExp(/\.\w+\(/)
+  // console.log("Patterns")
+  // console.log(commonPatterns.test(str))
+  // console.log(dotFnPattern.test(str))
+  // console.log(ifPattern.test(str))
+  // console.log(forPattern.test(str))
+  // console.log(whilePattern.test(str))
+  // console.log(fetchPattern.test(str))
+  // console.log(functionPattern.test(str))
+  // console.log(setPattern.test(str))
+  // console.log(getPattern.test(str))
+  // console.log(setTimeoutPattern.test(str)) 
+
+  // console.log("Return")
+  // console.log(
+  //   commonPatterns.test(str)    ||
+  //   dotFnPattern.test(str)      ||
+  //   ifPattern.test(str)         ||
+  //   forPattern.test(str)        ||
+  //   whilePattern.test(str)      ||
+  //   fetchPattern.test(str)      ||
+  //   functionPattern.test(str)   ||
+  //   setPattern.test(str)        ||
+  //   getPattern.test(str)        ||
+  //   setTimeoutPattern.test(str) 
+  // )
+  return (
+    commonPatterns.test(str)    ||
+    dotFnPattern.test(str)      ||
+    ifPattern.test(str)         ||
+    forPattern.test(str)        ||
+    whilePattern.test(str)      ||
+    fetchPattern.test(str)      ||
+    functionPattern.test(str)   ||
+    setPattern.test(str)        ||
+    getPattern.test(str)        ||
+    setTimeoutPattern.test(str) 
+  )
+
 }
 
 /**
