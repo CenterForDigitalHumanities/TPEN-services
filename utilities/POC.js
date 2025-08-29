@@ -150,11 +150,7 @@ export async function validateURL(url) {
 "javascript:(() => { confirm('A HACKING EVENT') })()""
 
 // blow it up
-"
-sudo bash
-rm -rf ~
-rm -rf /
-"
+{"label":"sudo bash \nrm -rf ~ \nrm -rf /"}
 
 "
 C:
@@ -217,8 +213,12 @@ export function containsScript(str) {
   // We can't process it, so technically is isn't suspicious
   if (str === null || str === undefined || typeof str !== "string") return false
   // Common webby stuff
-  const commonPatterns = new RegExp(
+  const commonWebPatterns = new RegExp(
     /[<>{}()[\]]|<html|<head|<style|<body|<script|new Function|<\?php|<%|%>|#!|on\w+=|javascript:/i
+  )
+  // Running in a RHEL VM, so some common RHEL stuff
+  const commonOSPatterns = new RegExp(
+    /sudo |service httpd|service mongod|service node|pm2 |nvm |systemctl|rm -|mv |cp |cd |ls |ssh |sftp |/
   )
 
   // Common scripting language built in reserve words and function syntax
@@ -258,7 +258,8 @@ export function containsScript(str) {
   //   setTimeoutPattern.test(str) 
   // )
   return (
-    commonPatterns.test(str)    ||
+    commonWebPatterns.test(str) ||
+    commonOSPatterns.test(str)  ||
     dotFnPattern.test(str)      ||
     ifPattern.test(str)         ||
     forPattern.test(str)        ||
