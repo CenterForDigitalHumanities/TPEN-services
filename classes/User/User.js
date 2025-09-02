@@ -165,6 +165,7 @@ export default class User {
             _id: 1,                        // Project ID
             title: 1,                      // Project title
             label: 1,                      // Project label
+            collaborators: { $arrayElemAt: [`$groupInfo.members`, 0] },  // User collaborators within the group
             roles: { $arrayElemAt: [`$groupInfo.members.${this._id}.roles`, 0] },  // User roles within the group
             _lastModified: 1, // Last modified page
             _createdAt: 1,    // Creation date
