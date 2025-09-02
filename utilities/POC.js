@@ -36,36 +36,31 @@ done
  * Go through relevant keys on a TPEN3 JSON object that may have a value
  * set by direct user input.
  */ 
-export function checkJSONForSuspiciousInput(obj, specific_keys = [], level) {
+export function checkJSONForSuspiciousInput(obj, specific_keys = [], logWarning = true) {
   if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
+  // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
+  if (typeof logWarning !== "boolean") logWarning = true
   const common_keys = ["label", "name", "displayName", "value", "body", "target", "text"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const recursiveChecks = []
-  // Helps with bad level param values like undefined, null, false, '', and 'hello'
-  if (typeof level !== "number") level = 0
   for (const key of allKeys) {
     // Also check JSON values, only one level deep.
-    if (level < 1) {
-      let jsonCheck = isValidJSON(obj[key])
-      if (jsonCheck) {
-        childJSONChecks.push({`${key}`: {"warn": checkJSONForSuspiciousInput(obj[key], [], 1), "value": getValueString(obj[key])}})
-        continue
-      }  
-    }
+    if (isValidJSON(obj[key]) && checkJSONForSuspiciousInput(obj[key], [], false)) {
+      warnings[key] = getValueString(obj[key])
+      continue
+    }  
     if (isSuspicousValueString(getValueString(obj[key]))) {
       warnings[key] = obj[key]
     }
   }
-  for (const childKey of childJSONChecks) {
-    if (childJSONChecks[childKey].warn) warnings[childKey] = childJSONChecks[childKey].value
-  }
-
   if (Object.keys(warnings).length > 0) {
-    warnings.id = obj._id ?? obj.id ?? obj["@id"] ?? "N/A"
-    console.warn("Found suspicious values in json.  See below.")
-    console.log(warnings)
+    if (logWarning) {
+      warnings.id = obj._id ?? obj.id ?? obj["@id"] ?? "N/A"
+      console.warn("Found suspicious values in json.  See below.")
+      console.warn(warnings)  
+    }
     return true
   }
   return false
@@ -93,7 +88,7 @@ export function containsScript(str) {
   if (str === null || str === undefined || typeof str !== "string") return false
   // Common webby stuff
   const commonWebPatterns = new RegExp(
-    /[<>{}()[\]]|<html|<head|<style|<body|<script|new Function|<\?php|<%|%>|#!|on\w+=|javascript:/i
+    /[<>{}()[\]< >{ }( )[\ ]]|<html|<head|<style|<body|<script|new Function|<\?php|<%|%>|#!|on\w+=|javascript:/i
   )
   // Running in a RHEL VM, so some common RHEL stuff
   const commonOSPatterns = new RegExp(
@@ -183,39 +178,4 @@ export function getValueString(data) {
       return null
   }
   return null
-}
-
-// In cases where we know the value should be a valid URL, it would be a suspicious error if it wasn't
-export function isValidURLString(urlString) {
-  if (!urlString) return false
-  if (typeof urlString !== "string") return false
-  const urlPattern = new RegExp(
-    "^(https?://((localhost)|(([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9].)+[a-zA-Z]{2,})|(\\d{1,3}\\.){3}\\d{1,3})(:\\d+)?(/[-a-zA-Z0-9@:%_+.~#?&//=]*)?(\\?[;&a-zA-Z0-9@:%_+.~#?&//=]*)?(#[a-zA-Z0-9@:%_+.~#?&//=]*)?)$"
-  )
-  return urlPattern.test(urlString)
-}
-
-// In cases where we know the value should be a valid URL, it would be a suspicious error if it wasn't
-export function isValidEmailAddressString(emailString) {
-  if (!emailString) return false
-  if (typeof emailString !== "string") return false
-  const validEmail = new RegExp(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
-  return validEmail.test(emailString)
-}
-
-/**
- * Check if the supplied input is valid JSON or not.
- * In cases where we know input should be valid JSON, it would be a suspcious error if it wasn't
- * @param input A string or Object that should be JSON conformant.
- * @return boolean For whether or not the supplied input was JSON conformant.
- */
-export function isValidJSON(input = "") {
-   if (input) {
-      try {
-         const json = (typeof input === "string") ? JSON.parse(input) : JSON.parse(JSON.stringify(input))
-         return true
-      }
-      catch (no) { }
-   }
-   return false
 }
