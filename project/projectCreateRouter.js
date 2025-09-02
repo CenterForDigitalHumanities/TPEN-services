@@ -137,8 +137,6 @@ router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   const { label } = req.body
   if (!label) return respondWithError(res, 400, "JSON with 'label' property required in the request body")
   try {
-    let project = await new Project(projectId).loadProject()
-    if (!project) return respondWithError(res, 404, "Project not found")
     console.log("check if label is suspicious is any way")
     const sus = poc.isSuspicousValueString(label)
     // const sus = poc.checkJSONForSuspiciousInput(req.body)
@@ -146,6 +144,8 @@ router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
       console.warn("This label is suspcious.  Be careful.")
       console.warn(label)
     }
+    let project = await new Project(projectId).loadProject()
+    if (!project) return respondWithError(res, 404, "Project not found")
     //project = await project.setLabel(label)
     res.status(200).json(project)
   } catch (error) {
