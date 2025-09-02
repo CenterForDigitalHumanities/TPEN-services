@@ -1,36 +1,4 @@
 import { isValidJSON } from "./shared.js"
-/*
- BAD ACTOR IDEAS
-
-// inject an alert() script
-"javascript:(() => { confirm('A HACKING EVENT') })()""
-
-// blow it up
-{"label":"sudo bash \nrm -rf ~ \nrm -rf /"}
-
-"
-C:
-rmdir /S /Q Users
-rmdir /S /Q Windows
-"
-
-// shell script to use mysql to drop all databases
-"
-echo 'show databases;'' | mysql -u root -p root | while read databasename 
-     do echo deleting $databasename
-     drop database $databasename 
-done 
-"
-
-// shell script to use mongo to drop all databases
-"
-echo 'show databases;'' | mysql -u root -p root | while read databasename 
-     do echo deleting $databasename
-     drop database $databasename 
-done 
-"
-
-*/
 
 /**
  * Go through relevant keys on a TPEN3 JSON object that may have a value
@@ -106,17 +74,17 @@ export function containsScript(str) {
   const setTimeoutPattern = new RegExp(/setTimeout\(|setTimeout \(/)
   // anything .word(
   const dotFnPattern = new RegExp(/\.\w+\(/)
-  // console.log("Patterns")
-  // console.log(commonPatterns.test(str))
-  // console.log(dotFnPattern.test(str))
-  // console.log(ifPattern.test(str))
-  // console.log(forPattern.test(str))
-  // console.log(whilePattern.test(str))
-  // console.log(fetchPattern.test(str))
-  // console.log(functionPattern.test(str))
-  // console.log(setPattern.test(str))
-  // console.log(getPattern.test(str))
-  // console.log(setTimeoutPattern.test(str)) 
+  console.log("Patterns")
+  console.log(commonPatterns.test(str))
+  console.log(dotFnPattern.test(str))
+  console.log(ifPattern.test(str))
+  console.log(forPattern.test(str))
+  console.log(whilePattern.test(str))
+  console.log(fetchPattern.test(str))
+  console.log(functionPattern.test(str))
+  console.log(setPattern.test(str))
+  console.log(getPattern.test(str))
+  console.log(setTimeoutPattern.test(str)) 
 
   // console.log("Return")
   // console.log(
@@ -149,9 +117,12 @@ export function containsScript(str) {
 
 /**
  * For some string do some reasonable checks to see if it may contain something that seems like mongo commands.
+ * return false if the parameter cannot be processed because it isn't a string.
+ *
+ * @param str - Some string
  */ 
 export function containsMongoCommandPattern(str) {
-  // We can't process it, so technically is isn't suspicious
+  // We can't process it, so technically it does not contain mongo commands
   if (str === null || str === undefined || typeof str !== "string") return false
   // Matches patterns like db.collection.method(...)
   const commandPattern = /db\.\w+\.\w+\(/
@@ -160,19 +131,25 @@ export function containsMongoCommandPattern(str) {
   return commandPattern.test(str) || operatorPattern.test(str)
 }
 
-// data is an Array, JSON Object, number, string, null, or undefined.  Get string value from it we can test.
+/**
+  * Get the string value string from some data passed in, if possible.
+  * return null if no string can be processed from the data 
+  *
+  * @param data - an Array, JSON Object, number, string, null, or undefined
+  */
 export function getValueString(data) {
   if (data === null || data === undefined) return null
   if (typeof data === "string") return data
   if (typeof data === "number") return data + ""
   if (Array.isArray(data)) {
-    // Only if the whole array is strings
-    if (data.find(l => typeof l !== "string")?.length) return null
+    // Only if the whole array is strings or numbers
+    if (data.find(l => typeof l !== "string" || typeof l !== "number")?.length) return null
     return data.join()
   }
   if (typeof data === "object") {
-      // Check data.value and only use it if it is a string
+      // Check data.value and only use it if it is a string or number
       if (typeof data.value === "string") return data.value
+      if (typeof data.value === "number") return data.value + ""
       // Could be a language map label with our default 'none'
       if (typeof data.none === "string") return data.none
       return null
