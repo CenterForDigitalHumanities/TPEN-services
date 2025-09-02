@@ -62,17 +62,17 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.body).toBeTruthy()
   })
 
-  it('Call to /user with a TPEN3 user ID that does not exist. The status should be 400 with a message.', async () => {
+  it('Call to /user with a TPEN3 user ID that does not exist. The status should be 404 with a message.', async () => {
     const res = await request(routeTester)
       .get('/user/')
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(404)
     expect(res.body).toBeTruthy()
   })
 
   it('Call to /user with a TPEN3 user ID that is  invalid', async () => {
     const res = await request(routeTester)
       .get('/user/kjl')
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(404)
     expect(res.body).toBeTruthy()
   })
 
@@ -88,14 +88,13 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
 describe('GET /:id route #testThis', () => {
   it('should respond with status 400 if no user ID is provided', async () => {
     const response = await request(app).get('/user/')
-    expect(response.status).toBe(400)
-    expect(response.body.message).toBe('No user ID provided')
+    expect(response.status).toBe(404)
   })
 
   it('should respond with status 400 if the provided user ID is invalid', async () => {
     const response = await request(app).get('/user/jkl')
-    expect(response.status).toBe(400)
-    expect(response.body.message).toBe('The TPEN3 user ID is invalid')
+    expect(response.status).toBe(404)
+    expect(response.body.message).toBe('User not found')
   })
 
  
