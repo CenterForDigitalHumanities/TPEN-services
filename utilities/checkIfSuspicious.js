@@ -4,7 +4,7 @@ import { isValidJSON } from "./shared.js"
  * Go through relevant keys on a TPEN3 JSON object that may have a value
  * set by direct user input.
  */ 
-export function checkJSONForSuspiciousInput(obj, specific_keys = [], logWarning = true) {
+export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
   // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
@@ -15,11 +15,11 @@ export function checkJSONForSuspiciousInput(obj, specific_keys = [], logWarning 
   const recursiveChecks = []
   for (const key of allKeys) {
     // Also check JSON values, only one level deep.
-    if (isValidJSON(obj[key]) && checkJSONForSuspiciousInput(obj[key], [], false)) {
+    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], false)) {
       warnings[key] = getValueString(obj[key])
       continue
     }  
-    if (isSuspicousValueString(getValueString(obj[key]))) {
+    if (isSuspiciousValueString(getValueString(obj[key]))) {
       warnings[key] = obj[key]
     }
   }
@@ -37,7 +37,7 @@ export function checkJSONForSuspiciousInput(obj, specific_keys = [], logWarning 
 /**
  * For some string do some reasonable checks to see if it may contain something that seems like code.
  */ 
-export function isSuspicousValueString(valString) {
+export function isSuspiciousValueString(valString) {
   // We can't process it, so technically is isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
 
@@ -56,17 +56,18 @@ export function containsScript(str) {
   if (str === null || str === undefined || typeof str !== "string") return false
   // Common webby stuff
   const commonWebPatterns = new RegExp(
-    /[<>{}()[\]< >{ }( )[\ ]]|<html|<head|<style|<body|<script|new Function|<\?php|<%|%>|#!|on\w+=|javascript:/i
+    /<>|{}|\(\)|\[\]|< >|{ }|\( \)|\[ \]|==|===|=\[|= \[|<html|<head|<style|<body|<script|javascript:|new Function|<\?php|<%|%>|#!/
   )
   // Running in a RHEL VM, so some common RHEL stuff
   const commonOSPatterns = new RegExp(
-    /sudo |service httpd|service mongod|service node|pm2 |nvm |systemctl|rm -|mv |cp |cd |ls |ssh |sftp |/
+    /sudo |service httpd|service mongod|service node|pm2 |nvm |systemctl|rm -|mv |cp |cd |ssh |sftp /
   )
 
   // Common scripting language built in reserve words and function syntax
   const ifPattern = new RegExp(/if\(|if \(/)
   const forPattern = new RegExp(/for\(|for \(|forEach\(|forEach \(/)
-  const whilePattern = new RegExp(/while\(|while \(|do{ | do {/)
+  const whilePattern = new RegExp(/while\(|while \(/)
+  const doPattern = new RegExp(/do{|do {/)
   const fetchPattern = new RegExp(/fetch\(|fetch \(/)
   const functionPattern = new RegExp(/function\(|function \(|=>{|=> {|\){|\) {|}\)|} \)/)
   const setPattern = new RegExp(/set\(|set \(/)
@@ -74,31 +75,37 @@ export function containsScript(str) {
   const setTimeoutPattern = new RegExp(/setTimeout\(|setTimeout \(/)
   // anything .word(
   const dotFnPattern = new RegExp(/\.\w+\(/)
-  console.log("Patterns")
-  console.log(commonPatterns.test(str))
-  console.log(dotFnPattern.test(str))
-  console.log(ifPattern.test(str))
-  console.log(forPattern.test(str))
-  console.log(whilePattern.test(str))
-  console.log(fetchPattern.test(str))
-  console.log(functionPattern.test(str))
-  console.log(setPattern.test(str))
-  console.log(getPattern.test(str))
-  console.log(setTimeoutPattern.test(str)) 
+
+  // console.log("Patterns")
+  // console.log(commonWebPatterns.test(str))
+  // console.log(commonOSPatterns.test(str))
+  // console.log(dotFnPattern.test(str))
+  // console.log(ifPattern.test(str))
+  // console.log(forPattern.test(str))
+  // console.log(whilePattern.test(str))
+  // console.log(doPattern.test(str))
+  // console.log(fetchPattern.test(str))
+  // console.log(functionPattern.test(str))
+  // console.log(setPattern.test(str))
+  // console.log(getPattern.test(str))
+  // console.log(setTimeoutPattern.test(str)) 
 
   // console.log("Return")
   // console.log(
-  //   commonPatterns.test(str)    ||
+  //   commonWebPatterns.test(str) ||
+  //   commonOSPatterns.test(str)  ||
   //   dotFnPattern.test(str)      ||
   //   ifPattern.test(str)         ||
   //   forPattern.test(str)        ||
   //   whilePattern.test(str)      ||
+  //   doPattern.test(str)         ||
   //   fetchPattern.test(str)      ||
   //   functionPattern.test(str)   ||
   //   setPattern.test(str)        ||
   //   getPattern.test(str)        ||
   //   setTimeoutPattern.test(str) 
   // )
+
   return (
     commonWebPatterns.test(str) ||
     commonOSPatterns.test(str)  ||
@@ -106,6 +113,7 @@ export function containsScript(str) {
     ifPattern.test(str)         ||
     forPattern.test(str)        ||
     whilePattern.test(str)      ||
+    doPattern.test(str)         ||
     fetchPattern.test(str)      ||
     functionPattern.test(str)   ||
     setPattern.test(str)        ||
@@ -124,11 +132,9 @@ export function containsScript(str) {
 export function containsMongoCommandPattern(str) {
   // We can't process it, so technically it does not contain mongo commands
   if (str === null || str === undefined || typeof str !== "string") return false
-  // Matches patterns like db.collection.method(...)
-  const commandPattern = /db\.\w+\.\w+\(/
-  // Matches common MongoDB operators
-  const operatorPattern = /\$\w+/
-  return commandPattern.test(str) || operatorPattern.test(str)
+  // Matches patterns like db.dropDatabase() or db.collection.method(...)
+  const commandPattern = /db\.\w+/
+  return commandPattern.test(str)
 }
 
 /**
