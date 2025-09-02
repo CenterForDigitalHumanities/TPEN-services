@@ -1,4 +1,4 @@
-
+import { isValidJSON } from "./shared.js"
 /*
  BAD ACTOR IDEAS
 
@@ -36,17 +36,32 @@ done
  * Go through relevant keys on a TPEN3 JSON object that may have a value
  * set by direct user input.
  */ 
-export function checkJSONForSuspiciousInput(obj, specific_keys = []) {
+export function checkJSONForSuspiciousInput(obj, specific_keys = [], level) {
   if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
-  const common_keys = ["label", "name", "displayName", "value", "body", "target"]
+  const common_keys = ["label", "name", "displayName", "value", "body", "target", "text"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
+  const recursiveChecks = []
+  // Helps with bad level param values like undefined, null, false, '', and 'hello'
+  if (typeof level !== "number") level = 0
   for (const key of allKeys) {
+    // Also check JSON values, only one level deep.
+    if (level < 1) {
+      let jsonCheck = isValidJSON(obj[key])
+      if (jsonCheck) {
+        childJSONChecks.push({`${key}`: {"warn": checkJSONForSuspiciousInput(obj[key], [], 1), "value": getValueString(obj[key])}})
+        continue
+      }  
+    }
     if (isSuspicousValueString(getValueString(obj[key]))) {
       warnings[key] = obj[key]
     }
   }
+  for (const childKey of childJSONChecks) {
+    if (childJSONChecks[childKey].warn) warnings[childKey] = childJSONChecks[childKey].value
+  }
+
   if (Object.keys(warnings).length > 0) {
     warnings.id = obj._id ?? obj.id ?? obj["@id"] ?? "N/A"
     console.warn("Found suspicious values in json.  See below.")
