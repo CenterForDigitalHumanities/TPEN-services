@@ -46,6 +46,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
+  // We don't need to check keys that TPEN Services will never process.
   const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
