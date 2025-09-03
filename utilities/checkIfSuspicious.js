@@ -45,20 +45,25 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
   // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
-  const common_keys = ["label", "name", "displayName", "value", "body", "target", "text"]
+  // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
   for (const key of allKeys) {
     // Also check embedded JSON values recursively, without logging.
     if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key])) {
-      // We don't need to log out <embedded> notes, but we could.
-      warnings[key] = getValueString(obj[key]) ?? "<embedded>"
+      // We don't need to log out <embedded> notes, but we could like key: <embedded> to show the trail
+      // if (logWarning) {
+      //   warn[key] = "<embedded>"
+      //   console.warn(warn)  
+      // }
+      warnings[key] = "<embedded>"
     }  
     else if (isSuspiciousValueString(getValueString(obj[key]))) {
       if (logWarning) {
         warn[key] = getValueString(obj[key])
-        console.warn("Found suspicious values in json.  See below.")
+        console.warn("Found suspicious value in JSON.  This 'key: value' may be embedded below the top level JSON.")
         console.warn(warn)  
       }
       warnings[key] = getValueString(obj[key])
@@ -140,5 +145,6 @@ function getValueString(data) {
     if (data.find(l => typeof l !== "string" || typeof l !== "number")?.length) return null
     return data.join()
   }
+  // JSON is checked recursively until a base value meeting one of the above conditions is found.
   return null
 }
