@@ -48,24 +48,23 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   const common_keys = ["label", "name", "displayName", "value", "body", "target", "text"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
+  const warn = {}
   for (const key of allKeys) {
     // Also check embedded JSON values recursively, without logging.
-    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], false)) {
-      warnings[key] = getValueString(obj[key])
-      continue
+    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key])) {
+      // We don't need to log out <embedded> notes, but we could.
+      warnings[key] = getValueString(obj[key]) ?? "<embedded>"
     }  
-    if (isSuspiciousValueString(getValueString(obj[key]))) {
-      warnings[key] = obj[key]
+    else if (isSuspiciousValueString(getValueString(obj[key]))) {
+      if (logWarning) {
+        warn[key] = getValueString(obj[key])
+        console.warn("Found suspicious values in json.  See below.")
+        console.warn(warn)  
+      }
+      warnings[key] = getValueString(obj[key])
     }
   }
-  if (Object.keys(warnings).length > 0) {
-    if (logWarning) {
-      console.warn("Found suspicious values in json.  See below.")
-      console.warn(warnings)  
-    }
-    return true
-  }
-  return false
+  return Object.keys(warnings).length > 0
 }
 
 /**
@@ -140,13 +139,6 @@ function getValueString(data) {
     // Only if the whole array is strings or numbers
     if (data.find(l => typeof l !== "string" || typeof l !== "number")?.length) return null
     return data.join()
-  }
-  if (typeof data === "object") {
-      // Check data.value and only use it if it is a string or number
-      if (typeof data.value === "string" || typeof data.value === "number") return data.value + ""
-      // Could be a language map label with our default 'none'
-      if (typeof data.none === "string") return data.none
-      return null
   }
   return null
 }

@@ -84,7 +84,7 @@ describe("Suspicious string library. #suspiciousStrings", () => {
 
      it('returns suspicious warnings for all string values.', () => {
           for (const value of all) {
-               if(!isSuspiciousValueString(value)) console.log(value)
+               if (!isSuspiciousValueString(value)) console.log(value)
                expect(isSuspiciousValueString(value)).toBe(true)
           }
      })
