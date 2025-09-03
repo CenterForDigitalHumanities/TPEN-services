@@ -17,4 +17,16 @@ router.route('/:projectId/lines').get(async (req, res) => {
   respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
+//Get Project Label
+router.route('/:projectId/getLabel').get(async (req, res) => {
+    try {
+        const project = await ProjectFactory.loadAsUser(req.params.projectId, null)
+        res.status(200).json({ label: project.label })
+    } catch (error) {
+        res.status(error.status ?? 500).json({ error: error.message })
+    }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use GET instead")
+})
+
 export default router
