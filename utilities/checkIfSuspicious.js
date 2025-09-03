@@ -60,7 +60,6 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   }
   if (Object.keys(warnings).length > 0) {
     if (logWarning) {
-      warnings.id = obj._id ?? obj.id ?? obj["@id"] ?? "N/A"
       console.warn("Found suspicious values in json.  See below.")
       console.warn(warnings)  
     }
