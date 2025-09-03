@@ -131,8 +131,8 @@ export function containsScript(str) {
 }
 
 /**
-  * Get the string value string from some data passed in, if possible.
-  * return null if no string can be processed from the data 
+  * Interperet a string value from the data passed in, if possible.
+  * return null if the data cannot be interpreted as stringy.
   *
   * @param data - an Array, JSON Object, number, string, null, or undefined
   */
@@ -145,6 +145,6 @@ function getValueString(data) {
     if (data.find(l => typeof l !== "string" || typeof l !== "number")?.length) return null
     return data.join()
   }
-  // JSON is checked recursively until a base value meeting one of the above conditions is found.
+  // Always return null for JSON data. It's not stringy.
   return null
 }
