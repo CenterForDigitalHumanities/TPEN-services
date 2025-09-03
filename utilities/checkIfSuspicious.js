@@ -132,7 +132,7 @@ function containsScript(str) {
 }
 
 /**
-  * Interperet a string value from the data passed in, if possible.
+  * Interpret a string value from the data passed in, if possible.
   * return null if the data cannot be interpreted as stringy.
   *
   * @param data - an Array, JSON Object, number, string, null, or undefined
