@@ -1031,6 +1031,89 @@ export default class ProjectFactory {
   }
 
   /**
+   * Reads a the manifest.json from TPEN Static for Read-Only transcribe view.
+   * 
+   * @param {string} projectId - The ID of the project to read the manifest from.
+   * @returns {Object} - The parsed JSON content of the manifest file.
+   */
+  static async readFileFromGitHub(projectId) {
+    const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/manifest.json`
+    const token = process.env.GITHUB_TOKEN
+
+    try {
+      const response = await fetch(manifestUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      })
+
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`GitHub read failed: ${response.status} - ${errText}`)
+      }
+
+      const output = {}
+      const canvasMap = {}
+      const fileData = await response.json()
+      const contentBuffer = Buffer.from(fileData.content, 'base64')
+      const manifest = JSON.parse(contentBuffer.toString('utf-8'))
+
+      for (const canvas of manifest.items) {
+        const imageUrl = canvas.items[0].items.find(i => i.motivation === "painting").body.id
+        const canvasLabel = canvas.annotations[0].label.none[0]
+        canvasMap[imageUrl] = canvasLabel
+      }
+
+      for (const canvas of manifest.items) {
+        for (const annoPage of canvas.annotations) {
+          const partOfId = await fetch(annoPage.partOf[0].id).then(res => res.json())
+          const layerLabel = partOfId.label.none[0]
+
+          if (!output[layerLabel]) {
+            output[layerLabel] = {}
+            for (const [imageUrl, canvasLabel] of Object.entries(canvasMap)) {
+              output[layerLabel][imageUrl] = { label: canvasLabel, lines: [] }
+            }
+          }
+
+          const lines = await Promise.all(
+            annoPage.items.map(async (anno) => {
+              const [x, y, w, h] = anno.target.selector.value.split(':')[1].split(',').map(Number)
+              return { x, y, w, h, text: anno.body.value ?? '' }
+            })
+          )
+
+          const imageUrl = canvas.items[0].items.find(i => i.motivation === "painting").body.id
+          output[layerLabel][imageUrl].lines = lines
+        }
+      }
+
+      for (const layerLabel of Object.keys(output)) {
+        const canvases = Object.values(output[layerLabel])
+        const maxLen = Math.max(...canvases.map(c => c.lines.length))
+
+        const connectPages = []
+        for (let i = 0; i < maxLen; i++) {
+          for (const canvas of canvases) {
+            if (canvas.lines[i]) {
+              connectPages.push({ ...canvas.lines[i], fromCanvas: canvas.label })
+            }
+          }
+        }
+
+        for (const canvas of canvases) {
+          canvas.lines = connectPages.filter(line => line.fromCanvas === canvas.label).map(({ fromCanvas, ...line }) => line)
+        }
+      }
+      return output
+    } catch (error) {
+        console.error(`Failed to read manifest for project ${projectId}:`, error)
+        throw error
+    }
+  }
+
+  /**
     * Checks if the IIIF manifest has been exported and deployed to github for a specific project.
     * 
     * @param {string} projectId - The ID of the project to check.
