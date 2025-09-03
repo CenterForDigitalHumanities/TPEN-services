@@ -5,7 +5,6 @@ import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
 import isSuspiciousRequest from "../utilities/checkIfSuspicious.js"
-import { isSuspiciousJSON, isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
