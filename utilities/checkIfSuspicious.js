@@ -1,6 +1,6 @@
 /**
   * When clients make request they can provide anything in the body.  Some things, like labels,
-  * we take into database and expect it to render on HTML pages when it is returned to clients.
+  * we take into databases and expect it to render on HTML pages when it is returned to clients.
   *
   * JSON and Strings should not be code of any kind, whether they are db requests, script injection, or OS commands.
   * This library contains middleware to use on routes as well as individual functions to use
@@ -86,7 +86,7 @@ export function isSuspiciousValueString(valString) {
  * For some string do some reasonable checks to see if it may contain something that seems like a script.
  * Mostly concerned with script injection.  PHP, Javascript, Perl, JQuery, JSP, etc.
  */ 
-export function containsScript(str) {
+function containsScript(str) {
   // We can't process it, so technically is isn't suspicious
   if (str === null || str === undefined || typeof str !== "string") return false
 
