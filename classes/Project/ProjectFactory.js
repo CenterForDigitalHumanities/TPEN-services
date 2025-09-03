@@ -1061,31 +1061,40 @@ export default class ProjectFactory {
 
       for (const canvas of manifest.items) {
         const imageUrl = canvas.items[0].items.find(i => i.motivation === "painting").body.id
-        const canvasLabel = canvas.annotations[0].label.none[0]
+        const canvasLabel = canvas.annotations?.[0]?.label?.none?.[0] || `Default Canvas ${manifest.items.indexOf(canvas) + 1}`
         canvasMap[imageUrl] = canvasLabel
       }
 
       for (const canvas of manifest.items) {
-        for (const annoPage of canvas.annotations) {
+        const imgUrl = canvas.items[0].items.find(i => i.motivation === "painting").body.id
+        const annotations = canvas.annotations
+
+        if (!annotations || annotations.length === 0) {
+          const defaultLayer = 'Default Layer'
+          if (!output[defaultLayer]) output[defaultLayer] = {}
+          output[defaultLayer][imgUrl] = { label: canvasMap[imgUrl], lines: [] }
+          continue
+        }
+
+        for (const annoPage of annotations) {
           const partOfId = await fetch(annoPage.partOf[0].id).then(res => res.json())
           const layerLabel = partOfId.label.none[0]
 
           if (!output[layerLabel]) {
             output[layerLabel] = {}
-            for (const [imageUrl, canvasLabel] of Object.entries(canvasMap)) {
-              output[layerLabel][imageUrl] = { label: canvasLabel, lines: [] }
+            for (const [imgUrl, canvasLabel] of Object.entries(canvasMap)) {
+              output[layerLabel][imgUrl] = { label: canvasLabel, lines: [] }
             }
           }
 
           const lines = await Promise.all(
             annoPage.items.map(async (anno) => {
               const [x, y, w, h] = anno.target.selector.value.split(':')[1].split(',').map(Number)
-              return { x, y, w, h, text: anno.body.value ?? '' }
+              return { x, y, w, h, text: anno.body?.value ?? '' }
             })
           )
 
-          const imageUrl = canvas.items[0].items.find(i => i.motivation === "painting").body.id
-          output[layerLabel][imageUrl].lines = lines
+          output[layerLabel][imgUrl].lines = lines
         }
       }
 
@@ -1096,9 +1105,7 @@ export default class ProjectFactory {
         const connectPages = []
         for (let i = 0; i < maxLen; i++) {
           for (const canvas of canvases) {
-            if (canvas.lines[i]) {
-              connectPages.push({ ...canvas.lines[i], fromCanvas: canvas.label })
-            }
+            if (canvas.lines[i]) connectPages.push({ ...canvas.lines[i], fromCanvas: canvas.label })
           }
         }
 
