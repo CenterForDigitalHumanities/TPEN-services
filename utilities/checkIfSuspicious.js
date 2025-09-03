@@ -1,4 +1,40 @@
-import { isValidJSON } from "./shared.js"
+/**
+  * When clients make request they can provide anything in the body.  Some things, like labels,
+  * we take into database and expect it to render on HTML pages when it is returned to clients.
+  *
+  * JSON and Strings should not be code of any kind, whether they are db requests, script injection, or OS commands.
+  * This library contains middleware to use on routes as well as individual functions to use
+  * outside of the middleware chain for custom suspicious value handling.
+  */
+
+import { isValidJSON, respondWithError } from "./shared.js"
+
+/**
+ * This middleware function checks request bodies for suspcious looking JSON or strings.
+ * Use it to protect individual routes
+  1. import isSuspiciousRequest into the route file
+  2. apply to route like route.patch("/label", isSuspiciousRequest(), controller) 
+ * 
+ * @returns next() to move down the middleware chain or 422
+ */
+function isSuspiciousRequest() {
+
+  function isSuspiciousBody(req, res, next) {
+    const body = req?.body
+    if (!body) return next()
+    if (isValidJSON(body)) {
+      if (isSuspiciousJSON(body)) return respondWithError(res, 422, "Suspicious input will not be processed.")
+    }
+    else if (typeof body === "string" || typeof body === "number") {
+      if (isSuspiciousValueString(body+"")) return respondWithError(res, 422, "Suspicious input will not be processed.")
+    } 
+    next()
+  }
+
+  return isSuspiciousBody
+}
+
+export default isSuspiciousRequest
 
 /**
  * Go through relevant keys on a TPEN3 JSON object that may have a value
@@ -12,9 +48,8 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   const common_keys = ["label", "name", "displayName", "value", "body", "target", "text"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
-  const recursiveChecks = []
   for (const key of allKeys) {
-    // Also check JSON values, only one level deep.
+    // Also check embedded JSON values recursively, without logging.
     if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], false)) {
       warnings[key] = getValueString(obj[key])
       continue
@@ -40,11 +75,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
 export function isSuspiciousValueString(valString) {
   // We can't process it, so technically is isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
-
-  const containsScriptInjection = containsScript(valString)
-  const containsMongoCommands = containsMongoCommandPattern(valString)
-
-  return containsScriptInjection || containsMongoCommands
+  return containsScript(valString)
 }
 
 /**
@@ -54,87 +85,46 @@ export function isSuspiciousValueString(valString) {
 export function containsScript(str) {
   // We can't process it, so technically is isn't suspicious
   if (str === null || str === undefined || typeof str !== "string") return false
+
   // Common webby stuff
   const commonWebPatterns = new RegExp(
-    /<>|{}|\(\)|\[\]|< >|{ }|\( \)|\[ \]|==|===|=\[|= \[|<html|<head|<style|<body|<script|javascript:|new Function|<\?php|<%|%>|#!/
+    /<>|{}|\(\)|\[\]|< >|{ }|\( \)|\[ \]|==|=\[|= \[|<html|<head|<style|<body|<script|javascript:|<\?php|<%|%>|#!/
   )
   // Running in a RHEL VM, so some common RHEL stuff
   const commonOSPatterns = new RegExp(
-    /sudo |service httpd|service mongod|service node|pm2 |nvm |systemctl|rm -|mv |cp |cd |ssh |sftp /
+    /sudo |service httpd|service mongod|service node|pm2 |nvm |systemctl|rm \-|mv \-|cp \-|cd \-|ls \-|ssh |sftp /
   )
-
-  // Common scripting language built in reserve words and function syntax
+  // Common scripting language words
   const ifPattern = new RegExp(/if\(|if \(/)
   const forPattern = new RegExp(/for\(|for \(|forEach\(|forEach \(/)
   const whilePattern = new RegExp(/while\(|while \(/)
   const doPattern = new RegExp(/do{|do {/)
   const fetchPattern = new RegExp(/fetch\(|fetch \(/)
-  const functionPattern = new RegExp(/function\(|function \(|=>{|=> {|\){|\) {|}\)|} \)/)
+  const evalPattern = new RegExp(/eval\(|eval \(/)
+  const functionPattern = new RegExp(/new Function\(|new Function \(|function\(|function \(|=>{|=> {|\){|\) {|}\)|} \)/)
   const setPattern = new RegExp(/set\(|set \(/)
   const getPattern = new RegExp(/get\(|get \(/)
   const setTimeoutPattern = new RegExp(/setTimeout\(|setTimeout \(/)
-  // anything .word(
+  // anything .word( 
   const dotFnPattern = new RegExp(/\.\w+\(/)
-
-  // console.log("Patterns")
-  // console.log(commonWebPatterns.test(str))
-  // console.log(commonOSPatterns.test(str))
-  // console.log(dotFnPattern.test(str))
-  // console.log(ifPattern.test(str))
-  // console.log(forPattern.test(str))
-  // console.log(whilePattern.test(str))
-  // console.log(doPattern.test(str))
-  // console.log(fetchPattern.test(str))
-  // console.log(functionPattern.test(str))
-  // console.log(setPattern.test(str))
-  // console.log(getPattern.test(str))
-  // console.log(setTimeoutPattern.test(str)) 
-
-  // console.log("Return")
-  // console.log(
-  //   commonWebPatterns.test(str) ||
-  //   commonOSPatterns.test(str)  ||
-  //   dotFnPattern.test(str)      ||
-  //   ifPattern.test(str)         ||
-  //   forPattern.test(str)        ||
-  //   whilePattern.test(str)      ||
-  //   doPattern.test(str)         ||
-  //   fetchPattern.test(str)      ||
-  //   functionPattern.test(str)   ||
-  //   setPattern.test(str)        ||
-  //   getPattern.test(str)        ||
-  //   setTimeoutPattern.test(str) 
-  // )
-
+  // db.anything
+  const dbDotPattern = new RegExp(/db\.\w/)
   return (
     commonWebPatterns.test(str) ||
     commonOSPatterns.test(str)  ||
     dotFnPattern.test(str)      ||
+    dbDotPattern.test(str)      ||
     ifPattern.test(str)         ||
     forPattern.test(str)        ||
     whilePattern.test(str)      ||
     doPattern.test(str)         ||
     fetchPattern.test(str)      ||
+    evalPattern.test(str)       ||
     functionPattern.test(str)   ||
     setPattern.test(str)        ||
     getPattern.test(str)        ||
     setTimeoutPattern.test(str) 
   )
-
-}
-
-/**
- * For some string do some reasonable checks to see if it may contain something that seems like mongo commands.
- * return false if the parameter cannot be processed because it isn't a string.
- *
- * @param str - Some string
- */ 
-export function containsMongoCommandPattern(str) {
-  // We can't process it, so technically it does not contain mongo commands
-  if (str === null || str === undefined || typeof str !== "string") return false
-  // Matches patterns like db.dropDatabase() or db.collection.method(...)
-  const commandPattern = /db\.\w+/
-  return commandPattern.test(str)
 }
 
 /**
@@ -143,7 +133,7 @@ export function containsMongoCommandPattern(str) {
   *
   * @param data - an Array, JSON Object, number, string, null, or undefined
   */
-export function getValueString(data) {
+function getValueString(data) {
   if (data === null || data === undefined) return null
   if (typeof data === "string") return data
   if (typeof data === "number") return data + ""
@@ -154,8 +144,7 @@ export function getValueString(data) {
   }
   if (typeof data === "object") {
       // Check data.value and only use it if it is a string or number
-      if (typeof data.value === "string") return data.value
-      if (typeof data.value === "number") return data.value + ""
+      if (typeof data.value === "string" || typeof data.value === "number") return data.value + ""
       // Could be a language map label with our default 'none'
       if (typeof data.none === "string") return data.none
       return null

@@ -22,7 +22,6 @@ describe("Suspicious string library. #suspiciousStrings", () => {
           "<style",
           "<body",
           "<script",
-          "new Function",
           "<?php",
           "<%",
           "%>",
@@ -39,9 +38,10 @@ describe("Suspicious string library. #suspiciousStrings", () => {
           "nvm ",
           "systemctl",
           "rm -",
-          "mv ",
-          "cp ",
-          "cd ",
+          "mv -",
+          "cp -",
+          "cd -",
+          "ls -",
           "ssh ",
           "sftp "
      ]
@@ -60,11 +60,22 @@ describe("Suspicious string library. #suspiciousStrings", () => {
           "fetch(",
           "fetch (",
           "function(",
-          "function ("
+          "function (",
+          "eval(",
+          "eval (",
+          "get(",
+          "get (",
+          "set(",
+          "set (",
+          "new Function(",
+          "=>{",
+          "=> {",
+          "==",
+          "==="
      ]
 
      const mongoy = [
-          "db.anything",
+          "db.anything"
      ]
 
      const all = [...notations, ...declarations, ...rhel, ...functiony, ...mongoy]

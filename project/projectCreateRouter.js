@@ -4,6 +4,8 @@ import auth0Middleware from "../auth/index.js"
 import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
+import isSuspiciousRequest from "../utilities/checkIfSuspicious.js"
+import { isSuspiciousJSON, isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -112,24 +114,9 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
 })
 
 /**
- * Here a client may have input any JSON object (any keys, any values).
- * They are changing a Project Label by providing free-typed text.
- *
- * Less is more - avoid processing a malicious foreign key we don't even care about.
- * In this case we only care about req.body.label
- * 
- * Free typed strings may be malicious or rude.  No script injection allowed for things that end up in the dbs.
- * The key 'label' is not malicious but the value req.body.label could be.
- *
+ * Free typed strings may be malicious or rude.  The key 'label' is not malicious but the value req.body.label could be.
  */
-
-/**
- * This utility import is specifically for this POC.
- * I've collected together whatever scrubbying or validating functions we had available.
- * I've added some ideas into it at the  bottom.
- */
-import { isSuspiciousValueString, isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
-router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/label").patch(auth0Middleware(), isSuspiciousRequest(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectId = req.params.projectId
@@ -137,18 +124,10 @@ router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
   const { label } = req.body
   if (!label) return respondWithError(res, 400, "JSON with 'label' property required in the request body")
   try {
-    console.log("check if label is suspicious is any way")
-    const sus = isSuspiciousValueString(label)
-    // const sus = isSuspiciousJSON(req.body)
-    console.log("Is it sus?")
-    console.log(sus)
-    if (sus) {
-      console.warn("This label is suspcious.  Be careful.")
-      console.warn(label)
-    }
-    let project = await new Project(projectId).loadProject()
-    if (!project) return respondWithError(res, 404, "Project not found")
-    //project = await project.setLabel(label)
+    let project = new Project(projectId)
+    const loadedProject = await project.loadProject()
+    if (!loadedProject) return respondWithError(res, 404, "Project not found")
+    project = await project.setLabel(label)
     res.status(200).json(project)
   } catch (error) {
     respondWithError(
