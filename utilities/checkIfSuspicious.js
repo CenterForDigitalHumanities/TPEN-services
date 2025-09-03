@@ -77,7 +77,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
  * For some string do some reasonable checks to see if it may contain something that seems like code.
  */ 
 export function isSuspiciousValueString(valString) {
-  // We can't process it, so technically is isn't suspicious
+  // We can't process it, so technically it isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
   return containsScript(valString)
 }
@@ -87,7 +87,7 @@ export function isSuspiciousValueString(valString) {
  * Mostly concerned with script injection.  PHP, Javascript, Perl, JQuery, JSP, etc.
  */ 
 function containsScript(str) {
-  // We can't process it, so technically is isn't suspicious
+  // We can't process it, so technically it isn't suspicious
   if (str === null || str === undefined || typeof str !== "string") return false
 
   // Common webby stuff
