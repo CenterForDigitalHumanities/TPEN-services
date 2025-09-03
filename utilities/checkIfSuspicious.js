@@ -23,10 +23,10 @@ function isSuspiciousRequest() {
     const body = req?.body
     if (!body) return next()
     if (isValidJSON(body)) {
-      if (isSuspiciousJSON(body)) return respondWithError(res, 422, "Suspicious input will not be processed.")
+      if (isSuspiciousJSON(body)) return respondWithError(res, 400, "Suspicious input will not be processed.")
     }
     else if (typeof body === "string" || typeof body === "number") {
-      if (isSuspiciousValueString(body+"")) return respondWithError(res, 422, "Suspicious input will not be processed.")
+      if (isSuspiciousValueString(body+"")) return respondWithError(res, 400, "Suspicious input will not be processed.")
     } 
     next()
   }
