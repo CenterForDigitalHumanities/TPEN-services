@@ -114,7 +114,7 @@ export default class Line {
     async updateText(text, options = {}) {
         if (typeof text !== 'string') throw new Error('Text content must be a string')
         if (!this.body) this.body = "" // simple variant for no body
-
+        this.creator = options.creator
         const isVariantTextualBody = body => typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
 
         if (Array.isArray(this.body)) {
@@ -133,10 +133,6 @@ export default class Line {
             const currentValue = this.body.chars ?? this.body['cnt:asChars'] ?? this.body.value ?? this.body
             if (currentValue === text) return this
             this.body = { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language }
-            // Apply options directly to the Annotation
-            if (options.creator) this.creator = options.creator
-            if (options.generator) this.generator = options.generator
-            // discarding unknown options
             return this.update()
         }
 
