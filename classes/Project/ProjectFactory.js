@@ -1089,7 +1089,9 @@ export default class ProjectFactory {
 
           const lines = await Promise.all(
             annoPage.items.map(async (anno) => {
-              const [x, y, w, h] = anno.target.selector.value.split(':')[1].split(',').map(Number)
+              let selectorValue = anno?.target?.selector?.value || anno?.target?.id || anno?.target
+              const dimensions = selectorValue.includes('=') ? selectorValue.split('=')[1] : selectorValue.split(':')[1]
+              const [x, y, w, h] = dimensions.split(',').map(Number)
               return { x, y, w, h, text: anno.body?.value ?? '' }
             })
           )
