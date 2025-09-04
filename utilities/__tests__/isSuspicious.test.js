@@ -91,7 +91,7 @@ describe("Suspicious string library. #suspiciousStrings", () => {
 
      it('returns suspicious warnings for all JSON values', () => {
           for (const value of all) {
-               const common_keys = ["label", "name", "displayName", "value", "body", "target", "text"]
+               const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none"]
                for (const key of common_keys) {
                     const json1 = {}
                     json1[key] = value
@@ -105,7 +105,6 @@ describe("Suspicious string library. #suspiciousStrings", () => {
                     expect(isSuspiciousJSON(json3)).toBe(true)
                }
           }
-
      })
 
      it('Does not return supicious warning for safe value string.', () => {
