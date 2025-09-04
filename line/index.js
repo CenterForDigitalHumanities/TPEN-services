@@ -160,7 +160,7 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       return
     }
     const line = new Line(oldLine)
-    const updatedLine = await line.updateText(req.body)
+    const updatedLine = await line.updateText(req.body, {"creator": user._id})
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
     await withOptimisticLocking(
