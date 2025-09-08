@@ -121,7 +121,7 @@ router.route("/:projectId/label").patch(auth0Middleware(), isSuspiciousRequest()
   const projectId = req.params.projectId
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   const { label } = req.body
-  if (!label) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank.")
+  if (!label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank.")
   try {
     let project = new Project(projectId)
     const loadedProject = await project.loadProject()
