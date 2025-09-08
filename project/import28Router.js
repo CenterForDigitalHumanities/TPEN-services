@@ -54,7 +54,7 @@ router.route("/deletecookie").get(
     }
 )
 .all((req, res) => {
-    respondWithError(res, 405, "Method not allowed")
+    respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 router.route("/import28/:uid").get(
