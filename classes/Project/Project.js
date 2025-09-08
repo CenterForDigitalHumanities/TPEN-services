@@ -128,6 +128,7 @@ export default class Project {
   }
 
   async setLabel(label) {
+    if (typeof label === "number") label += ""
     if (typeof label !== "string" || label.trim() === "") {
       throw new Error("Label must be a non-empty string")
     }
