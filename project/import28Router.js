@@ -26,6 +26,37 @@ const corsOptions = {
 
 const router = express.Router({ mergeParams: true })
 
+router.route("/deletecookie").get(
+    cors(corsOptions),
+    cookieParser(),
+    patchTokenFromQuery,
+    auth0Middleware(),
+    async (req, res) => {
+        const isProdTPEN = req.hostname.includes("t-pen.org")
+
+        const cookieOptions = {
+            path: "/",
+            sameSite: "Strict",
+            httpOnly: true,
+            domain: req.hostname
+        }
+
+        if (isProdTPEN) {
+            cookieOptions.secure = true
+            cookieOptions.domain = "t-pen.org"
+        }
+
+        if (req.cookies.userToken) {
+            res.clearCookie("userToken", cookieOptions)
+        }
+
+        res.status(200).json({ message: "Cookies deleted successfully" })
+    }
+)
+.all((req, res) => {
+    respondWithError(res, 405, "Improper request method. Use GET instead")
+})
+
 router.route("/import28/:uid").get(
     cors(corsOptions),
     cookieParser(),
