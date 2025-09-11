@@ -4,7 +4,7 @@ import auth0Middleware from "../auth/index.js"
 import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
-import isSuspiciousRequest from "../utilities/checkIfSuspicious.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -115,13 +115,13 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
 /**
  * Free typed strings may be malicious or rude.  The key 'label' is not malicious but the value req.body.label could be.
  */
-router.route("/:projectId/label").patch(auth0Middleware(), isSuspiciousRequest(), async (req, res) => {
+router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectId = req.params.projectId
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   const { label } = req.body
-  if (!label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank.")
+  if (typeof label !== "string" || !label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank and must be a string.")
   try {
     let project = new Project(projectId)
     const loadedProject = await project.loadProject()

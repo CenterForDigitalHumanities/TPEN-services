@@ -10,16 +10,16 @@
 import { isValidJSON, respondWithError } from "./shared.js"
 
 /**
- * This middleware function checks request bodies for suspcious looking JSON or strings.
- * Use it to protect individual routes
-  1. import isSuspiciousRequest into the route file
-  2. apply to route like route.patch("/label", isSuspiciousRequest(), controller) 
+ * This middleware function scans request bodies for suspcious looking JSON or strings.
+ * Use it to protect individual routes.
+  1. import contentScanMiddleware into the route file
+  2. apply to route like route.patch("/label", contentScanMiddleware(), controller) 
  * 
  * @returns next() to move down the middleware chain or 422
  */
-function isSuspiciousRequest() {
+function screenContentMiddleware() {
 
-  function isSuspiciousBody(req, res, next) {
+  function suspiciousBodyContent(req, res, next) {
     const body = req?.body
     if (!body) return next()
     if (isValidJSON(body)) {
@@ -31,16 +31,18 @@ function isSuspiciousRequest() {
     next()
   }
 
-  return isSuspiciousBody
+  return suspiciousBodyContent
 }
 
-export default isSuspiciousRequest
+export default screenContentMiddleware
 
 /**
  * Go through relevant keys on a TPEN3 JSON object that may have a value
  * set by direct user input.
  */ 
-export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
+export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
+  // Guard against unnreasonably deep embedded JSON structures so we don't recurse for too long.
+  if (depth > 10) return true
   if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
   if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
   // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
@@ -52,8 +54,8 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
   const warnings = {}
   const warn = {}
   for (const key of allKeys) {
-    // Also check embedded JSON values recursively, without logging.
-    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key])) {
+    // Also check embedded JSON values recursively to a max depth of 10.
+    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], true, depth + 1)) {
       // We don't need to log out <embedded> notes, but we could like key: <embedded> to show the trail
       // if (logWarning) {
       //   warn[key] = "<embedded>"
@@ -68,6 +70,8 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true) {
         console.warn(warn)  
       }
       warnings[key] = getValueString(obj[key])
+      // Break out once we find the first suspicious string value.
+      break
     }
   }
   return Object.keys(warnings).length > 0
