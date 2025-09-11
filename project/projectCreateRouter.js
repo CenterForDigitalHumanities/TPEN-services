@@ -4,6 +4,7 @@ import auth0Middleware from "../auth/index.js"
 import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -111,16 +112,20 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
-router.route("/:projectId/label").patch(auth0Middleware(), async (req, res) => {
+/**
+ * Free typed strings may be malicious or rude.  The key 'label' is not malicious but the value req.body.label could be.
+ */
+router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectId = req.params.projectId
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   const { label } = req.body
-  if (!label) return respondWithError(res, 400, "Label is required")
+  if (typeof label !== "string" || !label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank and must be a string.")
   try {
     let project = new Project(projectId)
-    if (!project) return respondWithError(res, 404, "Project not found")
+    const loadedProject = await project.loadProject()
+    if (!loadedProject) return respondWithError(res, 404, "Project not found")
     project = await project.setLabel(label)
     res.status(200).json(project)
   } catch (error) {
