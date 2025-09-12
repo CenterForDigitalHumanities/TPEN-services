@@ -49,7 +49,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
     return false
   }
   if (!isValidJSON(obj)) {
-    console.error("Cannot perform suspicious content check.  The object provided is not valid JSON.  This was skipped so we could continue")
+    console.error("Cannot perform suspicious content check.  The object provided is not valid JSON.  This was skipped so we could continue.")
     console.log(obj)
     return false
   }
