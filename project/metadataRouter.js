@@ -6,6 +6,7 @@ import { ACTIONS, SCOPES, ENTITIES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
+// TODO add route protection from /utilities/checkIfSuspicious.js here.
 router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const metadata = req.body
