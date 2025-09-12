@@ -154,7 +154,7 @@ function getValueString(data) {
   if (typeof data === "string") return data
   if (typeof data === "number") return data + ""
   if (Array.isArray(data)) {
-    // Only if the whole array is strings or numbers
+    // We can use it if the whole array is strings or numbers.  Otherwise it can't be .join()d and checked. 
     if (
       data.filter(l => {
         if (typeof l !== "string" && typeof l !== "number") return l
