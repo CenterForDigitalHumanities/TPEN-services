@@ -212,7 +212,7 @@ class DatabaseController {
                         return resp.json().then(errorData => {
                             const conflictError = new Error('Version conflict detected')
                             conflictError.status = 409
-                            conflictError.currentVersion = errorData.currentVersion
+                            conflictError.currentVersion = errorData
                             conflictError._dbaction = this.URLS.OVERWRITE
                             throw conflictError
                         }).catch(jsonErr => {
@@ -294,7 +294,7 @@ class DatabaseController {
  *   await databaseTiny.overwrite(updatedDoc)
  * } catch (err) {
  *   if (err.status === 409) {
- *     // Handle version conflict - retry with err.currentVersion if needed
+ *     // Handle version conflict - retry with currentVersion if needed
  *   }
  * }
  * ```

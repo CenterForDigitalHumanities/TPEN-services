@@ -1,6 +1,7 @@
 import express from "express"
 import { respondWithError } from "../utilities/shared.js"
 import Project from "../classes/Project/Project.js"
+import validateURL from "../utilities/validateURL.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -33,9 +34,9 @@ router.route("/:projectId/tools").post(async (req, res) => {
     const project = new Project(projectId)
     await project.addTools(tools)
     res.status(201).json("Tools added successfully")
-    return
   } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message.toString())
+    console.error(error)
+    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
   }
 }).put(async (req, res) => {
   const { projectId } = req.params
@@ -61,9 +62,29 @@ router.route("/:projectId/tools").post(async (req, res) => {
     const project = new Project(projectId)
     await project.updateTools(tools)
     res.status(200).json("Tools updated successfully")
-    return
   } catch (error) {
-    return respondWithError(res, error.status ?? 500, error.message.toString())
+    console.error(error)
+    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
+  }
+}).delete(async (req, res) => {
+  const { projectId } = req.params
+  const { tool } = req.body
+
+  if (!projectId) {
+    return respondWithError(res, 400, "Project ID is required")
+  }
+
+  if (!tool) {
+    return respondWithError(res, 400, "Tool information is required")
+  }
+
+  try {
+    const project = new Project(projectId)
+    await project.removeTool(tool)
+    res.status(200).json("Tools removed successfully")
+  } catch (error) {
+    console.error(error)
+    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
   }
 }).all((_, res) => {
   respondWithError(res, 405, "Improper request method. Use PUT instead")

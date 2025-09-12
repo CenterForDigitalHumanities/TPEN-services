@@ -40,6 +40,13 @@ export default class Group {
         return Object.fromEntries(roles.map(role => [role, allRoles[role]]))
     }
 
+    async getCustomRoles() {
+        if (Object.keys(this.data.members).length === 0) {
+            await this.#loadFromDB()
+        }
+        return this.data.customRoles
+    }
+
     getPermissions(role) {
         return Object.assign(Group.defaultRoles, this.data.customRoles)[role] ?? "x_x_x"
     }
@@ -180,14 +187,14 @@ export default class Group {
         return true
     }
 
-    async setCustomRoles(roles) {
+    async updateCustomRoles(roles) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = roles
-        this.update()
+        await this.update()
     }
 
     async addCustomRoles(roleMap) {
@@ -197,34 +204,16 @@ export default class Group {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        this.update()
+        await this.update()
     }
 
-    async removeCustomRoles(roleMap) {
+    async removeCustomRoles(roleName) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
 
-        if (!Array.isArray(roleMap)) {
-
-            if (this.isValidRolesMap(roleMap)) {
-                for (const role in roleMap) {
-                    delete this.data.customRoles[role]
-                }
-                return this.update()
-            }
-            if (typeof roleMap !== "string") {
-                throw {
-                    status: 400,
-                    message: "Invalid roles. Must be an array of strings or a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings."
-                }
-            }
-            roleMap = roleMap.toUpperCase().split(" ")
-
-        }
-
-        roleMap.map(role => delete this.data.customRoles[role])
-        return this.update()
+        delete this.data.customRoles[roleName]
+        await this.update()
     }
 
     async save() {

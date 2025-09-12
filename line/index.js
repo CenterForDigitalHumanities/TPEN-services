@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
-import { respondWithError, getProjectById, getPageById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict } from '../utilities/shared.js'
+import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
 
 const router = express.Router({ mergeParams: true })
@@ -54,14 +54,14 @@ router.post('/', auth0Middleware(), async (req, res) => {
   try {
     const project = await getProjectById(req.params.projectId, res)
     if (!project) return
-    const page = await getPageById(req.params.pageId, req.params.projectId, res)
+    const page = await findPageById(req.params.pageId, req.params.projectId)
     if (!page) return
 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
     let newLine
     // This feels like a use case for /bulkCreate in RERUM.  Make all these lines with one call.
     for (const lineData of inputLines) {
-      newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData })
+      newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData }, user.agent.split('/').pop())
 
       const existingLine = findLineInPage(page, newLine.id, res)
       if (existingLine) {
@@ -72,12 +72,15 @@ router.post('/', auth0Middleware(), async (req, res) => {
       const savedLine = await newLine.update()
       page.items.push(savedLine)
     }
-    await withOptimisticLocking(updatePageAndProject(page, project, user._id),(currentVersion) => {
-      if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-        respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
-        return
-      }
-      currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
+    const ifNewContent = (page.items && page.items.length)
+    await withOptimisticLocking(
+      () => updatePageAndProject(page, project, user._id, ifNewContent),
+      (currentVersion) => {
+        if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+          return
+        }
+        currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
       Object.assign(page, currentVersion)
       return updatePageAndProject(page, project, user._id)
      })
@@ -86,13 +89,16 @@ router.post('/', auth0Middleware(), async (req, res) => {
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
-      withOptimisticLocking
+      return handleVersionConflict(res, error)
+    }
     respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
   }
 })
 
 // Update an existing line, including in RERUM
 router.put('/:lineId', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
@@ -111,19 +117,22 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
     }
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    await withOptimisticLocking(updatePageAndProject(page, project, user._id),(currentVersion) => {
-      if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-        respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+    await withOptimisticLocking(
+      () => updatePageAndProject(page, project, user._id, true),
+      (currentVersion) => {
+        if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+        }
+        const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+        if (!newLineIndex === -1) {
+          respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
+          return
+        }
+        currentVersion.items[newLineIndex] = updatedLine
+        Object.assign(page, currentVersion)
+        return updatePageAndProject(page, project, user._id)
       }
-      const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-      if (!newLineIndex === -1) {
-        respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-        return
-      }
-      currentVersion.items[newLineIndex] = updatedLine
-      Object.assign(page, currentVersion)
-      return updatePageAndProject(page, project, user._id)
-    })
+    )
     res.json(line.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
@@ -136,6 +145,8 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
 
 // Update the text of an existing line
 router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     if (typeof req.body !== 'string') {
       respondWithError(res, 400, 'Invalid request body. Expected a string.')
@@ -149,27 +160,35 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
       return
     }
     const line = new Line(oldLine)
-    const updatedLine = await line.updateText(req.body)
+    const updatedLine = await line.updateText(req.body, {"creator": user._id})
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    await withOptimisticLocking(updatePageAndProject(page, project, user._id),(currentVersion) => {
-      if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-        respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+    await withOptimisticLocking(
+      () => updatePageAndProject(page, project, user._id, true),
+      (currentVersion) => {
+        if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          if(res.headersSent) return
+          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+          return
+        }
+        const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+        if (!newLineIndex === -1) {
+          if(res.headersSent) return
+          respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
+          return
+        }
+        currentVersion.items[newLineIndex] = updatedLine
+        Object.assign(page, currentVersion)
+        return updatePageAndProject(page, project, user._id)
       }
-      const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-      if (!newLineIndex === -1) {
-        respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-        return
-      }
-      currentVersion.items[newLineIndex] = updatedLine
-      Object.assign(page, currentVersion)
-      return updatePageAndProject(page, project, user._id)
-    })
+    )
+    if(res.headersSent) return
     res.json(line.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
-      return handleVersionConflict(res, error)
+      handleVersionConflict(res, error)
+      return
     }
     res.status(error.status ?? 500).json({ error: error.message })
   }
@@ -177,6 +196,8 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
 
 // Update the xywh (bounds) of an existing line
 router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     if (typeof req.body !== 'object' || !req.body.x || !req.body.y || !req.body.w || !req.body.h) {
       respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
@@ -193,19 +214,23 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     const updatedLine = await line.updateBounds(req.body)
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    await withOptimisticLocking(updatePageAndProject(page, project, user._id),(currentVersion) => {
-      if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-        respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+    await withOptimisticLocking(
+      () => updatePageAndProject(page, project, user._id, true),
+      (currentVersion) => {
+        if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
+          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+          return
+        }
+        const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+        if (!newLineIndex === -1) {
+          respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
+          return
+        }
+        currentVersion.items[newLineIndex] = updatedLine
+        Object.assign(page, currentVersion)
+        return updatePageAndProject(page, project, user._id)
       }
-      const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-      if (!newLineIndex === -1) {
-        respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-        return
-      }
-      currentVersion.items[newLineIndex] = updatedLine
-      Object.assign(page, currentVersion)
-      return updatePageAndProject(page, project, user._id)
-    })
+    )
     res.json(line.asJSON(true))
   } catch (error) {    // Handle version conflicts with optimistic locking
     if (error.status === 409) {

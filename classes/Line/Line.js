@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 export default class Line {
@@ -11,13 +12,13 @@ export default class Line {
         return this
     }
 
-    constructor({ id, target, body, motivation, label, type }) {
-        if (!id || !body || !target) {
+    constructor({ id, target, body, motivation, label, type, creator = null }) {
+        if (!id || !target) 
             throw new Error('Line data is malformed.')
-        }
         this.id = id // Ensure the id is assigned
         this.body = body
         this.target = target
+        this.creator = creator
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -27,10 +28,10 @@ export default class Line {
         return this
     }
 
-    static build(projectId, pageId, { body, target, motivation, label, type }) {
+    static build(projectId, pageId, { body, target, motivation, label, type }, creator) {
         // TODO: Should this have a space for an id that is sent in?
         const id = `${process.env.SERVERURL}project/${projectId}/page/${pageId}/line/${databaseTiny.reserveId()}`
-        return new Line({ id, body, target, motivation, label, type })
+        return new Line({ id, body, target, motivation, label, type, creator })
     }
 
     async #saveLineToRerum() {
@@ -40,6 +41,7 @@ export default class Line {
             type: this.type ?? "Annotation",
             motivation: this.motivation ?? "transcribing",
             target: this.target,
+            creator: await fetchUserAgent(this.creator),
             body: this.body
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }
@@ -89,18 +91,52 @@ export default class Line {
 #updateLineForPage() {
     return {
         id: this.id,
+        type: this.type ?? "Annotation",
         target: this.target
     }
 }
-    async updateText(text) {
-        if (typeof text !== 'string') {
-            throw new Error('Text content must be a string')
+    /**
+     * Updates the textual content of the annotation body.
+     *
+     * Handles various body formats, including arrays of bodies and different textual body variants.
+     * Throws errors if the body format is unexpected or ambiguous.
+     *
+     * @async
+     * @param {string} text - The new text content to set.
+     * @param {Object} [options={}] - Optional parameters for updating the text.
+     * @param {string} [options.format="text/plain"] - The format of the text (e.g., "text/plain").
+     * @param {string} [options.language] - The language of the text.
+     * @param {string} [options.creator] - The creator of the annotation (applied at the annotation level).
+     * @param {string} [options.generator] - The generator of the annotation (applied at the annotation level).
+     * @returns {Promise<this>} The updated instance for chaining.
+     * @throws {Error} If the text is not a string, or if the body format is unexpected or ambiguous.
+     */
+    async updateText(text, options = {}) {
+        if (typeof text !== 'string') throw new Error('Text content must be a string')
+        if (!this.body) this.body = "" // simple variant for no body
+        this.creator = options.creator
+        const isVariantTextualBody = body => typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
+
+        if (Array.isArray(this.body)) {
+            const textualBodies = this.body.filter(body => isVariantTextualBody(body))
+            if (textualBodies.length !== 1) throw new Error(textualBodies.length > 1 ? 'Multiple textual bodies found. Cannot determine which one to update.' : 'No textual body found in the array to update.')
+
+            const textualBody = textualBodies[0]
+            const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
+            if (currentValue === text) return this
+            Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
+            // discard Annotation-level options if only one body entry is modified.
+            return this.update()
         }
-        if(this.body === text) {
-            return this
+
+        if (isVariantTextualBody(this.body)) {
+            const currentValue = this.body.chars ?? this.body['cnt:asChars'] ?? this.body.value ?? this.body
+            if (currentValue === text) return this
+            this.body = { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language }
+            return this.update()
         }
-        this.body = text
-        return this.update()
+
+        throw new Error('Unexpected body format. Cannot update text.')
     }
 
     async updateBounds({x, y, w, h}) {

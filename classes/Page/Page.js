@@ -1,4 +1,6 @@
 import dbDriver from "../../database/driver.js"
+import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
+import ProjectFactory from "../Project/ProjectFactory.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -21,18 +23,18 @@ export default class Page {
      * @param {Array} items The array of Annotation objects.
      * @seeAlso {@link Page.build}
      */
-    constructor(layerId, { id, label, target, items = [] }) {
+    constructor(layerId, { id, label, target, items = [], creator = null, partOf = null, prev = null, next = null }) {
         if (!id || !target) {
             throw new Error("Page data is malformed.")
         }
-        Object.assign(this, { id, label, target, partOf: layerId, items })
+        Object.assign(this, { id, label, target, partOf: partOf ?? layerId, items, creator, prev, next })
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
         return this
     }
 
-    static build(projectId, layerId, canvas, prev, next, items = []) {
+    static build(projectId, layerId, canvas, creator, partOf, prev, next, items = []) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Page instance.")
         }
@@ -49,38 +51,41 @@ export default class Page {
         const id = items.length
             ? `${process.env.RERUMIDPREFIX}${databaseTiny.reserveId()}`
             : `${process.env.SERVERURL}project/${projectId}/page/${databaseTiny.reserveId()}`
-
+        let canvasLabel = canvas.label ?? `Page ${canvas.id.split('/').pop()}`
         const page = {
             data: {
                 "@context": "http://www.w3.org/ns/anno.jsonld",
                 id,
                 type: "AnnotationPage",
-                label: canvas.label ?? `Page ${canvas.id.split('/').pop()}`,
+                label: ProjectFactory.getLabelAsString(canvasLabel),
                 target: canvas.id,
-                partOf: `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
+                creator: creator,
+                partOf: partOf ?? `${process.env.SERVERURL}project/${projectId}/layer/${layerId}`,
                 items,
                 prev,
                 next
             }
         }
-
         return new Page(layerId, page.data)
     }
 
     async #savePageToRerum() {
+        const prev = this.prev ?? null
+        const next = this.next ?? null
         const pageAsAnnotationPage = {
             "@context": "http://www.w3.org/ns/anno.jsonld",
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
-            target: this.target,
-            partOf: this.partOf,
             items: this.items ?? [],
-            prev: this.prev ?? null,
-            next: this.next ?? null
+            prev,
+            next,
+            creator: await fetchUserAgent(this.creator),
+            target: this.target,
+            partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
         if (this.#tinyAction === 'create') {
-            await databaseTiny.save(pageAsAnnotationPage)
+            const saved = await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
                     console.error(err, pageAsAnnotationPage)
                     throw new Error(`Failed to save Page to RERUM: ${err.message}`)
@@ -101,12 +106,7 @@ export default class Page {
             return this
         } catch (err) {
             if (err.status === 409) {
-                // Handle version conflict - re-throw with more context
-                const conflictError = new Error(`Page update failed due to version conflict. The page '${this.id}' was modified by another process.`)
-                conflictError.status = 409
-                conflictError.currentVersion = err.currentVersion
-                conflictError.pageId = this.id
-                throw conflictError
+                throw handleVersionConflict(null, err)
             }
             throw err
         }
@@ -114,27 +114,25 @@ export default class Page {
 
     /**
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
+      * FIXME: This will save to RERUM even if there has been no content change
+      * The rerum variable below is true if the content has changed.
+      *
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
     async update() {
-        if (this.#tinyAction === 'update' || this.items.length) {
+        const hasContent = this.items?.length || this.items?.some?.(item => item && typeof item === 'object' && 'body' in item)
+        if (this.#tinyAction === 'update' || hasContent) {
             this.#setRerumId()
             await this.#savePageToRerum()
         }
-        return this.#updatePageForProject()
+        return this.#formatPageForProject()
     }
 
     asProjectPage() {
-        return this.#updatePageForProject()
+        return this.#formatPageForProject()
     }
 
-    #updatePageForProject() {
-        // Page in local MongoDB is in the Project.layers.pages Array and looks like:
-        // { 
-        //   id: "https://api.t-pen.org/layer/layerID/page/pageID", 
-        //   label: "Page 1", 
-        //   target: "https://canvas.uri" 
-        // }
+    #formatPageForProject() {
         return {
             id: this.id,
             label: this.label,
