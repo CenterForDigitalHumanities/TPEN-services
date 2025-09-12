@@ -43,16 +43,11 @@ export default screenContentMiddleware
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
   // Guard against unnreasonably deep embedded JSON structures so we don't recurse for too long.
   if (depth > 10) return true
-  if (Array.isArray(obj) && !getValueString(obj)) {
-    console.error("Cannot perform suspicious content checks on Arrays containing JSON.  This Array was skipped so we could continue.")
-    console.log(obj)
-    return false
-  }
-  if (!isValidJSON(obj)) {
-    console.error("Cannot perform suspicious content check.  The object provided is not valid JSON.  This was skipped so we could continue.")
-    console.log(obj)
-    return false
-  }
+  // Arrays are considered valid JSON Arrays.  Bail out on Arrays, they are too complex to check.
+  // Simple arrays like {"none": ["while(true) return true"]} are handled elsewhere in the recursion.
+  if (Array.isArray(obj)) return false
+  // Bail out if the data provided is not JSON.  It is invalid and not worth checking.
+  if (!isValidJSON(obj)) return false
   // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
@@ -72,6 +67,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
       warnings[key] = "<embedded>"
     }  
     else if (isSuspiciousValueString(getValueString(obj[key]))) {
+      // Note this will check simple Array values like ["a value of a language map label"]
       if (logWarning) {
         warn[key] = getValueString(obj[key])
         console.warn("Found suspicious value in JSON.  This 'key: value' may be embedded below the top level JSON.")
@@ -154,10 +150,9 @@ function getValueString(data) {
   if (typeof data === "string") return data
   if (typeof data === "number") return data + ""
   if (Array.isArray(data)) {
-    // We can use it if the whole array is strings or numbers.  Otherwise it can't be .join()d and checked. 
-    if (
-      data.filter(l => typeof l !== "string" && typeof l !== "number").length > 0
-    ) return null
+    // We can use it as a value string if the whole array is strings or numbers.
+    // Otherwise it is too complex to be a value string and will be skipped. 
+    if (data.filter(l => typeof l !== "string" && typeof l !== "number").length > 0) return null
     return data.join()
   }
   // Always return null for JSON data. It's not stringy.
