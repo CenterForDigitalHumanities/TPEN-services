@@ -1,13 +1,13 @@
 import express from "express"
 import { respondWithError } from "../utilities/shared.js"
 import auth0Middleware from "../auth/index.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import Project from "../classes/Project/Project.js"
 import { ACTIONS, SCOPES, ENTITIES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
-// TODO add route protection from /utilities/checkIfSuspicious.js here.
-router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/metadata").put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const { projectId } = req.params
   const metadata = req.body
   const user = req.user
