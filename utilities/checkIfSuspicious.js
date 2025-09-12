@@ -41,14 +41,14 @@ export default screenContentMiddleware
  * set by direct user input.
  */ 
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
-  // Guard against unnreasonably deep embedded JSON structures so we don't recurse for too long.
+  // Guard against unreasonably deep embedded JSON structures so we don't recurse for too long.
   if (depth > 10) return true
   // Arrays are considered valid JSON Arrays.  Bail out on Arrays, they are too complex to check.
   // Simple arrays like {"none": ["while(true) return true"]} are handled elsewhere in the recursion.
   if (Array.isArray(obj)) return false
   // Bail out if the data provided is not JSON.  It is invalid and not worth checking.
   if (!isValidJSON(obj)) return false
-  // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
+  // Helps guard bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
   // We don't need to check keys that TPEN Services will never process.
