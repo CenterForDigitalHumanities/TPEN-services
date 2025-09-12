@@ -16,13 +16,14 @@ import Hotkeys from "../classes/HotKeys/Hotkeys.js"
 import layerRouter from "../layer/index.js"
 import pageRouter from "../page/index.js"
 import cookieParser from "cookie-parser"
+import checkIfSuspicious from "../utilities/checkIfSuspicious.js"
 
 let router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
 
 router
   .route("/create")
-  .post(auth0Middleware(), async (req, res) => {
+  .post(auth0Middleware(), checkIfSuspicious, async (req, res) => {
     const user = req.user
 
     if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
