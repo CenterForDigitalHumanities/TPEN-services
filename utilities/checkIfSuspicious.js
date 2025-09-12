@@ -43,8 +43,16 @@ export default screenContentMiddleware
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
   // Guard against unnreasonably deep embedded JSON structures so we don't recurse for too long.
   if (depth > 10) return true
-  if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
-  if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
+  if (Array.isArray(obj) && !getValueString(obj)) {
+    console.error("Cannot perform suspicious content checks on Arrays containing JSON.  This Array was skipped so we could continue.")
+    console.log(obj)
+    return false
+  }
+  if (!isValidJSON(obj)) {
+    console.error("Cannot perform suspicious content check.  The object provided is not valid JSON.  This was skipped so we could continue")
+    console.log(obj)
+    return false
+  }
   // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
@@ -147,7 +155,11 @@ function getValueString(data) {
   if (typeof data === "number") return data + ""
   if (Array.isArray(data)) {
     // Only if the whole array is strings or numbers
-    if (data.find(l => typeof l !== "string" || typeof l !== "number")?.length) return null
+    if (
+      data.filter(l => {
+        if (typeof l !== "string" && typeof l !== "number") return l
+      }).length > 0
+    ) return null
     return data.join()
   }
   // Always return null for JSON data. It's not stringy.
