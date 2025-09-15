@@ -27,7 +27,7 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
       if (isSuspiciousJSON(layerObj, [], true, 1))
         return respondWithError(res, 400, "Suspicious project data will not be processed.")
       for (const pageObj of pages) {
-        if (isSuspiciousJSON(pageObj, [], true, 1))
+        if (isSuspiciousJSON(pageObj, [], true, 2))
           return respondWithError(res, 400, "Suspicious project data will not be processed.")
         // page.items are referenced and do not need to be checked.
       }
