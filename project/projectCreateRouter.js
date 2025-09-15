@@ -33,7 +33,7 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
       }
     }
   }
-  if(project.tools) {
+  if (project.tools) {
     for (const toolObj of project.tools) {
       if (isSuspiciousJSON(toolObj, [], true, 1))
         return respondWithError(res, 400, "Suspicious project data will not be processed.")
