@@ -8,7 +8,7 @@ import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
-router.route("/create").post(auth0Middleware(), async (req, res) => {
+router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectObj = new Project()
