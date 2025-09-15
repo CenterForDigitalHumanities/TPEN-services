@@ -5,6 +5,7 @@ import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
+import { isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -13,6 +14,31 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectObj = new Project()
   let project = req.body
+  // Special check on metadata, tools, layers, and pages
+  if (project.metadata) {
+    for (const metadataObj of project.metadata) {
+      if (isSuspiciousJSON(metadataObj, [], true, 1))
+        return respondWithError(res, 400, "Suspicious project data will not be processed.")
+    }
+  }
+  if (project.layers) {
+    for (const layerObj of project.layers) {
+      const pages = layerObj.pages
+      if (isSuspiciousJSON(layerObj, [], true, 1))
+        return respondWithError(res, 400, "Suspicious project data will not be processed.")
+      for (const pageObj of pages) {
+        if (isSuspiciousJSON(pageObj, [], true, 1))
+          return respondWithError(res, 400, "Suspicious project data will not be processed.")
+        // page.items are referenced and do not need to be checked.
+      }
+    }
+  }
+  if(project.tools) {
+    for (const toolObj of project.tools) {
+      if (isSuspiciousJSON(toolObj, [], true, 1))
+        return respondWithError(res, 400, "Suspicious project data will not be processed.")
+    }
+  }
   project = { ...project, creator: user?.agent }
   try {
     const newProject = await projectObj.create(project)
