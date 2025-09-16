@@ -22,11 +22,15 @@ function screenContentMiddleware() {
   function suspiciousBodyContent(req, res, next) {
     const body = req?.body
     if (!body) return next()
-    if (isValidJSON(body)) {
+    if (Array.isArray(body)) {
+      const simple = getValueString(body)
+      if (simple !== null && isSuspiciousValueString(simple, true)) return respondWithError(res, 400, "Suspicious input will not be processed.")
+    }
+    else if (isValidJSON(body)) {
       if (isSuspiciousJSON(body)) return respondWithError(res, 400, "Suspicious input will not be processed.")
     }
     else if (typeof body === "string" || typeof body === "number") {
-      if (isSuspiciousValueString(body+"")) return respondWithError(res, 400, "Suspicious input will not be processed.")
+      if (isSuspiciousValueString(body+"", true)) return respondWithError(res, 400, "Suspicious input will not be processed.")
     } 
     next()
   }
@@ -43,8 +47,7 @@ export default screenContentMiddleware
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
   // Guard against unreasonably deep embedded JSON structures so we don't recurse for too long.
   if (depth > 10) return true
-  // Arrays are considered valid JSON Arrays.  Bail out on Arrays, they are too complex to check.
-  // Simple arrays like {"none": ["while(true) return true"]} are handled elsewhere in the recursion.
+  // Arrays are considered valid JSON.  Simple ones are checkd upstream.  Bail out on complex arrays here.
   if (Array.isArray(obj)) return false
   // Bail out if the data provided is not JSON.  It is invalid and not worth checking.
   if (!isValidJSON(obj)) return false
@@ -52,7 +55,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
   // We don't need to check keys that TPEN Services will never process.
-  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none"]
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none", "roles"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
@@ -84,10 +87,17 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
 /**
  * For some string do some reasonable checks to see if it may contain something that seems like code.
  */ 
-export function isSuspiciousValueString(valString) {
+export function isSuspiciousValueString(valString, logWarning = false) {
   // We can't process it, so technically it isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
-  return containsScript(valString)
+  // Helps guard bad logWarning param
+  if (typeof logWarning !== "boolean") logWarning = false
+  const sus = containsScript(valString)
+  if (sus && logWarning) {
+    console.warn("Suspicious content detected.  See string below.")
+    console.warn(valString)
+  }
+  return sus
 }
 
 /**

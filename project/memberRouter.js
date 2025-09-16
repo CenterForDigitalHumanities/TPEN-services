@@ -5,6 +5,7 @@ import auth0Middleware from "../auth/index.js"
 import Project from "../classes/Project/Project.js"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 import Group from "../classes/Group/Group.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -51,7 +52,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
 })
 
 // Add, set, remove roles
-router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
@@ -72,7 +73,7 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
   }
 })
 
-router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
