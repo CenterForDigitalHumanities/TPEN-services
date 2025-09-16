@@ -90,6 +90,8 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
 export function isSuspiciousValueString(valString, logWarning = false) {
   // We can't process it, so technically it isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
+  // Helps guard bad logWarning param
+  if (typeof logWarning !== "boolean") logWarning = false
   const sus = containsScript(valString)
   if (sus && logWarning) {
     console.warn("Suspicious content detected.  See string below.")
