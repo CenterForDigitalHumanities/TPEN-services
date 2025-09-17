@@ -200,3 +200,5 @@ kill %1  # Stop the background server
 - IIIF libraries for manifest handling
 
 NEVER CANCEL long-running commands. Application builds and tests are designed to complete within documented timeouts. Always wait for completion to ensure accurate validation of changes.
+
+All work on issues for bugs, features, and enhancements will target the `development` branch. The `main` branch will only be targetted with hotfixes by admins or by PRs from the `development` branch. New work should branch from `development`.
