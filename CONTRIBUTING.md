@@ -64,7 +64,7 @@ cp sample.env .env
    - **PORT**: Server port (default: 3001)
    - **MONGODB**: MongoDB connection string
    - **MONGODBNAME**: MongoDB database name
-   - **AUDIENCE**: Auth0 audience for JWT validation
+   - **AUDIENCE**: Auth0 audience for JWT validation ( or  alternate authentication )
    - **DOMAIN**: Auth0 domain
 
 **Important**: Never commit your `.env` file to version control. It's included in `.gitignore` for security.
@@ -84,6 +84,8 @@ TPEN Services uses Auth0 for authentication. For development:
 - Set up an Auth0 account and application
 - Configure your `.env` file with the appropriate `AUDIENCE` and `DOMAIN` values
 - Some features may require valid Auth0 configuration to function properly
+
+> Auth0 is not required for development, but will always be used upstream. If you have an alternate solution, you only need to replace the `/auth` directory to ensure your own middleware is utilized. Contributions to the main project that alter these files will not be accepted.
 
 ## Running the Project Locally
 
@@ -142,7 +144,7 @@ npm run inviteMemberTests
 
 ### Test Requirements
 - Some tests require database connections and will be skipped if databases are not available
-- Authentication tests require proper Auth0 configuration
+- Authentication tests require proper Auth0 configuration ( currently skipped )
 - Ensure your `.env` file is properly configured before running tests
 
 ## Code Style and Best Practices
@@ -150,12 +152,16 @@ npm run inviteMemberTests
 ### General Guidelines
 - Use ES6+ modules (`import`/`export` syntax)
 - Follow existing code style and patterns
+    - Prefer switch statements, ternary operations, and guard clauses in place of complex if-else blocks
+    - Use terminal semicolons only when required by syntax as the leadign character of the problematic line
+    - Use nullish coalescing operators and optional chaining for clarity in place of expanded conditionals
+    - Use clear and English(ish) symbol names
 - Write clear, descriptive commit messages
 - Include tests for new functionality
 - Update documentation when making changes
 
 ### File Organization
-- **Routes**: Organized in feature folders (`project/`, `manifest/`, `line/`, etc.)
+- **API Routes**: Organized in feature folders (`project/`, `manifest/`, `line/`, etc.)
 - **Classes**: Located in `classes/` directory
 - **Utilities**: Helper functions in `utilities/` directory
 - **Tests**: Use `__tests__` directories or `.test.js` suffix
@@ -167,9 +173,9 @@ npm run inviteMemberTests
 
 ## Making Contributions
 
-### 1. Create a Feature Branch
+### 1. Create a Branch
 ```bash
-git checkout -b feature/your-feature-name
+git checkout -b issue-#-your-feature/fix-name
 ```
 
 ### 2. Make Your Changes
@@ -203,7 +209,7 @@ Use conventional commit messages:
 
 ### 5. Push and Create Pull Request
 ```bash
-git push origin feature/your-feature-name
+git push origin issue-#-your-feature/fix-name
 ```
 
 Then create a pull request on GitHub with:
