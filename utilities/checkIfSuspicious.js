@@ -7,7 +7,7 @@
   * outside of the middleware chain for custom suspicious value handling.
   */
 
-import { isValidJSON, respondWithError } from "./shared.js"
+import { isValidJSON, respondWithError, languageCodes } from "./shared.js"
 
 /**
  * This middleware function scans request bodies for suspcious looking JSON or strings.
@@ -55,7 +55,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
   // We don't need to check keys that TPEN Services will never process.
-  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none", "roles"]
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", ...languageCodes]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}

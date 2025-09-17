@@ -5,7 +5,7 @@ import ProjectFactory from "../classes/Project/ProjectFactory.js"
 import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
-import { isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
+import { isSuspiciousJSON, isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -87,12 +87,15 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
         resolvedPayload: checkURL.resolvedPayload
       })
     try {
+      if (isSuspiciousJSON(checkURL.resolvedPayload)) return respondWithError(res, 400, "Suspicious data will not be processed.")
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),
       )
       res.status(201).json(result)
     } catch (error) {
+      console.log("project import error")
+      console.error(error)
       res.status(error.status ?? 500).json({
         status: error.status ?? 500,
         message: error.message,
@@ -108,6 +111,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
         resolvedPayload: checkURL.resolvedPayload
       })
     try {
+      if (isSuspiciousJSON(checkURL.resolvedPayload)) return respondWithError(res, 400, "Suspicious data will not be processed.")
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),
@@ -115,6 +119,8 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       )
       res.status(201).json(result)
     } catch (error) {
+      console.log("TPEN 2.8 project import error")
+      console.error(error)
       res.status(error.status ?? 500).json({
         status: error.status ?? 500,
         message: error.message,
@@ -138,6 +144,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
     if (!imageUrl || !projectLabel) {
       return respondWithError(res, 400, "Image URL and project label are required")
     }
+    if (isSuspiciousValueString(projectLabel)) return respondWithError(res, 400, "Suspicious data will not be processed.")
     const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user.agent.split('/').pop())
     res.status(201).json(project)
   } catch (error) {
