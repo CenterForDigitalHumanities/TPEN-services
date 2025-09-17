@@ -17,14 +17,12 @@ npm --version
 ```
 
 ### Database Requirements
-TPEN Services uses two database systems:
-- **MongoDB**: For primary data storage
-- **MariaDB**: For additional data operations
+TPEN Services uses **MongoDB** for primary data storage.
 
 For local development, you'll need either:
-- Local installations of MongoDB and MariaDB
-- Docker containers running these databases
-- Access to remote database instances
+- Local installation of MongoDB
+- Docker container running MongoDB
+- Access to a remote MongoDB instance (such as MongoDB Atlas)
 
 ### Git
 - Git should be installed and configured on your system
@@ -66,10 +64,6 @@ cp sample.env .env
    - **PORT**: Server port (default: 3001)
    - **MONGODB**: MongoDB connection string
    - **MONGODBNAME**: MongoDB database name
-   - **MARIADB**: MariaDB host
-   - **MARIADBNAME**: MariaDB database name
-   - **MARIADBUSER**: MariaDB username
-   - **MARIADBPASSWORD**: MariaDB password
    - **AUDIENCE**: Auth0 audience for JWT validation
    - **DOMAIN**: Auth0 domain
 
@@ -78,14 +72,11 @@ cp sample.env .env
 ### 4. Database Setup
 
 #### MongoDB
-- Install MongoDB locally or use MongoDB Atlas
+- Install MongoDB locally or use MongoDB Atlas (cloud)
 - Update the `MONGODB` connection string in your `.env` file
 - Ensure the database specified in `MONGODBNAME` exists
 
-#### MariaDB
-- Install MariaDB locally or use a cloud service
-- Create a database and user as specified in your `.env` file
-- Update the MariaDB connection settings accordingly
+**Note**: The project uses MongoDB as its primary database. While the codebase includes a MariaDB controller, it is not actively used and MongoDB is sufficient for development.
 
 ### 5. Authentication Setup
 
