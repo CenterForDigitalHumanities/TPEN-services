@@ -13,7 +13,8 @@
     "Cache-Control",
     "Last-Modified",
     "Link",
-    "X-HTTP-Method-Override"
+    "X-HTTP-Method-Override",
+    "If-Overwritten-Version"
   ],
   "exposedHeaders": "*",
   "origin": "*",
