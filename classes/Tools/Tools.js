@@ -70,6 +70,10 @@ export default class Tools {
         return this.tools.some(t => t.toolName === toolName)
     }
 
+    async checkIfInDefaultTools(toolName) {
+        return Tools.defaultTools.some(t => t.toolName === toolName)
+    }
+
     static defaultTools = [
         {
             "label":"Inspect",

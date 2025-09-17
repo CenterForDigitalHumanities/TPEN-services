@@ -20,6 +20,9 @@ router.route("/:projectId/addIframeTool").post(async (req, res) => {
     if (await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 400, "Tool with the same name already exists")
     }
+    if (await tools.checkIfInDefaultTools(toolName)) {
+      return respondWithError(res, 400, "Default tools cannot be altered")
+    }
     const addedTool = await tools.addIframeTool(label, toolName, url, location, state)
     res.status(200).json(addedTool)
   } catch (error) {
@@ -44,6 +47,9 @@ router.route("/:projectId/removeTool").delete(async (req, res) => {
     const tools = new Tools(projectId)
     if (!await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 404, "Tool not found")
+    }
+    if (await tools.checkIfInDefaultTools(toolName)) {
+      return respondWithError(res, 400, "Default tools cannot be removed")
     }
     const removedTool = await tools.removeTool(toolName)
     res.status(200).json(removedTool)

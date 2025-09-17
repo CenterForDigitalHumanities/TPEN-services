@@ -28,7 +28,7 @@ export default class ProjectFactory {
    * @returns object of project data
    */
 
-  static async DBObjectFromManifest(manifest, creator, importTPEN28 = false) {
+  static async DBObjectFromManifest(manifest, creator, tools = [], importTPEN28 = false) {
     if (!manifest) {
       throw {
         status: 404,
@@ -50,7 +50,7 @@ export default class ProjectFactory {
       metadata,
       manifest: importTPEN28 ? [ manifest.id.split('/manifest.json')[0] + '?version=3' ] : [ manifest.id ],
       layers: [ layer.asProjectLayer() ],
-      tools: Tools.defaultTools,
+      tools: Tools.defaultTools.concat(tools),
       _createdAt: now,
       _modifiedAt: -1,
       _lastModified: firstPage,
@@ -67,10 +67,10 @@ export default class ProjectFactory {
     return label[lang].join(", ")
   }
 
-  static async fromManifestURL(manifestId, creator, importTPEN28 = false) {
+  static async fromManifestURL(manifestId, creator, tools = [], importTPEN28 = false) {
     return vault.loadManifest(manifestId)
       .then(async (manifest) => {
-        return await ProjectFactory.DBObjectFromManifest(manifest, creator, importTPEN28)
+        return await ProjectFactory.DBObjectFromManifest(manifest, creator, tools, importTPEN28)
       })
       .then(async (project) => {
         const projectObj = new Project()
