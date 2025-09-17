@@ -18,7 +18,8 @@ export default class Project {
    */
 
   async create(payload) {
-    // validation checks for all the required elements without which a project cannot be created. modify validateProjectPayload function to include more elements as they become available (layers,... )
+    // Comprehensive validation checks for all the required elements and their data types. 
+    // This prevents malformed projects with incorrect data types from being created.
     const validation = validateProjectPayload(payload)
     
     if (!validation.isValid) {
