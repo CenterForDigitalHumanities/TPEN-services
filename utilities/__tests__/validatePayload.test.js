@@ -354,10 +354,8 @@ describe('validateProjectPayload', () => {
       }
       const result = validateProjectPayload(payload)
       expect(result.isValid).toBe(false)
-      expect(result.errors).toContain("metadata must be an array")
-      expect(result.errors).toContain("layers must be an array")
-      expect(result.errors).toContain("manifest must be an array")
-      expect(result.errors).toContain("group must be a non-empty string")
+      // Since we now return the first error encountered, we only expect the first validation error
+      expect(result.errors).toBe("metadata must be an array")
     })
 
     test('should accept valid complete project payload', () => {

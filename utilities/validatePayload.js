@@ -21,75 +21,66 @@ export function validateProjectPayload(payload) {
   }
 
   // Validate data types and structure of each required element
-  const validationErrors = []
+  // Return immediately upon encountering the first validation error
 
   // Validate label - must be a non-empty string
   if (typeof payload.label !== 'string' || payload.label.trim() === '') {
-    validationErrors.push('label must be a non-empty string')
+    return { isValid: false, errors: 'label must be a non-empty string' }
   }
 
   // Validate metadata - must be an array
   if (!Array.isArray(payload.metadata)) {
-    validationErrors.push('metadata must be an array')
+    return { isValid: false, errors: 'metadata must be an array' }
   }
 
   // Validate layers - must be an array
   if (!Array.isArray(payload.layers)) {
-    validationErrors.push('layers must be an array')
-  } else {
-    // Validate each layer object has required properties
-    for (let i = 0; i < payload.layers.length; i++) {
-      const layer = payload.layers[i]
-      if (typeof layer !== 'object' || layer === null) {
-        validationErrors.push(`layer at index ${i} must be an object`)
-        continue
-      }
-      
-      const layerRequiredProps = ['id', 'label', 'pages']
-      const missingLayerProps = layerRequiredProps.filter(prop => !layer.hasOwnProperty(prop))
-      if (missingLayerProps.length > 0) {
-        validationErrors.push(`layer must have id, label, and pages properties`)
-        break // Only report this error once
-      }
+    return { isValid: false, errors: 'layers must be an array' }
+  }
+  
+  // Validate each layer object has required properties
+  for (let i = 0; i < payload.layers.length; i++) {
+    const layer = payload.layers[i]
+    if (typeof layer !== 'object' || layer === null) {
+      return { isValid: false, errors: `layer at index ${i} must be an object` }
+    }
+    
+    const layerRequiredProps = ['id', 'label', 'pages']
+    const missingLayerProps = layerRequiredProps.filter(prop => !layer.hasOwnProperty(prop))
+    if (missingLayerProps.length > 0) {
+      return { isValid: false, errors: 'layer must have id, label, and pages properties' }
     }
   }
 
   // Validate manifest - must be a non-empty array
   if (!Array.isArray(payload.manifest)) {
-    validationErrors.push('manifest must be an array')
-  } else if (payload.manifest.length === 0) {
-    validationErrors.push('manifest array cannot be empty')
-  } else {
-    // Validate that manifest array contains valid URIs
-    const invalidUris = payload.manifest.filter(uri => {
-      if (typeof uri !== 'string') return true
-      try {
-        new URL(uri)
-        return false
-      } catch {
-        return true
-      }
-    })
-    if (invalidUris.length > 0) {
-      validationErrors.push('manifest array must contain valid URIs')
+    return { isValid: false, errors: 'manifest must be an array' }
+  }
+  
+  if (payload.manifest.length === 0) {
+    return { isValid: false, errors: 'manifest array cannot be empty' }
+  }
+  
+  // Validate that manifest array contains valid URIs
+  for (const uri of payload.manifest) {
+    if (typeof uri !== 'string') {
+      return { isValid: false, errors: 'manifest array must contain valid URIs' }
+    }
+    try {
+      new URL(uri)
+    } catch {
+      return { isValid: false, errors: 'manifest array must contain valid URIs' }
     }
   }
 
   // Validate creator - must be a non-empty string
   if (typeof payload.creator !== 'string' || payload.creator.trim() === '') {
-    validationErrors.push('creator must be a non-empty string')
+    return { isValid: false, errors: 'creator must be a non-empty string' }
   }
 
   // Validate group - must be a non-empty string
   if (typeof payload.group !== 'string' || payload.group.trim() === '') {
-    validationErrors.push('group must be a non-empty string')
-  }
-
-  if (validationErrors.length > 0) {
-    return {
-      isValid: false,
-      errors: validationErrors.join('; ')
-    }
+    return { isValid: false, errors: 'group must be a non-empty string' }
   }
 
   return {isValid: true, errors: null}
