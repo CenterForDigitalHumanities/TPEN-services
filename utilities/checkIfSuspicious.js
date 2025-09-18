@@ -7,7 +7,7 @@
   * outside of the middleware chain for custom suspicious value handling.
   */
 
-import { isValidJSON, respondWithError, languageCodes } from "./shared.js"
+import { isValidJSON, respondWithError } from "./shared.js"
 
 /**
  * This middleware function scans request bodies for suspcious looking JSON or strings.
