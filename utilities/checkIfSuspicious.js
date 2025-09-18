@@ -162,7 +162,7 @@ export function isSuspiciousLanguageMap(languageMapObj, logWarning = false) {
 }
 
 /**
- * A valid JSON key from a valid JSON object that may be a language map lanuage key.
+ * A valid JSON key from a valid JSON object that may be a language map language key.
  * Determine if the key is a valid-looking language map key.
  * Typical language codes are 2-3 characters, but extensions and subtagging make them longer.
  * Limiting the max length to a total of 1 language code with 3 extensions.
