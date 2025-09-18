@@ -102,11 +102,11 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
       if (isSuspiciousJSON(metadataObj, [], logWarning, 1)) {
         if (logWarning) {
           // Don't need to see the whole metdata map value, the specific data is already logged
-          warn.metadata = "<metadatamap>"
-          console.warn("Found suspicious value in JSON metadata map.  The metadata may be embedded below the top level JSON.")
+          warn.metadata = "<jsonarray>"
+          console.warn("Found suspicious value in JSON metadata array.  The metadata may be embedded below the top level JSON.")
           console.warn(warn)  
         }
-        warnings.metadata = "<metadatamap>"
+        warnings.metadata = "<jsonarray>"
         break
       }
     }
