@@ -41,7 +41,7 @@ function screenContentMiddleware() {
 export default screenContentMiddleware
 
 /**
- * Go through relevant keys on a JSON object that may have a key or value
+ * Go through relevant keys on a JSON object that may have a key and/or value
  * set by direct user input.
  */ 
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
@@ -54,10 +54,10 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   // Helps guard bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
   const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language", "descripiton"]
-  const allKeys = [...common_keys, ...specific_keys]
+  const combined_keys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
-  for (const key of allKeys) {
+  for (const key of combined_keys) {
     // Also check embedded JSON values recursively to a max depth of 10.
     if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], logWarning, depth + 1)) {
       // We don't need to log out <embedded> notes, but we could like key: <embedded> to show the trail
