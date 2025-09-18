@@ -53,7 +53,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   if (!isValidJSON(obj)) return false
   // Helps guard bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
-  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language", "descripiton"]
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language", "description"]
   const combined_keys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
