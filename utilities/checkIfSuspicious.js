@@ -93,6 +93,24 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
       break
     }
   }
+  /**
+   * Specifically check the metadata key if it is an Array, since it can be a complex Array of JSON Objects we encounter often.
+   * Each object has 'label' and 'value' keys whose values can be strings or language maps.
+   */
+  if (obj.metadata && Array.isArray(obj.metadata)) {
+    for (const metadataObj of obj.metadata) {
+      if (isSuspiciousJSON(metadataObj, [], logWarning, 1)) {
+        if (logWarning) {
+          // Don't need to see the whole metdata map value, the specific data is already logged
+          warn.metadata = "<metadatamap>"
+          console.warn("Found suspicious value in JSON metadata map.  The metadata may be embedded below the top level JSON.")
+          console.warn(warn)  
+        }
+        warnings.metadata = "<metadatamap>"
+        break
+      }
+    }
+  }
   // Could collect all warnings and log them out here, but we break out on the first warning instead.
   return Object.keys(warnings).length > 0
 }
@@ -137,7 +155,7 @@ export function isSuspiciousLanguageMap(languageMapObj, logWarning = false) {
     }
   }
   if (sus && logWarning) {
-    console.warn("Suspicious content detected.  See language map entry below.")
+    console.warn("Suspicious content detected.  See language map entry below.  This data may be embedded below the top level JSON.")
     console.warn(warn)
   }
   return sus
