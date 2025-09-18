@@ -1,9 +1,10 @@
 import express from "express"
-import {respondWithError} from "../utilities/shared.js"
+import { respondWithError, isValidJSON } from "../utilities/shared.js"
 import User from "../classes/User/User.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import cors from "cors"
 import auth0Middleware from "../auth/index.js"
+import { isSuspiciousJSON, isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router()
 router.use(
@@ -22,6 +23,12 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthorized user")
   try {
+    if (req.body && !Array.isArray(req.body)) {
+      for (const key of req.body) {
+        if (isSuspiciousJSON(req.body[key]) || isSuspiciousValueString(req.body[key]))
+          return respondWithError(res, 400, "Suspicious profile data will not be processed.")
+      }
+    }
     const userObj = new User(user._id)
     const userProfile = await userObj.updateProfile(req.body)
     res.status(200).json(userProfile)
