@@ -1,3 +1,9 @@
+/*
+ * Ensure the input is a valid url, and try to resolve it for data.
+ *
+ * @param url - A string that is supposed to be a resolvable URL
+ */
+
 async function validateURL(url) {
   if (!url) return { valid: false, message: "Manifest URL is required for import", status: 404 }
   if (!isNaN(url)) return { valid: false, message: "Input is a number, not a URL", status: 400 }

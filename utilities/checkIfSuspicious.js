@@ -41,7 +41,7 @@ function screenContentMiddleware() {
 export default screenContentMiddleware
 
 /**
- * Go through relevant keys on a TPEN3 JSON object that may have a value
+ * Go through relevant keys on a JSON object that may have a key or value
  * set by direct user input.
  */ 
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
@@ -53,15 +53,13 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   if (!isValidJSON(obj)) return false
   // Helps guard bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
-  // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
-  // We don't need to check keys that TPEN Services will never process.
-  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language"]
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language", "descripiton"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
   for (const key of allKeys) {
     // Also check embedded JSON values recursively to a max depth of 10.
-    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], true, depth + 1)) {
+    if (isValidJSON(obj[key]) && isSuspiciousJSON(obj[key], [], logWarning, depth + 1)) {
       // We don't need to log out <embedded> notes, but we could like key: <embedded> to show the trail
       // if (logWarning) {
       //   warn[key] = "<embedded>"
@@ -70,7 +68,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
       warnings[key] = "<embedded>"
     }  
     else if (isSuspiciousValueString(getValueString(obj[key]))) {
-      // Note this will check simple Array values like ["a value of a language map label"]
+      // Note this will check simple joinable Array values like ["label 1", "label 2", 1234321]
       if (logWarning) {
         warn[key] = getValueString(obj[key])
         console.warn("Found suspicious value in JSON.  This 'key: value' may be embedded below the top level JSON.")
@@ -84,16 +82,19 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   // Check for possible language maps that were skipped over due to their complexity.
   const language_map_keys = ["label", "value", "summary", "requiredStatement"]
   for (const language_key of language_map_keys) {
-    if (isValidJSON(obj[language_key]) && isSuspiciousLanguageMap(obj[language_key], true)) {
+    if (isValidJSON(obj[language_key]) && isSuspiciousLanguageMap(obj[language_key], logWarning)) {
       if (logWarning) {
-        warn[language_key] = getValueString(obj[language_key])
+        // Don't need to see the whole language map value, the specific language is already logged.
+        // warn[language_key] = obj[language_key]
+        warn[language_key] = "<languagemap>"
         console.warn("Found suspicious value in JSON language map.  This 'key: value' may be embedded below the top level JSON.")
         console.warn(warn)  
       }
-      warnings[language_key] = getValueString(obj[language_key]) ?? "<embedded>"
+      warnings[language_key] = obj[language_key]
       break
     }
   }
+  // Could collect all warnings and log them out here, but we break out on the first warning instead.
   return Object.keys(warnings).length > 0
 }
 
@@ -143,12 +144,17 @@ export function isSuspiciousLanguageMap(languageMapObj, logWarning = false) {
   return sus
 }
 
+/**
+ * A key from a valid JSON object that may be a language map.
+ * Determine if the key is a valid-looking language map key.
+ * Typical language codes are 2-3 characters, but extensions and subtagging make them longer.
+ * Limiting the max length to a total of 1 language code with 3 extensions.
+ * It must be 15 characters or less and only contain lowercase letters and '-'
+ */ 
 function isValidLanguageMapKey(key) {
-  // This is more of a relaxed guard to make sure key is a thing
-  if (typeof key !== "string") return false
-  // Accounting for 3 extensions and sub tags, that is 4 x 3 + the three '-'s = 15
+  // Relaxed guard to make sure key has a value
+  if (!key) return false
   if (key.length > 15) return false
-  // can only be lowercase letters and dashes
   const chars = new RegExp(/^[a-z-]+$/)
   if (!chars.test(key)) return false
   return true

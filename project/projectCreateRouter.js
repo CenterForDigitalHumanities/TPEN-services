@@ -144,10 +144,12 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
     if (!imageUrl || !projectLabel) {
       return respondWithError(res, 400, "Image URL and project label are required")
     }
-    if (isSuspiciousValueString(projectLabel)) return respondWithError(res, 400, "Suspicious data will not be processed.")
+    if (isSuspiciousValueString(projectLabel, true)) return respondWithError(res, 400, "Suspicious project label will not be processed.")
     const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user.agent.split('/').pop())
     res.status(201).json(project)
   } catch (error) {
+    console.log("Create project from image error")
+    console.error(error)
     respondWithError(
       res,
       error.status ?? error.code ?? 500,
