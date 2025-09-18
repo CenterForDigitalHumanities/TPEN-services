@@ -5,7 +5,7 @@ import Tools from "../classes/Tools/Tools.js"
 
 const router = express.Router({ mergeParams: true })
 
-//Add Iframe Tool to Project
+//Add Tool to Project
 router.route("/:projectId/addTool").post(async (req, res) => {
   const { label, toolName, url, location, enabled } = req?.body
   if (!label || !toolName || !location) {
@@ -20,6 +20,9 @@ router.route("/:projectId/addTool").post(async (req, res) => {
     await tools.validateToolArray(req?.body)
     if (await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 400, "Tool with the same name already exists")
+    }
+    if (await tools.checkIfToolLabelExists(label)) {
+      return respondWithError(res, 400, "Tool with the same label already exists")
     }
     if (await tools.checkIfInDefaultTools(toolName)) {
       return respondWithError(res, 400, "Default tools cannot be altered")

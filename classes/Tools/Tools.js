@@ -76,6 +76,13 @@ export default class Tools {
         return this.tools.some(t => t.toolName === toolName)
     }
 
+    async checkIfToolLabelExists(label) {
+        if (!this.tools || !Array.isArray(this.tools)) {
+            await this.#loadFromDB()
+        }
+        return this.tools.some(t => t.label === label)
+    }
+
     async checkIfInDefaultTools(toolName) {
         return Tools.defaultTools.some(t => t.toolName === toolName)
     }
@@ -99,6 +106,9 @@ export default class Tools {
         for (const tool of tools) {
             if (typeof tool !== "object" || tool === null) continue
             let { label, toolName, url = "", location, enabled = true } = tool
+            if (Tools.defaultTools.some(t => t.toolName === toolName)) continue
+            if (Tools.defaultTools.some(t => t.label === label)) continue
+            if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(toolName)) continue
             if (typeof label !== "string") continue
             if (typeof toolName !== "string" || !await this.checkToolNamePattern(toolName)) continue
             if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) continue
@@ -142,42 +152,42 @@ export default class Tools {
             "label": "Inspect",
             "toolName": "inspect",
             "custom": { "enabled": true },
-            "url": null,
+            "url": "",
             "location": "drawer"
         },
         {
             "label": "View Full Page",
             "toolName": "view-fullpage",
             "custom": { "enabled": true },
-            "url": null,
+            "url": "",
             "location": "pane"
         },
         {
             "label": "History Tool",
             "toolName": "history",
             "custom": { "enabled": true },
-            "url": null,
+            "url": "",
             "location": "pane"
         },
         {
             "label": "Preview Tool",
             "toolName": "preview",
             "custom": { "enabled": true },
-            "url": null,
+            "url": "",
             "location": "pane"
         },
         {
             "label": "Line Breaking",
             "toolName": "line-breaking",
             "custom": { "enabled": true },
-            "url": null,
+            "url": "",
             "location": "dialog"
         },
         {
             "label": "Compare Pages",
             "toolName": "compare-pages",
             "custom": { "enabled": true },
-            "url": null,
+            "url": "",
             "location": "pane"
         },
         {
