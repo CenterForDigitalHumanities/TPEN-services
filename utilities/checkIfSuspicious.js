@@ -144,9 +144,8 @@ export function isSuspiciousLanguageMap(languageMapObj, logWarning = false) {
 }
 
 function isValidLanguageMapKey(key) {
-  // key is supposed to be a valid language code string.
+  // This is more of a relaxed guard to make sure key is a thing
   if (typeof key !== "string") return false
-  // This is tough because it can be quite variable with subtagging.  Regular language codes are 2-3 chars.
   // Accounting for 3 extensions and sub tags, that is 4 x 3 + the three '-'s = 15
   if (key.length > 15) return false
   // can only be lowercase letters and dashes
