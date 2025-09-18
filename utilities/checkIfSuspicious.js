@@ -85,12 +85,11 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
     if (isValidJSON(obj[language_key]) && isSuspiciousLanguageMap(obj[language_key], logWarning)) {
       if (logWarning) {
         // Don't need to see the whole language map value, the specific language is already logged.
-        // warn[language_key] = obj[language_key]
         warn[language_key] = "<languagemap>"
         console.warn("Found suspicious value in JSON language map.  This 'key: value' may be embedded below the top level JSON.")
         console.warn(warn)  
       }
-      warnings[language_key] = obj[language_key]
+      warnings[language_key] = "<languagemap>"
       break
     }
   }
@@ -145,15 +144,13 @@ export function isSuspiciousLanguageMap(languageMapObj, logWarning = false) {
 }
 
 /**
- * A key from a valid JSON object that may be a language map.
+ * A valid JSON key from a valid JSON object that may be a language map lanuage key.
  * Determine if the key is a valid-looking language map key.
  * Typical language codes are 2-3 characters, but extensions and subtagging make them longer.
  * Limiting the max length to a total of 1 language code with 3 extensions.
- * It must be 15 characters or less and only contain lowercase letters and '-'
+ * It must be 15 characters or less and only contain lowercase letters and '-'.
  */ 
 function isValidLanguageMapKey(key) {
-  // Relaxed guard to make sure key has a value
-  if (!key) return false
   if (key.length > 15) return false
   const chars = new RegExp(/^[a-z-]+$/)
   if (!chars.test(key)) return false
