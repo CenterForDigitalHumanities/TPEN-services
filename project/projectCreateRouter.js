@@ -69,32 +69,6 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
   respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
-// Import Project from URL with custom Tools
-router.route("/import-with-custom-tools").post(auth0Middleware(), async (req, res) => {
-  const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
-  try {
-    const { url, tools } = req.body
-    if (!url || !Array.isArray(tools)) {
-      return respondWithError(res, 400, "URL and tools are required")
-    }
-    const project = await ProjectFactory.fromManifestURL(
-      url,
-      user.agent.split('/').pop(),
-      tools
-    )
-    res.status(201).json(project)
-  } catch (error) {
-    respondWithError(
-      res,
-      error.status ?? error.code ?? 500,
-      error.message ?? "Unknown server error"
-    )
-  }
-}).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
-})
-
 router.route("/import").post(auth0Middleware(), async (req, res) => {
   let { createFrom } = req.query
   let user = req.user
@@ -106,6 +80,8 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     })
   if (createFrom === "url") {
     const manifestURL = req?.body?.url
+    let tools = req?.body?.tools ?? []
+    if (!Array.isArray(tools)) tools = []
     let checkURL = await validateURL(manifestURL)
     if (!checkURL.valid)
       return res.status(checkURL.status).json({
@@ -116,6 +92,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),
+        tools
       )
       res.status(201).json(result)
     } catch (error) {

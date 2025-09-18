@@ -6,7 +6,7 @@ import Tools from "../classes/Tools/Tools.js"
 const router = express.Router({ mergeParams: true })
 
 //Add Iframe Tool to Project
-router.route("/:projectId/addIframeTool").post(async (req, res) => {
+router.route("/:projectId/addTool").post(async (req, res) => {
   const { label, toolName, url, location, state } = req.body
   if (!label || !toolName || !url || !location) {
     return respondWithError(res, 400, "label, toolName, url, and location are required fields.")
@@ -26,7 +26,7 @@ router.route("/:projectId/addIframeTool").post(async (req, res) => {
     const addedTool = await tools.addIframeTool(label, toolName, url, location, state)
     res.status(200).json(addedTool)
   } catch (error) {
-    console.error("Error fetching default tools:", error)
+    console.error("Error adding tool:", error)
     respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
   }
 }).all((_, res) => {

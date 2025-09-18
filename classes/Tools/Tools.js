@@ -10,6 +10,9 @@ export default class Tools {
 
     async #loadFromDB() {
         this.data = await database.getById(this._id, process.env.TPENPROJECTS)
+        if (!this.data) {
+            throw new Error("Project not found")
+        }
         this.tools = this.data.tools
         return this
     }
@@ -45,6 +48,9 @@ export default class Tools {
             await this.#loadFromDB()
         }
         const toolIndex = this.tools.findIndex(t => t.toolName === toolName)
+        if (toolIndex === -1) {
+            throw new Error("Tool not found")
+        }
         const removedTool = this.tools.splice(toolIndex, 1)[0]
         await this.update()
         return removedTool
@@ -76,51 +82,51 @@ export default class Tools {
 
     static defaultTools = [
         {
-            "label":"Inspect",
-            "toolName":"inspect",
-            "custom": { "state": true },
+            "label": "Inspect",
+            "toolName": "inspect",
+            "custom": { "enabled": true },
             "url": null,
             "location": "drawer"
         },
         {
-            "label":"View Full Page", 
-            "toolName":"view-fullpage",
-            "custom": { "state": true },
+            "label": "View Full Page",
+            "toolName": "view-fullpage",
+            "custom": { "enabled": true },
             "url": null,
             "location": "pane"
         },
         {
-            "label":"History Tool", 
-            "toolName":"history",
-            "custom": { "state": true },
+            "label": "History Tool",
+            "toolName": "history",
+            "custom": { "enabled": true },
             "url": null,
             "location": "pane"
         },
         {
-            "label":"Preview Tool", 
-            "toolName":"preview",
-            "custom": { "state": true },
+            "label": "Preview Tool",
+            "toolName": "preview",
+            "custom": { "enabled": true },
             "url": null,
             "location": "pane"
         },
         {
-            "label":"Line Breaking", 
-            "toolName":"line-breaking",
-            "custom": { "state": true },
+            "label": "Line Breaking",
+            "toolName": "line-breaking",
+            "custom": { "enabled": true },
             "url": null,
             "location": "dialog"
         },
         {
-            "label":"Compare Pages", 
-            "toolName":"compare-pages",
-            "custom": { "state": true },
+            "label": "Compare Pages",
+            "toolName": "compare-pages",
+            "custom": { "enabled": true },
             "url": null,
             "location": "pane"
         },
         {
             "label": "Cappelli's Abbreviation",
             "toolName": "cappelli-abbreviation",
-            "custom": { "state": false },
+            "custom": { "enabled": false },
             "url": "https://centerfordigitalhumanities.github.io/cappelli/",
             "location": "pane"
         },
@@ -128,21 +134,21 @@ export default class Tools {
             "label": "Enigma",
             "toolName": "enigma",
             "url": "https://ciham-digital.huma-num.fr/enigma/",
-            "custom": { "state": false },
+            "custom": { "enabled": false },
             "location": "pane"
         },
         {
             "label": "Latin Dictionary",
             "toolName": "latin-dictionary",
             "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
-            "custom": { "state": false },
+            "custom": { "enabled": false },
             "location": "pane"
         },
         {
             "label": "Latin Vulgate",
             "toolName": "latin-vulgate",
             "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
-            "custom": { "state": false },
+            "custom": { "enabled": false },
             "location": "pane"
         }
     ]
