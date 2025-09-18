@@ -27,7 +27,7 @@ export default class Tools {
         return database.update(this.data, process.env.TPENPROJECTS)
     }
 
-    async addIframeTool(label, toolName, url, location, state = true) {
+    async addIframeTool(label, toolName, url, location, enabled = true) {
         if (!this.tools || !Array.isArray(this.tools)) {
             await this.#loadFromDB()
         }
@@ -36,7 +36,7 @@ export default class Tools {
             toolName,
             url,
             location,
-            custom: { state }
+            custom: { enabled }
         }
         this.tools.push(newTool)
         await this.update()
@@ -64,7 +64,7 @@ export default class Tools {
         if (!tool) {
             throw new Error("Tool not found")
         }
-        tool.custom.state = !tool.custom.state
+        tool.custom.enabled = !tool.custom.enabled
         await this.update()
         return tool
     }

@@ -4,12 +4,28 @@ import validateURL from "../utilities/validateURL.js"
 import Tools from "../classes/Tools/Tools.js"
 
 const router = express.Router({ mergeParams: true })
+const toolNamePattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 //Add Iframe Tool to Project
 router.route("/:projectId/addTool").post(async (req, res) => {
-  const { label, toolName, url, location, state } = req.body
+  const { label, toolName, url, location, enabled } = req.body
   if (!label || !toolName || !url || !location) {
     return respondWithError(res, 400, "label, toolName, url, and location are required fields.")
+  }
+  if (typeof label !== "string") {
+    return respondWithError(res, 400, "label must be a string.")
+  }
+  if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
+    return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
+  }
+  if (typeof url !== "string" || !validateURL(url).valid) {
+    return respondWithError(res, 400, "url must be a valid URL string.")
+  }
+  if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
+    return respondWithError(res, 400, "location must be either 'dialog' or 'pane'.")
+  }
+  if (enabled !== undefined && typeof enabled !== "boolean") {
+    return respondWithError(res, 400, "enabled must be a boolean.")
   }
   try {
     const projectId = req.params.projectId
@@ -23,7 +39,7 @@ router.route("/:projectId/addTool").post(async (req, res) => {
     if (await tools.checkIfInDefaultTools(toolName)) {
       return respondWithError(res, 400, "Default tools cannot be altered")
     }
-    const addedTool = await tools.addIframeTool(label, toolName, url, location, state)
+    const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled)
     res.status(200).json(addedTool)
   } catch (error) {
     console.error("Error adding tool:", error)
@@ -38,6 +54,9 @@ router.route("/:projectId/removeTool").delete(async (req, res) => {
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
+  }
+  if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
+    return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
   }
   try {
     const projectId = req.params.projectId
@@ -66,6 +85,9 @@ router.route("/:projectId/toggleTool").patch(async (req, res) => {
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
+  }
+  if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
+    return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
   }
   try {
     const projectId = req.params.projectId
