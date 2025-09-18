@@ -14,7 +14,8 @@ async function validateURL(url) {
       return {
         valid: false,
         message: "URL does not point to valid JSON",
-        status: 415
+        status: 415,
+        resolvedPayload: null
       }
     }
 

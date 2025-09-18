@@ -55,7 +55,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
   // We don't need to check keys that TPEN Services will never process.
-  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", ...languageCodes]
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
@@ -81,6 +81,19 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
       break
     }
   }
+  // Check for possible language maps that were skipped over due to their complexity.
+  const language_map_keys = ["label", "value", "summary", "requiredStatement"]
+  for (const language_key of language_map_keys) {
+    if (isValidJSON(obj[language_key]) && isSuspiciousLanguageMap(obj[language_key], true)) {
+      if (logWarning) {
+        warn[language_key] = getValueString(obj[language_key])
+        console.warn("Found suspicious value in JSON language map.  This 'key: value' may be embedded below the top level JSON.")
+        console.warn(warn)  
+      }
+      warnings[language_key] = getValueString(obj[language_key]) ?? "<embedded>"
+      break
+    }
+  }
   return Object.keys(warnings).length > 0
 }
 
@@ -98,6 +111,48 @@ export function isSuspiciousValueString(valString, logWarning = false) {
     console.warn(valString)
   }
   return sus
+}
+
+/**
+ * Language maps are of a special complexity but need to be checked.
+ * They are a JSON object with an indeterminate amount of valid or invalid language code keys.
+ * Each key has a value that is supposed to be an Array of strings.
+ * We want to know if any "valid-looking" language code key has a suspicious value.
+ * Language code keys that clearly are not valid language codes should be ignored.
+ */
+export function isSuspiciousLanguageMap(languageMapObj, logWarning = false) {
+  // We can't process it, so technically it isn't suspicious
+  if (!isValidJSON(languageMapObj)) return false
+  // Helps guard bad logWarning param
+  if (typeof logWarning !== "boolean") logWarning = false
+  let sus = false
+  const warn = {}
+  for (const key in languageMapObj) {
+    if (isValidLanguageMapKey(key)) {
+      if (isSuspiciousValueString(getValueString(languageMapObj[key]))) {
+        sus = true
+        warn[key] = getValueString(languageMapObj[key])
+        break
+      }
+    }
+  }
+  if (sus && logWarning) {
+    console.warn("Suspicious content detected.  See language map entry below.")
+    console.warn(warn)
+  }
+  return sus
+}
+
+function isValidLanguageMapKey(key) {
+  // key is supposed to be a valid language code string.
+  if (typeof key !== "string") return false
+  // This is tough because it can be quite variable with subtagging.  Regular language codes are 2-3 chars.
+  // Accounting for 3 extensions and sub tags, that is 4 x 3 + the three '-'s = 15
+  if (key.length > 15) return false
+  // can only be lowercase letters and dashes
+  const chars = new RegExp(/^[a-z-]+$/)
+  if (!chars.test(key)) return false
+  return true
 }
 
 /**
