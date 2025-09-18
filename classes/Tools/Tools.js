@@ -97,14 +97,20 @@ export default class Tools {
     async validateAllTools(tools) {
         const validTools = []
         for (const tool of tools) {
-            if (typeof tool !== "object" || tool === null) break
-            const { label, toolName, url, location, custom } = tool
-            if (typeof label !== "string") break
-            if (typeof toolName !== "string" || !await this.checkToolNamePattern(toolName)) break
-            if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) break
-            if (!["dialog", "pane", "drawer", "linked", "sidebar"].includes(location)) break
-            if (custom.enabled !== undefined && typeof custom.enabled !== "boolean") break
-            validTools.push(tool)
+            if (typeof tool !== "object" || tool === null) continue
+            let { label, toolName, url = "", location, enabled = true } = tool
+            if (typeof label !== "string") continue
+            if (typeof toolName !== "string" || !await this.checkToolNamePattern(toolName)) continue
+            if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) continue
+            if (!["dialog", "pane", "drawer", "linked", "sidebar"].includes(location)) continue
+            if (enabled !== undefined && typeof enabled !== "boolean") continue
+            validTools.push({
+                label,
+                toolName,
+                url,
+                location,
+                custom: { enabled }
+            })
         }
         return validTools
     }
@@ -120,7 +126,7 @@ export default class Tools {
         if (typeof toolName !== "string" || !await this.checkToolNamePattern(toolName)) {
             throw { status: 400, message: "toolName must be a string in 'lowercase-with-hyphens' format." }
         }
-        if ( url !== undefined && (typeof url !== "string" || url !== "" && !await this.validateURL(url))) {
+        if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) {
             throw { status: 400, message: "url must be a valid URL string." }
         }
         if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
