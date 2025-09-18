@@ -6,6 +6,7 @@ import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import { isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
+import Tools from "../classes/Tools/Tools.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -89,6 +90,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
         resolvedPayload: checkURL.resolvedPayload
       })
     try {
+      tools = await new Tools().validateAllTools(tools)
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),

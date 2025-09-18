@@ -12,27 +12,13 @@ router.route("/:projectId/addTool").post(async (req, res) => {
   if (!label || !toolName || !url || !location) {
     return respondWithError(res, 400, "label, toolName, url, and location are required fields.")
   }
-  if (typeof label !== "string") {
-    return respondWithError(res, 400, "label must be a string.")
-  }
-  if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
-    return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
-  }
-  if (typeof url !== "string" || !validateURL(url).valid) {
-    return respondWithError(res, 400, "url must be a valid URL string.")
-  }
-  if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
-    return respondWithError(res, 400, "location must be either 'dialog' or 'pane'.")
-  }
-  if (enabled !== undefined && typeof enabled !== "boolean") {
-    return respondWithError(res, 400, "enabled must be a boolean.")
-  }
   try {
     const projectId = req.params.projectId
     if (!projectId || !validateURL(projectId)) {
       return respondWithError(res, 400, "A valid project ID is required.")
     }
     const tools = new Tools(projectId)
+    await tools.checkAllValidations(res, req?.body)
     if (await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 400, "Tool with the same name already exists")
     }

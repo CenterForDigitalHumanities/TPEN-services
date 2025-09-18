@@ -1,5 +1,6 @@
 import dbDriver from "../../database/driver.js"
 const database = new dbDriver("mongo")
+import { respondWithError } from "../utilities/shared.js"
 
 export default class Tools {
     constructor(projectId) {
@@ -78,6 +79,43 @@ export default class Tools {
 
     async checkIfInDefaultTools(toolName) {
         return Tools.defaultTools.some(t => t.toolName === toolName)
+    }
+
+    async validateAllTools(tools) {
+        const validTools = []
+        for (const tool of tools) {
+            if (!Array.isArray(tool)) break
+            const { label, toolName, url, location, enabled } = tool
+            if (typeof label !== "string") break
+            if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) break
+            if (typeof url !== "string" || !validateURL(url).valid) break
+            if (!["dialog", "pane", "drawer", "linked", "sidebar"].includes(location)) break
+            if (enabled !== undefined && typeof enabled !== "boolean") break
+            validTools.push(tool)
+        }
+        return validTools
+    }
+
+    async validateToolArray(res, tool) {
+        if (!Array.isArray(tool)) {
+            throw new Error("tools must be an array of tool objects.")
+        }
+        const {label, toolName, url, location, enabled} = tool
+        if (typeof label !== "string") {
+            return respondWithError(res, 400, "label must be a string.")
+        }
+        if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
+            return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
+        }
+        if (typeof url !== "string" || !validateURL(url).valid) {
+            return respondWithError(res, 400, "url must be a valid URL string.")
+        }
+        if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
+            return respondWithError(res, 400, "location must be either 'dialog' or 'pane'.")
+        }
+        if (enabled !== undefined && typeof enabled !== "boolean") {
+            return respondWithError(res, 400, "enabled must be a boolean.")
+        }
     }
 
     static defaultTools = [
