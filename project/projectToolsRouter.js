@@ -4,13 +4,12 @@ import validateURL from "../utilities/validateURL.js"
 import Tools from "../classes/Tools/Tools.js"
 
 const router = express.Router({ mergeParams: true })
-const toolNamePattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 //Add Iframe Tool to Project
 router.route("/:projectId/addTool").post(async (req, res) => {
-  const { label, toolName, url, location, enabled } = req.body
-  if (!label || !toolName || !url || !location) {
-    return respondWithError(res, 400, "label, toolName, url, and location are required fields.")
+  const { label, toolName, url, location, enabled } = req?.body
+  if (!label || !toolName || !location) {
+    return respondWithError(res, 400, "label, toolName, and location are required fields.")
   }
   try {
     const projectId = req.params.projectId
@@ -18,7 +17,7 @@ router.route("/:projectId/addTool").post(async (req, res) => {
       return respondWithError(res, 400, "A valid project ID is required.")
     }
     const tools = new Tools(projectId)
-    await tools.checkAllValidations(res, req?.body)
+    await tools.validateToolArray(req?.body)
     if (await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 400, "Tool with the same name already exists")
     }
@@ -41,8 +40,8 @@ router.route("/:projectId/removeTool").delete(async (req, res) => {
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
   }
-  if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
-    return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
+  if (typeof toolName !== "string") {
+    return respondWithError(res, 400, "toolName must be a string.")
   }
   try {
     const projectId = req.params.projectId
@@ -50,6 +49,9 @@ router.route("/:projectId/removeTool").delete(async (req, res) => {
       return respondWithError(res, 400, "A valid project ID is required.")
     }
     const tools = new Tools(projectId)
+    if (!await tools.checkToolNamePattern(toolName)) {
+      return respondWithError(res, 400, "toolName must be in 'lowercase-with-hyphens' format.")
+    }
     if (!await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 404, "Tool not found")
     }
@@ -72,8 +74,8 @@ router.route("/:projectId/toggleTool").patch(async (req, res) => {
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
   }
-  if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
-    return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
+  if (typeof toolName !== "string") {
+    return respondWithError(res, 400, "toolName must be a string.")
   }
   try {
     const projectId = req.params.projectId
@@ -81,6 +83,9 @@ router.route("/:projectId/toggleTool").patch(async (req, res) => {
       return respondWithError(res, 400, "A valid project ID is required.")
     }
     const tools = new Tools(projectId)
+    if (!await tools.checkToolNamePattern(toolName)) {
+      return respondWithError(res, 400, "toolName must be in 'lowercase-with-hyphens' format.")
+    }
     if (!await tools.checkIfToolExists(toolName)) {
       return respondWithError(res, 404, "Tool not found")
     }

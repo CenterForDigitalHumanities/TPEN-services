@@ -1,6 +1,5 @@
 import dbDriver from "../../database/driver.js"
 const database = new dbDriver("mongo")
-import { respondWithError } from "../utilities/shared.js"
 
 export default class Tools {
     constructor(projectId) {
@@ -28,7 +27,7 @@ export default class Tools {
         return database.update(this.data, process.env.TPENPROJECTS)
     }
 
-    async addIframeTool(label, toolName, url, location, enabled = true) {
+    async addIframeTool(label, toolName, url = "", location, enabled = true) {
         if (!this.tools || !Array.isArray(this.tools)) {
             await this.#loadFromDB()
         }
@@ -81,40 +80,54 @@ export default class Tools {
         return Tools.defaultTools.some(t => t.toolName === toolName)
     }
 
+    async checkToolNamePattern(toolName) {
+        const toolNamePattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+        return toolNamePattern.test(toolName)
+    }
+
+    async validateURL(url) {
+        try {
+            new URL(url)
+            return true
+        } catch (e) {
+            return false
+        }
+    }
+
     async validateAllTools(tools) {
         const validTools = []
         for (const tool of tools) {
-            if (!Array.isArray(tool)) break
-            const { label, toolName, url, location, enabled } = tool
+            if (typeof tool !== "object" || tool === null) break
+            const { label, toolName, url, location, custom } = tool
             if (typeof label !== "string") break
-            if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) break
-            if (typeof url !== "string" || !validateURL(url).valid) break
+            if (typeof toolName !== "string" || !await this.checkToolNamePattern(toolName)) break
+            if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) break
             if (!["dialog", "pane", "drawer", "linked", "sidebar"].includes(location)) break
-            if (enabled !== undefined && typeof enabled !== "boolean") break
+            if (custom.enabled !== undefined && typeof custom.enabled !== "boolean") break
             validTools.push(tool)
         }
         return validTools
     }
 
-    async validateToolArray(res, tool) {
-        if (!Array.isArray(tool)) {
-            throw new Error("tools must be an array of tool objects.")
+    async validateToolArray(tool) {
+        if(typeof tool !== "object" || tool === null) {
+            throw { status: 400, message: "Each tool must be an object." }
         }
         const {label, toolName, url, location, enabled} = tool
         if (typeof label !== "string") {
-            return respondWithError(res, 400, "label must be a string.")
+            throw { status: 400, message: "label must be a string." }
         }
-        if (typeof toolName !== "string" || !toolNamePattern.test(toolName)) {
-            return respondWithError(res, 400, "toolName must be a string in 'lowercase-with-hyphens' format.")
+        if (typeof toolName !== "string" || !await this.checkToolNamePattern(toolName)) {
+            throw { status: 400, message: "toolName must be a string in 'lowercase-with-hyphens' format." }
         }
-        if (typeof url !== "string" || !validateURL(url).valid) {
-            return respondWithError(res, 400, "url must be a valid URL string.")
+        if ( url !== undefined && (typeof url !== "string" || url !== "" && !await this.validateURL(url))) {
+            throw { status: 400, message: "url must be a valid URL string." }
         }
         if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
-            return respondWithError(res, 400, "location must be either 'dialog' or 'pane'.")
+            throw { status: 400, message: "location must be either 'dialog', 'pane', 'drawer', 'linked', or 'sidebar'." }
         }
         if (enabled !== undefined && typeof enabled !== "boolean") {
-            return respondWithError(res, 400, "enabled must be a boolean.")
+            throw { status: 400, message: "enabled must be a boolean." }
         }
     }
 

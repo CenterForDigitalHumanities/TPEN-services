@@ -82,7 +82,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
   if (createFrom === "url") {
     const manifestURL = req?.body?.url
     let tools = req?.body?.tools ?? []
-    if (!Array.isArray(tools)) tools = []
+    tools = await new Tools().validateAllTools(tools)
     let checkURL = await validateURL(manifestURL)
     if (!checkURL.valid)
       return res.status(checkURL.status).json({
@@ -90,7 +90,6 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
         resolvedPayload: checkURL.resolvedPayload
       })
     try {
-      tools = await new Tools().validateAllTools(tools)
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),
