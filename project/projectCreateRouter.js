@@ -6,6 +6,7 @@ import validateURL from "../utilities/validateURL.js"
 import Project from "../classes/Project/Project.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import { isSuspiciousJSON, isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
+import Tools from "../classes/Tools/Tools.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -74,6 +75,8 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     })
   if (createFrom === "url") {
     const manifestURL = req?.body?.url
+    let tools = req?.body?.tools ?? []
+    tools = await new Tools().validateAllTools(tools)
     let checkURL = await validateURL(manifestURL)
     if (!checkURL.valid)
       return res.status(checkURL.status).json({
@@ -85,6 +88,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),
+        tools
       )
       res.status(201).json(result)
     } catch (error) {

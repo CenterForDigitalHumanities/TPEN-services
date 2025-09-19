@@ -182,7 +182,7 @@ export const updatePageAndProject = async (page, project, userId) => {
 const recordModification = async (project, pageId, userId) => {
    if (!project || !pageId) {
       // silent failure of logging
-      console.error(`recordModification failed: projectId or pageId is missing. Submitted values - project: ${project}, page: ${page}, userId: ${userId}`)
+      console.error(`recordModification failed: projectId or pageId is missing. Submitted values - project: ${project}, pageId: ${pageId}, userId: ${userId}`)
       return
    }
 
@@ -303,25 +303,6 @@ export async function findLayerById(layerId, projectId, rerum = false) {
 }
 
 /**
- * Handle version conflict errors from optimistic locking consistently
- * @param {Response} res - Express response object
- * @param {Error} error - The error object from the version conflict
- * @returns {Response} JSON response with conflict details
- */
-export const handleVersionConflict = (res, error) => {
-   return res ? res.status(409).json({
-      currentVersion: error,
-      code: 'VERSION_CONFLICT',
-      details: 'The document was modified by another process.'
-   }) : {
-      status: 409,
-      currentVersion: error,
-      code: 'VERSION_CONFLICT',
-      details: 'The document was modified by another process.'
-   }
-}
-
-/**
  * Wrapper function to add optimistic locking retry logic to any async operation
  * @param {Function} operation - The async operation to execute
  * @param {number} maxRetries - Maximum number of retries (default: 1)
@@ -375,4 +356,23 @@ export const fetchUserAgent = async (userId) => {
    } catch (error) {
       throw new Error(`Error fetching user agent: ${error.message}`)
    }
+}
+
+/**
+ * Handle version conflict errors from optimistic locking consistently
+ * @param {Response} res - Express response object
+ * @param {Error} error - The error object from the version conflict
+ * @returns {Response} JSON response with conflict details
+ */
+export const handleVersionConflict = (res, error) => {
+  return res.status(409).json({
+    error: error.message,
+    currentVersion: error.currentVersion,
+    code: 'VERSION_CONFLICT',
+    details: 'The document was modified by another process.',
+    // Include additional context if available
+    ...(error.pageId && { pageId: error.pageId }),
+    ...(error.layerId && { layerId: error.layerId }),
+    ...(error.lineId && { lineId: error.lineId })
+  })
 }
