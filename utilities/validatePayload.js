@@ -33,6 +33,39 @@ export function validateProjectPayload(payload) {
     return { isValid: false, errors: 'metadata must be an array' }
   }
 
+  // Validate each metadata object structure
+  for (let i = 0; i < payload.metadata.length; i++) {
+    const metadataItem = payload.metadata[i]
+    
+    // Each metadata item must be an object
+    if (typeof metadataItem !== 'object' || metadataItem === null) {
+      return { isValid: false, errors: `metadata item at index ${i} must be an object` }
+    }
+
+    // Check for required properties: label and value
+    const metadataRequiredProps = ['label', 'value']
+    const missingMetadataProps = metadataRequiredProps.filter(prop => !metadataItem.hasOwnProperty(prop))
+    if (missingMetadataProps.length > 0) {
+      return { isValid: false, errors: 'metadata item must have label and value properties' }
+    }
+
+    // Validate label and value are non-empty strings
+    if (typeof metadataItem.label !== 'string' || metadataItem.label.trim() === '') {
+      return { isValid: false, errors: 'metadata item label must be a non-empty string' }
+    }
+    
+    if (typeof metadataItem.value !== 'string' || metadataItem.value.trim() === '') {
+      return { isValid: false, errors: 'metadata item value must be a non-empty string' }
+    }
+
+    // Ensure no extra properties beyond label and value
+    const allowedProps = ['label', 'value']
+    const extraProps = Object.keys(metadataItem).filter(prop => !allowedProps.includes(prop))
+    if (extraProps.length > 0) {
+      return { isValid: false, errors: 'metadata item must only have label and value properties' }
+    }
+  }
+
   // Validate layers - must be an array
   if (!Array.isArray(payload.layers)) {
     return { isValid: false, errors: 'layers must be an array' }
