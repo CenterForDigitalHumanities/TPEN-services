@@ -7,7 +7,7 @@ const router = express.Router({ mergeParams: true })
 
 //Add Tool to Project
 router.route("/:projectId/addTool").post(async (req, res) => {
-  const { label, toolName, url, location, enabled } = req?.body
+  const { label, toolName, url, location, enabled, tagname } = req?.body
   if (!label || !toolName || !location) {
     return respondWithError(res, 400, "label, toolName, and location are required fields.")
   }
@@ -27,7 +27,17 @@ router.route("/:projectId/addTool").post(async (req, res) => {
     if (await tools.checkIfInDefaultTools(toolName)) {
       return respondWithError(res, 400, "Default tools cannot be altered")
     }
-    const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled)
+    if (url !== undefined && url !== "" && await tools.checkIfURLisJSScript(url)) {
+      const fetchedTagname = await tools.getTagnameFromScript(url)
+      if (!fetchedTagname || !await tools.checkToolPattern(fetchedTagname)) {
+          throw { status: 400, message: "Could not extract a valid tagname from the provided JavaScript URL." }
+      }
+      tagname = fetchedTagname
+    }
+    if (tagname !== undefined && tagname !== "" && !await tools.checkIfTagNameExists(tagname)) {
+      tagname = ""
+    }
+    const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled, tagname)
     res.status(200).json(addedTool)
   } catch (error) {
     console.error("Error adding tool:", error)
@@ -52,7 +62,7 @@ router.route("/:projectId/removeTool").delete(async (req, res) => {
       return respondWithError(res, 400, "A valid project ID is required.")
     }
     const tools = new Tools(projectId)
-    if (!await tools.checkToolNamePattern(toolName)) {
+    if (!await tools.checkToolPattern(toolName)) {
       return respondWithError(res, 400, "toolName must be in 'lowercase-with-hyphens' format.")
     }
     if (!await tools.checkIfToolExists(toolName)) {
@@ -86,7 +96,7 @@ router.route("/:projectId/toggleTool").patch(async (req, res) => {
       return respondWithError(res, 400, "A valid project ID is required.")
     }
     const tools = new Tools(projectId)
-    if (!await tools.checkToolNamePattern(toolName)) {
+    if (!await tools.checkToolPattern(toolName)) {
       return respondWithError(res, 400, "toolName must be in 'lowercase-with-hyphens' format.")
     }
     if (!await tools.checkIfToolExists(toolName)) {
