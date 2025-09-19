@@ -24,7 +24,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   if (!user) return respondWithError(res, 401, "Unauthorized user")
   try {
     if (req.body && !Array.isArray(req.body)) {
-      for (const key of req.body) {
+      for (const key in req.body) {
         if (isSuspiciousJSON(req.body[key]) || isSuspiciousValueString(req.body[key]))
           return respondWithError(res, 400, "Suspicious profile data will not be processed.")
       }
