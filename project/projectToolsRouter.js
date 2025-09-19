@@ -1,93 +1,115 @@
 import express from "express"
 import { respondWithError } from "../utilities/shared.js"
-import Project from "../classes/Project/Project.js"
 import validateURL from "../utilities/validateURL.js"
+import Tools from "../classes/Tools/Tools.js"
 
 const router = express.Router({ mergeParams: true })
 
-// Adding tools to the Project
-router.route("/:projectId/tools").post(async (req, res) => {
-  const { projectId } = req.params
-  const tools = req.body
-
-  if (!projectId) {
-    return respondWithError(res, 400, "Project ID is required")
+//Add Tool to Project
+router.route("/:projectId/addTool").post(async (req, res) => {
+  const { label, toolName, url, location, enabled, tagname } = req?.body
+  if (!label || !toolName || !location) {
+    return respondWithError(res, 400, "label, toolName, and location are required fields.")
   }
-
-  if (!Array.isArray(tools)) {
-    tools = [tools]
-  }
-
-  if (tools.every(tool => tool.name === "" || tool.value === "" || tool.url === "" || tool.state === undefined)) {
-    return respondWithError(res, 400, "All tools must have a name, value, URL, and state")  
-  }
-
-  if (!tools.every(tool => typeof tool.name === "string" && typeof tool.value === "string" && typeof tool.url === "string" && typeof tool.state === "boolean")) {
-    return respondWithError(res, 400, "All tools must have a valid name, value, URL, and state")
-  }
-
-  if (!tools.every(tool => validateURL(tool.url))) {
-    return respondWithError(res, 400, "All tools must have a valid URL")
-  }
-
   try {
-    const project = new Project(projectId)
-    await project.addTools(tools)
-    res.status(201).json("Tools added successfully")
+    const projectId = req.params.projectId
+    if (!projectId || !validateURL(projectId)) {
+      return respondWithError(res, 400, "A valid project ID is required.")
+    }
+    const tools = new Tools(projectId)
+    await tools.validateToolArray(req?.body)
+    if (await tools.checkIfToolExists(toolName)) {
+      return respondWithError(res, 400, "Tool with the same name already exists")
+    }
+    if (await tools.checkIfToolLabelExists(label)) {
+      return respondWithError(res, 400, "Tool with the same label already exists")
+    }
+    if (await tools.checkIfInDefaultTools(toolName)) {
+      return respondWithError(res, 400, "Default tools cannot be altered")
+    }
+    if (url !== undefined && url !== "" && await tools.checkIfURLisJSScript(url)) {
+      const fetchedTagname = await tools.getTagnameFromScript(url)
+      if (!fetchedTagname || !await tools.checkToolPattern(fetchedTagname)) {
+          throw { status: 400, message: "Could not extract a valid tagname from the provided JavaScript URL." }
+      }
+      tagname = fetchedTagname
+    }
+    if (tagname !== undefined && tagname !== "" && !await tools.checkIfTagNameExists(tagname)) {
+      tagname = ""
+    }
+    const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled, tagname)
+    res.status(200).json(addedTool)
   } catch (error) {
-    console.error(error)
-    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
-  }
-}).put(async (req, res) => {
-  const { projectId } = req.params
-  const tools = req.body
-
-  if (!projectId) {
-    return respondWithError(res, 400, "Project ID is required")
-  }
-
-  if (!Array.isArray(tools) || tools.length === 0) {
-    return respondWithError(res, 400, "At least one tool is required")
-  }
-
-  if (tools.every(tool => tool.value === "" || tool.state === undefined)) {
-    return respondWithError(res, 400, "All tools must have a value and state")  
-  }
-
-  if (!tools.every(tool => typeof tool.value === "string" && typeof tool.state === "boolean")) {
-    return respondWithError(res, 400, "All tools must have a valid value and state")
-  }
-
-  try {
-    const project = new Project(projectId)
-    await project.updateTools(tools)
-    res.status(200).json("Tools updated successfully")
-  } catch (error) {
-    console.error(error)
-    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
-  }
-}).delete(async (req, res) => {
-  const { projectId } = req.params
-  const { tool } = req.body
-
-  if (!projectId) {
-    return respondWithError(res, 400, "Project ID is required")
-  }
-
-  if (!tool) {
-    return respondWithError(res, 400, "Tool information is required")
-  }
-
-  try {
-    const project = new Project(projectId)
-    await project.removeTool(tool)
-    res.status(200).json("Tools removed successfully")
-  } catch (error) {
-    console.error(error)
-    respondWithError(res, error.status ?? error.code ?? 500, error.message ?? "Internal Server Error")
+    console.error("Error adding tool:", error)
+    respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use PUT instead")
+  respondWithError(res, 405, "Improper request method. Use POST instead")
+})
+
+// Remove Tool from Project
+router.route("/:projectId/removeTool").delete(async (req, res) => {
+  const { toolName } = req.body
+  if (!toolName) {
+    return respondWithError(res, 400, "toolName is a required field.")
+  }
+  if (typeof toolName !== "string") {
+    return respondWithError(res, 400, "toolName must be a string.")
+  }
+  try {
+    const projectId = req.params.projectId
+    if (!projectId || !validateURL(projectId)) {
+      return respondWithError(res, 400, "A valid project ID is required.")
+    }
+    const tools = new Tools(projectId)
+    if (!await tools.checkToolPattern(toolName)) {
+      return respondWithError(res, 400, "toolName must be in 'lowercase-with-hyphens' format.")
+    }
+    if (!await tools.checkIfToolExists(toolName)) {
+      return respondWithError(res, 404, "Tool not found")
+    }
+    if (await tools.checkIfInDefaultTools(toolName)) {
+      return respondWithError(res, 400, "Default tools cannot be removed")
+    }
+    const removedTool = await tools.removeTool(toolName)
+    res.status(200).json(removedTool)
+  } catch (error) {
+    console.error("Error removing tool:", error)
+    respondWithError(res, error.status || 500, error.message || "An error occurred while removing the tool.")
+  }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use DELETE instead")
+})
+
+// Toggle Tool State in Project
+router.route("/:projectId/toggleTool").patch(async (req, res) => {
+  const { toolName } = req.body
+  if (!toolName) {
+    return respondWithError(res, 400, "toolName is a required field.")
+  }
+  if (typeof toolName !== "string") {
+    return respondWithError(res, 400, "toolName must be a string.")
+  }
+  try {
+    const projectId = req.params.projectId
+    if (!projectId || !validateURL(projectId)) {
+      return respondWithError(res, 400, "A valid project ID is required.")
+    }
+    const tools = new Tools(projectId)
+    if (!await tools.checkToolPattern(toolName)) {
+      return respondWithError(res, 400, "toolName must be in 'lowercase-with-hyphens' format.")
+    }
+    if (!await tools.checkIfToolExists(toolName)) {
+      return respondWithError(res, 404, "Tool not found")
+    }
+    const toggledTool = await tools.toggleTool(toolName)
+    res.status(200).json(toggledTool)
+  } catch (error) {
+    console.error("Error toggling tool state:", error)
+    respondWithError(res, error.status || 500, error.message || "An error occurred while toggling the tool state.")
+  }
+}).all((_, res) => {
+  respondWithError(res, 405, "Improper request method. Use PATCH instead")
 })
 
 export default router
