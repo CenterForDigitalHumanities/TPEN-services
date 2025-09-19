@@ -133,16 +133,20 @@ export default class Tools {
             if (Tools.defaultTools.some(t => t.toolName === toolName)) continue
             if (Tools.defaultTools.some(t => t.label === label)) continue
             if (!toolPattern.test(toolName)) continue
-            if (!toolPattern.test(tagname)) continue
             if (typeof label !== "string") continue
             if (typeof toolName !== "string" || !await this.checkToolPattern(toolName)) continue
             if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) continue
-            if (url !== undefined && url !== "" && !await this.checkIfURLisJSScript(url) && tagname !== "") { tagname = "" }
-            if (tagname !== undefined && tagname !== "" && !await this.checkIfTagNameExists(tagname)) continue
-            if (url !== undefined && url !== "" && await this.checkIfURLisJSScript(url)) {
-                tagname = await this.getTagnameFromScript(url)
-                if (Tools.defaultTools.some(t => t.tagname === tagname)) continue
-                if (!tagname || !await this.checkToolPattern(tagname)) continue
+            if (url !== undefined && url !== "") {
+                if(!await this.checkIfURLisJSScript(url)) {
+                    if (tagname !== undefined && tagname !== "") {
+                        tagname = ""
+                    }
+                }
+                else {
+                    tagname = await this.getTagnameFromScript(url)
+                    if (Tools.defaultTools.some(t => t.tagname === tagname)) continue
+                    if (!tagname || !toolPattern.test(tagname)) continue
+                }
             }
             if (!["dialog", "pane", "drawer", "linked", "sidebar"].includes(location)) continue
             if (enabled !== undefined && typeof enabled !== "boolean") continue
