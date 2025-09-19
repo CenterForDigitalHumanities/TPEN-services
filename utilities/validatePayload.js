@@ -50,6 +50,46 @@ export function validateProjectPayload(payload) {
     if (missingLayerProps.length > 0) {
       return { isValid: false, errors: 'layer must have id, label, and pages properties' }
     }
+
+    // Validate that pages is an array
+    if (!Array.isArray(layer.pages)) {
+      return { isValid: false, errors: 'layer pages must be an array' }
+    }
+
+    // Validate each page object within the layer
+    for (let j = 0; j < layer.pages.length; j++) {
+      const page = layer.pages[j]
+      if (typeof page !== 'object' || page === null) {
+        return { isValid: false, errors: `page at index ${j} in layer ${i} must be an object` }
+      }
+
+      // Required properties for a page: id and target
+      const pageRequiredProps = ['id', 'target']
+      const missingPageProps = pageRequiredProps.filter(prop => !page.hasOwnProperty(prop))
+      if (missingPageProps.length > 0) {
+        return { isValid: false, errors: 'page must have id and target properties' }
+      }
+
+      // Validate page id is a non-empty string
+      if (typeof page.id !== 'string' || page.id.trim() === '') {
+        return { isValid: false, errors: 'page id must be a non-empty string' }
+      }
+
+      // Validate page target is a non-empty string (should be a canvas URI)
+      if (typeof page.target !== 'string' || page.target.trim() === '') {
+        return { isValid: false, errors: 'page target must be a non-empty string' }
+      }
+
+      // Validate optional page label if present
+      if (page.hasOwnProperty('label') && (typeof page.label !== 'string' || page.label.trim() === '')) {
+        return { isValid: false, errors: 'page label must be a non-empty string when present' }
+      }
+
+      // Validate optional page items if present
+      if (page.hasOwnProperty('items') && !Array.isArray(page.items)) {
+        return { isValid: false, errors: 'page items must be an array when present' }
+      }
+    }
   }
 
   // Validate manifest - must be a non-empty array

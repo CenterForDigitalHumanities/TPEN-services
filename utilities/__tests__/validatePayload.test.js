@@ -183,6 +183,178 @@ describe('validateProjectPayload', () => {
       expect(result.isValid).toBe(false)
       expect(result.errors).toContain("layer must have id, label, and pages properties")
     })
+
+    test('should return invalid for non-array layer pages', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: "not-an-array"
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("layer pages must be an array")
+    })
+
+    test('should return invalid for malformed page objects', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: [
+              {
+                "no": "page" // missing id and target
+              }
+            ]
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("page must have id and target properties")
+    })
+
+    test('should return invalid for page with empty id', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: [
+              {
+                id: "",
+                target: "http://example.com/canvas1"
+              }
+            ]
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("page id must be a non-empty string")
+    })
+
+    test('should return invalid for page with empty target', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: [
+              {
+                id: "http://example.com/page1",
+                target: ""
+              }
+            ]
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("page target must be a non-empty string")
+    })
+
+    test('should return invalid for page with invalid label', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: [
+              {
+                id: "http://example.com/page1",
+                label: "",
+                target: "http://example.com/canvas1"
+              }
+            ]
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("page label must be a non-empty string when present")
+    })
+
+    test('should return invalid for page with non-array items', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: [
+              {
+                id: "http://example.com/page1",
+                target: "http://example.com/canvas1",
+                items: "not-an-array"
+              }
+            ]
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("page items must be an array when present")
+    })
+
+    test('should accept valid layer with properly structured pages', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [
+          {
+            id: "http://example.com/layer1",
+            label: "Layer 1",
+            pages: [
+              {
+                id: "http://example.com/page1",
+                label: "Page 1",
+                target: "http://example.com/canvas1",
+                items: []
+              }
+            ]
+          }
+        ],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(true)
+    })
   })
 
   describe('manifest validation', () => {
