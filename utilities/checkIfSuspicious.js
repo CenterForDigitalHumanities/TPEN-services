@@ -22,11 +22,15 @@ function screenContentMiddleware() {
   function suspiciousBodyContent(req, res, next) {
     const body = req?.body
     if (!body) return next()
-    if (isValidJSON(body)) {
+    if (Array.isArray(body)) {
+      const simple = getValueString(body)
+      if (simple !== null && isSuspiciousValueString(simple, true)) return respondWithError(res, 400, "Suspicious input will not be processed.")
+    }
+    else if (isValidJSON(body)) {
       if (isSuspiciousJSON(body)) return respondWithError(res, 400, "Suspicious input will not be processed.")
     }
     else if (typeof body === "string" || typeof body === "number") {
-      if (isSuspiciousValueString(body+"")) return respondWithError(res, 400, "Suspicious input will not be processed.")
+      if (isSuspiciousValueString(body+"", true)) return respondWithError(res, 400, "Suspicious input will not be processed.")
     } 
     next()
   }
@@ -41,15 +45,17 @@ export default screenContentMiddleware
  * set by direct user input.
  */ 
 export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, depth = 0) {
-  // Guard against unnreasonably deep embedded JSON structures so we don't recurse for too long.
+  // Guard against unreasonably deep embedded JSON structures so we don't recurse for too long.
   if (depth > 10) return true
-  if (Array.isArray(obj)) throw new Error("Do not supply the array.  Use this on each item in the array.")
-  if (!isValidJSON(obj)) throw new Error("Object to check is not valid JSON")
-  // Helps gaurd bad logWarning param, to make sure the warning log happens as often as possible.
+  // Arrays are considered valid JSON.  Simple ones are checkd upstream.  Bail out on complex arrays here.
+  if (Array.isArray(obj)) return false
+  // Bail out if the data provided is not JSON.  It is invalid and not worth checking.
+  if (!isValidJSON(obj)) return false
+  // Helps guard bad logWarning param, to make sure the warning log happens as often as possible.
   if (typeof logWarning !== "boolean") logWarning = true
   // Keys we anticipate could have a value set by direct user input.  Always check Annotation bodies.
   // We don't need to check keys that TPEN Services will never process.
-  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none"]
+  const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none", "roles"]
   const allKeys = [...common_keys, ...specific_keys]
   const warnings = {}
   const warn = {}
@@ -64,6 +70,7 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
       warnings[key] = "<embedded>"
     }  
     else if (isSuspiciousValueString(getValueString(obj[key]))) {
+      // Note this will check simple Array values like ["a value of a language map label"]
       if (logWarning) {
         warn[key] = getValueString(obj[key])
         console.warn("Found suspicious value in JSON.  This 'key: value' may be embedded below the top level JSON.")
@@ -80,10 +87,17 @@ export function isSuspiciousJSON(obj, specific_keys = [], logWarning = true, dep
 /**
  * For some string do some reasonable checks to see if it may contain something that seems like code.
  */ 
-export function isSuspiciousValueString(valString) {
+export function isSuspiciousValueString(valString, logWarning = false) {
   // We can't process it, so technically it isn't suspicious
   if (valString === null || valString === undefined || typeof valString !== "string") return false
-  return containsScript(valString)
+  // Helps guard bad logWarning param
+  if (typeof logWarning !== "boolean") logWarning = false
+  const sus = containsScript(valString)
+  if (sus && logWarning) {
+    console.warn("Suspicious content detected.  See string below.")
+    console.warn(valString)
+  }
+  return sus
 }
 
 /**
@@ -146,8 +160,9 @@ function getValueString(data) {
   if (typeof data === "string") return data
   if (typeof data === "number") return data + ""
   if (Array.isArray(data)) {
-    // Only if the whole array is strings or numbers
-    if (data.find(l => typeof l !== "string" || typeof l !== "number")?.length) return null
+    // We can use it as a value string if the whole array is strings or numbers.
+    // Otherwise it is too complex to be a value string and will be skipped. 
+    if (data.filter(l => typeof l !== "string" && typeof l !== "number").length > 0) return null
     return data.join()
   }
   // Always return null for JSON data. It's not stringy.
