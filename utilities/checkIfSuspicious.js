@@ -10,7 +10,7 @@
 import { isValidJSON, respondWithError } from "./shared.js"
 
 /**
- * This middleware function scans request bodies for suspcious looking JSON or strings.
+ * This middleware function scans request bodies for suspicious looking JSON or strings.
  * Use it to protect individual routes.
   1. import contentScanMiddleware into the route file
   2. apply to route like route.patch("/label", contentScanMiddleware(), controller) 
