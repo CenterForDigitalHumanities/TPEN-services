@@ -182,7 +182,7 @@ export const updatePageAndProject = async (page, project, userId) => {
 const recordModification = async (project, pageId, userId) => {
    if (!project || !pageId) {
       // silent failure of logging
-      console.error(`recordModification failed: projectId or pageId is missing. Submitted values - project: ${project}, page: ${page}, userId: ${userId}`)
+      console.error(`recordModification failed: projectId or pageId is missing. Submitted values - project: ${project}, pageId: ${pageId}, userId: ${userId}`)
       return
    }
 
