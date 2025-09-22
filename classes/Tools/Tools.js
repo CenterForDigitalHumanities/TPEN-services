@@ -27,7 +27,7 @@ export default class Tools {
         return database.update(this.data, process.env.TPENPROJECTS)
     }
 
-    async addIframeTool(label, toolName, url = "", location, enabled = true, tagname = "") {
+    async addIframeTool(label, toolName, url = "", location, enabled = true, tagName = "") {
         if (!this.tools || !Array.isArray(this.tools)) {
             await this.#loadFromDB()
         }
@@ -36,8 +36,7 @@ export default class Tools {
             toolName,
             url,
             location,
-            custom: { enabled },
-            tagname
+            custom: { enabled, tagName }
         }
         this.tools.push(newTool)
         await this.update()
@@ -129,7 +128,8 @@ export default class Tools {
         const toolPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
         for (const tool of tools) {
             if (typeof tool !== "object" || tool === null) continue
-            let { label, toolName, url = "", location, enabled = true, tagname = "" } = tool
+            let { label, toolName, url = "", location, custom } = tool
+            let { enabled = true, tagName = "" } = custom
             if (Tools.defaultTools.some(t => t.toolName === toolName)) continue
             if (Tools.defaultTools.some(t => t.label === label)) continue
             if (!toolPattern.test(toolName)) continue
@@ -138,14 +138,14 @@ export default class Tools {
             if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) continue
             if (url !== undefined && url !== "") {
                 if(!await this.checkIfURLisJSScript(url)) {
-                    if (tagname !== undefined && tagname !== "") {
-                        tagname = ""
+                    if (tagName !== undefined && tagName !== "") {
+                        tagName = ""
                     }
                 }
                 else {
-                    tagname = await this.getTagnameFromScript(url)
-                    if (Tools.defaultTools.some(t => t.tagname === tagname)) continue
-                    if (!tagname || !toolPattern.test(tagname)) continue
+                    tagName = await this.getTagnameFromScript(url)
+                    if (Tools.defaultTools.some(t => t.tagName === tagName)) continue
+                    if (!tagName || !toolPattern.test(tagName)) continue
                 }
             }
             if (!["dialog", "pane", "drawer", "linked", "sidebar"].includes(location)) continue
@@ -155,8 +155,7 @@ export default class Tools {
                 toolName,
                 url,
                 location,
-                custom: { enabled },
-                tagname
+                custom: { enabled, tagName }
             })
         }
         return validTools
@@ -166,7 +165,8 @@ export default class Tools {
         if(typeof tool !== "object" || tool === null) {
             throw { status: 400, message: "Each tool must be an object." }
         }
-        const {label, toolName, url, location, enabled, tagname} = tool
+        const { label, toolName, url, location, custom } = tool
+        let { enabled = true, tagName = "" } = custom
         if (typeof label !== "string") {
             throw { status: 400, message: "label must be a string." }
         }
@@ -176,11 +176,11 @@ export default class Tools {
         if (url !== undefined && (typeof url !== "string" || (url !== "" && !await this.validateURL(url)))) {
             throw { status: 400, message: "url must be a valid URL string." }
         }
-        if (url !== undefined && url !== "" && !await this.checkIfURLisJSScript(url) && tagname !== "") {
-            throw { status: 400, message: "If url is not a JavaScript file, tagname must be empty." }
+        if (url !== undefined && url !== "" && !await this.checkIfURLisJSScript(url) && tagName !== "") {
+            throw { status: 400, message: "If url is not a JavaScript file, tagName must be empty." }
         }
-        if (tagname !== undefined && tagname !== "" && !await this.checkIfTagNameExists(tagname)) {
-            throw { status: 400, message: "tagname must be unique and not already in use." }
+        if (tagName !== undefined && tagName !== "" && !await this.checkIfTagNameExists(tagName)) {
+            throw { status: 400, message: "tagName must be unique and not already in use." }
         }
         if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
             throw { status: 400, message: "location must be either 'dialog', 'pane', 'drawer', 'linked', or 'sidebar'." }
@@ -194,82 +194,102 @@ export default class Tools {
         {
             "label": "Inspect",
             "toolName": "inspect",
-            "custom": { "enabled": true },
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
             "url": "",
-            "location": "drawer",
-            "tagname": ""
+            "location": "drawer"
         },
         {
             "label": "View Full Page",
             "toolName": "view-fullpage",
-            "custom": { "enabled": true },
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
             "url": "",
-            "location": "pane",
-            "tagname": ""
+            "location": "pane"
         },
         {
             "label": "History Tool",
             "toolName": "history",
-            "custom": { "enabled": true },
+            "custom": { 
+                "enabled": true, 
+                "tagName": ""
+            },
             "url": "",
-            "location": "pane",
-            "tagname": ""
+            "location": "pane"
         },
         {
             "label": "Preview Tool",
             "toolName": "preview",
-            "custom": { "enabled": true },
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
             "url": "",
-            "location": "pane",
-            "tagname": ""
+            "location": "pane"
         },
         {
             "label": "Line Breaking",
             "toolName": "line-breaking",
-            "custom": { "enabled": true },
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
             "url": "",
-            "location": "dialog",
-            "tagname": ""
+            "location": "dialog"
         },
         {
             "label": "Compare Pages",
             "toolName": "compare-pages",
-            "custom": { "enabled": true },
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
             "url": "",
-            "location": "pane",
-            "tagname": ""
+            "location": "pane"
         },
         {
             "label": "Cappelli's Abbreviation",
             "toolName": "cappelli-abbreviation",
-            "custom": { "enabled": false },
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
             "url": "https://centerfordigitalhumanities.github.io/cappelli/",
-            "location": "pane",
-            "tagname": ""
+            "location": "pane"
         },
         {
             "label": "Enigma",
             "toolName": "enigma",
             "url": "https://ciham-digital.huma-num.fr/enigma/",
-            "custom": { "enabled": false },
-            "location": "pane",
-            "tagname": ""
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
+            "location": "pane"
         },
         {
             "label": "Latin Dictionary",
             "toolName": "latin-dictionary",
             "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
-            "custom": { "enabled": false },
-            "location": "pane",
-            "tagname": ""
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
+            "location": "pane"
         },
         {
             "label": "Latin Vulgate",
             "toolName": "latin-vulgate",
             "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
-            "custom": { "enabled": false },
-            "location": "pane",
-            "tagname": ""
+            "custom": { 
+                "enabled": true, 
+                "tagName": "" 
+            },
+            "location": "pane"
         }
     ]
 }
