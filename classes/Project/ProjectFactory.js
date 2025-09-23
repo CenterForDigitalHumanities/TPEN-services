@@ -4,6 +4,7 @@ import User from "../User/User.js"
 import Layer from "../Layer/Layer.js"
 import Line from "../Line/Line.js"
 import Page from "../Page/Page.js"
+import Tools from "../Tools/Tools.js"
 import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
 import imageSize from 'image-size'
@@ -27,79 +28,7 @@ export default class ProjectFactory {
    * @returns object of project data
    */
 
-  static tools = [
-    { 
-      "name":"Page Tools",
-      "value":"page",
-      "state": false
-    },
-    {
-      "name":"Inspect",
-      "value":"inspector",
-      "state": false
-    },
-    {
-      "name":"Special Characters", 
-      "value":"characters",
-      "state": false
-    },
-    {
-      "name":"XML Tags", 
-      "value":"xml",
-      "state": false
-    },
-    {
-      "name":"View Full Page", 
-      "value":"fullpage",
-      "state": false
-    },
-    {
-      "name":"History Tool", 
-      "value":"history",
-      "state": false
-    },
-    {
-      "name":"Preview Tool", 
-      "value":"preview",
-      "state": false
-    },
-    {
-      "name":"Parsing Adjustment", 
-      "value":"parsing",
-      "state": false
-    },
-    {
-      "name":"Compare Pages", 
-      "value":"compare",
-      "state": false
-    },
-    {
-      "name": "Cappelli's Abbreviation",
-      "value": "cappelli",
-      "url": "https://centerfordigitalhumanities.github.io/cappelli/",
-      "state": false
-    },
-    {
-      "name": "Enigma",
-      "value": "enigma",
-      "url": "https://ciham-digital.huma-num.fr/enigma/",
-      "state": false
-    },
-    {
-      "name": "Latin Dictionary",
-      "value": "latin",
-      "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
-      "state": false
-    },
-    {
-      "name": "Latin Vulgate",
-      "value": "vulgate",
-      "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
-      "state": false
-    }
-  ]
-
-  static async DBObjectFromManifest(manifest, creator, importTPEN28 = false) {
+  static async DBObjectFromManifest(manifest, creator, tools = [], importTPEN28 = false) {
     if (!manifest) {
       throw {
         status: 404,
@@ -121,7 +50,7 @@ export default class ProjectFactory {
       metadata,
       manifest: importTPEN28 ? [ manifest.id.split('/manifest.json')[0] + '?version=3' ] : [ manifest.id ],
       layers: [ layer.asProjectLayer() ],
-      tools: this.tools,
+      tools: Tools.defaultTools.concat(tools),
       _createdAt: now,
       _modifiedAt: -1,
       _lastModified: firstPage,
@@ -138,10 +67,10 @@ export default class ProjectFactory {
     return label[lang].join(", ")
   }
 
-  static async fromManifestURL(manifestId, creator, importTPEN28 = false) {
+  static async fromManifestURL(manifestId, creator, tools = [], importTPEN28 = false) {
     return vault.loadManifest(manifestId)
       .then(async (manifest) => {
-        return await ProjectFactory.DBObjectFromManifest(manifest, creator, importTPEN28)
+        return await ProjectFactory.DBObjectFromManifest(manifest, creator, tools, importTPEN28)
       })
       .then(async (project) => {
         const projectObj = new Project()
@@ -199,7 +128,7 @@ export default class ProjectFactory {
       metadata: modules['Metadata'] ? project.metadata : [],
       manifest: project.manifest,
       layers: [],
-      tools: modules['Tools'] ? project.tools : this.tools,
+      tools: modules['Tools'] ? project.tools : Tools.defaultTools,
       _createdAt: Date.now().toString().slice(-6),
       _modifiedAt: -1
     }
@@ -630,7 +559,7 @@ export default class ProjectFactory {
       metadata,
       manifest: [ manifest.id ],
       layers: [ layer.asProjectLayer() ],
-      tools: this.tools,
+      tools: Tools.defaultTools,
       _createdAt: now,
       _modifiedAt: -1,
       _lastModified: firstPage,
