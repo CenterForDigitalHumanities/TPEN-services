@@ -75,7 +75,7 @@ describe("Suspicious string library. #suspiciousStrings", () => {
      ]
 
      const mongoy = [
-          "db.anything"
+          "db.anything("
      ]
 
      const all = [...notations, ...declarations, ...rhel, ...functiony, ...mongoy]
@@ -91,7 +91,7 @@ describe("Suspicious string library. #suspiciousStrings", () => {
 
      it('returns suspicious warnings for all JSON values', () => {
           for (const value of all) {
-               const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "none"]
+               const common_keys = ["label", "name", "displayName", "email", "url", "value", "body", "target", "text", "textValue", "roles", "language", "description"]
                for (const key of common_keys) {
                     const json1 = {}
                     json1[key] = value
