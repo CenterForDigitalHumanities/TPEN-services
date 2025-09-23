@@ -156,5 +156,80 @@ export function validateProjectPayload(payload) {
     return { isValid: false, errors: 'group must be a non-empty string' }
   }
 
+  // Validate tools - must be an array of valid tool objects if present
+  if (payload.hasOwnProperty('tools')) {
+    if (!Array.isArray(payload.tools)) {
+      return { isValid: false, errors: 'tools must be an array when present' }
+    }
+
+    // Validate each tool object structure
+    for (let i = 0; i < payload.tools.length; i++) {
+      const tool = payload.tools[i]
+      
+      // Each tool must be an object
+      if (typeof tool !== 'object' || tool === null) {
+        return { isValid: false, errors: `tool at index ${i} must be an object` }
+      }
+
+      // Check for required properties: label, toolName, location, custom
+      const toolRequiredProps = ['label', 'toolName', 'location', 'custom']
+      const missingToolProps = toolRequiredProps.filter(prop => !tool.hasOwnProperty(prop))
+      if (missingToolProps.length > 0) {
+        return { isValid: false, errors: 'tool must have label, toolName, location, and custom properties' }
+      }
+
+      // Validate tool properties
+      if (typeof tool.label !== 'string' || tool.label.trim() === '') {
+        return { isValid: false, errors: 'tool label must be a non-empty string' }
+      }
+
+      if (typeof tool.toolName !== 'string' || tool.toolName.trim() === '') {
+        return { isValid: false, errors: 'tool toolName must be a non-empty string' }
+      }
+
+      // Validate toolName pattern (lowercase with hyphens)
+      const toolNamePattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+      if (!toolNamePattern.test(tool.toolName)) {
+        return { isValid: false, errors: 'tool toolName must be in lowercase-with-hyphens format' }
+      }
+
+      // Validate url if present (optional)
+      if (tool.hasOwnProperty('url')) {
+        if (typeof tool.url !== 'string') {
+          return { isValid: false, errors: 'tool url must be a string when present' }
+        }
+        // If url is not empty, validate it's a valid URL
+        if (tool.url !== '') {
+          try {
+            new URL(tool.url)
+          } catch {
+            return { isValid: false, errors: 'tool url must be a valid URL when not empty' }
+          }
+        }
+      }
+
+      // Validate location
+      const validLocations = ['dialog', 'pane', 'drawer', 'linked', 'sidebar']
+      if (!validLocations.includes(tool.location)) {
+        return { isValid: false, errors: 'tool location must be one of: dialog, pane, drawer, linked, sidebar' }
+      }
+
+      // Validate custom object
+      if (typeof tool.custom !== 'object' || tool.custom === null) {
+        return { isValid: false, errors: 'tool custom must be an object' }
+      }
+
+      // Validate custom.enabled if present
+      if (tool.custom.hasOwnProperty('enabled') && typeof tool.custom.enabled !== 'boolean') {
+        return { isValid: false, errors: 'tool custom.enabled must be a boolean when present' }
+      }
+
+      // Validate custom.tagName if present
+      if (tool.custom.hasOwnProperty('tagName') && (typeof tool.custom.tagName !== 'string')) {
+        return { isValid: false, errors: 'tool custom.tagName must be a string when present' }
+      }
+    }
+  }
+
   return {isValid: true, errors: null}
 }

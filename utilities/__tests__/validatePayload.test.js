@@ -594,6 +594,217 @@ describe('validateProjectPayload', () => {
     })
   })
 
+  describe('tools validation', () => {
+    test('should accept valid payload without tools property', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123"
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(true)
+    })
+
+    test('should return invalid for non-array tools', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: "tools" // String instead of array
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tools must be an array when present")
+    })
+
+    test('should return invalid for tools array containing non-objects', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: ["not-an-object"]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool at index 0 must be an object")
+    })
+
+    test('should return invalid for tool missing required properties', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool"
+            // Missing toolName, location, custom
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool must have label, toolName, location, and custom properties")
+    })
+
+    test('should return invalid for tool with invalid toolName pattern', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool",
+            toolName: "InvalidToolName", // Should be lowercase with hyphens
+            location: "dialog",
+            custom: { enabled: true }
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool toolName must be in lowercase-with-hyphens format")
+    })
+
+    test('should return invalid for tool with invalid location', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool",
+            toolName: "test-tool",
+            location: "invalid-location",
+            custom: { enabled: true }
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool location must be one of: dialog, pane, drawer, linked, sidebar")
+    })
+
+    test('should return invalid for tool with invalid URL', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool",
+            toolName: "test-tool",
+            url: "not-a-valid-url",
+            location: "dialog",
+            custom: { enabled: true }
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool url must be a valid URL when not empty")
+    })
+
+    test('should return invalid for tool with non-object custom', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool",
+            toolName: "test-tool",
+            location: "dialog",
+            custom: "not-an-object"
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool custom must be an object")
+    })
+
+    test('should return invalid for tool with invalid custom.enabled', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool",
+            toolName: "test-tool",
+            location: "dialog",
+            custom: { enabled: "not-a-boolean" }
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toBe("tool custom.enabled must be a boolean when present")
+    })
+
+    test('should accept valid tools array', () => {
+      const payload = {
+        label: "Test Project",
+        metadata: [],
+        layers: [],
+        manifest: ["http://example.com/manifest"],
+        creator: "http://example.com/user",
+        group: "abc123",
+        tools: [
+          {
+            label: "Test Tool",
+            toolName: "test-tool",
+            url: "https://example.com/tool.js",
+            location: "dialog",
+            custom: {
+              enabled: true,
+              tagName: "test-element"
+            }
+          },
+          {
+            label: "Another Tool",
+            toolName: "another-tool",
+            url: "",
+            location: "pane",
+            custom: {
+              enabled: false,
+              tagName: ""
+            }
+          }
+        ]
+      }
+      const result = validateProjectPayload(payload)
+      expect(result.isValid).toBe(true)
+    })
+  })
+
   describe('complete validation scenarios', () => {
     test('should return invalid for payload missing required elements', () => {
       const payload = {
