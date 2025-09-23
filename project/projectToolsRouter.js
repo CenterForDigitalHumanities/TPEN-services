@@ -6,8 +6,9 @@ import Tools from "../classes/Tools/Tools.js"
 const router = express.Router({ mergeParams: true })
 
 //Add Tool to Project
-router.route("/:projectId/addTool").post(async (req, res) => {
-  const { label, toolName, url, location, enabled, tagname } = req?.body
+router.route("/:projectId/tool").post(async (req, res) => {
+  const { label, toolName, url, location, custom } = req?.body
+  let { enabled, tagName } = custom
   if (!label || !toolName || !location) {
     return respondWithError(res, 400, "label, toolName, and location are required fields.")
   }
@@ -32,23 +33,18 @@ router.route("/:projectId/addTool").post(async (req, res) => {
       if (!fetchedTagname || !await tools.checkToolPattern(fetchedTagname)) {
           throw { status: 400, message: "Could not extract a valid tagname from the provided JavaScript URL." }
       }
-      tagname = fetchedTagname
+      tagName = fetchedTagname
     }
-    if (tagname !== undefined && tagname !== "" && !await tools.checkIfTagNameExists(tagname)) {
-      tagname = ""
+    if (tagName !== undefined && tagName !== "" && !await tools.checkIfTagNameExists(tagName)) {
+      tagName = ""
     }
-    const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled, tagname)
+    const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled, tagName)
     res.status(200).json(addedTool)
   } catch (error) {
     console.error("Error adding tool:", error)
     respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
   }
-}).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
-})
-
-// Remove Tool from Project
-router.route("/:projectId/removeTool").delete(async (req, res) => {
+}).delete(async (req, res) => {
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
@@ -78,11 +74,11 @@ router.route("/:projectId/removeTool").delete(async (req, res) => {
     respondWithError(res, error.status || 500, error.message || "An error occurred while removing the tool.")
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use DELETE instead")
+  respondWithError(res, 405, "Improper request method. Use POST to add a tool or DELETE to remove a tool.")
 })
 
 // Toggle Tool State in Project
-router.route("/:projectId/toggleTool").patch(async (req, res) => {
+router.route("/:projectId/toggleTool").put(async (req, res) => {
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
