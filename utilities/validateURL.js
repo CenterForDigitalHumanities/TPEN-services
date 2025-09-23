@@ -1,3 +1,9 @@
+/*
+ * Ensure the input is a valid url, and try to resolve it for data.
+ *
+ * @param url - A string that is supposed to be a resolvable URL
+ */
+
 async function validateURL(url) {
   if (!url) return { valid: false, message: "Manifest URL is required for import", status: 404 }
   if (!isNaN(url)) return { valid: false, message: "Input is a number, not a URL", status: 400 }
@@ -14,7 +20,8 @@ async function validateURL(url) {
       return {
         valid: false,
         message: "URL does not point to valid JSON",
-        status: 415
+        status: 415,
+        resolvedPayload: null
       }
     }
 
@@ -29,9 +36,9 @@ async function validateURL(url) {
       }
     }
 
-    return { valid: true }
+    return { valid: true, resolvedPayload: data }
   } catch {
-    return { valid: false, message: "URL is not reachable", status: 500 }
+    return { valid: false, resolvedPayload: null, message: "URL is not reachable", status: 500 }
   }
 }
 
