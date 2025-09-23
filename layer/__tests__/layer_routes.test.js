@@ -48,7 +48,7 @@ describe('Layer Routes', () => {
 
       expect(res.status).toBe(201)
       expect(res.body).toEqual(mockLayer)
-      expect(Layer.build).toHaveBeenCalledWith('123', 'Layer 1', ['canvas1', 'canvas2'])
+      expect(Layer.build).toHaveBeenCalledWith('123', 'Layer 1', ['canvas1', 'canvas2'], 'test-user')
     })
 
     it('should return 400 for invalid input', async () => {

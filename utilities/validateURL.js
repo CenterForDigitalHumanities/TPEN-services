@@ -1,39 +1,32 @@
+/*
+ * Ensure the input is a valid url, and try to resolve it for data.
+ *
+ * @param url - A string that is supposed to be a resolvable URL
+ */
+
 async function validateURL(url) {
-  if (!url) {
-    return {valid: false, message: "Manifest URL is required for import", status: 404}
-  }
-  if (!isNaN(url)) {
-    return {valid: false, message: "Input is a number, not a URL", status: 400}
-  }
+  if (!url) return { valid: false, message: "Manifest URL is required for import", status: 404 }
+  if (!isNaN(url)) return { valid: false, message: "Input is a number, not a URL", status: 400 }
 
   const urlPattern = new RegExp(
     "^(https?://((localhost)|(([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9].)+[a-zA-Z]{2,})|(\\d{1,3}\\.){3}\\d{1,3})(:\\d+)?(/[-a-zA-Z0-9@:%_+.~#?&//=]*)?(\\?[;&a-zA-Z0-9@:%_+.~#?&//=]*)?(#[a-zA-Z0-9@:%_+.~#?&//=]*)?)$"
   )
-
-  if (!urlPattern.test(url)) {
-    return {valid: false, message: "Invalid URL format", status: 400}
-  }
+  if (!urlPattern.test(url)) return { valid: false, message: "Invalid URL format", status: 400 }
 
   try {
     const response = await fetch(url)
     const contentType = response.headers.get("Content-Type")
-
-    if (
-      !contentType ||
-      (!contentType.includes("application/json") &&
-        !contentType.includes("application/ld+json"))
-    ) {
+    if (!contentType || (!contentType.includes("application/json") && !contentType.includes("application/ld+json"))) {
       return {
         valid: false,
         message: "URL does not point to valid JSON",
-        status: 415
+        status: 415,
+        resolvedPayload: null
       }
     }
 
     const data = await response.json()
-
     let dataType = data["@type"] ?? data.type
-
     if (dataType !== "sc:Manifest" && dataType !== "Manifest") {
       return {
         valid: false,
@@ -43,9 +36,9 @@ async function validateURL(url) {
       }
     }
 
-    return {valid: true}
-  } catch (error) {
-    return {valid: false, message: "URL is not reachable", status: 500}
+    return { valid: true, resolvedPayload: data }
+  } catch {
+    return { valid: false, resolvedPayload: null, message: "URL is not reachable", status: 500 }
   }
 }
 
