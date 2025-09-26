@@ -1,13 +1,13 @@
 import express from "express"
 import { respondWithError } from "../utilities/shared.js"
 import auth0Middleware from "../auth/index.js"
-import { isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import Project from "../classes/Project/Project.js"
 import { ACTIONS, SCOPES, ENTITIES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
-router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => {
+router.route("/:projectId/metadata").put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const { projectId } = req.params
   const metadata = req.body
   const user = req.user
@@ -16,9 +16,6 @@ router.route("/:projectId/metadata").put(auth0Middleware(), async (req, res) => 
     return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
   }
   try {
-    for (const data of metadata) {
-      if (isSuspiciousJSON(data)) return respondWithError(res, 400, "Suspicious input will not be processed.")
-    }
     const projectObj = new Project(projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.PROJECT))) {
       return respondWithError(res, 403, "You do not have permission to update metadata for this project.")

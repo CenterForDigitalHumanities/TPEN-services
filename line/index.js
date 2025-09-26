@@ -124,7 +124,7 @@ router.put('/:lineId', auth0Middleware(), async (req, res) => {
           respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-        if (!newLineIndex === -1) {
+        if (newLineIndex === -1) {
           respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
           return
         }
@@ -172,7 +172,7 @@ router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
           return
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-        if (!newLineIndex === -1) {
+        if (newLineIndex === -1) {
           if(res.headersSent) return
           respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
           return
@@ -207,7 +207,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     const page = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
-      respondWithError(res, 404, `Line with ID '${req.params.line}' not found in page '${req.params.pageId}'`)
+      respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
     const line = new Line(oldLine)
@@ -222,7 +222,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
           return
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-        if (!newLineIndex === -1) {
+        if (newLineIndex === -1) {
           respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
           return
         }
