@@ -29,13 +29,13 @@ router.route("/:projectId/tool").post(async (req, res) => {
       return respondWithError(res, 400, "Default tools cannot be altered")
     }
     if (url !== undefined && url !== "" && await tools.checkIfURLisJSScript(url)) {
-      const fetchedTagname = await tools.getTagnameFromScript(url)
-      if (!fetchedTagname || !await tools.checkToolPattern(fetchedTagname)) {
-          throw { status: 400, message: "Could not extract a valid tagname from the provided JavaScript URL." }
+      const fetchedTagName = await tools.getTagnameFromScript(url)
+      if (!fetchedTagName || !await tools.checkToolPattern(fetchedTagName)) {
+          throw { status: 400, message: "Could not extract a valid tagName from the provided JavaScript URL." }
       }
-      tagName = fetchedTagname
+      tagName = fetchedTagName
     }
-    if (tagName !== undefined && tagName !== "" && !await tools.checkIfTagNameExists(tagName)) {
+    if (tagName !== undefined && tagName !== "" && await tools.checkIfTagNameExists(tagName)) {
       tagName = ""
     }
     const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled, tagName)
