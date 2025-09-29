@@ -9,24 +9,6 @@ const app = express()
 app.use(express.json())
 
 // Mock authentication middleware to bypass authentication
-// jest.mock('../../auth/index.js', () => {
-//   return {
-//     default: jest.fn(() => [
-//       // Mock verifier middleware
-//       (req, res, next) => {
-//         req.auth = { payload: {} }
-//         next()
-//       },
-//       // Mock setUser middleware
-//       (req, res, next) => {
-//         req.user = { _id: 'test-user' } // Mock a valid user
-//         next()
-//       }
-//     ])
-//   }
-// })
-
-// Mock authentication middleware to bypass authentication
 jest.mock('../../auth/index.js', () => jest.fn((req, res, next) => {
   req.user = { id: 'test-user' } // Mock a valid user
   next()
