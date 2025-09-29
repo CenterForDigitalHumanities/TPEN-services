@@ -25,7 +25,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   try {
     if (req.body && !Array.isArray(req.body)) {
       for (const key in req.body) {
-        if (isSuspiciousJSON(req.body[key]) || isSuspiciousValueString(req.body[key]))
+        if (isSuspiciousJSON(req.body[key]) || isSuspiciousValueString(req.body[key], true))
           return respondWithError(res, 400, "Suspicious profile data will not be processed.")
       }
     }

@@ -27,13 +27,13 @@ function hasSuspiciousLayerData(layer) {
   // Expect that layer.pages is an Array of JSON objects or strings (URIs / _ids)
   if (layer.pages && Array.isArray(layer.pages)) {
     for (const page of layer.pages) {
-      if (isSuspiciousJSON(page, [], true, 1) || isSuspiciousValueString(page, [], true, 1)) return true
+      if (isSuspiciousJSON(page, [], true, 1) || isSuspiciousValueString(page, true)) return true
     }
   }
   // Expect that layer.canvases is an Array of JSON objects or strings (URIs / _ids). 
   if (layer.canvases && Array.isArray(layer.canvases)) {
     for (const canvas of layer.canvases) {
-      if (isSuspiciousJSON(canvas, [], true, 1) || isSuspiciousValueString(canvas, [], true, 1)) return true
+      if (isSuspiciousJSON(canvas, [], true, 1) || isSuspiciousValueString(canvas, true)) return true
     }
   }
   return false
