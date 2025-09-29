@@ -2,6 +2,7 @@ import express from 'express'
 import * as utils from '../utilities/shared.js'
 import auth0Middleware from "../auth/index.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
+import { isSuspiciousJSON, isSuspiciousValueString} from "../utilities/checkIfSuspicious.js"
 import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
@@ -21,6 +22,8 @@ router.use(cors(common_cors))
  * @param project - The project data from the request body.  
  */
 function hasSuspiciousLayerData(layer) {
+  // Guard against invalid layer param
+  if (!layer || typeof layer !== "object") return false
   // Expect that layer.pages is an Array of JSON objects.  If not the layer data is malformed so skip it.
   if (layer.pages && Array.isArray(layer.pages)) {
     for (const pageObj of layer.pages) {
