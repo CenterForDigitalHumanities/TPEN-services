@@ -57,8 +57,6 @@ describe('Layer Routes', () => {
         .post('/project/123/layer')
         .send(suspiciousLayer)
 
-      console.log('Response status:', res.status)
-      console.log('Response body:', res.body)
       expect(res.status).toBe(400)
       expect(res.body.message).toBe('Suspicious input will not be processed.')
     })
