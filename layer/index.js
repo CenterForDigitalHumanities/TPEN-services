@@ -24,16 +24,16 @@ router.use(cors(common_cors))
 function hasSuspiciousLayerData(layer) {
   // Guard against invalid layer param
   if (!layer || typeof layer !== "object") return false
-  // Expect that layer.pages is an Array of JSON objects.  If not the layer data is malformed so skip it.
+  // Expect that layer.pages is an Array of JSON objects or strings (URIs / _ids)
   if (layer.pages && Array.isArray(layer.pages)) {
-    for (const pageObj of layer.pages) {
-      if (isSuspiciousJSON(pageObj, [], true, 1)) return true
+    for (const page of layer.pages) {
+      if (isSuspiciousJSON(page, [], true, 1) || isSuspiciousValueString(page, [], true, 1)) return true
     }
   }
-  // Expect that layer.canvases is an Array of Strings (URIs).  If not the layer data is malformed so skip it.
+  // Expect that layer.canvases is an Array of JSON objects or strings (URIs / _ids). 
   if (layer.canvases && Array.isArray(layer.canvases)) {
-    for (const canvasURI of layer.canvases) {
-      if (isSuspiciousValueString(canvasURI, [], true, 1)) return true
+    for (const canvas of layer.canvases) {
+      if (isSuspiciousJSON(canvas, [], true, 1) || isSuspiciousValueString(canvas, [], true, 1)) return true
     }
   }
   return false
