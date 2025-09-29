@@ -1,6 +1,7 @@
 import express from 'express'
 import * as utils from '../utilities/shared.js'
 import auth0Middleware from "../auth/index.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
@@ -87,7 +88,7 @@ router.route('/:layerId')
     })
 
 // Route to create a new layer within a project
-router.route('/').post(auth0Middleware(), async (req, res) => {
+router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
     const { label, canvases } = req.body
     if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
