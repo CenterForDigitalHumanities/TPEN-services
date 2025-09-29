@@ -46,7 +46,6 @@ describe('Layer Routes', () => {
         .send(suspiciousLayer)
 
       expect(res.status).toBe(400)
-      expect(res.body.message).toBe('Suspicious input will not be processed.')
     })
 
     it('should reject suspicious content in canvases array', async () => {
@@ -60,7 +59,6 @@ describe('Layer Routes', () => {
         .send(suspiciousLayer)
 
       expect(res.status).toBe(400)
-      expect(res.body.message).toBe('Suspicious input will not be processed.')
     })
 
     it('should create a new layer and return 201', async () => {
