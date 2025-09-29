@@ -71,7 +71,7 @@ router.route('/:layerId')
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
         }
     })
-    .put(auth0Middleware(), async (req, res) => {
+    .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
         const { projectId, layerId } = req.params
         let label = req.body?.label
         const update = req.body
@@ -80,6 +80,7 @@ router.route('/:layerId')
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
         try {
+            if (hasSuspiciousLayerData(req.body)) return utils.respondWithError(res, 400, "Suspicious layer data will not be processed.")
             const project = await Project.getById(projectId)
             if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
             const layer = await findLayerById(layerId, projectId)
