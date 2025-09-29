@@ -18,6 +18,8 @@ const router = express.Router({ mergeParams: true })
  * @param project - The project data from the request body.  
  */
 function hasSuspiciousProjectData(project) {
+  // Guard against invalid project param
+  if (!project || typeof project !== "object") return false
   // Expect that project.layers is an Array of JSON objects.  If not the project data is malformed so skip it.
   if (project.layers && Array.isArray(project.layers)) {
     for (const layerObj of project.layers) {

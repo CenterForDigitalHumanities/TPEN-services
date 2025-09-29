@@ -35,6 +35,32 @@ describe('Layer Routes', () => {
   })
 
   describe.skip('POST /project/:projectId/layer', () => {
+    it('should reject suspicious content in request body', async () => {
+      const suspiciousLayer = { 
+        label: '<script>alert("malicious")</script>', 
+        canvases: ['canvas1', 'canvas2'] 
+      }
+
+      const res = await request(app)
+        .post('/project/123/layer')
+        .send(suspiciousLayer)
+
+      expect(res.status).toBe(400)
+    })
+
+    it('should reject suspicious content in canvases array', async () => {
+      const suspiciousLayer = { 
+        label: 'Clean Label', 
+        canvases: ['eval(malicious)', 'canvas2'] 
+      }
+
+      const res = await request(app)
+        .post('/project/123/layer')
+        .send(suspiciousLayer)
+
+      expect(res.status).toBe(400)
+    })
+
     it('should create a new layer and return 201', async () => {
       const mockLayer = { label: 'Layer 1', canvases: ['canvas1', 'canvas2'] }
       const mockProject = new Project()
