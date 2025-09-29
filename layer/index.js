@@ -24,16 +24,16 @@ router.use(cors(common_cors))
 function hasSuspiciousLayerData(layer) {
   // Guard against invalid layer param
   if (!layer || typeof layer !== "object") return false
-  // Expect that layer.pages is an Array of JSON objects.  If not the layer data is malformed so skip it.
+  // Expect that layer.pages is an Array of JSON objects or strings (URIs / _ids)
   if (layer.pages && Array.isArray(layer.pages)) {
-    for (const pageObj of layer.pages) {
-      if (isSuspiciousJSON(pageObj, [], true, 1)) return true
+    for (const page of layer.pages) {
+      if (isSuspiciousJSON(page, [], true, 1) || isSuspiciousValueString(page, true)) return true
     }
   }
-  // Expect that layer.canvases is an Array of Strings (URIs).  If not the layer data is malformed so skip it.
+  // Expect that layer.canvases is an Array of JSON objects or strings (URIs / _ids). 
   if (layer.canvases && Array.isArray(layer.canvases)) {
-    for (const canvasURI of layer.canvases) {
-      if (isSuspiciousValueString(canvasURI, [], true, 1)) return true
+    for (const canvas of layer.canvases) {
+      if (isSuspiciousJSON(canvas, [], true, 1) || isSuspiciousValueString(canvas, true)) return true
     }
   }
   return false
@@ -71,7 +71,7 @@ router.route('/:layerId')
             return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
         }
     })
-    .put(auth0Middleware(), async (req, res) => {
+    .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
         const { projectId, layerId } = req.params
         let label = req.body?.label
         const update = req.body
@@ -80,6 +80,7 @@ router.route('/:layerId')
         if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
         try {
+            if (hasSuspiciousLayerData(req.body)) return utils.respondWithError(res, 400, "Suspicious layer data will not be processed.")
             const project = await Project.getById(projectId)
             if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
             const layer = await findLayerById(layerId, projectId)
