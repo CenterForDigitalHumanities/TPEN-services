@@ -83,11 +83,11 @@ export default class Tools {
         return this.tools.some(t => t.label === label)
     }
 
-    async checkIfTagNameExists(tagname) {
+    async checkIfTagNameExists(tagName) {
         if (!this.tools || !Array.isArray(this.tools)) {
             await this.#loadFromDB()
         }
-        return this.tools.some(t => t.tagname === tagname)
+        return this.tools.some(t => t.custom?.tagName === tagName)
     }
 
     async checkIfInDefaultTools(toolName) {
@@ -99,13 +99,13 @@ export default class Tools {
         return toolPattern.test(toolValue)
     }
 
-    async getTagnameFromScript(url) {
+    async getTagNameFromScript(url) {
         try {
             const text = await (await fetch(url)).text()
             const match = text.match(/customElements\.define\s*\(\s*['"]([^'"]+)['"]/)
             return match ? match[1] : null
         } catch (e) {
-            console.error("Error fetching tagname:", e)
+            console.error("Error fetching tagName:", e)
             return null
         }
     }
@@ -143,7 +143,7 @@ export default class Tools {
                     }
                 }
                 else {
-                    tagName = await this.getTagnameFromScript(url)
+                    tagName = await this.getTagNameFromScript(url)
                     if (Tools.defaultTools.some(t => t.tagName === tagName)) continue
                     if (!tagName || !toolPattern.test(tagName)) continue
                 }
