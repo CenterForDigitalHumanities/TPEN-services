@@ -67,9 +67,11 @@ describe.skip('page endpoint end to end unit test (spinning up the endpoint and 
             "type": "TextualBody",
             "value": "OK",
             "format": "text/plain"
-          }
+          },
+          "target": "https://example.org/canvas/1#xywh=100,100,100,100"
         }
-      ]
+      ],
+      "target": "https://example.org/canvas/1"
     }
 
     const res = await request(app)
@@ -91,8 +93,10 @@ describe.skip('page endpoint end to end unit test (spinning up the endpoint and 
             "value": "while(true) return true",
             "format": "text/plain"
           }
-        }
-      ]
+        },
+        "target": "https://example.org/canvas/1#xywh=100,100,100,100"
+      ],
+      "target": "https://example.org/canvas/1"
     }
     const res = await request(app)
       .put('/project/123/layer/layer1/page/page1')
