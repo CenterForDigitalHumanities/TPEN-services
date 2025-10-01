@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
+import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
+import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
@@ -48,7 +50,7 @@ router.get('/:lineId', async (req, res) => {
 })
 
 // Add a new line/lines to an existing Page, save it in RERUM if it has body content.
-router.post('/', auth0Middleware(), async (req, res) => {
+router.post('/', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
@@ -58,6 +60,12 @@ router.post('/', auth0Middleware(), async (req, res) => {
     if (!page) return
 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
+    // Check each annotation for suspicious content in the body property
+    for (const anno of inputLines) {
+      if (isSuspiciousJSON(anno, [], true, 1)) {
+        return respondWithError(res, 400, "Suspicious input will not be processed.")
+      }
+    }
     let newLine
     // This feels like a use case for /bulkCreate in RERUM.  Make all these lines with one call.
     for (const lineData of inputLines) {
