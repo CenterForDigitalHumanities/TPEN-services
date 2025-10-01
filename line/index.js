@@ -1,7 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
-import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
 import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
@@ -50,7 +49,7 @@ router.get('/:lineId', async (req, res) => {
 })
 
 // Add a new line/lines to an existing Page, save it in RERUM if it has body content.
-router.post('/', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
+router.post('/', auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
