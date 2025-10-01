@@ -104,6 +104,16 @@ describe.skip('lineRouter API tests', () => {
     expect(response.body).toEqual({ id: '123', body: 'Updated Text', target: 'https://example.com?xywh=10,10,100,100' })
   })
 
+  it('PATCH /project/:pid/page/:page/line/:line/text should detect suspicious content', async () => {
+    const suspiciousPatch ='while(true) return true' 
+
+    const response = await request(app)
+      .patch('/project/1/page/1/line/123')
+      .send(suspiciousPatch)
+
+    expect(response.status).toBe(400)
+  })
+
   it('PATCH /project/:pid/page/:page/line/:line/bounds should update line bounds', async () => {
     Line.prototype.updateBounds.mockResolvedValue({
       asJSON: () => ({ id: '123', body: 'Sample Line', target: 'https://example.com?xywh=20,20,200,200' })
