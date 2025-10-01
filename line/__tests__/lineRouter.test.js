@@ -47,12 +47,12 @@ describe.skip('lineRouter API tests', () => {
     const annotations = [
       {
         id: 'anno-1',
-        body: {'value': 'This is fine',
+        body: {'value': 'This is fine'},
         target: 'canvas#xywh=0,0,100,100'
       },
       {
         id: 'anno-2',
-        body: {'value': '<script>alert("bad")</script>',
+        body: {'value': '<script>alert("bad")</script>'},
         target: 'canvas#xywh=0,100,100,100'
       }
     ]
