@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
+import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
 import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
@@ -100,7 +101,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
 })
 
 // Update an existing line, including in RERUM
-router.put('/:lineId', auth0Middleware(), async (req, res) => {
+router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
