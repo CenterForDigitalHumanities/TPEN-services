@@ -1,5 +1,6 @@
 import { createGitHubIssue } from './githubService.js'
 import { respondWithError } from "../utilities/shared.js"
+import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 /**
  * 
@@ -15,6 +16,11 @@ export async function submitFeedback(req, res) {
   if (!feedback) {
     return res.status(204).send()
   }
+
+  if (isSuspiciousValueString(feedback)) {
+    return respondWithError(res, 400, "Suspicious input will not be processed.")
+  }
+
   try {
     await createGitHubIssue('Feedback', `Feedback from ${user}`, `Page: ${page}\n\nFeedback: ${sanitizeUserInput(feedback)}`)
     res.status(200).json({ message: 'Feedback submitted successfully' })
@@ -36,6 +42,10 @@ export async function submitBug(req, res) {
 
   if (!bugDescription) {
     return res.status(204).send()
+  }
+
+  if (isSuspiciousValueString(bugDescription)) {
+    return respondWithError(res, 400, "Suspicious input will not be processed.")
   }
 
   try {
