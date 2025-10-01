@@ -105,7 +105,7 @@ describe.skip('lineRouter API tests', () => {
   })
 
   it('PATCH /project/:pid/page/:page/line/:line/text should detect suspicious content', async () => {
-    const suspiciousPatch ='while(true) return true' 
+    const suspiciousPatch = 'while(true) return true' 
 
     const response = await request(app)
       .patch('/project/1/page/1/line/123')
