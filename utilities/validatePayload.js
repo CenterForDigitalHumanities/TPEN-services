@@ -50,12 +50,8 @@ export function validateProjectPayload(payload) {
     }
 
     // Validate label and value are non-empty strings
-    if (typeof metadataItem.label !== 'string' || metadataItem.label.trim() === '') {
+    if (typeof metadataItem.label.none[0] !== 'string' || metadataItem.label.none[0].trim() === '') {
       return { isValid: false, errors: 'metadata item label must be a non-empty string' }
-    }
-    
-    if (typeof metadataItem.value !== 'string' || metadataItem.value.trim() === '') {
-      return { isValid: false, errors: 'metadata item value must be a non-empty string' }
     }
 
     // Ensure no extra properties beyond label and value
