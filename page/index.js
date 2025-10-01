@@ -90,7 +90,7 @@ router.route('/:pageId')
     }
 
     try {
-      if (hasSuspiciousPageData(req.body)) return utils.respondWithError(res, 400, "Suspicious page data will not be processed.")
+      if (hasSuspiciousPageData(req.body)) return respondWithError(res, 400, "Suspicious page data will not be processed.")
       // Find the page object
       const page = await findPageById(pageId, projectId)
       page.creator = user.agent.split('/').pop()

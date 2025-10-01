@@ -1,5 +1,4 @@
 import express from 'express'
-import * as utils from '../utilities/shared.js'
 import auth0Middleware from '../auth/index.js'
 import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
 import { isSuspiciousJSON, isSuspiciousValueString} from '../utilities/checkIfSuspicious.js'
@@ -8,7 +7,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { findPageById, findLayerById, updateLayerAndProject } from '../utilities/shared.js'
+import { findPageById, findLayerById, updateLayerAndProject, respondWithError } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -87,7 +86,7 @@ router.route('/:layerId')
             return res.status(200).json(layerAsCollection)
         } catch (error) {
             console.error(error)
-            return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+            return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
         }
     })
     .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
@@ -96,15 +95,15 @@ router.route('/:layerId')
         const update = req.body
         const providedPages = update?.pages
         const user = req.user
-        if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
-        if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
+        if (!projectId) return respondWithError(res, 400, 'Project ID is required')
+        if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
         try {
-            if (hasSuspiciousLayerData(req.body)) return utils.respondWithError(res, 400, "Suspicious layer data will not be processed.")
+            if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
             const project = await Project.getById(projectId)
-            if (!project?._id) return utils.respondWithError(res, 404, "Project '${projectId}' does not exist")
+            if (!project?._id) return respondWithError(res, 404, "Project '${projectId}' does not exist")
             const layer = await findLayerById(layerId, projectId)
             const originalPages = layer.pages ?? []
-            if (!layer?.id) return utils.respondWithError(res, 404, "Layer '${layerId}' not found in project")
+            if (!layer?.id) return respondWithError(res, 404, "Layer '${layerId}' not found in project")
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
                 layer[key] = update[key]
@@ -126,32 +125,32 @@ router.route('/:layerId')
             res.status(200).json(layer)
         } catch (error) {
             console.error(error)
-            return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
+            return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
         }
     })
     .all((req, res) => {
-        utils.respondWithError(res, 405, 'Improper request method. Use GET instead.')
+        respondWithError(res, 405, 'Improper request method. Use GET instead.')
     })
 
 // Route to create a new layer within a project
 router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
     const { label, canvases } = req.body
-    if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
+    if (!projectId) return respondWithError(res, 400, 'Project ID is required')
     if (!label || !Array.isArray(canvases) || canvases.length === 0) {
-        return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
+        return respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
     }
     try {
         if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
         const project = await Project.getById(projectId)
-        if (!project) return utils.respondWithError(res, 404, 'Project does not exist')
+        if (!project) return respondWithError(res, 404, 'Project does not exist')
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()
         res.status(201).json(project.data)
     } catch (error) {
         console.error(error)
-        return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error creating layer')
+        return respondWithError(res, error.status ?? 500, error.message ?? 'Error creating layer')
     }
 })
 
