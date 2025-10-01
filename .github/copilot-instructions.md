@@ -20,7 +20,7 @@ Always reference these instructions first and fallback to search or bash command
 - Test basic functionality: `curl http://localhost:3001/` should return "TPEN3 SERVICES BABY!!!"
 
 ### Environment Requirements
-- Node.js >= 22.14.0 (works with v20.19.4 but shows warnings)
+- Node.js >= 22.20.0 
 - MongoDB (for database tests and full functionality)
 - MariaDB (for database tests and full functionality)
 - Copy `sample.env` to `.env` for basic functionality

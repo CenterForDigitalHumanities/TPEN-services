@@ -5,7 +5,7 @@ Thank you for your interest in contributing to TPEN Services! This guide will he
 ## Prerequisites
 
 ### Node.js and npm
-- **Node.js version**: >= 22.14.0 (as specified in `package.json`)
+- **Node.js version**: >= 22.20.0 (as specified in `package.json`)
 - **npm**: Latest version (comes with Node.js)
 
 You can download Node.js from [nodejs.org](https://nodejs.org/) or use a version manager like [nvm](https://github.com/nvm-sh/nvm).
