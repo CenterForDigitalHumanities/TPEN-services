@@ -1,5 +1,7 @@
 import express from 'express'
 import auth0Middleware from '../auth/index.js'
+import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
+import { hasSuspiciousPageData } from '../utilities/checkIfSuspicious.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
@@ -48,7 +50,7 @@ router.route('/:pageId')
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
   })
-  .put(auth0Middleware(), async (req, res) => {
+  .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
     const { projectId, pageId } = req.params
@@ -69,6 +71,7 @@ router.route('/:pageId')
     }
 
     try {
+      if (hasSuspiciousPageData(req.body)) return respondWithError(res, 400, "Suspicious page data will not be processed.")
       // Find the page object
       const page = await findPageById(pageId, projectId)
       page.creator = user.agent.split('/').pop()
