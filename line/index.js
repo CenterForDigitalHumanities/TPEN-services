@@ -105,10 +105,6 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
-    // Check for suspicious content in the request body
-    if (isSuspiciousJSON(req.body, [], true, 1)) {
-      return respondWithError(res, 400, "Suspicious input will not be processed.")
-    }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
