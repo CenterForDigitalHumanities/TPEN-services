@@ -189,7 +189,7 @@ export function hasSuspiciousPageData(page) {
  *
  * @param layer - The layer data from the request body.  
  */
-function hasSuspiciousLayerData(layer) {
+export function hasSuspiciousLayerData(layer) {
   // Guard against invalid layer param
   if (!layer || typeof layer !== "object") return false
   // Expect that layer.pages is an Array of JSON objects or strings (URIs / _ids)
