@@ -1,5 +1,6 @@
 import { createGitHubIssue } from './githubService.js'
 import { respondWithError } from "../utilities/shared.js"
+import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 /**
  * 
@@ -11,10 +12,8 @@ import { respondWithError } from "../utilities/shared.js"
 export async function submitFeedback(req, res) {
   const user = req.user ? `${req.user.profile.displayName} (${req.user._id})` : 'Anonymous'
   const { page, feedback } = req.body
-
-  if (!feedback) {
-    return res.status(204).send()
-  }
+  if (!feedback) return res.status(204).send()
+  if (isSuspiciousValueString(feedback)) return respondWithError(res, 400, "Suspicious input will not be processed.")
   try {
     await createGitHubIssue('Feedback', `Feedback from ${user}`, `Page: ${page}\n\nFeedback: ${sanitizeUserInput(feedback)}`)
     res.status(200).json({ message: 'Feedback submitted successfully' })
@@ -33,11 +32,8 @@ export async function submitFeedback(req, res) {
 export async function submitBug(req, res) {
   const user = req.user ? `${req.user.profile.displayName} (${req.user._id})` : 'Anonymous'
   const { page, bugDescription } = req.body
-
-  if (!bugDescription) {
-    return res.status(204).send()
-  }
-
+  if (!bugDescription) return res.status(204).send()
+  if (isSuspiciousValueString(bugDescription)) return respondWithError(res, 400, "Suspicious input will not be processed.")
   try {
     await createGitHubIssue('Bug Report', `Bug reported by ${user}`, `Page: ${page}\n\nBug: ${sanitizeUserInput(bugDescription)}`)
     res.status(200).json({ message: 'Bug report submitted successfully' })
