@@ -62,7 +62,7 @@ router.post('/', auth0Middleware(), screenContentMiddleware(), async (req, res) 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
     // Check each annotation for suspicious content in the body property before saving any data.
     for (const anno of inputLines) {
-      if (isSuspiciousJSON(anno.body, [], true, 1)) {
+      if (isSuspiciousJSON(anno, [], true, 1)) {
         return respondWithError(res, 400, "Suspicious input will not be processed.")
       }
     }
