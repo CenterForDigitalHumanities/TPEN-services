@@ -43,7 +43,7 @@ describe.skip('lineRouter API tests', () => {
     expect(response.body).toEqual({ id: '123', body: 'New Line', target: 'https://example.com?xywh=10,10,100,100' })
   })
 
-  it('should detect suspicious content in array of annotations', () => {
+  it('should detect suspicious content in array of annotations', async () => {
     const annotations = [
       {
         id: 'anno-1',
