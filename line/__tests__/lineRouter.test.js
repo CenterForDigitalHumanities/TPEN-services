@@ -43,6 +43,27 @@ describe.skip('lineRouter API tests', () => {
     expect(response.body).toEqual({ id: '123', body: 'New Line', target: 'https://example.com?xywh=10,10,100,100' })
   })
 
+  it('should detect suspicious content in array of annotations', async () => {
+    const annotations = [
+      {
+        id: 'anno-1',
+        body: {'value': 'This is fine'},
+        target: 'canvas#xywh=0,0,100,100'
+      },
+      {
+        id: 'anno-2',
+        body: {'value': '<script>alert("bad")</script>'},
+        target: 'canvas#xywh=0,100,100,100'
+      }
+    ]
+
+    const response = await request(app)
+      .post('/project/1/page/1/line/')
+      .send(annotations)
+
+    expect(response.status).toBe(400)
+  })
+
   it('PUT /project/:pid/page/:pid/line/:line should update a line', async () => {
     Line.prototype.update.mockResolvedValue({
       asJSON: () => ({ id: '123', body: 'Updated Line', target: 'https://example.com?xywh=10,10,100,100' })

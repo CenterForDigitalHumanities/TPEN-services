@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import auth0Middleware from "../auth/index.js"
+import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
@@ -58,17 +59,21 @@ router.post('/', auth0Middleware(), async (req, res) => {
     if (!page) return
 
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
+    // Check each annotation for suspicious content.  The body itself will be checked during the recursion.
+    for (const anno of inputLines) {
+      if (isSuspiciousJSON(anno, [], true, 1)) {
+        return respondWithError(res, 400, "Suspicious input will not be processed.")
+      }
+    }
     let newLine
     // This feels like a use case for /bulkCreate in RERUM.  Make all these lines with one call.
     for (const lineData of inputLines) {
       newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData }, user.agent.split('/').pop())
-
       const existingLine = findLineInPage(page, newLine.id, res)
       if (existingLine) {
         respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
         return
       }
-
       const savedLine = await newLine.update()
       page.items.push(savedLine)
     }
@@ -84,7 +89,6 @@ router.post('/', auth0Middleware(), async (req, res) => {
       Object.assign(page, currentVersion)
       return updatePageAndProject(page, project, user._id)
      })
-
     res.status(201).json(newLine.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
