@@ -149,7 +149,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
 })
 
 // Update the text of an existing line
-router.patch('/:lineId/text', auth0Middleware(), async (req, res) => {
+router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
