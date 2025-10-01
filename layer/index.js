@@ -1,7 +1,7 @@
 import express from 'express'
 import auth0Middleware from '../auth/index.js'
 import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
-import { isSuspiciousJSON, isSuspiciousValueString, hasSuspiciousLayerData} from '../utilities/checkIfSuspicious.js'
+import { hasSuspiciousLayerData } from '../utilities/checkIfSuspicious.js'
 import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
