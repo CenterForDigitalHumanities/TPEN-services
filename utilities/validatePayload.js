@@ -50,8 +50,12 @@ export function validateProjectPayload(payload) {
     }
 
     // Validate label and value are non-empty strings
-    if (typeof metadataItem.label?.none?.[0] !== 'string' || metadataItem.label?.none?.[0].trim() === '') {
-      return { isValid: false, errors: 'metadata item label must be a non-empty string' }
+    if (typeof metadataItem.label !== 'string' || typeof metadataItem.label?.none?.[0] !== 'string' || metadataItem.label.trim() === '' || metadataItem.label?.none?.[0].trim() === '') {
+      return { isValid: false, errors: 'metadata item label must be a non-empty string or non-empty language map' }
+    }
+
+    if (typeof metadataItem.value !== 'string' || typeof metadataItem.value?.none?.[0] !== 'string') {
+      return { isValid: false, errors: 'metadata item value must be a language map or string' }
     }
 
     // Ensure no extra properties beyond label and value
