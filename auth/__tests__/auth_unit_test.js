@@ -13,20 +13,21 @@ const TIME_OUT = process.env.TEST_TIMEOUT ?? 5000
 
 describe("auth0Middleware #auth_test", () => {
   it(
-    "should return 401 Unauthorized without valid token",
+    "should return 400 without Authorization Header",
     async () => {
       const res = await request(app).get("/protected-route")
-
-      expect(res.status).toBe(401)
+      expect(res.status).toBe(400)
     },
     TIME_OUT
   )
 
   it(
-    "No user should be found on req if token is invalid",
+    "should return 401 with invalid token from Authorization Header",
     async () => {
-      const res = await request(app).get("/protected-route")
-      expect(res.req.user).toBeUndefined()
+      const res = await request(app)
+      .get("/protected-route")
+      .set("Authorization", `Bearer 123123123123123123123123123`)
+      expect(res.status).toBe(401)
     },
     TIME_OUT
   )

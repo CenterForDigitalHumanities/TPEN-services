@@ -5,9 +5,7 @@ import express from "express"
 import request from "supertest"
 import app from '../../app.js';  
 import User from "../../classes/User/User.js"
-
 import {jest} from "@jest/globals"
-
 
 const routeTester = new express()
 const privateRoutesTester = new express()
@@ -24,16 +22,17 @@ describe("Test private routes restfulness #user_class", () => {
 })
 
 describe("Unauthourized GETs    #user_class", () => {
-  it("/my/profile should return 401", async () => {
+  it("/my/project should return 400 if there is no Authorization header #user_class", async () => {
     const response = await request(mainApp)
-      .get("/my/profile") 
-    expect(response.status).toBe(401)
+      .get("/my/projects") 
+    expect(response.status).toBe(400)
     expect(response.body).toBeTruthy()
   })
 
-  it("/my/project should return 401 #user_class", async () => {
+  it("/my/profile should return 401 for an invalid Authorization header.", async () => {
     const response = await request(mainApp)
-      .get("/my/projects") 
+      .get("/my/profile") 
+      .set("Authorization", `Bearer 123123123123123123123123123`)
     expect(response.status).toBe(401)
     expect(response.body).toBeTruthy()
   })
@@ -69,7 +68,7 @@ describe('userProfile endpoint end to end unit test (spinning up the endpoint an
     expect(res.body).toBeTruthy()
   })
 
-  it('Call to /user with a TPEN3 user ID that is  invalid', async () => {
+  it('Call to /user with a TPEN3 user ID that is invalid', async () => {
     const res = await request(routeTester)
       .get('/user/kjl')
     expect(res.statusCode).toBe(404)
