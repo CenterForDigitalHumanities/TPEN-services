@@ -35,7 +35,7 @@ router.route("/:projectId/tool").post(async (req, res) => {
       }
       tagName = fetchedTagName
     }
-    if (tagName !== undefined && tagName !== "" && !await tools.checkIfTagNameExists(tagName)) {
+    if (tagName !== undefined && tagName !== "" && await tools.checkIfTagNameExists(tagName)) {
       tagName = ""
     }
     const addedTool = await tools.addIframeTool(label, toolName, url, location, enabled, tagName)

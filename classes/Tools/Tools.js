@@ -179,7 +179,7 @@ export default class Tools {
         if (url !== undefined && url !== "" && !await this.checkIfURLisJSScript(url) && tagName !== "") {
             throw { status: 400, message: "If url is not a JavaScript file, tagName must be empty." }
         }
-        if (tagName !== undefined && tagName !== "" && !await this.checkIfTagNameExists(tagName)) {
+        if (tagName !== undefined && tagName !== "" && await this.checkIfTagNameExists(tagName)) {
             throw { status: 400, message: "tagName must be unique and not already in use." }
         }
         if (["dialog", "pane", "drawer", "linked", "sidebar"].indexOf(location) === -1) {
@@ -208,7 +208,7 @@ export default class Tools {
                 "enabled": true, 
                 "tagName": "" 
             },
-            "url": "",
+            "url": "https://centerfordigitalhumanities.github.io/Page-Viewer/",
             "location": "pane"
         },
         {
