@@ -18,7 +18,6 @@ dotenvExpand.expand(storedEnv)
 
 import logger from 'morgan'
 import indexRouter from './index.js'
-import manifestRouter from './manifest/index.js'
 import projectRouter from './project/index.js'
 import pageRouter from './page/index.js'
 import lineRouter from './line/index.js'
@@ -54,7 +53,6 @@ app.all('*_', (req, res, next) => {
 })
 
 app.use('/', indexRouter)
-app.use('/manifest', manifestRouter)
 app.use('/project/:projectId/page/:pageId/line', lineRouter) 
 app.use('/project/:projectId/page', pageRouter) 
 app.use('/project', projectRouter)
