@@ -75,7 +75,6 @@ Always reference these instructions first and fallback to search or bash command
 │   └── tiny/              # TinyPEN API controller
 ├── auth/                  # Auth0 authentication
 ├── project/               # Project API routes
-├── manifest/              # Manifest API routes
 ├── userProfile/           # User API routes
 ├── line/                  # Line API routes
 ├── page/                  # Page API routes
@@ -89,7 +88,6 @@ Always reference these instructions first and fallback to search or bash command
 - `POST /project/import?createFrom=URL` -- Import project from IIIF manifest
 - `GET /user/:id` -- Get user profile (public)
 - `GET /my/profile` -- Get authenticated user profile
-- `GET /manifest/:id` -- Get IIIF manifest
 - `GET /line/:id` -- Get text line annotation
 - `GET /page/:id` -- Get annotation page
 
@@ -97,7 +95,7 @@ Always reference these instructions first and fallback to search or bash command
 - Uses Auth0 JWT bearer tokens
 - Protected endpoints require `Authorization: Bearer <token>` header
 - Environment variables AUDIENCE and DOMAIN must be configured for auth tests
-- Public endpoints: `/`, `/user/:id`, `/manifest/:id`
+- Public endpoints: `/`, `/user/:id`
 - Protected endpoints: `/project/*`, `/my/*`, most POST/PUT/DELETE operations
 
 ### Database Configuration
