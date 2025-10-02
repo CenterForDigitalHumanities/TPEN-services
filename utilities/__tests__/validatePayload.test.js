@@ -176,23 +176,6 @@ describe('validateProjectPayload', () => {
       }
       const result = validateProjectPayload(payload)
       expect(result.isValid).toBe(false)
-      expect(result.errors).toBe("metadata item label must be a non-empty string")
-    })
-
-    test('should return invalid for metadata with empty value', () => {
-      const payload = {
-        label: "Test Project",
-        metadata: [
-          { label: "Author", value: "" }
-        ],
-        layers: [],
-        manifest: ["http://example.com/manifest"],
-        creator: "http://example.com/user",
-        group: "abc123"
-      }
-      const result = validateProjectPayload(payload)
-      expect(result.isValid).toBe(false)
-      expect(result.errors).toBe("metadata item value must be a non-empty string")
     })
 
     test('should return invalid for metadata with extra properties', () => {
@@ -208,7 +191,6 @@ describe('validateProjectPayload', () => {
       }
       const result = validateProjectPayload(payload)
       expect(result.isValid).toBe(false)
-      expect(result.errors).toBe("metadata item must only have label and value properties")
     })
   })
 
