@@ -25,10 +25,17 @@ router.get('/:lineId', async (req, res) => {
   try {
     if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
       const resolved = await fetch(lineId)
-        .then(res => res.json())
-        .catch(err => { return {} })
+        .then(resp => {
+          if (resp.ok) return resp.json()
+          else {
+            if (resp.status) return {"code": resp.status, "message": resp.statusText ?? `Communication error with RERUM.  Could not get item '${lineId}'`}
+            else throw resp
+          }
+        }).catch(err => {
+          throw err 
+        })
         if (resolved.id || resolved["@id"]) return res.json(resolved)
-        else return respondWithError(res, 500, `Communication error with RERUM.  Could not get item '${lineId}'`)
+        else return respondWithError(res, resolved.code, resolved.message)
     }
     const projectData = (await getProjectById(projectId)).data
     if (!projectData) {
