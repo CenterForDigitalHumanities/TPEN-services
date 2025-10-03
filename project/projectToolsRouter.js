@@ -105,7 +105,7 @@ router.route("/:projectId/toggleTool").put(async (req, res) => {
     respondWithError(res, error.status || 500, error.message || "An error occurred while toggling the tool state.")
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use PATCH instead")
+  respondWithError(res, 405, "Improper request method. Use PUT instead")
 })
 
 export default router
