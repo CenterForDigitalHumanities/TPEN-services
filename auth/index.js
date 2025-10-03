@@ -31,7 +31,7 @@ export function authenticateUser() {
     a. to apply to all sub routes of a parent route, e.g project/history, project/:id, project/create apply the function on the base route in app.js in the following way; app.use("/project/*", auth0Middleware())
     b. to protect an individual route; route.get("/project", auth0Middleware(), controller) 
     c. to protect all routes in the app; app.use(auth0Middleware())
- * @returns authenticated user, 400 if there was no Authorization header on the request, or 401 if the token from Authorization is not authorized.
+ * @returns user or 401
  */
 function auth0Middleware() {
   const verifier = auth({

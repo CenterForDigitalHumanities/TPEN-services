@@ -22,10 +22,25 @@ describe("Test private routes restfulness #user_class", () => {
 })
 
 describe("Unauthourized GETs    #user_class", () => {
-  it("/my/project should return 400 if there is no Authorization header #user_class", async () => {
+  it("/my/project should return 401 if there is no Authorization header #user_class", async () => {
     const response = await request(mainApp)
       .get("/my/projects") 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(401)
+    expect(response.body).toBeTruthy()
+  })
+
+  it("/my/project should return 401 if there is an invalid Authorization header #user_class", async () => {
+    const response = await request(mainApp)
+      .get("/my/projects")
+      .set("Authorization", `Bearer 123123123123123123123123123`)
+    expect(response.status).toBe(401)
+    expect(response.body).toBeTruthy()
+  })
+
+  it("/my/profile should return 401 if there is no Authorization header.", async () => {
+    const response = await request(mainApp)
+      .get("/my/profile") 
+    expect(response.status).toBe(401)
     expect(response.body).toBeTruthy()
   })
 
