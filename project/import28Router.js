@@ -101,10 +101,6 @@ router.route("/import28/:uid").get(
                 })
             )
 
-            Object.keys(req.cookies).forEach((cookieName) => {
-                res.clearCookie(cookieName)
-            })
-
             return res.status(200).json({
                 message: "Select a Project to Import : ",
                 data: parsedData
