@@ -196,9 +196,9 @@ export default class Tools {
             "toolName": "inspect",
             "custom": { 
                 "enabled": true, 
-                "tagName": "" 
+                "tagName": "tpen-magnifier-tool" 
             },
-            "url": "",
+            "url": "https://app.t-pen.org/components/magnifier-tool/index.js",
             "location": "drawer"
         },
         {
@@ -216,9 +216,9 @@ export default class Tools {
             "toolName": "history",
             "custom": { 
                 "enabled": true, 
-                "tagName": ""
+                "tagName": "tpen-line-history"
             },
-            "url": "",
+            "url": "https://app.t-pen.org/components/line-history/index.js",
             "location": "pane"
         },
         {
@@ -235,7 +235,7 @@ export default class Tools {
             "label": "Line Breaking",
             "toolName": "line-breaking",
             "custom": { 
-                "enabled": true, 
+                "enabled": false, 
                 "tagName": "" 
             },
             "url": "",
@@ -245,7 +245,7 @@ export default class Tools {
             "label": "Compare Pages",
             "toolName": "compare-pages",
             "custom": { 
-                "enabled": true, 
+                "enabled": false, 
                 "tagName": "" 
             },
             "url": "",
@@ -264,9 +264,9 @@ export default class Tools {
         {
             "label": "Enigma",
             "toolName": "enigma",
-            "url": "https://ciham-digital.huma-num.fr/enigma/",
+            "url": "https://http://enigma.huma-num.fr/",
             "custom": { 
-                "enabled": true, 
+                "enabled": false, 
                 "tagName": "" 
             },
             "location": "pane"
@@ -286,7 +286,7 @@ export default class Tools {
             "toolName": "latin-vulgate",
             "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
             "custom": { 
-                "enabled": true, 
+                "enabled": false, 
                 "tagName": "" 
             },
             "location": "pane"

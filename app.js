@@ -42,7 +42,7 @@ app.use(express.static(path.join(__dirname, 'public')))
  * For any request that comes through to the app, check whether or not we are in maintenance mode.
  * If we are, then respond with a 503 and a message.  Otherwise, continue on.
  */
-app.all('*', (req, res, next) => {
+app.all('*_', (req, res, next) => {
   if (process.env.DOWN === 'true') {
     return res.status(503).json({
       message:
@@ -62,7 +62,7 @@ app.use('/proxy', proxyRouter)
 app.use('/beta', feedbackRouter)
 
 //catch 404 because of an invalid site path
-app.use('*', (req, res) => {
+app.use('*_', (req, res) => {
   res.status(404).json({ message: res.statusMessage ?? 'This page does not exist' })
 })
 

@@ -87,7 +87,7 @@ function opts(req, res, next) {
 
 const proxyRouter = express.Router()
 proxyRouter.use(cors(common_cors))
-proxyRouter.route('/*')
+proxyRouter.route('/*_')
   .options(opts)
   .get(proxy)
 

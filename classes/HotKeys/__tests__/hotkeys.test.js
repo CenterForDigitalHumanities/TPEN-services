@@ -1,7 +1,7 @@
 import Hotkeys from '../Hotkeys.js'
 
 test('Hotkeys constructor should throw an error if _id is not provided', () => {
-    expect(() => new Hotkeys()).toThrowError(new Error("_id is required"))
+    expect(() => new Hotkeys()).toThrow(new Error("_id is required"))
 })
 
 test('Hotkeys constructor should initialize with _id and symbols', () => {
@@ -19,7 +19,7 @@ test('assign should set symbols and return the instance', () => {
 
 test('assign should throw an error if symbols are not strings', () => {
     const hotkeys = new Hotkeys('123')
-    expect(() => hotkeys.assign([1, 2])).toThrowError(new Error("All symbols must be strings"))
+    expect(() => hotkeys.assign([1, 2])).toThrow(new Error("All symbols must be strings"))
 })
 
 test('add should add a symbol if it does not exist and return the instance', () => {
@@ -36,7 +36,7 @@ test('add should not add a symbol if it already exists', () => {
 
 test('add should throw an error if symbol is not a string', () => {
     const hotkeys = new Hotkeys('123')
-    expect(() => hotkeys.add(1)).toThrowError(new Error("Symbol must be a string"))
+    expect(() => hotkeys.add(1)).toThrow(new Error("Symbol must be a string"))
 })
 
 test('remove should remove a symbol if it exists and return the instance', () => {
@@ -47,5 +47,5 @@ test('remove should remove a symbol if it exists and return the instance', () =>
 
 test('remove should throw an error if symbol is not a string', () => {
     const hotkeys = new Hotkeys('123')
-    expect(() => hotkeys.remove(1)).toThrowError(new Error("Symbol must be a string"))
+    expect(() => hotkeys.remove(1)).toThrow(new Error("Symbol must be a string"))
 })
