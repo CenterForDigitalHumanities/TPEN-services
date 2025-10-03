@@ -28,11 +28,10 @@ router.get('/:lineId', async (req, res) => {
         .then(resp => {
           if (resp.ok) return resp.json()
           else {
-            if (resp.status) return {"code": resp.status, "message": resp.statusText ?? `Communication error with RERUM.  Could not get item '${lineId}'`}
-            else throw resp
+            return {"code": resp.status ?? 500, "message": resp.statusText ?? `Communication error with RERUM`}
           }
         }).catch(err => {
-          throw err 
+          return {"code": 500, "message": `Communication error with RERUM`}
         })
         if (resolved.id || resolved["@id"]) return res.json(resolved)
         else return respondWithError(res, resolved.code, resolved.message)
