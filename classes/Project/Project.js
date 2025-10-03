@@ -242,12 +242,15 @@ export default class Project {
     
     this.data.tools = this.data.tools.map(tool => {
       const match = selectedValues.find(t => {
-        if (isNotValidValue(t.value)) 
-          throw new Error("Invalid value")
-        return t.value === tool.value})
+        if (isNotValidValue(t.toolName)) 
+          throw new Error("Invalid toolName")
+        return t.toolName === tool.toolName})
       return {
         ...tool,
-        state: match ? match.state : tool.state
+        custom: {
+          ...tool.custom,
+          enabled: match ? match.enabled : tool.custom.enabled
+        }
       }
     })    
   

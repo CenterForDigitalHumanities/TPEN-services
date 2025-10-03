@@ -72,6 +72,8 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     }
   } else if (createFrom === "tpen28url") {
     const manifestURL = req?.body?.url
+    let tools = req?.body?.tools ?? []
+    tools = await new Tools().validateAllTools(tools)
     let checkURL = await validateURL(manifestURL)
     if (!checkURL.valid)
       return res.status(checkURL.status).json({
@@ -83,6 +85,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       const result = await ProjectFactory.fromManifestURL(
         manifestURL,
         user.agent.split('/').pop(),
+        tools,
         true
       )
       res.status(201).json(result)
