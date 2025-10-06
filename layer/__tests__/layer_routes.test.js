@@ -35,6 +35,32 @@ describe('Layer Routes', () => {
   })
 
   describe.skip('POST /project/:projectId/layer', () => {
+    it('should reject suspicious content in request body', async () => {
+      const suspiciousLayer = { 
+        label: '<script>alert("malicious")</script>', 
+        canvases: ['canvas1', 'canvas2'] 
+      }
+
+      const res = await request(app)
+        .post('/project/123/layer')
+        .send(suspiciousLayer)
+
+      expect(res.status).toBe(400)
+    })
+
+    it('should reject suspicious content in canvases array', async () => {
+      const suspiciousLayer = { 
+        label: 'Clean Label', 
+        canvases: ['eval(malicious)', 'canvas2'] 
+      }
+
+      const res = await request(app)
+        .post('/project/123/layer')
+        .send(suspiciousLayer)
+
+      expect(res.status).toBe(400)
+    })
+
     it('should create a new layer and return 201', async () => {
       const mockLayer = { label: 'Layer 1', canvases: ['canvas1', 'canvas2'] }
       const mockProject = new Project()
@@ -48,7 +74,7 @@ describe('Layer Routes', () => {
 
       expect(res.status).toBe(201)
       expect(res.body).toEqual(mockLayer)
-      expect(Layer.build).toHaveBeenCalledWith('123', 'Layer 1', ['canvas1', 'canvas2'])
+      expect(Layer.build).toHaveBeenCalledWith('123', 'Layer 1', ['canvas1', 'canvas2'], 'test-user')
     })
 
     it('should return 400 for invalid input', async () => {
@@ -62,6 +88,35 @@ describe('Layer Routes', () => {
   })
 
   describe.skip('PUT /project/:projectId/layer/:layerId', () => {
+    it('should reject suspicious content in request body', async () => {
+      const suspiciousLayer = { 
+        label: '<script>alert("malicious")</script>', 
+        canvases: ['canvas1', 'canvas2'] 
+      }
+
+      const res = await request(app)
+        .put('/project/123/layer/layer1')
+        .send(suspiciousLayer)
+
+      expect(res.status).toBe(400)
+    })
+
+    it('should reject suspicious content in pages array', async () => {
+      const suspiciousLayer = { 
+        label: 'Clean Label', 
+        pages: [
+          { id: 'page1', annotations: [] },
+          { id: 'eval(malicious)', annotations: [] }
+        ]
+      }
+
+      const res = await request(app)
+        .put('/project/123/layer/layer1')
+        .send(suspiciousLayer)
+
+      expect(res.status).toBe(400)
+    })
+
     it('should update an existing layer and return 200', async () => {
       const mockLayer = { label: 'Updated Layer', canvases: ['canvas1', 'canvas2'] }
       const mockProject = new Project()

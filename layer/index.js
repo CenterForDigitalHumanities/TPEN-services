@@ -1,11 +1,13 @@
 import express from 'express'
-import * as utils from '../utilities/shared.js'
-import auth0Middleware from "../auth/index.js"
+import auth0Middleware from '../auth/index.js'
+import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
+import { hasSuspiciousLayerData } from '../utilities/checkIfSuspicious.js'
 import pageRouter from '../page/index.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
+import { findPageById, findLayerById, updateLayerAndProject, respondWithError } from '../utilities/shared.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -15,9 +17,17 @@ router.use(cors(common_cors))
 router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
-
         try {
-            const layer = await findLayerById(layerId, projectId)
+            const layer = await findLayerById(layerId, projectId, true)
+            if (!layer) {
+                respondWithError(res, 404, 'No layer found with that ID.')
+                return
+            }
+            if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
+                // If the page is a RERUM document, we need to fetch it from the server
+                res.status(200).json(layer)
+                return
+            }
             // Make this internal Layer look more like a RERUM AnnotationCollection
             const layerAsCollection = {
                 '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -28,74 +38,75 @@ router.route('/:layerId')
                 first: layer.pages.at(0).id,
                 last: layer.pages.at(-1).id
             }
-
+            if (layer.creator) layerAsCollection.creator = layer.creator
             return res.status(200).json(layerAsCollection)
         } catch (error) {
             console.error(error)
-            return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+            return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
         }
     })
-    .put(auth0Middleware(), async (req, res) => {
+    .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
         const { projectId, layerId } = req.params
-        let { label, canvases } = req.body
-
-        if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
-
-        if (!layerId) return utils.respondWithError(res, 400, 'Layer ID is required')
-
-
+        let label = req.body?.label
+        const update = req.body
+        const providedPages = update?.pages
+        const user = req.user
+        if (!projectId) return respondWithError(res, 400, 'Project ID is required')
+        if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
         try {
-            const project = new Project(projectId)
-            const layers = await project.loadProject()
-
-            if (!layers) return utils.respondWithError(res, 404, 'Project does not exist')
-
-            const layer = await findLayerById(layerId, projectId, true)
-
-            if (!layer) return utils.respondWithError(res, 404, 'Layer not found in project')
-
-            label ??= label ?? layer.label
-            if(canvases?.length === 0) canvases = undefined
-            const updatedLayer = canvases ?
-                Layer.build(projectId, label, canvases)
-                : new Layer(projectId, {id:layer.id, label, pages:layer.pages})
-
-            await updatedLayer.update()
-            project.updateLayer(updatedLayer.asProjectLayer(), layerId)
-            await project.update()
-
-            res.status(200).json(project.data)
+            if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
+            const project = await Project.getById(projectId)
+            if (!project?._id) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
+            const layer = await findLayerById(layerId, projectId)
+            const originalPages = layer.pages ?? []
+            if (!layer?.id) return respondWithError(res, 404, `Layer '${layerId}' not found in project`)
+            // Only update top-level properties that are present in the request
+            Object.keys(update ?? {}).forEach(key => {
+                layer[key] = update[key]
+            })
+            Object.keys(layer).forEach(key => {
+                if (layer[key] === undefined || layer[key] === null) {
+                  // Remove properties that are undefined or null.  prev and next can be null
+                  if (key !== "first" && key !== "last") delete layer[key]
+                  else layer[key] = null
+                }
+            })
+            if (providedPages?.length === 0) providedPages = undefined
+            let pages = []
+            if (providedPages && providedPages.length) {
+                pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
+                layer.pages = pages
+            }
+            await updateLayerAndProject(layer, project, user._id, originalPages)
+            res.status(200).json(layer)
         } catch (error) {
-            return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
+            console.error(error)
+            return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
         }
     })
     .all((req, res) => {
-        utils.respondWithError(res, 405, 'Improper request method. Use GET instead.')
+        respondWithError(res, 405, 'Improper request method. Use GET instead.')
     })
 
 // Route to create a new layer within a project
-router.route('/').post(auth0Middleware(), async (req, res) => {
+router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
     const { label, canvases } = req.body
-
-    if (!projectId) return utils.respondWithError(res, 400, 'Project ID is required')
-
+    if (!projectId) return respondWithError(res, 400, 'Project ID is required')
     if (!label || !Array.isArray(canvases) || canvases.length === 0) {
-        return utils.respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
+        return respondWithError(res, 400, 'Invalid layer data. Provide a label and an array of URIs or Page objects.')
     }
-
     try {
+        if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
         const project = await Project.getById(projectId)
-
-        if (!project) return utils.respondWithError(res, 404, 'Project does not exist')
-
+        if (!project) return respondWithError(res, 404, 'Project does not exist')
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()
-
         res.status(201).json(project.data)
     } catch (error) {
-        return utils.respondWithError(res, error.status ?? 500, error.message ?? 'Error creating layer')
+        console.error(error)
+        return respondWithError(res, error.status ?? 500, error.message ?? 'Error creating layer')
     }
 })
 
@@ -103,31 +114,3 @@ router.route('/').post(auth0Middleware(), async (req, res) => {
 router.use('/:layerId/page', pageRouter)
 
 export default router
-
-async function findLayerById(layerId, projectId, skipLookup = false) {
-    if (!skipLookup && layerId.startsWith(process.env.RERUMIDPREFIX)) {
-        return fetch(layerId).then(res => res.json())
-    }
-    const p = (await Project.getById(projectId)).data
-    if (!p) {
-        const error = new Error(`Project with ID '${projectId}' not found`)
-        error.status = 404
-        throw error
-    }
-    const layer = layerId.length < 6
-        ? p.layers[parseInt(layerId) + 1]
-        : p.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
-    if (!layer) {
-        const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
-        error.status = 404
-        throw error
-    }
-    // Ensure the layer has pages and is not malformed
-    if (!layer.pages || layer.pages.length === 0) {
-        const error = new Error(`Layer with ID '${layerId}' is malformed: no pages found`)
-        error.status = 422
-        throw error
-    }
-    
-    return layer
-}
