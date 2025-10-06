@@ -5,6 +5,7 @@ import auth0Middleware from "../auth/index.js"
 import cors from "cors"
 import validateURL from "../utilities/validateURL.js"
 import ProjectFactory from "../classes/Project/ProjectFactory.js"
+import Tools from "../classes/Tools/Tools.js"
 
 function patchTokenFromQuery(req, res, next) {
   if (!req.headers.authorization && req.cookies.userToken) {
@@ -100,10 +101,6 @@ router.route("/import28/:uid").get(
                 })
             )
 
-            Object.keys(req.cookies).forEach((cookieName) => {
-                res.clearCookie(cookieName)
-            })
-
             return res.status(200).json({
                 message: "Select a Project to Import : ",
                 data: parsedData
@@ -161,11 +158,13 @@ router.route("/import28/selectedproject/:selectedProjectId").get(
 
             const manifestURL = `${process.env.TPEN28URL}/TPEN/manifest/${selectedProjectId}`
             let checkURL = await validateURL(manifestURL)
+            let tools = req?.body?.tools ?? []
+            tools = await new Tools().validateAllTools(tools)
             let importData
             if (!checkURL.valid)
                 return res.status(checkURL.status).json({message: checkURL.message, resolvedPayload: checkURL.resolvedPayload})
             try {
-                importData = await ProjectFactory.fromManifestURL(manifestURL, user.agent.split('/').pop(), true)
+                importData = await ProjectFactory.fromManifestURL(manifestURL, user.agent.split('/').pop(), tools, true)
             } catch (error) {
                 res.status(error.status ?? 500).json({
                     status: error.status ?? 500,

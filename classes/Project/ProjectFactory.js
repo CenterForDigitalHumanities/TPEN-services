@@ -295,16 +295,34 @@ export default class ProjectFactory {
     }
     let projectTools = []
     try {
-      projectTools = [...projectTPEN28Data.userTool, ...projectTPEN28Data.projectTool]
+      projectTools = [...projectTPEN28Data.userTool, ...projectTPEN28Data.projectTool?.map(tool => tool.name)]
     }
     catch (err) {
       // Just in case the spread operator didn't end up making an array due to 'undefined' or something weird.
       projectTools = []
     }
-    const toolList = projectTPEN3Data.tools.map((tool) => tool.value)
+
+    const toolNameToSlug = {
+      page: "page",
+      inspector: "inspect",
+      characters: "characters",
+      xml: "xml",
+      fullpage: "view-fullpage",
+      history: "history",
+      preview: "preview",
+      parsing: "line-breaking",
+      compare: "compare-pages",
+      "Cappelli's Abbreviation": "cappelli-abbreviation",
+      Enigma: "enigma",
+      "Latin Dictionary": "latin-dictionary",
+      "Latin Vulgate": "latin-vulgate",
+    }
+
+    const toolList = projectTPEN3Data.tools.map((tool) => tool.toolName)
+    const slugs = projectTools.map((tool) => toolNameToSlug[tool])
     const selectedTools = toolList.map((tool) => ({
-        value: tool,
-        state: projectTools.includes(tool),
+        toolName: tool,
+        enabled: slugs.includes(tool),
     }))
     const project = new Project(projectTPEN3Data._id)
     if (selectedTools && selectedTools.length > 0) {
