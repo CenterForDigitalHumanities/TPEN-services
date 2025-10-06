@@ -8,7 +8,7 @@
 import request from "supertest"
 import { jest } from "@jest/globals"
 import app from "../app.js"
-import fs from 'fs'
+import fs from "fs"
 
 /**
  * Recursively extract all routes from Express 5 router layers
@@ -347,5 +347,6 @@ describe('Check to see that critical repo files are present #exists_unit', () =>
     expect(fs.existsSync(filePath+"API.md")).toBeTruthy()
     expect(fs.existsSync(filePath+"LICENSE.md")).toBeTruthy()
     expect(fs.existsSync(filePath+".gitignore")).toBeTruthy()
+    expect(fs.existsSync(filePath+"package.json")).toBeTruthy()
   })
 })
