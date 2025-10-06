@@ -345,7 +345,7 @@ describe('Check to see that critical repo files are present #exists_unit', () =>
     expect(fs.existsSync(filePath+"CONTRIBUTING.md")).toBeTruthy()
     expect(fs.existsSync(filePath+"README.md")).toBeTruthy()
     expect(fs.existsSync(filePath+"API.md")).toBeTruthy()
-    expect(fs.existsSync(filePath+"LICENSE .md")).toBeTruthy()
+    expect(fs.existsSync(filePath+"LICENSE.md")).toBeTruthy()
     expect(fs.existsSync(filePath+".gitignore")).toBeTruthy()
   })
 })
