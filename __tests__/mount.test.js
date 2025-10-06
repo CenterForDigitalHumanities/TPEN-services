@@ -1,21 +1,14 @@
-import request from "supertest"
-import { jest } from "@jest/globals"
-import app from "../app.js"
-import fs from 'fs'
-
 /**
- * Express 5 Route Detection
- * 
- * Key changes from Express 4 to Express 5:
- * 1. Router is accessed via app.router (not app._router)
- * 2. Layers use 'matchers' array instead of 'regexp' property
- * 3. Each matcher is a function that tests if a path matches
- * 4. Matchers return match info including path and params, or false
- * 5. Routers are nested, requiring recursive inspection
+ * Express Route Detection
  * 
  * This approach checks routes without making HTTP requests by
  * directly inspecting the Express app's routing table.
  */
+
+import request from "supertest"
+import { jest } from "@jest/globals"
+import app from "../app.js"
+import fs from 'fs'
 
 /**
  * Recursively extract all routes from Express 5 router layers
