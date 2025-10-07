@@ -80,7 +80,7 @@ function routeExists(path, method = null) {
     const pathMatches = routePath === testPath
     
     // If method is specified, check if it matches
-    if (method) {return pathMatches && route.method === method.toLowerCase()
+    if (method) return pathMatches && route.method === method.toLowerCase() 
 
     return pathMatches
   })
