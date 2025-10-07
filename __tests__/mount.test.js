@@ -68,15 +68,23 @@ const allRoutes = (() => {
 /**
  * Check if a route exists in the Express app
  * @param {string} path - The route path to check (e.g., '/', '/api', '/:id', '/:projectId/hotkeys')
- * @returns {boolean} - True if the route exists
+ * @param {string} [method] - Optional HTTP method to check (e.g., 'get', 'post', 'put', 'delete', 'patch')
+ * @returns {boolean} - True if the route exists (and matches the method if specified)
  */
-function routeExists(path) {
+function routeExists(path, method = null) {
   return allRoutes.some(route => {
     // Normalize paths for comparison (handle trailing slashes)
     const routePath = route.path.replace(/\/+$/, '') || '/'
     const testPath = path.replace(/\/+$/, '') || '/'
     
-    return routePath === testPath
+    const pathMatches = routePath === testPath
+    
+    // If method is specified, check if it matches
+    if (method) {
+      return pathMatches && route.method === method.toLowerCase()
+    }
+    
+    return pathMatches
   })
 }
 
@@ -84,247 +92,247 @@ describe('Check to see that all expected route patterns exist. #exists_unit', ()
   
   describe('Root and API routes', () => {
     it('GET / -- root index route', () => {
-      expect(routeExists('/')).toBe(true)
+      expect(routeExists('/', 'get')).toBe(true)
     })
     
     it('GET /api -- API documentation route', () => {
-      expect(routeExists('/api')).toBe(true)
+      expect(routeExists('/api', 'get')).toBe(true)
     })
   })
   
   describe('User profile routes (/user)', () => {
     it('GET /user/:id -- public user profile', () => {
-      expect(routeExists('/:id')).toBe(true)
+      expect(routeExists('/:id', 'get')).toBe(true)
     })
   })
   
   describe('Private user routes (/my)', () => {
     it('GET /my/profile -- authenticated user profile', () => {
-      expect(routeExists('/profile')).toBe(true)
+      expect(routeExists('/profile', 'get')).toBe(true)
     })
     
     it('PUT /my/profile -- update user profile', () => {
-      expect(routeExists('/profile')).toBe(true)
+      expect(routeExists('/profile', 'put')).toBe(true)
     })
     
     it('GET /my/projects -- user projects list', () => {
-      expect(routeExists('/projects')).toBe(true)
+      expect(routeExists('/projects', 'get')).toBe(true)
     })
   })
   
   describe('Project creation and import routes', () => {
     it('POST /project/create -- create new project', () => {
-      expect(routeExists('/create')).toBe(true)
+      expect(routeExists('/create', 'post')).toBe(true)
     })
     
     it('POST /project/import -- import from manifest URL', () => {
-      expect(routeExists('/import')).toBe(true)
+      expect(routeExists('/import', 'post')).toBe(true)
     })
     
     it('POST /project/import-image -- import image', () => {
-      expect(routeExists('/import-image')).toBe(true)
+      expect(routeExists('/import-image', 'post')).toBe(true)
     })
     
     it('GET /project/deletecookie -- TPEN 2.8 import cookie deletion', () => {
-      expect(routeExists('/deletecookie')).toBe(true)
+      expect(routeExists('/deletecookie', 'get')).toBe(true)
     })
     
     it('GET /project/import28/:uid -- TPEN 2.8 import by user ID', () => {
-      expect(routeExists('/import28/:uid')).toBe(true)
+      expect(routeExists('/import28/:uid', 'get')).toBe(true)
     })
     
     it('GET /project/import28/selectedproject/:selectedProjectId -- TPEN 2.8 selected project import', () => {
-      expect(routeExists('/import28/selectedproject/:selectedProjectId')).toBe(true)
+      expect(routeExists('/import28/selectedproject/:selectedProjectId', 'get')).toBe(true)
     })
   })
   
   describe('Project read and management routes', () => {
     it('GET /project/:id -- get project by ID', () => {
-      expect(routeExists('/:id')).toBe(true)
+      expect(routeExists('/:id', 'get')).toBe(true)
     })
     
     it('GET /project/:id/manifest -- export project manifest', () => {
-      expect(routeExists('/:id/manifest')).toBe(true)
+      expect(routeExists('/:id/manifest', 'get')).toBe(true)
     })
     
     it('GET /project/:id/deploymentStatus -- check manifest deployment status', () => {
-      expect(routeExists('/:id/deploymentStatus')).toBe(true)
+      expect(routeExists('/:id/deploymentStatus', 'get')).toBe(true)
     })
     
     it('PATCH /project/:projectId/label -- update project label', () => {
-      expect(routeExists('/:projectId/label')).toBe(true)
+      expect(routeExists('/:projectId/label', 'patch')).toBe(true)
     })
     
     it('PUT /project/:projectId/metadata -- update project metadata', () => {
-      expect(routeExists('/:projectId/metadata')).toBe(true)
+      expect(routeExists('/:projectId/metadata', 'put')).toBe(true)
     })
   })
   
   describe('Project member management routes', () => {
     it('POST /project/:id/invite-member -- invite project member', () => {
-      expect(routeExists('/:id/invite-member')).toBe(true)
+      expect(routeExists('/:id/invite-member', 'post')).toBe(true)
     })
     
     it('POST /project/:id/remove-member -- remove project member', () => {
-      expect(routeExists('/:id/remove-member')).toBe(true)
+      expect(routeExists('/:id/remove-member', 'post')).toBe(true)
     })
     
     it('POST /project/:projectId/collaborator/:collaboratorId/addRoles -- add roles to collaborator', () => {
-      expect(routeExists('/:projectId/collaborator/:collaboratorId/addRoles')).toBe(true)
+      expect(routeExists('/:projectId/collaborator/:collaboratorId/addRoles', 'post')).toBe(true)
     })
     
     it('PUT /project/:projectId/collaborator/:collaboratorId/setRoles -- set collaborator roles', () => {
-      expect(routeExists('/:projectId/collaborator/:collaboratorId/setRoles')).toBe(true)
+      expect(routeExists('/:projectId/collaborator/:collaboratorId/setRoles', 'put')).toBe(true)
     })
     
     it('POST /project/:projectId/collaborator/:collaboratorId/removeRoles -- remove collaborator roles', () => {
-      expect(routeExists('/:projectId/collaborator/:collaboratorId/removeRoles')).toBe(true)
+      expect(routeExists('/:projectId/collaborator/:collaboratorId/removeRoles', 'post')).toBe(true)
     })
     
     it('POST /project/:projectId/switch/owner -- switch project owner', () => {
-      expect(routeExists('/:projectId/switch/owner')).toBe(true)
+      expect(routeExists('/:projectId/switch/owner', 'post')).toBe(true)
     })
     
     it('GET /project/:projectId/collaborator/:collaboratorId/agent/:agentId -- get collaborator agent info', () => {
-      expect(routeExists('/:projectId/collaborator/:collaboratorId/agent/:agentId')).toBe(true)
+      expect(routeExists('/:projectId/collaborator/:collaboratorId/agent/:agentId', 'get')).toBe(true)
     })
     
     it('GET /project/:projectId/collaborator/:collaboratorId/decline -- decline project invitation', () => {
-      expect(routeExists('/:projectId/collaborator/:collaboratorId/decline')).toBe(true)
+      expect(routeExists('/:projectId/collaborator/:collaboratorId/decline', 'get')).toBe(true)
     })
   })
   
   describe('Project custom roles routes', () => {
     it('GET /project/:projectId/customRoles -- get custom roles', () => {
-      expect(routeExists('/:projectId/customRoles')).toBe(true)
+      expect(routeExists('/:projectId/customRoles', 'get')).toBe(true)
     })
     
     it('POST /project/:projectId/addCustomRoles -- add custom roles', () => {
-      expect(routeExists('/:projectId/addCustomRoles')).toBe(true)
+      expect(routeExists('/:projectId/addCustomRoles', 'post')).toBe(true)
     })
     
     it('PUT /project/:projectId/updateCustomRoles -- update custom roles', () => {
-      expect(routeExists('/:projectId/updateCustomRoles')).toBe(true)
+      expect(routeExists('/:projectId/updateCustomRoles', 'put')).toBe(true)
     })
     
     it('DELETE /project/:projectId/removeCustomRoles -- remove custom roles', () => {
-      expect(routeExists('/:projectId/removeCustomRoles')).toBe(true)
+      expect(routeExists('/:projectId/removeCustomRoles', 'delete')).toBe(true)
     })
   })
   
   describe('Project hotkeys routes', () => {
     it('GET /project/:projectId/hotkeys -- get project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys')).toBe(true)
+      expect(routeExists('/:projectId/hotkeys', 'get')).toBe(true)
     })
     
     it('POST /project/:projectId/hotkeys -- create project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys')).toBe(true)
+      expect(routeExists('/:projectId/hotkeys', 'post')).toBe(true)
     })
     
     it('PUT /project/:projectId/hotkeys -- update project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys')).toBe(true)
+      expect(routeExists('/:projectId/hotkeys', 'put')).toBe(true)
     })
     
     it('DELETE /project/:projectId/hotkeys -- delete project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys')).toBe(true)
+      expect(routeExists('/:projectId/hotkeys', 'delete')).toBe(true)
     })
   })
   
   describe('Project tools routes', () => {
     it('POST /project/:projectId/tool -- add tool to project', () => {
-      expect(routeExists('/:projectId/tool')).toBe(true)
+      expect(routeExists('/:projectId/tool', 'post')).toBe(true)
     })
     
     it('DELETE /project/:projectId/tool -- remove tool from project', () => {
-      expect(routeExists('/:projectId/tool')).toBe(true)
+      expect(routeExists('/:projectId/tool', 'delete')).toBe(true)
     })
     
     it('PUT /project/:projectId/toggleTool -- toggle tool state', () => {
-      expect(routeExists('/:projectId/toggleTool')).toBe(true)
+      expect(routeExists('/:projectId/toggleTool', 'put')).toBe(true)
     })
   })
   
   describe('Project copy routes', () => {
     it('POST /project/:projectId/copy -- copy project', () => {
-      expect(routeExists('/:projectId/copy')).toBe(true)
+      expect(routeExists('/:projectId/copy', 'post')).toBe(true)
     })
     
     it('POST /project/:projectId/copy-without-annotations -- copy project without annotations', () => {
-      expect(routeExists('/:projectId/copy-without-annotations')).toBe(true)
+      expect(routeExists('/:projectId/copy-without-annotations', 'post')).toBe(true)
     })
     
     it('POST /project/:projectId/copy-with-group -- copy project with group', () => {
-      expect(routeExists('/:projectId/copy-with-group')).toBe(true)
+      expect(routeExists('/:projectId/copy-with-group', 'post')).toBe(true)
     })
     
     it('POST /project/:projectId/copy-with-customizations -- copy project with customizations', () => {
-      expect(routeExists('/:projectId/copy-with-customizations')).toBe(true)
+      expect(routeExists('/:projectId/copy-with-customizations', 'post')).toBe(true)
     })
   })
   
   describe('Layer routes (/project/:projectId/layer)', () => {
     it('GET /project/:projectId/layer/:layerId -- get layer by ID', () => {
-      expect(routeExists('/:layerId')).toBe(true)
+      expect(routeExists('/:layerId', 'get')).toBe(true)
     })
     
     it('PUT /project/:projectId/layer/:layerId -- update layer', () => {
-      expect(routeExists('/:layerId')).toBe(true)
+      expect(routeExists('/:layerId', 'put')).toBe(true)
     })
     
     it('POST /project/:projectId/layer -- create new layer', () => {
-      expect(routeExists('/')).toBe(true)
+      expect(routeExists('/', 'post')).toBe(true)
     })
   })
   
   describe('Page routes (/project/:projectId/page)', () => {
     it('GET /project/:projectId/page/:pageId -- get page by ID', () => {
-      expect(routeExists('/:pageId')).toBe(true)
+      expect(routeExists('/:pageId', 'get')).toBe(true)
     })
     
     it('PUT /project/:projectId/page/:pageId -- update page', () => {
-      expect(routeExists('/:pageId')).toBe(true)
+      expect(routeExists('/:pageId', 'put')).toBe(true)
     })
   })
   
   describe('Line routes (/project/:projectId/page/:pageId/line)', () => {
     it('GET /project/:projectId/page/:pageId/line/:lineId -- get line by ID', () => {
-      expect(routeExists('/:lineId')).toBe(true)
+      expect(routeExists('/:lineId', 'get')).toBe(true)
     })
     
     it('POST /project/:projectId/page/:pageId/line -- create new line', () => {
-      expect(routeExists('/')).toBe(true)
+      expect(routeExists('/', 'post')).toBe(true)
     })
     
     it('PUT /project/:projectId/page/:pageId/line/:lineId -- update line', () => {
-      expect(routeExists('/:lineId')).toBe(true)
+      expect(routeExists('/:lineId', 'put')).toBe(true)
     })
     
     it('PATCH /project/:projectId/page/:pageId/line/:lineId/text -- update line text', () => {
-      expect(routeExists('/:lineId/text')).toBe(true)
+      expect(routeExists('/:lineId/text', 'patch')).toBe(true)
     })
     
     it('PATCH /project/:projectId/page/:pageId/line/:lineId/bounds -- update line bounds', () => {
-      expect(routeExists('/:lineId/bounds')).toBe(true)
+      expect(routeExists('/:lineId/bounds', 'patch')).toBe(true)
     })
   })
   
   describe('Proxy routes', () => {
     it('GET /proxy/*_ -- proxy any GET request', () => {
-      expect(routeExists('/*_')).toBe(true)
+      expect(routeExists('/*_', 'get')).toBe(true)
     })
     
     it('OPTIONS /proxy/*_ -- proxy CORS preflight', () => {
-      expect(routeExists('/*_')).toBe(true)
+      expect(routeExists('/*_', 'options')).toBe(true)
     })
   })
   
   describe('Feedback routes (/beta)', () => {
     it('POST /beta/feedback -- submit user feedback', () => {
-      expect(routeExists('/feedback')).toBe(true)
+      expect(routeExists('/feedback', 'post')).toBe(true)
     })
     
     it('POST /beta/bug -- submit bug report', () => {
-      expect(routeExists('/bug')).toBe(true)
+      expect(routeExists('/bug', 'post')).toBe(true)
     })
   })
 })
