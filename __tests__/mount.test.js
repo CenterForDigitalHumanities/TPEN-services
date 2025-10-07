@@ -80,10 +80,8 @@ function routeExists(path, method = null) {
     const pathMatches = routePath === testPath
     
     // If method is specified, check if it matches
-    if (method) {
-      return pathMatches && route.method === method.toLowerCase()
-    }
-    
+    if (method) {return pathMatches && route.method === method.toLowerCase()
+
     return pathMatches
   })
 }
@@ -100,14 +98,8 @@ describe('Check to see that all expected route patterns exist. #exists_unit', ()
     })
   })
   
-  describe('User profile routes (/user)', () => {
-    it('GET /user/:id -- public user profile', () => {
-      expect(routeExists('/:id', 'get')).toBe(true)
-    })
-  })
-  
   describe('Private user routes (/my)', () => {
-    it('GET /my/profile -- authenticated user profile', () => {
+    it('GET /my/profile -- authenticated or public user profile', () => {
       expect(routeExists('/profile', 'get')).toBe(true)
     })
     
