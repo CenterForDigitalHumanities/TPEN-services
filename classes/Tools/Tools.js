@@ -228,7 +228,7 @@ export default class Tools {
                 "enabled": true, 
                 "tagName": "" 
             },
-            "url": "",
+            "url": "https://centerfordigitalhumanities.github.io/Preview-Transcription/",
             "location": "pane"
         },
         {
@@ -248,7 +248,7 @@ export default class Tools {
                 "enabled": false, 
                 "tagName": "" 
             },
-            "url": "",
+            "url": "https://centerfordigitalhumanities.github.io/Compare-Pages/",
             "location": "pane"
         },
         {
