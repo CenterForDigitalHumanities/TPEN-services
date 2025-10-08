@@ -122,16 +122,21 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
         // Get namespace from request origin
         const namespace = getNamespaceFromOrigin(req)
 
-        // Update the project_metadata for this namespace
-        const updateQuery = {
-            [`project_metadata.${namespace}`]: payload
-        }
+        // Fetch the full project data
+        const projectData = await database.findOne({ _id: id }, "projects")
 
-        const result = await database.update(id, updateQuery, "projects")
-
-        if (!result) {
+        if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
         }
+
+        // Initialize project_metadata if it doesn't exist
+        projectData.project_metadata ??= {}
+
+        // Update the namespace with the new payload
+        projectData.project_metadata[namespace] = payload
+
+        // Update the full project document
+        await database.update(projectData, "projects")
 
         res.status(200).json({ namespace, data: payload })
     } catch (error) {
@@ -164,15 +169,20 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
         // Get namespace from request origin
         const namespace = getNamespaceFromOrigin(req)
 
-        // Fetch current project data
+        // Fetch the full project data
         const projectData = await database.findOne({ _id: id }, "projects")
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
         }
 
+        // Initialize project_metadata if it doesn't exist
+        if (!projectData.project_metadata) {
+            projectData.project_metadata = {}
+        }
+
         // Get current namespace data
-        const currentData = projectData.project_metadata?.[namespace] || {}
+        const currentData = projectData.project_metadata[namespace] || {}
 
         // Perform deep upsert
         let mergedData
@@ -182,12 +192,11 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
             return respondWithError(res, 400, error.message)
         }
 
-        // Update the project_metadata for this namespace
-        const updateQuery = {
-            [`project_metadata.${namespace}`]: mergedData
-        }
+        // Update the namespace with merged data
+        projectData.project_metadata[namespace] = mergedData
 
-        await database.update(id, updateQuery, "projects")
+        // Update the full project document
+        await database.update(projectData, "projects")
 
         res.status(200).json({ namespace, data: mergedData })
     } catch (error) {
