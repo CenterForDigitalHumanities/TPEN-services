@@ -14,9 +14,11 @@ const router = express.Router({ mergeParams: true })
  */
 function getNamespacesToInclude(req) {
   const origin = req.headers.origin || req.headers.referer || ""
+  const host = req.headers.host || req.hostname || ""
   
   // Check for localhost or local network addresses (wildcard)
-  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)(:\d+)?/.test(origin)
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)(:\d+)?/.test(origin) ||
+                     /(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)(:\d+)?/.test(host)
   
   // Check for includes query parameter
   const includesParam = req.query.includes
@@ -33,14 +35,19 @@ function getNamespacesToInclude(req) {
     return includesArray
   }
   
-  // Otherwise, return just the origin namespace
-  try {
-    const url = new URL(origin)
-    return [url.hostname]
-  } catch (e) {
-    // If we can't parse the origin, return empty array (no metadata)
-    return []
+  // Otherwise, return just the origin namespace if we can parse it
+  if (origin) {
+    try {
+      const url = new URL(origin)
+      return [url.hostname]
+    } catch (e) {
+      // Fall through to return wildcard
+    }
   }
+  
+  // If we can't determine origin, default to wildcard for backward compatibility
+  // This ensures metadata is visible when testing locally or when origin headers are missing
+  return "*"
 }
 
 /**
