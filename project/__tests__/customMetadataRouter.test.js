@@ -1,6 +1,6 @@
 /**
  * Custom Metadata Router Tests
- * Tests for namespaced project_metadata functionality
+ * Tests for namespaced interfaces functionality
  */
 
 import { jest } from "@jest/globals"

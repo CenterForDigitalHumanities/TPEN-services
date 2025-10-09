@@ -8,7 +8,7 @@ import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 const router = express.Router({ mergeParams: true })
 
 /**
- * Helper function to determine which project_metadata namespaces to include
+ * Helper function to determine which interfaces namespaces to include
  * @param {Request} req - Express request object
  * @returns {Array|string} - Array of namespaces to include, or "*" for all
  */
@@ -51,44 +51,44 @@ function getNamespacesToInclude(req) {
 }
 
 /**
- * Filter project_metadata based on allowed namespaces
- * @param {Object} project - Project object with project_metadata
+ * Filter interfaces based on allowed namespaces
+ * @param {Object} project - Project object with interfaces
  * @param {Array|string} namespaces - Namespaces to include ("*" for all)
- * @returns {Object} - Project with filtered project_metadata
+ * @returns {Object} - Project with filtered interfaces
  */
-function filterProjectMetadata(project, namespaces) {
-  if (!project || !project.project_metadata) {
+function filterProjectInterfaces(project, namespaces) {
+  if (!project || !project.interfaces) {
     return project
   }
-  
-  // If wildcard, return all metadata
+
+  // If wildcard, return all interfaces
   if (namespaces === "*") {
     return project
   }
-  
-  // If no namespaces specified, remove all metadata
+
+  // If no namespaces specified, remove all interfaces
   if (!namespaces || namespaces.length === 0) {
-    const { project_metadata, ...projectWithoutMetadata } = project
-    return projectWithoutMetadata
+    const { interfaces, ...projectWithoutInterfaces } = project
+    return projectWithoutInterfaces
   }
   
   // Filter to only include specified namespaces
-  const filteredMetadata = {}
+  const filteredInterfaces = {}
   for (const ns of namespaces) {
-    if (project.project_metadata[ns] !== undefined) {
-      filteredMetadata[ns] = project.project_metadata[ns]
+    if (project.interfaces[ns] !== undefined) {
+      filteredInterfaces[ns] = project.interfaces[ns]
     }
   }
   
   // If no matching namespaces found, remove the field
-  if (Object.keys(filteredMetadata).length === 0) {
-    const { project_metadata, ...projectWithoutMetadata } = project
-    return projectWithoutMetadata
+  if (Object.keys(filteredInterfaces).length === 0) {
+    const { interfaces, ...projectWithoutInterfaces } = project
+    return projectWithoutInterfaces
   }
   
   return {
     ...project,
-    project_metadata: filteredMetadata
+    interfaces: filteredInterfaces
   }
 }
 
@@ -156,10 +156,10 @@ router.route("/:id").get(auth0Middleware(), async (req, res) => {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
     }
     
-    // Filter project_metadata based on origin and query parameters
+    // Filter interfaces based on origin and query parameters
     const namespacesToInclude = getNamespacesToInclude(req)
-    const filteredProject = filterProjectMetadata(project, namespacesToInclude)
-    
+    const filteredProject = filterProjectInterfaces(project, namespacesToInclude)
+
     res.status(200).json(filteredProject)
   } catch (error) {
     return respondWithError(
