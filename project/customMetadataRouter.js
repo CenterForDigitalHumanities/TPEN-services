@@ -90,7 +90,7 @@ router.route("/:id/custom").get(async (req, res) => {
         }
 
         // Return array of namespace keys
-        const namespaces = projectData.project_metadata ? Object.keys(projectData.project_metadata) : []
+        const namespaces = projectData.interfaces ? Object.keys(projectData.interfaces) : []
         res.status(200).json(namespaces)
     } catch (error) {
         return respondWithError(
@@ -129,11 +129,11 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
         }
 
-        // Initialize project_metadata if it doesn't exist
-        projectData.project_metadata ??= {}
+        // Initialize interfaces if it doesn't exist
+        projectData.interfaces ??= {}
 
         // Update the namespace with the new payload
-        projectData.project_metadata[namespace] = payload
+        projectData.interfaces[namespace] = payload
 
         // Update the full project document
         await database.update(projectData, "projects")
@@ -176,13 +176,13 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
         }
 
-        // Initialize project_metadata if it doesn't exist
-        if (!projectData.project_metadata) {
-            projectData.project_metadata = {}
+        // Initialize interfaces if it doesn't exist
+        if (!projectData.interfaces) {
+            projectData.interfaces = {}
         }
 
         // Get current namespace data
-        const currentData = projectData.project_metadata[namespace] || {}
+        const currentData = projectData.interfaces[namespace] || {}
 
         // Perform deep upsert
         let mergedData
@@ -193,7 +193,7 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
         }
 
         // Update the namespace with merged data
-        projectData.project_metadata[namespace] = mergedData
+        projectData.interfaces[namespace] = mergedData
 
         // Update the full project document
         await database.update(projectData, "projects")

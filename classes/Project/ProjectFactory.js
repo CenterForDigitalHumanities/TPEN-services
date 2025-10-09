@@ -1189,7 +1189,7 @@ export default class ProjectFactory {
           roles: 1,
           layers: { $ifNull: ['$layers', []] },
           metadata: { $ifNull: ['$metadata', []] },
-          project_metadata: { $ifNull: ['$project_metadata', {}] },
+          interfaces: { $ifNull: ['$interfaces', {}] },
           manifest: 1,
           license: 1,
           tools: 1,
