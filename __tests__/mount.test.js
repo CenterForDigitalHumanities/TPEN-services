@@ -230,6 +230,20 @@ describe('Check to see that all expected route patterns exist. #exists_unit', ()
     })
   })
   
+  describe('Project custom metadata routes', () => {
+    it('GET /project/:id/custom -- get custom metadata namespaces', () => {
+      expect(routeExists('/:id/custom', 'get')).toBe(true)
+    })
+    
+    it('POST /project/:id/custom -- create or replace namespace metadata', () => {
+      expect(routeExists('/:id/custom', 'post')).toBe(true)
+    })
+    
+    it('PUT /project/:id/custom -- upsert namespace metadata', () => {
+      expect(routeExists('/:id/custom', 'put')).toBe(true)
+    })
+  })
+  
   describe('Project tools routes', () => {
     it('POST /project/:projectId/tool -- add tool to project', () => {
       expect(routeExists('/:projectId/tool', 'post')).toBe(true)
