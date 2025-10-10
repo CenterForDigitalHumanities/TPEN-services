@@ -4,7 +4,7 @@ import auth0Middleware from "../auth/index.js"
 import Project from "../classes/Project/Project.js"
 import dbDriver from "../database/driver.js"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
-import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
+import screenContentMiddleware, { isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 const database = new dbDriver("mongo")
@@ -103,10 +103,11 @@ router.route("/:id/custom").get(async (req, res) => {
 })
 
 // POST /project/:id/custom - Create or replace entire origin namespace
-router.route("/:id/custom").post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
+router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
     const user = req.user
     const { id } = req.params
     const payload = req.body
+
 
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
@@ -116,6 +117,11 @@ router.route("/:id/custom").post(auth0Middleware(), screenContentMiddleware(), a
     }
 
     try {
+        for (const key in payload) {
+            if (isSuspiciousJSON(payload[key], Object.keys(payload[key]))) {
+                payload[key] = { $$unsafe: payload[key] }
+            }
+        }
         const project = new Project(id)
 
         // Check if user has update access to the project options
@@ -153,7 +159,7 @@ router.route("/:id/custom").post(auth0Middleware(), screenContentMiddleware(), a
 })
 
 // PUT /project/:id/custom - Upsert values in origin namespace
-router.route("/:id/custom").put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
+router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
     const user = req.user
     const { id } = req.params
     const payload = req.body
@@ -166,6 +172,12 @@ router.route("/:id/custom").put(auth0Middleware(), screenContentMiddleware(), as
     }
 
     try {
+
+        for (const key in payload) {
+            if (isSuspiciousJSON(payload[key], Object.keys(payload[key]))) {
+                payload[key] = { $$unsafe: payload[key] }
+            }
+        }
         const project = new Project(id)
 
         // Check if user has update access to the project options
