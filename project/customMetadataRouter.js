@@ -4,6 +4,7 @@ import auth0Middleware from "../auth/index.js"
 import Project from "../classes/Project/Project.js"
 import dbDriver from "../database/driver.js"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
+import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 const database = new dbDriver("mongo")
@@ -102,7 +103,7 @@ router.route("/:id/custom").get(async (req, res) => {
 })
 
 // POST /project/:id/custom - Create or replace entire origin namespace
-router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
+router.route("/:id/custom").post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const user = req.user
     const { id } = req.params
     const payload = req.body
@@ -110,6 +111,9 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        return respondWithError(res, 400, "Metadata payload must be a JSON object")
+    }
 
     try {
         const project = new Project(id)
@@ -149,7 +153,7 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
 })
 
 // PUT /project/:id/custom - Upsert values in origin namespace
-router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
+router.route("/:id/custom").put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const user = req.user
     const { id } = req.params
     const payload = req.body
@@ -157,6 +161,9 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        return respondWithError(res, 400, "Metadata payload must be a JSON object")
+    }
 
     try {
         const project = new Project(id)
