@@ -4,7 +4,7 @@ import auth0Middleware from "../auth/index.js"
 import Project from "../classes/Project/Project.js"
 import dbDriver from "../database/driver.js"
 import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
-import screenContentMiddleware, { isSuspiciousJSON } from "../utilities/checkIfSuspicious.js"
+import screenContentMiddleware, { isSuspiciousJSON, isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 const router = express.Router({ mergeParams: true })
 const database = new dbDriver("mongo")
@@ -118,7 +118,7 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
 
     try {
         for (const key in payload) {
-            if (isSuspiciousJSON(payload[key], Object.keys(payload[key]))) {
+            if (isSuspiciousJSON(payload[key], Object.keys(payload[key])) || isSuspiciousValueString(payload[key], true)) {
                 payload[key] = { $$unsafe: payload[key] }
             }
         }
@@ -174,7 +174,7 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
     try {
 
         for (const key in payload) {
-            if (isSuspiciousJSON(payload[key], Object.keys(payload[key]))) {
+            if (isSuspiciousJSON(payload[key], Object.keys(payload[key])) || isSuspiciousValueString(payload[key], true)) {
                 payload[key] = { $$unsafe: payload[key] }
             }
         }
