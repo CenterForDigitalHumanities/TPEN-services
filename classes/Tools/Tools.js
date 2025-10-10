@@ -235,17 +235,17 @@ export default class Tools {
             "label": "Line Breaking",
             "toolName": "line-breaking",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
-            "url": "",
+            "url": "https://centerfordigitalhumanities.github.io/Line-Breaking/",
             "location": "dialog"
         },
         {
             "label": "Compare Pages",
             "toolName": "compare-pages",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
             "url": "https://centerfordigitalhumanities.github.io/Compare-Pages/",
@@ -264,31 +264,31 @@ export default class Tools {
         {
             "label": "Enigma",
             "toolName": "enigma",
-            "url": "https://http://enigma.huma-num.fr/",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
+            "url": "http://enigma.huma-num.fr/",
             "location": "pane"
         },
         {
             "label": "Latin Dictionary",
             "toolName": "latin-dictionary",
-            "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
             "custom": { 
                 "enabled": true, 
                 "tagName": "" 
             },
+            "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
             "location": "pane"
         },
         {
             "label": "Latin Vulgate",
             "toolName": "latin-vulgate",
-            "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
+            "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
             "location": "pane"
         }
     ]
