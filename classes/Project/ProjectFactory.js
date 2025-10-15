@@ -39,7 +39,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label) ?? now
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, creator )
+    const layer = Layer.build(_id, `First Layer - ${label}`, manifest.items, creator)
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
@@ -48,8 +48,8 @@ export default class ProjectFactory {
       _id,
       label,
       metadata,
-      manifest: importTPEN28 ? [ manifest.id.split('/manifest.json')[0] + '?version=3' ] : [ manifest.id ],
-      layers: [ layer.asProjectLayer() ],
+      manifest: importTPEN28 ? [manifest.id.split('/manifest.json')[0] + '?version=3'] : [manifest.id],
+      layers: [layer.asProjectLayer()],
       tools: Tools.defaultTools.concat(tools),
       _createdAt: now,
       _modifiedAt: -1,
@@ -58,7 +58,7 @@ export default class ProjectFactory {
   }
 
   static getLabelAsString(label) {
-    if (label === null || label === undefined) return "" 
+    if (label === null || label === undefined) return ""
     if (typeof label === "string") return label
     if (typeof label !== "object") return ""
     const lang = Object.keys(label).length ? Object.keys(label)[0] : null
@@ -188,7 +188,8 @@ export default class ProjectFactory {
       for (const page of newPages) {
         const updatedPage = new Page(
           newLayer.id,
-          { id: page.id, label: page.label, target: page.target,
+          {
+            id: page.id, label: page.label, target: page.target,
             items: page.items,
             creator: creator,
             partOf: newLayer.id,
@@ -230,7 +231,7 @@ export default class ProjectFactory {
   }
 
   static async clonePagesWithAnnotations(layer, page, copiedProject, creator, database) {
-    if(!page.id.startsWith(process.env.RERUMIDPREFIX)) {
+    if (!page.id.startsWith(process.env.RERUMIDPREFIX)) {
       return {
         id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
         label: page.label,
@@ -240,44 +241,44 @@ export default class ProjectFactory {
     }
     else {
       return await fetch(page.id)
-      .then(response => response.json())
-      .then(async pageData => {
-        const newPage = new Page(layer.id,{
-          id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
-          label: page.label,
-          target: page.target,
-          creator: creator,
-          items: await Promise.all(pageData.items.map(async item => {
-            return await fetch(item.id)
-            .then(response => response.json())
-            .then(async itemData => {
-              const newItem = new Line({
-                id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
-                type: itemData.type,
-                label: itemData.label,
-                motivation: itemData.motivation,
-                body: itemData.body,
-                target: itemData.target,
-                creator: creator
-              })
-              return await newItem.update()
-            })
-          }))
+        .then(response => response.json())
+        .then(async pageData => {
+          const newPage = new Page(layer.id, {
+            id: `${process.env.SERVERURL}project/${copiedProject._id}/page/${database.reserveId()}`,
+            label: page.label,
+            target: page.target,
+            creator: creator,
+            items: await Promise.all(pageData.items.map(async item => {
+              return await fetch(item.id)
+                .then(response => response.json())
+                .then(async itemData => {
+                  const newItem = new Line({
+                    id: `${process.env.SERVERURL}project/${copiedProject._id}/line/${database.reserveId()}`,
+                    type: itemData.type,
+                    label: itemData.label,
+                    motivation: itemData.motivation,
+                    body: itemData.body,
+                    target: itemData.target,
+                    creator: creator
+                  })
+                  return await newItem.update()
+                })
+            }))
+          })
+          return await newPage.update()
         })
-        return await newPage.update()
-      })
     }
   }
 
   // We might add the Vault here to get the Manifest version 3
   static transformManifestUrl(url, protocol) {
-      const parsedUrl = new URL(url)
-      parsedUrl.protocol = protocol
-      if (parsedUrl.pathname.endsWith("/manifest.json")) {
-          parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
-      }
-      parsedUrl.search = "?version=3"
-      return parsedUrl.toString()
+    const parsedUrl = new URL(url)
+    parsedUrl.protocol = protocol
+    if (parsedUrl.pathname.endsWith("/manifest.json")) {
+      parsedUrl.pathname = parsedUrl.pathname.replace(/\/manifest\.json$/, "")
+    }
+    parsedUrl.search = "?version=3"
+    return parsedUrl.toString()
   }
 
   static async importTPEN28(projectTPEN28Data, projectTPEN3Data, userToken, protocol) {
@@ -321,22 +322,22 @@ export default class ProjectFactory {
     const toolList = projectTPEN3Data.tools.map((tool) => tool.toolName)
     const slugs = projectTools.map((tool) => toolNameToSlug[tool])
     const selectedTools = toolList.map((tool) => ({
-        toolName: tool,
-        enabled: slugs.includes(tool),
+      toolName: tool,
+      enabled: slugs.includes(tool),
     }))
     const project = new Project(projectTPEN3Data._id)
     if (selectedTools && selectedTools.length > 0) {
       await project.updateTools(selectedTools)
     }
     const allCanvases = projectTPEN3Data.layers[0].pages.map((page) => page.target)
-    const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) =>page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
+    const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) => page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
     manifestUrl = this.transformManifestUrl(manifestUrl, protocol)
     const responseManifest = await fetch(manifestUrl)
     if (!responseManifest.ok) {
-        throw new Error(`Failed to fetch: ${responseManifest.statusText}`)
+      throw new Error(`Failed to fetch: ${responseManifest.statusText}`)
     }
-    
+
     const manifestJson = await responseManifest.json()
     const itemsByPage = {}
     manifestJson.items.map((item, index) => {
@@ -345,33 +346,33 @@ export default class ProjectFactory {
         const annotations = item.annotations?.flatMap(
           (annotation) =>
             annotation.items?.flatMap((innerItems) => ({
-            body: {
-              type: innerItems.body?.type,
-              format: innerItems.body?.format,
-              value: innerItems.body?.value,
-            },
-            motivation: innerItems.motivation,
-            target: innerItems.target,
-            type: innerItems.type,
+              body: {
+                type: innerItems.body?.type,
+                format: innerItems.body?.format,
+                value: innerItems.body?.value,
+              },
+              motivation: innerItems.motivation,
+              target: innerItems.target,
+              type: innerItems.type,
             })) || []
-          ) || []
+        ) || []
         itemsByPage[allPagesIds[index]] = annotations
       }
     })
-    
+
     for (const [endpoint, annotations] of Object.entries(itemsByPage)) {
-        try {
-          const response = await fetch(`${endpoint}/line`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${userToken}`,
-            },
-            body: JSON.stringify(annotations),
-          })
-          if (!response.ok) {
-            throw new Error(`Failed to import annotations: ${response.statusText}`)
-          }
+      try {
+        const response = await fetch(`${endpoint}/line`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${userToken}`,
+          },
+          body: JSON.stringify(annotations),
+        })
+        if (!response.ok) {
+          throw new Error(`Failed to import annotations: ${response.statusText}`)
+        }
       } catch (error) {
         console.error("Error importing annotations:", error)
       }
@@ -447,7 +448,7 @@ export default class ProjectFactory {
     await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
-    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")    
+    return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
   static async cloneWithCustomizations(projectId, creator, modules) {
@@ -503,12 +504,13 @@ export default class ProjectFactory {
 
         let newPages = []
 
-        if(result[layer.id]) {
+        if (result[layer.id]) {
           newPages = await this.clonePages(layer, copiedProject, creator, database, true)
           for (const page of newPages) {
             const updatedPage = new Page(
               newLayer.id,
-              { id: page.id, label: page.label, target: page.target,
+              {
+                id: page.id, label: page.label, target: page.target,
                 items: page.items,
                 creator: creator,
                 partOf: newLayer.id,
@@ -529,11 +531,11 @@ export default class ProjectFactory {
           copiedProject.layers.push(newLayer)
         }
 
-        if(!result[layer.id]) {
+        if (!result[layer.id]) {
           newPages = await this.clonePages(layer, copiedProject, creator, database, false)
           newLayer.pages.push(...newPages)
           copiedProject.layers.push(newLayer)
-        }  
+        }
       }
     }
     else {
@@ -549,13 +551,13 @@ export default class ProjectFactory {
 
     modules['Group Members'].push(creator)
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': modules['Group Members'] })
-    if( modules['Hotkeys'] ) {
+    if (modules['Hotkeys']) {
       await this.cloneHotkeys(project._id, copiedProject._id)
     }
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
-  
+
   static async DBObjectFromImage(manifest, creator) {
     if (!manifest) {
       throw {
@@ -567,7 +569,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label)
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build( _id, `First Layer - ${label}`, manifest.items, creator) 
+    const layer = Layer.build(_id, `First Layer - ${label}`, manifest.items, creator)
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
@@ -575,8 +577,8 @@ export default class ProjectFactory {
       _id,
       label,
       metadata,
-      manifest: [ manifest.id ],
-      layers: [ layer.asProjectLayer() ],
+      manifest: [manifest.id],
+      layers: [layer.asProjectLayer()],
       tools: Tools.defaultTools,
       _createdAt: now,
       _modifiedAt: -1,
@@ -600,7 +602,7 @@ export default class ProjectFactory {
       return (
         region === "full" ||
         region === "square" ||
-        /^pct:\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/.test(region) || 
+        /^pct:\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/.test(region) ||
         /^\d+,\d+,\d+,\d+$/.test(region)
       )
     }
@@ -710,7 +712,7 @@ export default class ProjectFactory {
       id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
       type: "Manifest",
       label: { "none": [label] },
-      items: [ canvasLayout ],
+      items: [canvasLayout],
       creator: await fetchUserAgent(creator),
     }
 
@@ -723,22 +725,22 @@ export default class ProjectFactory {
     await this.uploadFileToGitHub(projectCanvas, _id)
 
     return await ProjectFactory.DBObjectFromImage(projectManifest, creator)
-    .then(async (project) => {
-      const projectObj = new Project()
-      const group = await Group.createNewGroup(creator,
-        {
-          label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
-          members: { [creator]: { roles: [] } }
-        })
-      .then((group) => group._id)
-      return await projectObj.create({ ...project, creator, group })
-    })
-    .catch((err) => {
-      throw {
-        status: err.status ?? 500,
-        message: err.message ?? "Internal Server Error"
-      }
-    })
+      .then(async (project) => {
+        const projectObj = new Project()
+        const group = await Group.createNewGroup(creator,
+          {
+            label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
+            members: { [creator]: { roles: [] } }
+          })
+          .then((group) => group._id)
+        return await projectObj.create({ ...project, creator, group })
+      })
+      .catch((err) => {
+        throw {
+          status: err.status ?? 500,
+          message: err.message ?? "Internal Server Error"
+        }
+      })
   }
 
   /**
@@ -832,22 +834,22 @@ export default class ProjectFactory {
 
           const annotationPages = []
           await Promise.all(project.layers.map(layer => {
-              return layer.pages.forEach(page => {
-                if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
-                  const annotationPage = {
-                    id: page.id,
-                    type: "AnnotationPage"
-                  }
-                  annotationPages.push(annotationPage)
+            return layer.pages.forEach(page => {
+              if ((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX)) {
+                const annotationPage = {
+                  id: page.id,
+                  type: "AnnotationPage"
                 }
-              })
+                annotationPages.push(annotationPage)
+              }
             })
+          })
           )
           annotationPages.length > 0 && (canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages }))
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
-          return 
+          return
         }
       })
     )
@@ -958,19 +960,19 @@ export default class ProjectFactory {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            message: sha ? `Updated ${projectId}/${fileName}` : `Created ${projectId}/${fileName}`,
-            content: Buffer.from(JSON.stringify(manifest)).toString('base64'),
-            branch: process.env.BRANCH,
-            ...(sha && { sha }),
+          message: sha ? `Updated ${projectId}/${fileName}` : `Created ${projectId}/${fileName}`,
+          content: Buffer.from(JSON.stringify(manifest)).toString('base64'),
+          branch: process.env.BRANCH,
+          ...(sha && { sha }),
         })
-    })
+      })
 
-    if (!putResponse.ok) {
-      const errText = await putResponse.text()
-      throw new Error(`GitHub upload failed: ${putResponse.status} - ${errText}`)
-    }
+      if (!putResponse.ok) {
+        const errText = await putResponse.text()
+        throw new Error(`GitHub upload failed: ${putResponse.status} - ${errText}`)
+      }
 
-    return await putResponse.json()
+      return await putResponse.json()
 
     } catch (error) {
       console.error(`Failed to upload ${projectId}/${fileName}:`, error)
@@ -1010,93 +1012,93 @@ export default class ProjectFactory {
     const commitsUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/commits?path=${filePath}&per_page=1`
     const commits = await fetch(commitsUrl, { headers })
       .then(async (resp) => {
-          if(resp.ok) return resp.json()
-          const errText = await resp.text()
-          return [{state: -1, "message": `${resp.status} - ${errText}`}]
+        if (resp.ok) return resp.json()
+        const errText = await resp.text()
+        return [{ state: -1, "message": `${resp.status} - ${errText}` }]
       })
       .catch(err => {
         console.error(err)
-        return [{state: -1, "message": `TPEN Services Internal Server Error`}]
+        return [{ state: -1, "message": `TPEN Services Internal Server Error` }]
       })
 
-    if(commits?.length && commits[0].state === -1) {
+    if (commits?.length && commits[0].state === -1) {
       console.error(commits[0])
-      return {status: -1, message: commits[0].message}
+      return { status: -1, message: commits[0].message }
     }
 
     if (!commits.length) {
-        return {status: 1}
+      return { status: 1 }
     }
     const commitMessage = commits[0].commit?.message.split(' ')
 
     if (commitMessage[0] === 'Delete') {
-        return {status: 1}
+      return { status: 1 }
     }
 
     const latestSha = commits[0].sha
     const deployments = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments?sha=${latestSha}`
     const deployment = await fetch(deployments, { headers })
       .then(async (resp) => {
-            if(resp.ok) return resp.json()
-            const errText = await resp.text()
-            return [{state: -1, "message": `${resp.status} - ${errText}`}]
+        if (resp.ok) return resp.json()
+        const errText = await resp.text()
+        return [{ state: -1, "message": `${resp.status} - ${errText}` }]
       })
       .catch(err => {
         console.error(err)
-        return [{state: -1, "message": `TPEN Services Internal Server Error`}]
+        return [{ state: -1, "message": `TPEN Services Internal Server Error` }]
       })
 
-    if(deployment?.length && deployment[0].state === -1) {
+    if (deployment?.length && deployment[0].state === -1) {
       console.error(deployment[0])
-      return {status: -1, message: deployment[0].message}
+      return { status: -1, message: deployment[0].message }
     }
 
     if (deployment.length === 0) {
-      if (await checkIfUrlExists(url)){
-        if(new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
-          return {status: 2}
+      if (await checkIfUrlExists(url)) {
+        if (new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
+          return { status: 2 }
         }
         else {
-          return {status: 3}
+          return { status: 3 }
         }
       }
-      return {status: 9}
+      return { status: 9 }
     }
 
     const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment[0].id}/statuses`
     const statuses = await fetch(statusUrl, { headers })
       .then(async (resp) => {
-          if(resp.ok) return resp.json()
-          const errText = await resp.text()
-          return [{state: -1, "message": `${resp.status} - ${errText}`}]
+        if (resp.ok) return resp.json()
+        const errText = await resp.text()
+        return [{ state: -1, "message": `${resp.status} - ${errText}` }]
       })
       .catch(err => {
         console.error(err)
-        return [{state: -1, "message": `TPEN Services Internal Server Error`}]
+        return [{ state: -1, "message": `TPEN Services Internal Server Error` }]
       })
 
     if (statuses?.length && statuses[0].state === -1) {
       console.error(statuses[0])
-      return {status: -1, message: statuses[0].message}
+      return { status: -1, message: statuses[0].message }
     }
 
     if (!statuses.length) {
-        return {status: 8}
+      return { status: 8 }
     }
 
     const latestStatus = statuses[0]
     const state = latestStatus.state
 
     if (state === 'success') {
-        return {status: 4}
+      return { status: 4 }
     } else if (['queued', 'in_progress', 'pending'].includes(state)) {
-        return {status: 5}
+      return { status: 5 }
     } else if (state === 'inactive') {
-        return {status: 6}
+      return { status: 6 }
     } else if (state === 'error') {
-        return {status: 7}
+      return { status: 7 }
     } else {
-        return {status: 8}
+      return { status: 8 }
     }
   }
 
@@ -1187,13 +1189,14 @@ export default class ProjectFactory {
           roles: 1,
           layers: { $ifNull: ['$layers', []] },
           metadata: { $ifNull: ['$metadata', []] },
+          interfaces: { $ifNull: ['$interfaces', {}] },
           manifest: 1,
           license: 1,
           tools: 1,
           options: 1,
-          _createdAt:1,
-          _modifiedAt:1,
-          _lastModified:1
+          _createdAt: 1,
+          _modifiedAt: 1,
+          _lastModified: 1
         }
       }
     ]
