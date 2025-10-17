@@ -239,7 +239,7 @@ export default class Tools {
                 "tagName": "" 
             },
             "url": "https://centerfordigitalhumanities.github.io/Line-Breaking/",
-            "location": "dialog"
+            "location": "pane"
         },
         {
             "label": "Compare Pages",
