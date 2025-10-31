@@ -111,12 +111,15 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   try {
-    const { imageUrl, projectLabel } = req.body
-    if (!imageUrl || !projectLabel) {
-      return respondWithError(res, 400, "Image URL and project label are required")
+    const { imageUrls, projectLabel } = req.body
+    if (!imageUrls || !projectLabel) {
+      return respondWithError(res, 400, "Image URL/URLs and project label are required")
+    }
+    if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+      return respondWithError(res, 400, "Image URLs must be a non-empty array")
     }
     if (isSuspiciousValueString(projectLabel, true)) return respondWithError(res, 400, "Suspicious project label will not be processed.")
-    const project = await ProjectFactory.createManifestFromImage(imageUrl, projectLabel, user.agent.split('/').pop())
+    const project = await ProjectFactory.createManifestFromImage(imageUrls, projectLabel, user.agent.split('/').pop())
     res.status(201).json(project)
   } catch (error) {
     console.log("Create project from image error")
