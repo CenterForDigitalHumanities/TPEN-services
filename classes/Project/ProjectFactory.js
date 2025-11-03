@@ -586,17 +586,13 @@ export default class ProjectFactory {
     }
   }
 
-  static async createManifestFromImage(imageURL, projectLabel, creator) {
-    if (!imageURL) {
+  static async createManifestFromImage(imageURLs, projectLabel, creator) {
+    if (!imageURLs || imageURLs.length === 0) {
       throw {
         status: 404,
         message: "No image found. Cannot process further."
       }
     }
-
-    let isIIFImage = false
-    let IIIFServiceParts = imageURL.split('/').reverse()
-    let IIIFServiceJson = null
 
     function isValidIIIFRegion(region) {
       return (
@@ -627,7 +623,7 @@ export default class ProjectFactory {
     function isValidIIIFRotation(rotation) {
       return (
         /^\d+(\.\d+)?$/.test(rotation) ||
-        size.startsWith("!") && /^\d+(\.\d+)?$/.test(rotation)
+        rotation.startsWith("!") && /^\d+(\.\d+)?$/.test(rotation)
       )
     }
 
@@ -640,89 +636,97 @@ export default class ProjectFactory {
       )
     }
 
-    let IIIFServiceURL = IIIFServiceParts.slice(4).reverse().join("/")
-
-    if (isValidIIIFQuality(IIIFServiceParts[0].split(".")[0]) && isValidIIIFRotation(IIIFServiceParts[1]) && isValidIIIFSize(IIIFServiceParts[2]) && isValidIIIFRegion(IIIFServiceParts[3])) {
-      await fetch(`${IIIFServiceURL}/info.json`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to fetch IIIF info: ${response.statusText}`)
-          }
-          return response.json()
-        })
-        .then(info => {
-          if (info?.protocol === "http://iiif.io/api/image") {
-            isIIFImage = true
-            IIIFServiceJson = info
-          }
-        })
-        .catch(err => {
-          console.error("Error fetching IIIF info:", err.message)
-          throw {
-            status: 500,
-            message: "Failed to fetch IIIF info"
-          }
-        })
-    }
-
-    const _id = database.reserveId()
     const now = Date.now().toString().slice(-6)
     const label = projectLabel ?? now
-    const dimensions = await this.getImageDimensions(imageURL)
-
-    const canvasLayout = {
-      id: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`,
-      type: "Canvas",
-      label: { "none": [`${label} Page 1`] },
-      width: dimensions.width,
-      height: dimensions.height,
-      items: [
-        {
-          id: `${process.env.TPENSTATIC}/${_id}/contentPage.json`,
-          type: "AnnotationPage",
-          items: [
-            {
-              id: `${process.env.TPENSTATIC}/${_id}/content.json`,
-              type: "Annotation",
-              motivation: "painting",
-              body: {
-                id: imageURL,
-                type: "Image",
-                format: mime.lookup(imageURL) || "image/jpeg",
-                width: dimensions.width,
-                height: dimensions.height,
-                ...(isIIFImage && {
-                  service: [{
-                    id: IIIFServiceURL,
-                    type: IIIFServiceJson?.type,
-                    profile: IIIFServiceJson?.profile,
-                  }]
-                })
-              },
-              target: `${process.env.TPENSTATIC}/${_id}/canvas-1.json`
-            }
-          ]
-        }
-      ],
-      creator: await fetchUserAgent(creator),
-    }
-
+    const _id = database.reserveId()
+    
     const projectManifest = {
       "@context": "http://iiif.io/api/presentation/3/context.json",
       id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
       type: "Manifest",
       label: { "none": [label] },
-      items: [canvasLayout],
+      items: [],
       creator: await fetchUserAgent(creator),
     }
 
-    const projectCanvas = {
-      "@context": "http://iiif.io/api/presentation/3/context.json",
-      ...canvasLayout
+    for (let index = 0; index < imageURLs.length; index++) {
+      const imageURL = imageURLs[index]
+      let isIIFImage = false
+      let IIIFServiceParts = imageURL.split('/').reverse()
+      let IIIFServiceJson = null
+      let IIIFServiceURL = IIIFServiceParts.slice(4).reverse().join("/")
+
+      if (
+        isValidIIIFQuality(IIIFServiceParts[0].split(".")[0]) &&
+        isValidIIIFRotation(IIIFServiceParts[1]) &&
+        isValidIIIFSize(IIIFServiceParts[2]) &&
+        isValidIIIFRegion(IIIFServiceParts[3])
+      ) {
+        try {
+          const response = await fetch(`${IIIFServiceURL}/info.json`)
+          if (response.ok) {
+            const info = await response.json()
+            if (info?.protocol === "http://iiif.io/api/image") {
+              isIIFImage = true
+              IIIFServiceJson = info
+            }
+          } else {
+            console.warn(`Failed to fetch IIIF info for image ${index + 1}`)
+          }
+        } catch (err) {
+          console.error("Error fetching IIIF info:", err.message)
+        }
+      }
+
+      const dimensions = await this.getImageDimensions(imageURL)
+
+      const canvasLayout = {
+        id: `${process.env.TPENSTATIC}/${_id}/canvas-${index + 1}.json`,
+        type: "Canvas",
+        label: { "none": [`${label} Page ${index + 1}`] },
+        width: dimensions.width,
+        height: dimensions.height,
+        items: [
+          {
+            id: `${process.env.TPENSTATIC}/${_id}/contentPage.json`,
+            type: "AnnotationPage",
+            items: [
+              {
+                id: `${process.env.TPENSTATIC}/${_id}/content.json`,
+                type: "Annotation",
+                motivation: "painting",
+                body: {
+                  id: imageURL,
+                  type: "Image",
+                  format: mime.lookup(imageURL) || "image/jpeg",
+                  width: dimensions.width,
+                  height: dimensions.height,
+                  ...(isIIFImage && {
+                    service: [{
+                      id: IIIFServiceURL,
+                      type: IIIFServiceJson?.type,
+                      profile: IIIFServiceJson?.profile,
+                    }]
+                  })
+                },
+                target: `${process.env.TPENSTATIC}/${_id}/canvas-${index + 1}.json`
+              }
+            ]
+          }
+        ],
+        creator: await fetchUserAgent(creator),
+      }
+
+      projectManifest.items.push(canvasLayout)
+      const projectCanvas = {
+        "@context": "http://iiif.io/api/presentation/3/context.json",
+        ...canvasLayout
+      }
+
+      await this.uploadFileToGitHub(projectCanvas, _id)
     }
 
     await this.uploadFileToGitHub(projectManifest, _id)
-    await this.uploadFileToGitHub(projectCanvas, _id)
 
     return await ProjectFactory.DBObjectFromImage(projectManifest, creator)
       .then(async (project) => {
@@ -937,22 +941,22 @@ export default class ProjectFactory {
     const manifestUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/contents/${projectId}/${fileName}`
     const token = process.env.GITHUB_TOKEN
 
-    try {
-      let sha = null
-
-      const getResponse = await fetch(manifestUrl, {
+    async function getFileSha() {
+      const res = await fetch(manifestUrl, {
         headers: {
           'Authorization': `token ${token}`,
           'Accept': 'application/vnd.github.v3+json',
         },
       })
-
-      if (getResponse.ok) {
-        const fileData = await getResponse.json()
-        sha = fileData.sha
+      if (res.ok) {
+        const data = await res.json()
+        return data.sha
       }
+      return null
+    }
 
-      const putResponse = await fetch(manifestUrl, {
+    async function uploadWithSha(sha = null) {
+      const res = await fetch(manifestUrl, {
         method: 'PUT',
         headers: {
           'Authorization': `token ${token}`,
@@ -961,19 +965,44 @@ export default class ProjectFactory {
         },
         body: JSON.stringify({
           message: sha ? `Updated ${projectId}/${fileName}` : `Created ${projectId}/${fileName}`,
-          content: Buffer.from(JSON.stringify(manifest)).toString('base64'),
+          content: Buffer.from(JSON.stringify(manifest, null, 2)).toString('base64'),
           branch: process.env.BRANCH,
           ...(sha && { sha }),
         })
       })
+      return res
+    }
 
-      if (!putResponse.ok) {
-        const errText = await putResponse.text()
-        throw new Error(`GitHub upload failed: ${putResponse.status} - ${errText}`)
+    async function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    try {
+      let sha = await getFileSha()
+      let response
+      const maxRetries = 3
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        response = await uploadWithSha(sha)
+
+        if (response.ok) break
+
+        if (response.status === 409) {
+          await delay(500 * attempt)
+          sha = await getFileSha()
+          continue
+        }
+
+        const errText = await response.text()
+        throw new Error(`GitHub upload failed: ${response.status} - ${errText}`)
       }
 
-      return await putResponse.json()
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`GitHub upload failed after ${maxRetries} attempts: ${errText}`)
+      }
 
+      return await response.json()
     } catch (error) {
       console.error(`Failed to upload ${projectId}/${fileName}:`, error)
     }
