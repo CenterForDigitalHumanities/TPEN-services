@@ -10,11 +10,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 import cookieParser from 'cookie-parser'
-import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
-
-let storedEnv = dotenv.config()
-dotenvExpand.expand(storedEnv)
+import cors from 'cors'
 
 import logger from 'morgan'
 import indexRouter from './index.js'
@@ -28,7 +24,15 @@ import feedbackRouter from './feedback/feedbackRoutes.js'
 
 let app = express()
 
+// CORS configuration - Open to all origins
+const corsOptions = {
+  origin: true, // Allow all origins
+  credentials: true,
+  optionsSuccessStatus: 200
+}
+
 //Middleware to use
+app.use(cors(corsOptions))
 app.use(logger('dev'))
 app.use(express.json())
 app.use(express.text())
