@@ -89,7 +89,9 @@ This allows developers to work immediately with sensible defaults while keeping 
 ├── bin/tpen3_services.js  # Server entry point
 ├── package.json           # Dependencies and scripts
 ├── jest.config.js         # Test configuration
-├── sample.env             # Environment template
+├── config.env             # Safe defaults (committed)
+├── .env.development       # Development template
+├── .env.production        # Production template
 ├── API.md                 # API documentation
 ├── classes/               # Domain model classes
 │   ├── Project/           # Project management
