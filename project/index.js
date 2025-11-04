@@ -7,7 +7,6 @@ import import28Router from "./import28Router.js"
 import projectReadRouter from "./projectReadRouter.js"
 import memberRouter from "./memberRouter.js"
 import customRolesRouter from "./customRolesRouter.js"
-import hotkeysRouter from "./hotkeysRouter.js"
 import metadataRouter from "./metadataRouter.js"
 import projectToolsRouter from "./projectToolsRouter.js"
 import memberUpgradeRouter from "./memberUpgradeRouter.js"
@@ -25,7 +24,6 @@ router.use(import28Router)
 router.use(projectReadRouter)
 router.use(memberRouter)
 router.use(customRolesRouter)
-router.use(hotkeysRouter)
 router.use(metadataRouter)
 router.use(projectToolsRouter)
 router.use(projectCopyRouter)
