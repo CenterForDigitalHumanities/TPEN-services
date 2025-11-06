@@ -9,7 +9,6 @@ import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
 import imageSize from 'image-size'
 import mime from 'mime-types'
-import Hotkeys from "../HotKeys/Hotkeys.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
 import { checkIfUrlExists } from "../../utilities/checkIfUrlExists.js"
 
@@ -134,13 +133,6 @@ export default class ProjectFactory {
     }
   }
 
-  static async cloneHotkeys(projectId, copiedProjectId) {
-    const hotkeys = await Hotkeys.getByProjectId(projectId)
-    if (hotkeys) {
-      const copiedHotkeys = new Hotkeys(copiedProjectId, hotkeys.symbols)
-      await copiedHotkeys.create()
-    }
-  }
 
   static async cloneGroup(projectId, creator, modules = { 'Group Members': true }) {
     const project = await ProjectFactory.loadAsUser(projectId, creator)
@@ -291,8 +283,13 @@ export default class ProjectFactory {
 
     const symbols = projectTPEN28Data.projectButtons.map(button => String.fromCharCode(button.key))
     if (symbols && symbols.length > 0) {
-      const copiedHotkeys = new Hotkeys(projectTPEN3Data._id, symbols)
-      await copiedHotkeys.create()
+      const project = new Project(projectTPEN3Data._id)
+      project.data = projectTPEN3Data
+      project.data.interfaces ??= {}
+      const namespace = process.env.TPENINTERFACESNAMESPACE ?? "https://app.t-pen.org/"
+      project.data.interfaces[namespace] ??= {}
+      project.data.interfaces[namespace].quicktype = symbols
+      await project.update()
     }
     let projectTools = []
     try {
@@ -400,7 +397,6 @@ export default class ProjectFactory {
     await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
-    await this.cloneHotkeys(project._id, copiedProject._id)
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
@@ -424,7 +420,6 @@ export default class ProjectFactory {
     await this.cloneLayers(project, copiedProject, creator, database, false)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
-    await this.cloneHotkeys(project._id, copiedProject._id)
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
@@ -459,7 +454,7 @@ export default class ProjectFactory {
     }
 
     // modules is an object with keys as module names and values as true/false
-    // e.g. { 'Metadata': true, 'Group Members': [member1, member2], 'Hotkeys': true, 'Tools': false, 'Layers': [{ 'layerId1': { withAnnotations: true } }, { 'layerId2': { withAnnotations: false } }] }
+    // e.g. { 'Metadata': true, 'Group Members': [member1, member2], 'Tools': false, 'Layers': [{ 'layerId1': { withAnnotations: true } }, { 'layerId2': { withAnnotations: false } }] }
 
     if (!modules || typeof modules !== 'object') {
       throw {
@@ -550,9 +545,6 @@ export default class ProjectFactory {
 
     modules['Group Members'].push(creator)
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': modules['Group Members'] })
-    if (modules['Hotkeys']) {
-      await this.cloneHotkeys(project._id, copiedProject._id)
-    }
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
@@ -1047,19 +1039,6 @@ export default class ProjectFactory {
         }
       },
 
-      {
-        $lookup: {
-          from: "hotkeys",
-          localField: "_id",
-          foreignField: "_id",
-          as: "hotkeys"
-        },
-      },
-      {
-        $set: {
-          "options.hotkeys": { $arrayElemAt: ["$hotkeys.symbols", 0] }
-        }
-      },
       {
         $project: {
           _id: 1,
