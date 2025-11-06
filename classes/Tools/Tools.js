@@ -228,27 +228,27 @@ export default class Tools {
                 "enabled": true, 
                 "tagName": "" 
             },
-            "url": "",
+            "url": "https://centerfordigitalhumanities.github.io/Preview-Transcription/",
             "location": "pane"
         },
         {
             "label": "Line Breaking",
             "toolName": "line-breaking",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
-            "url": "",
-            "location": "dialog"
+            "url": "https://centerfordigitalhumanities.github.io/Line-Breaking/",
+            "location": "pane"
         },
         {
             "label": "Compare Pages",
             "toolName": "compare-pages",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
-            "url": "",
+            "url": "https://centerfordigitalhumanities.github.io/Compare-Pages/",
             "location": "pane"
         },
         {
@@ -264,31 +264,31 @@ export default class Tools {
         {
             "label": "Enigma",
             "toolName": "enigma",
-            "url": "https://http://enigma.huma-num.fr/",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
+            "url": "https://enigma.huma-num.fr/",
             "location": "pane"
         },
         {
             "label": "Latin Dictionary",
             "toolName": "latin-dictionary",
-            "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
             "custom": { 
                 "enabled": true, 
                 "tagName": "" 
             },
+            "url": "https://www.perseus.tufts.edu/hopper/resolveform?lang=latin",
             "location": "pane"
         },
         {
             "label": "Latin Vulgate",
             "toolName": "latin-vulgate",
-            "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
             "custom": { 
-                "enabled": false, 
+                "enabled": true, 
                 "tagName": "" 
             },
+            "url": "https://vulsearch.sourceforge.net/cgi-bin/vulsearch",
             "location": "pane"
         }
     ]
