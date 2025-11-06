@@ -52,8 +52,6 @@ The application loads configuration via Node.js's native `--env-file` flag in th
 1. `config.env` - provides defaults
 2. `.env` - overrides with environment-specific values
 
-No additional packages like `dotenv` are needed with Node.js 22+.
-
 ### What Goes Where?
 
 **`config.env` (committed, safe defaults):**
@@ -94,7 +92,7 @@ No additional packages like `dotenv` are needed with Node.js 22+.
   - Prod: `tpen`
 - `TPENPROJECTS`, `TPENGROUPS`, `TPENUSERS` - Collection names
 
-**MariaDB:**
+**MariaDB:** (not actively used)
 
 - `MARIADB` - Host address
 - `MARIADBNAME` - Database name
