@@ -7,13 +7,11 @@ import app from '../app.js'
 import debug from 'debug'
 debug('tpen3_services:server')
 import http from 'http'
-import dotenv from 'dotenv'
-dotenv.config()
 
 /**
  * Get port from environment and store in Express.
  */
-const port = normalizePort(process.env.PORT ?? '3001')
+const port = normalizePort(process.env.PORT ?? '3011')
 app.set('port', port)
 
 /**
