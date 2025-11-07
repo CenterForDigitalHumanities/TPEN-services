@@ -30,23 +30,24 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Create .env from secrets
-        uses: SpicyPizza/create-envfile@v2.0.3
-        with:
-          envkey_DOWN: ${{ secrets.DOWN }}
-          envkey_SERVERURL: ${{ secrets.SERVERURL }}
-          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
-          envkey_MONGODB: ${{ secrets.MONGODB }}
-          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
-          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
-          envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
-          envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
-          envkey_MARIADB: ${{ secrets.MARIADB }}
-          envkey_MARIADBUSER: ${{ secrets.MARIADBUSERDEV }}
-          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORDDEV }}
-          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIXDEV }}
-          envkey_TINYPEN: ${{ secrets.TINYPENDEV }}
-          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
-          envkey_DOMAIN: ${{ secrets.DOMAIN }}
+        run: |
+          cat > .env << EOF
+          DOWN=${{ secrets.DOWN }}
+          SERVERURL=${{ secrets.SERVERURL }}
+          MONGODBNAME=${{ secrets.MONGODBNAME }}
+          MONGODB=${{ secrets.MONGODB }}
+          TPENPROJECTS=${{ secrets.TPENPROJECTS }}
+          TPENGROUPS=${{ secrets.TPENGROUPS }}
+          TPENUSERS=${{ secrets.TPENUSERS }}
+          MARIADBNAME=${{ secrets.MARIADBNAME }}
+          MARIADB=${{ secrets.MARIADB }}
+          MARIADBUSER=${{ secrets.MARIADBUSERDEV }}
+          MARIADBPASSWORD=${{ secrets.MARIADBPASSWORDDEV }}
+          RERUMIDPREFIX=${{ secrets.RERUMIDPREFIXDEV }}
+          TINYPEN=${{ secrets.TINYPENDEV }}
+          AUDIENCE=${{ secrets.AUDIENCE }}
+          DOMAIN=${{ secrets.DOMAIN }}
+          EOF
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:

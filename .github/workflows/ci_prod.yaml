@@ -8,27 +8,28 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Create .env from secrets
-        uses: SpicyPizza/create-envfile@v2.0.3
-        with:
-          envkey_DOWN: ${{ secrets.DOWN }}
-          envkey_SERVERURL: ${{ secrets.SERVERURL }}
-          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
-          envkey_MONGODB: ${{ secrets.MONGODB }}
-          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
-          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
-          envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
-          envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
-          envkey_MARIADB: ${{ secrets.MARIADB }}
-          envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
-          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
-          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
-          envkey_TINYPEN: ${{ secrets.TINYPEN }}
-          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
-          envkey_DOMAIN: ${{ secrets.DOMAIN }}
-          envkey_TPEN_SUPPORT_EMAIL: ${{ secrets.TPEN_SUPPORT_EMAIL }}
-          envkey_SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          envkey_SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          envkey_TPEN_EMAIL_CC: ${{ secrets.TPEN_EMAIL_CC }}
+        run: |
+          cat > .env << EOF
+          DOWN=${{ secrets.DOWN }}
+          SERVERURL=${{ secrets.SERVERURL }}
+          MONGODBNAME=${{ secrets.MONGODBNAME }}
+          MONGODB=${{ secrets.MONGODB }}
+          TPENPROJECTS=${{ secrets.TPENPROJECTS }}
+          TPENGROUPS=${{ secrets.TPENGROUPS }}
+          TPENUSERS=${{ secrets.TPENUSERS }}
+          MARIADBNAME=${{ secrets.MARIADBNAME }}
+          MARIADB=${{ secrets.MARIADB }}
+          MARIADBUSER=${{ secrets.MARIADBUSER }}
+          MARIADBPASSWORD=${{ secrets.MARIADBPASSWORD }}
+          RERUMIDPREFIX=${{ secrets.RERUMIDPREFIX }}
+          TINYPEN=${{ secrets.TINYPEN }}
+          AUDIENCE=${{ secrets.AUDIENCE }}
+          DOMAIN=${{ secrets.DOMAIN }}
+          TPEN_SUPPORT_EMAIL=${{ secrets.TPEN_SUPPORT_EMAIL }}
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          TPEN_EMAIL_CC=${{ secrets.TPEN_EMAIL_CC }}
+          EOF
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:

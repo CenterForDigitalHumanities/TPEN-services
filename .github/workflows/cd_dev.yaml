@@ -9,32 +9,33 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Create .env from secrets
-        uses: SpicyPizza/create-envfile@v2.0.3
-        with:
-          envkey_DOWN: ${{ secrets.DOWN }}
-          envkey_SERVERURL: ${{ secrets.SERVERURL }}
-          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
-          envkey_MONGODB: ${{ secrets.MONGODB }}
-          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
-          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
-          envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
-          envkey_MARIADBNAME: ${{ secrets.MARIADBNAMEDEV }}
-          envkey_MARIADB: ${{ secrets.MARIADB }}
-          envkey_MARIADBUSER: ${{ secrets.MARIADBUSERDEV}}
-          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORDDEV }}
-          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIXDEV }}
-          envkey_TINYPEN: ${{ secrets.TINYPENDEV }}
-          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
-          envkey_DOMAIN: ${{ secrets.DOMAIN }}
-          envkey_TPEN_SUPPORT_EMAIL: ${{ secrets.TPEN_SUPPORT_EMAIL }}
-          envkey_SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          envkey_SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          envkey_TPEN_EMAIL_CC: ${{ secrets.TPEN_EMAIL_CC }}
-          envkey_REPO_OWNER: ${{ secrets.REPO_OWNER }}
-          envkey_REPO_NAME: ${{ secrets.REPO_NAME }}
-          envkey_GITHUB_TOKEN: ${{ secrets.STATIC_REPO_TOKEN }}
-          envkey_BRANCH: ${{ secrets.BRANCH }}
-          envkey_TPENSTATIC: ${{ secrets.TPENSTATIC }}
+        run: |
+          cat > .env << EOF
+          DOWN=${{ secrets.DOWN }}
+          SERVERURL=${{ secrets.SERVERURL }}
+          MONGODBNAME=${{ secrets.MONGODBNAME }}
+          MONGODB=${{ secrets.MONGODB }}
+          TPENPROJECTS=${{ secrets.TPENPROJECTS }}
+          TPENGROUPS=${{ secrets.TPENGROUPS }}
+          TPENUSERS=${{ secrets.TPENUSERS }}
+          MARIADBNAME=${{ secrets.MARIADBNAMEDEV }}
+          MARIADB=${{ secrets.MARIADB }}
+          MARIADBUSER=${{ secrets.MARIADBUSERDEV }}
+          MARIADBPASSWORD=${{ secrets.MARIADBPASSWORDDEV }}
+          RERUMIDPREFIX=${{ secrets.RERUMIDPREFIXDEV }}
+          TINYPEN=${{ secrets.TINYPENDEV }}
+          AUDIENCE=${{ secrets.AUDIENCE }}
+          DOMAIN=${{ secrets.DOMAIN }}
+          TPEN_SUPPORT_EMAIL=${{ secrets.TPEN_SUPPORT_EMAIL }}
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          TPEN_EMAIL_CC=${{ secrets.TPEN_EMAIL_CC }}
+          REPO_OWNER=${{ secrets.REPO_OWNER }}
+          REPO_NAME=${{ secrets.REPO_NAME }}
+          GITHUB_TOKEN=${{ secrets.STATIC_REPO_TOKEN }}
+          BRANCH=${{ secrets.BRANCH }}
+          TPENSTATIC=${{ secrets.TPENSTATIC }}
+          EOF
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
