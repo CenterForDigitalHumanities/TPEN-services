@@ -188,7 +188,7 @@ npm start
 
 # Test the root endpoint
 curl http://localhost:3011/
-# Should return HTML with "TPEN3 SERVICES BABY!!!"
+# Should return HTML containing the TPEN3 Services index (e.g. <h1>TPEN3 Services</h1>)
 
 # Test from any origin - CORS is open by default
 curl -H "Origin: https://app.t-pen.org" \

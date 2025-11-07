@@ -19,7 +19,7 @@ Always reference these instructions first and fallback to search or bash command
 - ALWAYS run the bootstrapping steps first.
 - Production server: `npm start` -- starts on port 3011
 - Development server: `npm run dev` -- starts with nodemon auto-reload on port 3011
-- Test basic functionality: `curl http://localhost:3011/` should return "TPEN3 SERVICES BABY!!!"
+- Test basic functionality: `curl http://localhost:3011/` should return the TPEN3 Services index HTML (e.g. contains `<h1>TPEN3 Services</h1>`)
 
 ### Environment Requirements
 - Node.js >= 22.20.0 
@@ -59,7 +59,7 @@ This allows developers to work immediately with sensible defaults while keeping 
 ### Always Validate Core Functionality After Changes
 
 - Start the application: `npm start` or `npm run dev`
-- Test the root endpoint: `curl http://localhost:3011/` -- should return HTML with "TPEN3 SERVICES BABY!!!"
+- Test the root endpoint: `curl http://localhost:3011/` -- should return HTML containing the TPEN3 Services index (heading + welcome text)
 - Run unit tests that don't require databases: `npm run unitTests` -- many tests pass without database connections
 - Run existence tests: `npm run existsTests` -- validates route registration and class imports
 - ALWAYS wait for full test completion. Tests may appear to hang but will complete within 12 seconds.
@@ -113,7 +113,7 @@ This allows developers to work immediately with sensible defaults while keeping 
 ```
 
 ### Key API Endpoints
-- `GET /` -- Service status (returns "TPEN3 SERVICES BABY!!!")
+- `GET /` -- Service status (returns the TPEN3 Services index HTML)
 - `GET /project/:id` -- Get project by ID (requires authentication)
 - `POST /project/create` -- Create new project (requires authentication)
 - `POST /project/import?createFrom=URL` -- Import project from IIIF manifest
@@ -194,7 +194,7 @@ Required for external services:
 
 After making changes, always validate:
 
-1. **Basic Service**: Start server with `npm start`, test with `curl http://localhost:3011/` - should return HTML containing "TPEN3 SERVICES BABY!!!" in the response body
+1. **Basic Service**: Start server with `npm start`, test with `curl http://localhost:3011/` - should return HTML containing the TPEN3 Services index (e.g. the `<h1>` heading)
 2. **Route Registration**: `npm run existsTests` passes without errors
 3. **Core Logic**: `npm run unitTests` passes tests that don't require databases (some MongoDB tests will timeout - this is expected)
 4. **API Authentication**: Protected endpoints like `/my/profile` return 401 status code without valid tokens

@@ -54,13 +54,16 @@ async function test(name, fn) {
 }
 
 // Test 1: Root endpoint returns expected content
-await test('Root endpoint returns service identifier', async () => {
+await test('Root endpoint returns index HTML content', async () => {
   const res = await request('/')
   if (res.status !== 200) {
     throw new Error(`Expected 200, got ${res.status}`)
   }
-  if (!res.data.includes('TPEN3 SERVICES BABY')) {
-    throw new Error('Expected service identifier not found in response')
+  // Expect the new index page content
+  const hasHeader = res.data.includes('<h1>TPEN3 Services</h1>')
+  const hasWelcome = res.data.includes('Welcome to the TPEN3 Services API')
+  if (!hasHeader && !hasWelcome) {
+    throw new Error('Expected TPEN3 Services index content not found in response')
   }
 })
 
