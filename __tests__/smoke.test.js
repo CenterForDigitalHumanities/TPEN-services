@@ -12,12 +12,6 @@ const BASE_URL = process.env.SMOKE_TEST_URL || 'http://localhost:3001'
 const isHttps = BASE_URL.startsWith('https')
 const httpModule = isHttps ? https : http
 
-console.log(`\n🔍 Running smoke tests against: ${BASE_URL}\n`)
-
-const tests = []
-let passed = 0
-let failed = 0
-
 function request(path, options = {}) {
   return new Promise((resolve, reject) => {
     const url = new URL(path, BASE_URL)
@@ -41,78 +35,59 @@ function request(path, options = {}) {
   })
 }
 
-async function test(name, fn) {
+async function runCheck(name, fn) {
   try {
     await fn()
-    console.log(`✅ ${name}`)
-    passed++
-  } catch (error) {
-    console.error(`❌ ${name}`)
-    console.error(`   ${error.message}`)
-    failed++
+    return { name, ok: true }
+  } catch (err) {
+    return { name, ok: false, error: err.message || String(err) }
   }
 }
 
-// Test 1: Root endpoint returns expected content
-await test('Root endpoint returns index HTML content', async () => {
-  const res = await request('/')
-  if (res.status !== 200) {
-    throw new Error(`Expected 200, got ${res.status}`)
+// One Jest test that runs all smoke checks and asserts none failed
+test('post-deployment smoke checks', async () => {
+  const checks = []
+
+  // Root endpoint returns expected content
+  checks.push(await runCheck('Root endpoint returns service identifier', async () => {
+    const res = await request('/')
+    if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`)
+    if (!res.data.includes('TPEN3 SERVICES BABY')) throw new Error('Expected service identifier not found in response')
+  }))
+
+  // Protected endpoint requires authentication
+  checks.push(await runCheck('Protected endpoint requires authentication', async () => {
+    const res = await request('/my/profile')
+    if (res.status !== 401) throw new Error(`Expected 401, got ${res.status}`)
+  }))
+
+  // CORS headers present for allowed origin
+  checks.push(await runCheck('CORS headers present for allowed origins', async () => {
+    const res = await request('/', {
+      headers: { Origin: 'https://app.t-pen.org' }
+    })
+    const corsHeader = res.headers['access-control-allow-origin']
+    if (!corsHeader) throw new Error('CORS header not present')
+  }))
+
+  // Invalid route returns 404
+  checks.push(await runCheck('Invalid route returns 404', async () => {
+    const res = await request('/this-does-not-exist')
+    if (res.status !== 404) throw new Error(`Expected 404, got ${res.status}`)
+  }))
+
+  // Service responds within 3 seconds
+  checks.push(await runCheck('Service responds within 3 seconds', async () => {
+    const start = Date.now()
+    await request('/', { timeout: 3000 })
+    const duration = Date.now() - start
+    if (duration > 3000) throw new Error(`Response took ${duration}ms (> 3000ms)`)
+  }))
+
+  const failed = checks.filter(c => !c.ok)
+  if (failed.length > 0) {
+    // Fail the Jest test and print details
+    const msg = failed.map(f => `${f.name}: ${f.error}`).join('\n')
+    throw new Error(`Smoke tests failed:\n${msg}`)
   }
-  // Expect the new index page content
-  const hasHeader = res.data.includes('<h1>TPEN3 Services</h1>')
-  const hasWelcome = res.data.includes('Welcome to the TPEN3 Services API')
-  if (!hasHeader && !hasWelcome) {
-    throw new Error('Expected TPEN3 Services index content not found in response')
-  }
-})
-
-// Test 2: Protected endpoint requires authentication
-await test('Protected endpoint requires authentication', async () => {
-  const res = await request('/my/profile')
-  if (res.status !== 401) {
-    throw new Error(`Expected 401, got ${res.status}`)
-  }
-})
-
-// Test 3: CORS headers present for allowed origin
-await test('CORS headers present for allowed origins', async () => {
-  const res = await request('/', {
-    headers: {
-      'Origin': 'https://app.t-pen.org'
-    }
-  })
-  const corsHeader = res.headers['access-control-allow-origin']
-  if (!corsHeader) {
-    throw new Error('CORS header not present')
-  }
-})
-
-// Test 4: Invalid route returns 404
-await test('Invalid route returns 404', async () => {
-  const res = await request('/this-does-not-exist')
-  if (res.status !== 404) {
-    throw new Error(`Expected 404, got ${res.status}`)
-  }
-})
-
-// Test 5: Service responds within acceptable time
-await test('Service responds within 3 seconds', async () => {
-  const start = Date.now()
-  await request('/', { timeout: 3000 })
-  const duration = Date.now() - start
-  if (duration > 3000) {
-    throw new Error(`Response took ${duration}ms (> 3000ms)`)
-  }
-})
-
-// Summary
-console.log(`\n${'='.repeat(50)}`)
-console.log(`📊 Results: ${passed} passed, ${failed} failed`)
-console.log(`${'='.repeat(50)}\n`)
-
-if (failed > 0) {
-  process.exit(1)
-}
-
-console.log('✨ All smoke tests passed!\n')
+}, 30000) // set a longer timeout for the whole test if needed
