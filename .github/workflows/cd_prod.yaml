@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Create .env from secrets
-        uses: SpicyPizza/create-envfile@v2
+        uses: SpicyPizza/create-envfile@v2.0.3
         with:
           envkey_DOWN: ${{ secrets.DOWN }}
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
