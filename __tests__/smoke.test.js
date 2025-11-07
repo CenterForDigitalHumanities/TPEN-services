@@ -8,7 +8,7 @@
 import https from 'https'
 import http from 'http'
 
-const BASE_URL = process.env.SMOKE_TEST_URL || 'http://localhost:3001'
+const BASE_URL = process.env.SMOKE_TEST_URL || 'http://localhost:3011'
 const isHttps = BASE_URL.startsWith('https')
 const httpModule = isHttps ? https : http
 
@@ -49,10 +49,12 @@ test('post-deployment smoke checks', async () => {
   const checks = []
 
   // Root endpoint returns expected content
-  checks.push(await runCheck('Root endpoint returns service identifier', async () => {
+  checks.push(await runCheck('Root endpoint returns service index HTML', async () => {
     const res = await request('/')
     if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`)
-    if (!res.data.includes('TPEN3 SERVICES BABY')) throw new Error('Expected service identifier not found in response')
+    const hasHeading = res.data.includes('<h1>TPEN3 Services</h1>')
+    const hasWelcome = res.data.toLowerCase().includes('welcome to')
+    if (!(hasHeading || hasWelcome)) throw new Error('Expected TPEN3 Services index HTML not found in response')
   }))
 
   // Protected endpoint requires authentication
