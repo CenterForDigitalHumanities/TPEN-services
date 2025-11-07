@@ -9,27 +9,25 @@ jobs:
       - uses: actions/checkout@master
       - name: Create .env from secrets
         run: |
-          cat > .env << EOF
-          DOWN=${{ secrets.DOWN }}
-          SERVERURL=${{ secrets.SERVERURL }}
-          MONGODBNAME=${{ secrets.MONGODBNAME }}
-          MONGODB=${{ secrets.MONGODB }}
-          TPENPROJECTS=${{ secrets.TPENPROJECTS }}
-          TPENGROUPS=${{ secrets.TPENGROUPS }}
-          TPENUSERS=${{ secrets.TPENUSERS }}
-          MARIADBNAME=${{ secrets.MARIADBNAMEDEV }}
-          MARIADB=${{ secrets.MARIADB }}
-          MARIADBUSER=${{ secrets.MARIADBUSERDEV }}
-          MARIADBPASSWORD=${{ secrets.MARIADBPASSWORDDEV }}
-          RERUMIDPREFIX=${{ secrets.RERUMIDPREFIXDEV }}
-          TINYPEN=${{ secrets.TINYPENDEV }}
-          AUDIENCE=${{ secrets.AUDIENCE }}
-          DOMAIN=${{ secrets.DOMAIN }}
-          TPEN_SUPPORT_EMAIL=${{ secrets.TPEN_SUPPORT_EMAIL }}
-          SMTP_HOST=${{ secrets.SMTP_HOST }}
-          SMTP_PORT=${{ secrets.SMTP_PORT }}
-          TPEN_EMAIL_CC=${{ secrets.TPEN_EMAIL_CC }}
-          EOF
+          echo "DOWN=${{ secrets.DOWN }}" >> .env
+          echo "SERVERURL=${{ secrets.SERVERURL }}" >> .env
+          echo "MONGODBNAME=${{ secrets.MONGODBNAME }}" >> .env
+          echo "MONGODB=${{ secrets.MONGODB }}" >> .env
+          echo "TPENPROJECTS=${{ secrets.TPENPROJECTS }}" >> .env
+          echo "TPENGROUPS=${{ secrets.TPENGROUPS }}" >> .env
+          echo "TPENUSERS=${{ secrets.TPENUSERS }}" >> .env
+          echo "MARIADBNAME=${{ secrets.MARIADBNAMEDEV }}" >> .env
+          echo "MARIADB=${{ secrets.MARIADB }}" >> .env
+          echo "MARIADBUSER=${{ secrets.MARIADBUSERDEV }}" >> .env
+          echo "MARIADBPASSWORD=${{ secrets.MARIADBPASSWORDDEV }}" >> .env
+          echo "RERUMIDPREFIX=${{ secrets.RERUMIDPREFIXDEV }}" >> .env
+          echo "TINYPEN=${{ secrets.TINYPENDEV }}" >> .env
+          echo "AUDIENCE=${{ secrets.AUDIENCE }}" >> .env
+          echo "DOMAIN=${{ secrets.DOMAIN }}" >> .env
+          echo "TPEN_SUPPORT_EMAIL=${{ secrets.TPEN_SUPPORT_EMAIL }}" >> .env
+          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
+          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
+          echo "TPEN_EMAIL_CC=${{ secrets.TPEN_EMAIL_CC }}" >> .env
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
