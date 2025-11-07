@@ -33,7 +33,6 @@ jobs:
         uses: SpicyPizza/create-envfile@v2
         with:
           envkey_DOWN: ${{ secrets.DOWN }}
-          envkey_READONLY: ${{ secrets.READONLY }}
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
           envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
           envkey_MONGODB: ${{ secrets.MONGODB }}
@@ -44,7 +43,6 @@ jobs:
           envkey_MARIADB: ${{ secrets.MARIADB }}
           envkey_MARIADBUSER: ${{ secrets.MARIADBUSERDEV }}
           envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORDDEV }}
-          envkey_RERUMURL: ${{ secrets.RERUMURL }}
           envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIXDEV }}
           envkey_TINYPEN: ${{ secrets.TINYPENDEV }}
           envkey_AUDIENCE: ${{ secrets.AUDIENCE }}

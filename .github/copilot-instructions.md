@@ -188,7 +188,7 @@ Required for authentication:
 Required for external services:
 
 - `TINYPEN` (TinyPEN API base URL)
-- `RERUMURL` (RERUM repository URL)
+- `RERUMIDPREFIX` (RERUM ID prefix URL)
 
 ### Manual Testing Scenarios
 

@@ -80,7 +80,6 @@ The application loads configuration via Node.js's native `--env-file` flag in th
   - Dev: `https://dev.api.t-pen.org`
   - Prod: `https://api.t-pen.org`
 - `DOWN` - Maintenance mode flag (true/false)
-- `READONLY` - Read-only mode flag (true/false)
 
 ### Database Configuration
 
@@ -103,10 +102,9 @@ The application loads configuration via Node.js's native `--env-file` flag in th
 
 **RERUM Store:**
 
-- `RERUMURL` - RERUM API base URL
-  - Dev: `https://devstore.rerum.io/v1`
-  - Prod: `https://store.rerum.io/v1`
-- `RERUMIDPREFIX` - RERUM ID prefix (matches RERUMURL)
+- `RERUMIDPREFIX` - RERUM ID prefix
+  - Dev: `https://devstore.rerum.io/v1/id/`
+  - Prod: `https://store.rerum.io/v1/id/`
 
 **TinyPEN:**
 
@@ -150,7 +148,7 @@ Key differences between environments:
 |----------|-------------|------------|
 | SERVERURL | <https://dev.api.t-pen.org> | <https://api.t-pen.org> |
 | MONGODBNAME | testTpen | tpen |
-| RERUMURL | <https://devstore.rerum.io/v1> | <https://store.rerum.io/v1> |
+| RERUMIDPREFIX | <https://devstore.rerum.io/v1/id/> | <https://store.rerum.io/v1/id/> |
 | REPO_NAME | TPEN-Static-Dev | TPEN-static |
 
 ## GitHub Secrets Configuration
