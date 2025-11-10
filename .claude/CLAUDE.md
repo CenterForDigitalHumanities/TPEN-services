@@ -1,358 +1,229 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Ai Assistants when working with code in this repository.  There is also a .github/copilot-instructions.md file.
 
 ## Project Overview
 
-TPEN Services is the backend API for TPEN3 (Transcription for Paleographical and Editorial Notation), a web-based tool for transcribing and annotating digital manuscripts. This Node.js/Express API provides:
+TPEN Services is a Node.js Express API service for TPEN3 (Transcription for Paleographical and Editorial Notation). This provides RESTful APIs for digital humanities, cultural heritage, annotation services, and IIIF manifest handling. The service supports multiple database backends (MongoDB, MariaDB) and uses Auth0 for authentication.
 
-- **IIIF-compliant** annotation services following W3C Web Annotation standards
-- **Multi-user collaboration** with role-based access control
-- **Persistent storage** of transcriptions via RERUM/TinyThings
-- **Project management** for organizing manuscript transcription work
-- **RESTful API** endpoints for frontend applications
+Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 
-The service acts as a middleware layer between TPEN3 frontends and multiple data storage backends (MongoDB for metadata, RERUM for annotations).
+## Working Effectively
 
-## Tech Stack
+### Bootstrap, Build, and Test the Repository
+- Copy environment configuration: `cp sample.env .env`
+- Install dependencies: `npm install` -- takes up to 20 seconds. NEVER CANCEL. Set timeout to 60+ seconds.
+- Run unit tests: `npm run unitTests` -- takes 12 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
+- Run existence tests: `npm run existsTests` -- takes 7 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
+- Run all tests: `npm run allTests` -- takes 12 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
 
-### Core Technologies
-- **Node.js**: >= 22.20.0 (REQUIRED - uses modern JS features)
-- **Express**: 5.1.0 - Web framework
-- **MongoDB**: 6.20.0 - Primary database for projects, users, groups
-- **RERUM/TinyThings**: External service for persistent annotation storage
+### Run the Application
+- ALWAYS run the bootstrapping steps first.
+- Production server: `npm start` -- starts on port 3001
+- Development server: `npm run dev` -- starts with nodemon auto-reload on port 3001
+- Test basic functionality: `curl http://localhost:3001/` should return "TPEN3 SERVICES BABY!!!"
 
-### Key Dependencies
-- **Auth0**: JWT-based authentication via express-oauth2-jwt-bearer
-- **IIIF**: @iiif/helpers for Presentation API support
-- **DOMPurify**: XSS protection for user input
-- **Jest**: Testing framework with Supertest for API testing
+### Environment Requirements
+- Node.js >= 22.20.0 
+- MongoDB (for database tests and full functionality)
+- MariaDB (for database tests and full functionality)
+- Copy `sample.env` to `.env` for basic functionality
+- For full functionality, configure database connection strings in `.env`
 
-## Project Structure
+## Validation
 
-```
-/
-├── auth/                 # Authentication middleware (Auth0 JWT validation)
-├── bin/                  # Server startup script (tpen3_services.js)
-├── classes/              # Core business logic classes
-│   ├── Project.js       # Project CRUD and validation
-│   ├── User.js          # User profile and membership
-│   ├── Group.js         # Collaborator groups and permissions
-│   ├── Layer.js         # Annotation layers (RERUM-backed)
-│   ├── Page.js          # Annotation pages (RERUM-backed)
-│   └── Line.js          # Individual annotations (RERUM-backed)
-├── database/            # Database abstraction layer
-│   ├── dbDriver.js      # Unified interface for all DBs
-│   ├── mongo/           # MongoDB implementation
-│   └── tiny/            # RERUM/TinyThings implementation
-├── project/             # Project API routes
-├── userProfile/         # User profile routes
-├── utilities/           # Shared utilities and helpers
-└── __tests__/           # Test suites
-```
+### Always Validate Core Functionality After Changes
+- Start the application: `npm start` or `npm run dev`
+- Test the root endpoint: `curl http://localhost:3001/` -- should return HTML with "TPEN3 SERVICES BABY!!!"
+- Run unit tests that don't require databases: `npm run unitTests` -- many tests pass without database connections
+- Run existence tests: `npm run existsTests` -- validates route registration and class imports
+- ALWAYS wait for full test completion. Tests may appear to hang but will complete within 12 seconds.
+- NOTE: Application may crash after serving initial requests due to database connection attempts - this is expected behavior without running MongoDB/MariaDB.
 
-## Core Concepts
+### Test Categories Available
+- `npm run unitTests` -- Core unit tests (some require databases)
+- `npm run existsTests` -- Route and class existence validation (database-independent)
+- `npm run functionsTests` -- Function-level tests
+- `npm run E2Etests` -- End-to-end API tests
+- `npm run dbTests` -- Database-specific tests (require running databases)
+- `npm run authTest` -- Authentication tests (require Auth0 configuration)
 
-### Projects
-- Container for manuscript transcription work
-- Contains layers, manifests, metadata, and tools
-- Linked to a Group for access control
-- Identified by MongoDB ObjectId
-
-### Layers
-- Logical groupings of annotations (e.g., "Transcription", "Translation")
-- Stored in RERUM as AnnotationCollections
-- Contains Pages which contain Lines
-
-### Pages
-- Represents annotations for a single manuscript page/canvas
-- Stored as AnnotationPages in RERUM
-- Linked to IIIF canvas URIs
-
-### Lines
-- Individual annotations/transcriptions
-- Stored as Web Annotations in RERUM
-- Target specific regions on manuscript images
-
-### Groups
-- Manage project membership and permissions
-- Support custom roles beyond OWNER/CONTRIBUTOR/VIEWER
-- Control who can edit, view, or manage projects
-
-## API Architecture
-
-### RESTful Conventions
-```javascript
-GET    /project/:id              // Retrieve resource
-POST   /project/create           // Create new resource
-PUT    /project/:id              // Update resource
-DELETE /project/:id              // Delete resource
-```
-
-### Response Patterns
-```javascript
-// Success
-res.status(200).json(data)
-
-// Error
-res.status(400).json({ error: "message" })
-
-// No content
-res.status(204).send()
-```
-
-### Common Status Codes
-- 200: Success
-- 201: Created
-- 401: Unauthorized (invalid/missing token)
-- 403: Forbidden (insufficient permissions)
-- 404: Not Found
-- 500: Server Error
-
-## Database Strategy
-
-### MongoDB (Primary Storage)
-- Projects, Users, Groups, HotKeys collections
-- Handles metadata, relationships, and configuration
-- ObjectId-based identification
-
-### RERUM/TinyThings (Annotation Storage)
-- Persistent, versioned annotation storage
-- Returns stable URIs for annotations
-- Handles Layers, Pages, Lines as JSON-LD
-- Accessed via HTTP API
-
-### Database Abstraction
-```javascript
-// Always use the abstraction layer
-const database = new dbDriver("mongo")
-await database.save(data, "projects")
-await database.findOne({ _id: id }, "projects")
-```
-
-## Authentication & Authorization
-
-### Authentication Flow
-1. Client sends JWT in `Authorization: Bearer <token>`
-2. `auth0Middleware()` validates token with Auth0
-3. User agent extracted from token claims
-4. User record loaded/created from database
-
-### Authorization Model
-```javascript
-// Default roles
-OWNER       // Full control, can transfer ownership
-CONTRIBUTOR // Can edit content
-VIEWER      // Read-only access
-
-// Permission checking
-Project.checkUserAccess(userId, "edit_page", "layer", layerId)
-```
-
-### Protected Routes
-```javascript
-router.post("/path", auth0Middleware(), async (req, res) => {
-  const userId = req.user._id
-  // Route handler
-})
-```
-
-## Development Workflow
-
-### Getting Started
-```bash
-# Install dependencies
-npm install
-
-# Set up environment
-cp sample.env .env
-# Edit .env with your configuration
-
-# Start development server
-npm run dev
-
-# Run tests
-npm test
-```
-
-### Environment Variables
-```
-# Essential for development
-PORT=3001
-MONGODB=mongodb://localhost:27017
-MONGODBNAME=tpen3
-RERUMURL=https://store.rerum.io/v1
-AUDIENCE=https://yourapp.auth0.com/api
-DOMAIN=yourapp.auth0.com
-```
-
-### Making Changes
-
-1. **Follow existing patterns** - Look at similar code for guidance
-2. **Use the abstraction layers** - Don't access databases directly
-3. **Validate input** - Use utility validators in `/utilities`
-4. **Handle errors gracefully** - Use respondWithError() helper
-5. **Write tests** - Add tests for new functionality
-
-## Testing Guidelines
-
-### Running Tests
-```bash
-npm run allTests        # All tests
-npm run unitTests       # Unit tests only
-npm run E2Etests        # End-to-end tests
-npm run dbTests         # Database tests
-```
-
-### Test Organization
-- Tag tests with descriptive labels (e.g., `user_class`, `auth_test`)
-- Use Supertest for API endpoint testing
-- Mock external services when appropriate
-- Tests should be independent and idempotent
-
-## Code Style & Conventions
-
-### JavaScript Style
-```javascript
-// ES6+ modules
-import { something } from './module.js'
-
-// Async/await for all async operations
-async function processData() {
-  const result = await database.find({}, "collection")
-  return result
-}
-
-// Early returns with guard clauses
-if (!isValid) {
-  return respondWithError(res, 400, "Invalid input")
-}
-
-// Nullish coalescing and optional chaining
-const value = data?.property ?? defaultValue
-```
-
-### Naming Conventions
-- Files: camelCase.js
-- Classes: PascalCase
-- Functions/variables: camelCase
-- Routes: kebab-case
-- Database collections: UPPERCASE
-
-### Commit Messages
-```
-feat: Add new feature
-fix: Fix bug
-docs: Update documentation
-test: Add tests
-refactor: Refactor code
-```
-
-## Security Considerations
-
-### Input Validation
-```javascript
-// Always sanitize user input
-import DOMPurify from 'isomorphic-dompurify'
-const clean = DOMPurify.sanitize(userInput)
-
-// Check for suspicious content
-if (checkIfSuspicious(content)) {
-  throw new Error("Suspicious content detected")
-}
-```
-
-### Authentication Required
-- All write operations require valid JWT
-- User permissions checked before data modifications
-- Ownership verified for sensitive operations
-
-### CORS Configuration
-- Configured per endpoint as needed
-- Default CORS settings in common_cors.json
-- Restrictive by default
+### Expected Test Behavior
+- Tests requiring databases will timeout/fail without MongoDB/MariaDB running
+- Auth tests fail without proper AUDIENCE and DOMAIN environment variables
+- Core functionality tests (exists, basic units) should pass with minimal `.env` setup
+- Database-independent tests complete in 6-15 seconds
 
 ## Common Tasks
 
-### Adding a New API Endpoint
-1. Create route file in appropriate directory
-2. Define route with authentication middleware
-3. Implement business logic in classes/
-4. Add validation and error handling
-5. Write tests for the endpoint
-
-### Working with Projects
-```javascript
-// Load a project
-const project = new Project(projectId)
-await project.load()
-
-// Check user access
-const canEdit = await project.checkUserAccess(userId, "edit", "project")
-
-// Update project
-project.title = "New Title"
-await project.save()
+### Repository Structure
+```
+/home/runner/work/TPEN-services/TPEN-services/
+├── app.js                 # Express application setup
+├── bin/tpen3_services.js  # Server entry point
+├── package.json           # Dependencies and scripts
+├── jest.config.js         # Test configuration
+├── sample.env             # Environment template
+├── API.md                 # API documentation
+├── classes/               # Domain model classes
+│   ├── Project/           # Project management
+│   ├── User/              # User management
+│   ├── Group/             # Group management
+│   ├── Layer/             # Annotation layers
+│   ├── Line/              # Text line handling
+│   ├── Page/              # Page management
+│   └── Manifest/          # IIIF manifest handling
+├── database/              # Database drivers
+│   ├── mongo/             # MongoDB controller
+│   ├── maria/             # MariaDB controller
+│   └── tiny/              # TinyPEN API controller
+├── auth/                  # Auth0 authentication
+├── project/               # Project API routes
+├── userProfile/           # User API routes
+├── line/                  # Line API routes
+├── page/                  # Page API routes
+└── utilities/             # Helper functions
 ```
 
-### Working with Annotations
-```javascript
-// Create a new annotation page
-const page = new Page({
-  label: "Page 1",
-  target: canvasUri
-})
-await page.save()
+### Key API Endpoints
+- `GET /` -- Service status (returns "TPEN3 SERVICES BABY!!!")
+- `GET /project/:id` -- Get project by ID (requires authentication)
+- `POST /project/create` -- Create new project (requires authentication)
+- `POST /project/import?createFrom=URL` -- Import project from IIIF manifest
+- `GET /user/:id` -- Get user profile (public)
+- `GET /my/profile` -- Get authenticated user profile
+- `GET /line/:id` -- Get text line annotation
+- `GET /page/:id` -- Get annotation page
 
-// Add to layer
-layer.pages.push(page.id)
-await layer.save()
+### Authentication
+- Uses Auth0 JWT bearer tokens
+- Protected endpoints require `Authorization: Bearer <token>` header
+- Environment variables AUDIENCE and DOMAIN must be configured for auth tests
+- Public endpoints: `/`, `/user/:id`
+- Protected endpoints: `/project/*`, `/my/*`, most POST/PUT/DELETE operations
+
+### Database Configuration
+- MongoDB: Configure MONGODB and MONGODBNAME in `.env`
+- MariaDB: Configure MARIADB, MARIADBNAME, MARIADBUSER, MARIADBPASSWORD in `.env`
+- TinyPEN API: Configure TINYPEN in `.env`
+- Default configurations in `sample.env` point to development services
+
+### Development Workflow
+1. Always start with: `cp sample.env .env && npm install`
+2. Make code changes
+3. Test with: `npm run existsTests` (fast, database-independent)
+4. For database changes: ensure MongoDB/MariaDB running, then `npm run dbTests`
+5. For API changes: `npm run E2Etests`
+6. Start dev server: `npm run dev`
+7. Test manually: `curl http://localhost:3001/` and relevant endpoints
+
+### Debugging and Troubleshooting
+- Application logs appear in console when running `npm start` or `npm run dev`
+- Database connection errors indicate missing database services
+- Auth errors indicate missing AUDIENCE/DOMAIN environment variables
+- 404 errors on routes indicate route registration issues
+- Check `app.js` for middleware and route registration
+- Jest warnings about experimental VM modules are expected (ES module usage)
+
+### CI/CD Integration
+- GitHub Actions workflows in `.github/workflows/`
+- `test_pushes.yaml` runs unit tests on pushes
+- `ci_dev.yaml` runs E2E tests on PRs to development
+- Tests require environment secrets configured in GitHub repository settings
+
+### Performance Notes
+- Application startup: 2-3 seconds
+- npm install: ~1-20 seconds depending on cache (timeout: 60+ seconds)
+- Unit tests: ~12 seconds (timeout: 30+ seconds)
+- Existence tests: ~7 seconds (timeout: 30+ seconds)
+- Database tests: variable depending on database response times
+
+### Critical Environment Variables
+Required for basic functionality:
+- `PORT` (default: 3001)
+- `SERVERURL` (default: http://localhost:3001)
+
+Required for database functionality:
+- `MONGODB` (MongoDB connection string)
+- `MONGODBNAME` (MongoDB database name)
+- `MARIADB` (MariaDB host)
+- `MARIADBNAME`, `MARIADBUSER`, `MARIADBPASSWORD` (MariaDB credentials)
+
+Required for authentication:
+- `AUDIENCE` (Auth0 audience)
+- `DOMAIN` (Auth0 domain)
+
+Required for external services:
+- `TINYPEN` (TinyPEN API base URL)
+- `RERUMURL` (RERUM repository URL)
+
+### Manual Testing Scenarios
+After making changes, always validate:
+1. **Basic Service**: Start server with `npm start`, test with `curl http://localhost:3001/` - should return HTML containing "TPEN3 SERVICES BABY!!!" in the response body
+2. **Route Registration**: `npm run existsTests` passes without errors
+3. **Core Logic**: `npm run unitTests` passes tests that don't require databases (some MongoDB tests will timeout - this is expected)
+4. **API Authentication**: Protected endpoints like `/my/profile` return 401 status code without valid tokens
+5. **Application Behavior**: Server may crash after serving requests when MongoDB is not available - this is expected and indicates database connection attempts are working correctly
+
+### Complete Validation Workflow Example
+```bash
+# Basic setup
+cp sample.env .env
+npm install
+
+# Test core functionality without databases
+npm run existsTests  # Should pass completely
+npm run unitTests   # Should pass most tests, MongoDB tests will timeout
+
+# Test application serving
+npm start &
+sleep 3
+curl http://localhost:3001/  # Should return HTML with service name
+curl -w "Status: %{http_code}\n" http://localhost:3001/my/profile  # Should return 401
+kill %1  # Stop the background server
 ```
 
-### Database Operations
-```javascript
-// Always use the driver abstraction
-const db = new dbDriver("mongo")
+### Common File Locations
+- Main application entry: `bin/tpen3_services.js`
+- Express app setup: `app.js`
+- Route definitions: `project/index.js`, `userProfile/index.js`, etc.
+- Database controllers: `database/mongo/controller.js`, `database/maria/controller.js`
+- Authentication middleware: `auth/index.js`
+- Domain models: `classes/[Entity]/[Entity].js`
+- Configuration: `sample.env` (template), `.env` (local config)
 
-// Find documents
-const projects = await db.find({ creator: userId }, "projects")
+### Dependencies and Versions
+- Express.js for REST API framework
+- MongoDB driver for document storage
+- MariaDB driver for relational storage
+- Auth0 libraries for JWT authentication
+- Jest for testing framework
+- Nodemon for development auto-reload
+- IIIF libraries for manifest handling
 
-// Update document
-await db.update({ _id: id, ...updates }, "projects")
-```
+### External Resources
+- [IIIF Presentation API](https://iiif.io/api/presentation/)
+- [W3C Web Annotation](https://www.w3.org/TR/annotation-model/)
+- [Web Components MDN](https://developer.mozilla.org/en-US/docs/Web/Web_Components)
+- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [TPEN3 Project Homepage](https://three.t-pen.org)
+- [TPEN3 Services API](https://dev.api.t-pen.org)
+- [TPEN3 Services GitHub](https://github.com/CenterForDigitalHumanities/TPEN-services)
+- [TPEN3 Interfaces GitHub](https://github.com/CenterForDigitalHumanities/TPEN-interfaces)
 
-### Testing Your Changes
-```javascript
-// Write a test for your feature
-describe('My Feature', () => {
-  test('should do something', async () => {
-    const response = await request(app)
-      .post('/api/endpoint')
-      .send({ data: 'test' })
+## Additional Developer Preferences for AI Assistants
 
-    expect(response.status).toBe(200)
-    expect(response.body).toHaveProperty('result')
-  })
-})
-```
-
-## Important Notes
-
-1. **RERUM Integration**: Annotation data is stored externally in RERUM. Always handle RERUM API failures gracefully.
-
-2. **MongoDB Required**: While MariaDB support exists, MongoDB is the primary database and required for full functionality.
-
-3. **IIIF Compliance**: All annotation responses follow IIIF Presentation API 3.0 and W3C Web Annotation standards.
-
-4. **Async Everything**: All database operations and external API calls must use async/await.
-
-5. **Token Expiry**: Always check JWT expiration before processing requests.
-
-6. **Maintenance Mode**: Check `DOWN` environment variable for maintenance mode handling.
-
-## Need Help?
-
-- Check existing implementations in similar files
-- Review test files for usage examples
-- Look at utility functions in `/utilities` for common operations
-- Follow patterns established in the `/classes` directory
+1. Do not automatically commit or push code.  Developers prefer to do this themselves when the time is right.
+  - Make the code changes as requested.
+  - Explain what changed and why.
+  - Stop before committing.  The developer will decide at what point to commit changes on their own.  You do not need to keep track of it.
+2. No auto compacting.  We will compact ourselves if the context gets too big.
+3. When creating documentation do not add Claude as an @author.
+4. Preference using current libraries and native javascript/ExpressJS/Node capabilities instead of installing new npm packages to solve a problem.
+  - However, we understand that sometimes we need a package or a package is perfectly designed to solve our problem.  Ask if we want to use them in these cases.
+5. We like colors in our terminals!  Be diverse and color text in the terminal for the different purposes of the text.  (ex. errors red, success green, logs bold white, etc.)
+6. We like to see logs from running code, so expose those logs in the terminal logs as much as possible.
+7. Use JDoc style for code documentation.  Cleanup, fix, or generate documentation for the code you work on as you encounter it. 
+8. We use `npm start` often to run the app locally.  However, do not make code edits based on this assumption.  Production and development load balance in the app with pm2, not by using `npm start`
+9. NEVER CANCEL long-running commands. Application builds and tests are designed to complete within documented timeouts. Always wait for completion to ensure accurate validation of changes.
+10. All work on issues for bugs, features, and enhancements will target the `development` branch. The `main` branch will only be targetted with hotfixes by admins or by PRs from the `development` branch. New work should branch from `development`.
