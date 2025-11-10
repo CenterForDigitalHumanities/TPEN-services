@@ -127,12 +127,6 @@ The application loads configuration via Node.js's native `--env-file` flag in th
 - `AUDIENCE` - Auth0 API audience (should match SERVERURL)
 - `DOMAIN` - Auth0 tenant domain
 
-### CORS Configuration
-
-TPEN Services uses an open CORS policy by default. The API is accessible from any origin without restrictions. This is intentional to support public access to the API.
-
-No CORS-related environment variables are needed.
-
 ### Email Configuration
 
 - `SMTP_HOST` - SMTP server hostname
@@ -201,19 +195,6 @@ curl -H "Origin: https://app.t-pen.org" \
 curl http://localhost:3011/my/profile
 # Should return 401 Unauthorized
 ```
-
-### Migration Notes
-
-The following changes enable environment-based configuration:
-
-1. **Open CORS policy** - API accessible from any origin without restrictions
-2. **Native env loading** - Uses Node.js 22+ `--env-file` flag, no dotenv packages needed
-3. **Layered configuration** - `config.env` provides defaults, `.env` overrides
-4. **Static repo configurable** - `REPO_NAME` switches between TPEN-Static-Dev and TPEN-static
-5. **Database names environment-specific** - `testTpen` (dev) vs `tpen` (prod)
-
-All deployments must set appropriate environment variables via `.env` file or CI/CD secrets.
-
 ### Troubleshooting
 
 **API access from browser:**
