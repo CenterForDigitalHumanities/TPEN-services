@@ -92,7 +92,7 @@ export default class ProjectFactory {
 
   /** 
    * Creates a new manifest from given image url(s) and project label.
-   * @param {string|string[]} imageInput - URL or array of URLs of images to be used.
+   * @param {string|string[]} imgUrl - URL or array of URLs of images to be used.
    * @param {string} projectLabel - Label for the project.
    * @returns {Object} - Returns the created project object.
    */
@@ -327,7 +327,7 @@ export default class ProjectFactory {
       await project.updateTools(selectedTools)
     }
     const allCanvases = projectTPEN3Data.layers[0].pages.map((page) => page.target)
-    const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) => page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
+  const allPagesIds = projectTPEN3Data.layers[0].pages.map((page) => page.id.replace(/project\/([a-f0-9]+)/, `project/${projectTPEN3Data._id}`))
     let manifestUrl = projectTPEN3Data.manifest[0]
     manifestUrl = this.transformManifestUrl(manifestUrl, protocol)
     const responseManifest = await fetch(manifestUrl)
@@ -498,7 +498,7 @@ export default class ProjectFactory {
 
         let newPages = []
 
-        if (result[layer.id]) {
+  if (result[layer.id]) {
           newPages = await this.clonePages(layer, copiedProject, creator, database, true)
           for (const page of newPages) {
             const updatedPage = new Page(
@@ -560,7 +560,7 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = ProjectFactory.getLabelAsString(manifest.label)
     const metadata = manifest.metadata ?? []
-    const layer = Layer.build(_id, `First Layer - ${label}`, manifest.items, creator)
+  const layer = Layer.build(_id, `First Layer - ${label}`, manifest.items, creator)
 
     const firstPage = layer.pages[0]?.id.split('/').pop() ?? true
 
@@ -568,8 +568,8 @@ export default class ProjectFactory {
       _id,
       label,
       metadata,
-      manifest: [manifest.id],
-      layers: [layer.asProjectLayer()],
+  manifest: [manifest.id],
+  layers: [layer.asProjectLayer()],
       tools: Tools.defaultTools,
       _createdAt: now,
       _modifiedAt: -1,
@@ -590,7 +590,7 @@ export default class ProjectFactory {
       return (
         region === "full" ||
         region === "square" ||
-        /^pct:\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/.test(region) ||
+  /^pct:\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/.test(region) ||
         /^\d+,\d+,\d+,\d+$/.test(region)
       )
     }
@@ -781,6 +781,21 @@ export default class ProjectFactory {
           if (annotationPages.length) {
             canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages })
           }
+
+          const annotationPages = []
+          await Promise.all(project.layers.map(layer => {
+              return layer.pages.forEach(page => {
+                if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
+                  const annotationPage = {
+                    id: page.id,
+                    type: "AnnotationPage"
+                  }
+                  annotationPages.push(annotationPage)
+                }
+              })
+            })
+          )
+          annotationPages.length > 0 && (canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages }))
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
