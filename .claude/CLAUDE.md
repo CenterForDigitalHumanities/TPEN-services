@@ -19,9 +19,9 @@ Always reference these instructions first and fallback to search or bash command
 
 ### Run the Application
 - ALWAYS run the bootstrapping steps first.
-- Production server: `npm start` -- starts on port 3001
-- Development server: `npm run dev` -- starts with nodemon auto-reload on port 3001
-- Test basic functionality: `curl http://localhost:3001/` should return "TPEN3 SERVICES BABY!!!"
+- Production server: `npm start` -- starts on port 3011
+- Development server: `npm run dev` -- starts with nodemon auto-reload on port 3011
+- Test basic functionality: `curl http://localhost:3011/` should return "TPEN3 SERVICES BABY!!!"
 
 ### Environment Requirements
 - Node.js >= 22.20.0 
@@ -34,7 +34,7 @@ Always reference these instructions first and fallback to search or bash command
 
 ### Always Validate Core Functionality After Changes
 - Start the application: `npm start` or `npm run dev`
-- Test the root endpoint: `curl http://localhost:3001/` -- should return HTML with "TPEN3 SERVICES BABY!!!"
+- Test the root endpoint: `curl http://localhost:3011/` -- should return HTML with "TPEN3 SERVICES BABY!!!"
 - Run unit tests that don't require databases: `npm run unitTests` -- many tests pass without database connections
 - Run existence tests: `npm run existsTests` -- validates route registration and class imports
 - ALWAYS wait for full test completion. Tests may appear to hang but will complete within 12 seconds.
@@ -115,7 +115,7 @@ Always reference these instructions first and fallback to search or bash command
 4. For database changes: ensure MongoDB/MariaDB running, then `npm run dbTests`
 5. For API changes: `npm run E2Etests`
 6. Start dev server: `npm run dev`
-7. Test manually: `curl http://localhost:3001/` and relevant endpoints
+7. Test manually: `curl http://localhost:3011/` and relevant endpoints
 
 ### Debugging and Troubleshooting
 - Application logs appear in console when running `npm start` or `npm run dev`
@@ -140,8 +140,8 @@ Always reference these instructions first and fallback to search or bash command
 
 ### Critical Environment Variables
 Required for basic functionality:
-- `PORT` (default: 3001)
-- `SERVERURL` (default: http://localhost:3001)
+- `PORT` (default: 3011)
+- `SERVERURL` (default: http://localhost:3011)
 
 Required for database functionality:
 - `MONGODB` (MongoDB connection string)
@@ -159,7 +159,7 @@ Required for external services:
 
 ### Manual Testing Scenarios
 After making changes, always validate:
-1. **Basic Service**: Start server with `npm start`, test with `curl http://localhost:3001/` - should return HTML containing "TPEN3 SERVICES BABY!!!" in the response body
+1. **Basic Service**: Start server with `npm start`, test with `curl http://localhost:3011/` - should return HTML containing "TPEN3 SERVICES BABY!!!" in the response body
 2. **Route Registration**: `npm run existsTests` passes without errors
 3. **Core Logic**: `npm run unitTests` passes tests that don't require databases (some MongoDB tests will timeout - this is expected)
 4. **API Authentication**: Protected endpoints like `/my/profile` return 401 status code without valid tokens
@@ -178,8 +178,8 @@ npm run unitTests   # Should pass most tests, MongoDB tests will timeout
 # Test application serving
 npm start &
 sleep 3
-curl http://localhost:3001/  # Should return HTML with service name
-curl -w "Status: %{http_code}\n" http://localhost:3001/my/profile  # Should return 401
+curl http://localhost:3011/  # Should return HTML with service name
+curl -w "Status: %{http_code}\n" http://localhost:3011/my/profile  # Should return 401
 kill %1  # Stop the background server
 ```
 

@@ -110,7 +110,7 @@ Start the development server with hot reloading:
 npm run dev
 ```
 
-The server will start on the port specified in your `.env` file (default: 3001).
+The server will start on the port specified in your `.env` file (default:3011).
 
 ### Production Mode
 Run the server in production mode:
@@ -121,7 +121,7 @@ npm start
 ### Checking the Server
 Once running, you can test the server:
 ```bash
-curl http://localhost:3001
+curl http://localhost:3011
 ```
 
 ## Testing

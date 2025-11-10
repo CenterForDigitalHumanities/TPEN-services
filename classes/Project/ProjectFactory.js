@@ -31,7 +31,7 @@ export default class ProjectFactory {
     if (!manifest) {
       throw {
         status: 404,
-        message: err.message ?? "No manifest found. Cannot process empty object"
+        message: "No manifest found. Cannot process empty object"
       }
     }
     const _id = database.reserveId()
@@ -553,7 +553,7 @@ export default class ProjectFactory {
     if (!manifest) {
       throw {
         status: 404,
-        message: err.message ?? "No manifest found. Cannot process empty object"
+        message: "No manifest found. Cannot process empty object"
       }
     }
     const _id = manifest.id.split('/').slice(-2, -1)[0]
