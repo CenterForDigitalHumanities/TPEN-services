@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Ai Assistants when working with code in this repository.  There is also a .github/copilot-instructions.md file.
+This file provides guidance to AI Assistants when working with code in this repository.  There is also a .github/copilot-instructions.md file.
 
 ## Project Overview
 
@@ -210,6 +210,9 @@ kill %1  # Stop the background server
 - [TPEN3 Services API](https://dev.api.t-pen.org)
 - [TPEN3 Services GitHub](https://github.com/CenterForDigitalHumanities/TPEN-services)
 - [TPEN3 Interfaces GitHub](https://github.com/CenterForDigitalHumanities/TPEN-interfaces)
+- [RERUM API Docs](https://store.rerum.io/v1/API.html)
+- [RERUM API GitHub](https://github.com/CenterForDigitalHumanities/rerum_server_nodejs/)
+- [TPEN3 Homepage](https://three.t-pen.org)
 
 ## Additional Developer Preferences for AI Assistants
 
@@ -218,7 +221,7 @@ kill %1  # Stop the background server
   - Explain what changed and why.
   - Stop before committing.  The developer will decide at what point to commit changes on their own.  You do not need to keep track of it.
 2. No auto compacting.  We will compact ourselves if the context gets too big.
-3. When creating documentation do not add Claude as an @author.
+3. When creating documentation do not add any AI as an @author.
 4. Preference using current libraries and native javascript/ExpressJS/Node capabilities instead of installing new npm packages to solve a problem.
   - However, we understand that sometimes we need a package or a package is perfectly designed to solve our problem.  Ask if we want to use them in these cases.
 5. We like colors in our terminals!  Be diverse and color text in the terminal for the different purposes of the text.  (ex. errors red, success green, logs bold white, etc.)
