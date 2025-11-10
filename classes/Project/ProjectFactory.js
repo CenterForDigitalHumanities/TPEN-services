@@ -781,21 +781,6 @@ export default class ProjectFactory {
           if (annotationPages.length) {
             canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages })
           }
-
-          const annotationPages = []
-          await Promise.all(project.layers.map(layer => {
-              return layer.pages.forEach(page => {
-                if((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX) ) {
-                  const annotationPage = {
-                    id: page.id,
-                    type: "AnnotationPage"
-                  }
-                  annotationPages.push(annotationPage)
-                }
-              })
-            })
-          )
-          annotationPages.length > 0 && (canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages }))
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
