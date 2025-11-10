@@ -67,7 +67,7 @@ const allRoutes = (() => {
 
 /**
  * Check if a route exists in the Express app
- * @param {string} path - The route path to check (e.g., '/', '/api', '/:id', '/:projectId/hotkeys')
+ * @param {string} path - The route path to check (e.g., '/', '/api', '/:id')
  * @param {string} [method] - Optional HTTP method to check (e.g., 'get', 'post', 'put', 'delete', 'patch')
  * @returns {boolean} - True if the route exists (and matches the method if specified)
  */
@@ -209,24 +209,6 @@ describe('Check to see that all expected route patterns exist. #exists_unit', ()
     
     it('DELETE /project/:projectId/removeCustomRoles -- remove custom roles', () => {
       expect(routeExists('/:projectId/removeCustomRoles', 'delete')).toBe(true)
-    })
-  })
-  
-  describe('Project hotkeys routes', () => {
-    it('GET /project/:projectId/hotkeys -- get project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys', 'get')).toBe(true)
-    })
-    
-    it('POST /project/:projectId/hotkeys -- create project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys', 'post')).toBe(true)
-    })
-    
-    it('PUT /project/:projectId/hotkeys -- update project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys', 'put')).toBe(true)
-    })
-    
-    it('DELETE /project/:projectId/hotkeys -- delete project hotkeys', () => {
-      expect(routeExists('/:projectId/hotkeys', 'delete')).toBe(true)
     })
   })
   

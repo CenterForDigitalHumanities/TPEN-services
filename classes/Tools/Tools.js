@@ -268,7 +268,7 @@ export default class Tools {
                 "enabled": true, 
                 "tagName": "" 
             },
-            "url": "http://enigma.huma-num.fr/",
+            "url": "https://enigma.huma-num.fr/",
             "location": "pane"
         },
         {

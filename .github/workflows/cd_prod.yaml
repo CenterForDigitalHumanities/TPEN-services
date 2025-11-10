@@ -5,13 +5,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@master
       - name: Create .env from secrets
         uses: SpicyPizza/create-envfile@v2
         with:
+          fail_on_empty: false
+          sort_keys: false
           envkey_DOWN: ${{ secrets.DOWN }}
-          envkey_READONLY: ${{ secrets.READONLY }}
           envkey_SERVERURL: ${{ secrets.SERVERURL }}
           envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
           envkey_MONGODB: ${{ secrets.MONGODB }}
@@ -22,7 +24,6 @@ jobs:
           envkey_MARIADB: ${{ secrets.MARIADB }}
           envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
           envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
-          envkey_RERUMURL: ${{ secrets.RERUMURL }}
           envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
           envkey_TINYPEN: ${{ secrets.TINYPEN }}
           envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
@@ -31,6 +32,11 @@ jobs:
           envkey_SMTP_HOST: ${{ secrets.SMTP_HOST }}
           envkey_SMTP_PORT: ${{ secrets.SMTP_PORT }}
           envkey_TPEN_EMAIL_CC: ${{ secrets.TPEN_EMAIL_CC }}
+          envkey_REPO_OWNER: ${{ secrets.REPO_OWNER }}
+          envkey_REPO_NAME: ${{ secrets.REPO_NAME }}
+          envkey_GITHUB_TOKEN: ${{ secrets.STATIC_REPO_TOKEN }}
+          envkey_BRANCH: ${{ secrets.BRANCH }}
+          envkey_TPENSTATIC: ${{ secrets.TPENSTATIC }}
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
@@ -54,6 +60,7 @@ jobs:
   deploy:
     needs:
       - test
+    environment: production
     strategy:
       matrix:
         machines:
@@ -74,3 +81,9 @@ jobs:
           git pull
           npm install
           pm2 -s start -i max bin/tpen3_services.js
+      - name: Wait for service to be ready
+        run: sleep 5
+      - name: Run smoke tests
+        run: |
+          cd /srv/node/tpen-services/
+          SMOKE_TEST_URL=https://api.t-pen.org node __tests__/smoke.test.js

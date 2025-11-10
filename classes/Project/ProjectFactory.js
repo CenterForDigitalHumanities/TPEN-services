@@ -9,7 +9,6 @@ import dbDriver from "../../database/driver.js"
 import vault from "../../utilities/vault.js"
 import imageSize from 'image-size'
 import mime from 'mime-types'
-import Hotkeys from "../HotKeys/Hotkeys.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
 import { checkIfUrlExists } from "../../utilities/checkIfUrlExists.js"
 
@@ -32,7 +31,7 @@ export default class ProjectFactory {
     if (!manifest) {
       throw {
         status: 404,
-        message: err.message ?? "No manifest found. Cannot process empty object"
+        message: "No manifest found. Cannot process empty object"
       }
     }
     const _id = database.reserveId()
@@ -92,9 +91,9 @@ export default class ProjectFactory {
   }
 
   /** 
-   * Creates a new manifest from given image url and project label.
-   * @param {string} imageUrl - URL of the image to be used in the project.
-   * @param {string} label - Label for the project.
+   * Creates a new manifest from given image url(s) and project label.
+   * @param {string|string[]} imageInput - URL or array of URLs of images to be used.
+   * @param {string} projectLabel - Label for the project.
    * @returns {Object} - Returns the created project object.
    */
 
@@ -134,13 +133,6 @@ export default class ProjectFactory {
     }
   }
 
-  static async cloneHotkeys(projectId, copiedProjectId) {
-    const hotkeys = await Hotkeys.getByProjectId(projectId)
-    if (hotkeys) {
-      const copiedHotkeys = new Hotkeys(copiedProjectId, hotkeys.symbols)
-      await copiedHotkeys.create()
-    }
-  }
 
   static async cloneGroup(projectId, creator, modules = { 'Group Members': true }) {
     const project = await ProjectFactory.loadAsUser(projectId, creator)
@@ -291,8 +283,13 @@ export default class ProjectFactory {
 
     const symbols = projectTPEN28Data.projectButtons.map(button => String.fromCharCode(button.key))
     if (symbols && symbols.length > 0) {
-      const copiedHotkeys = new Hotkeys(projectTPEN3Data._id, symbols)
-      await copiedHotkeys.create()
+      const project = new Project(projectTPEN3Data._id)
+      project.data = projectTPEN3Data
+      project.data.interfaces ??= {}
+      const namespace = process.env.TPENINTERFACESNAMESPACE ?? "https://app.t-pen.org/"
+      project.data.interfaces[namespace] ??= {}
+      project.data.interfaces[namespace].quicktype = symbols
+      await project.update()
     }
     let projectTools = []
     try {
@@ -337,7 +334,6 @@ export default class ProjectFactory {
     if (!responseManifest.ok) {
       throw new Error(`Failed to fetch: ${responseManifest.statusText}`)
     }
-
     const manifestJson = await responseManifest.json()
     const itemsByPage = {}
     manifestJson.items.map((item, index) => {
@@ -359,20 +355,20 @@ export default class ProjectFactory {
         itemsByPage[allPagesIds[index]] = annotations
       }
     })
-
+    
     for (const [endpoint, annotations] of Object.entries(itemsByPage)) {
-      try {
-        const response = await fetch(`${endpoint}/line`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${userToken}`,
-          },
-          body: JSON.stringify(annotations),
-        })
-        if (!response.ok) {
-          throw new Error(`Failed to import annotations: ${response.statusText}`)
-        }
+        try {
+          const response = await fetch(`${endpoint}/line`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${userToken}`,
+            },
+            body: JSON.stringify(annotations),
+          })
+          if (!response.ok) {
+            throw new Error(`Failed to import annotations: ${response.statusText}`)
+          }
       } catch (error) {
         console.error("Error importing annotations:", error)
       }
@@ -401,7 +397,6 @@ export default class ProjectFactory {
     await this.cloneLayers(project, copiedProject, creator, database, true)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
-    await this.cloneHotkeys(project._id, copiedProject._id)
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
@@ -425,7 +420,6 @@ export default class ProjectFactory {
     await this.cloneLayers(project, copiedProject, creator, database, false)
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': true })
-    await this.cloneHotkeys(project._id, copiedProject._id)
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
 
@@ -460,7 +454,7 @@ export default class ProjectFactory {
     }
 
     // modules is an object with keys as module names and values as true/false
-    // e.g. { 'Metadata': true, 'Group Members': [member1, member2], 'Hotkeys': true, 'Tools': false, 'Layers': [{ 'layerId1': { withAnnotations: true } }, { 'layerId2': { withAnnotations: false } }] }
+    // e.g. { 'Metadata': true, 'Group Members': [member1, member2], 'Tools': false, 'Layers': [{ 'layerId1': { withAnnotations: true } }, { 'layerId2': { withAnnotations: false } }] }
 
     if (!modules || typeof modules !== 'object') {
       throw {
@@ -551,18 +545,15 @@ export default class ProjectFactory {
 
     modules['Group Members'].push(creator)
     const copiedGroup = await this.cloneGroup(project._id, creator, { 'Group Members': modules['Group Members'] })
-    if (modules['Hotkeys']) {
-      await this.cloneHotkeys(project._id, copiedProject._id)
-    }
     copiedProject._lastModified = copiedProject.layers[0]?.pages[0]?.id.split('/').pop()
     return database.save({ ...copiedProject, creator, group: copiedGroup._id }, "projects")
   }
-
+  
   static async DBObjectFromImage(manifest, creator) {
     if (!manifest) {
       throw {
         status: 404,
-        message: err.message ?? "No manifest found. Cannot process empty object"
+        message: "No manifest found. Cannot process empty object"
       }
     }
     const _id = manifest.id.split('/').slice(-2, -1)[0]
@@ -586,8 +577,9 @@ export default class ProjectFactory {
     }
   }
 
-  static async createManifestFromImage(imageURLs, projectLabel, creator) {
-    if (!imageURLs || imageURLs.length === 0) {
+  static async createManifestFromImage(imageInput, projectLabel, creator) {
+    const imageURLs = Array.isArray(imageInput) ? imageInput : [imageInput]
+    if (!imageURLs.length) {
       throw {
         status: 404,
         message: "No image found. Cannot process further."
@@ -639,7 +631,6 @@ export default class ProjectFactory {
     const now = Date.now().toString().slice(-6)
     const label = projectLabel ?? now
     const _id = database.reserveId()
-    
     const projectManifest = {
       "@context": "http://iiif.io/api/presentation/3/context.json",
       id: `${process.env.TPENSTATIC}/${_id}/manifest.json`,
@@ -652,99 +643,42 @@ export default class ProjectFactory {
     for (let index = 0; index < imageURLs.length; index++) {
       const imageURL = imageURLs[index]
       let isIIFImage = false
-      let IIIFServiceParts = imageURL.split('/').reverse()
+      const IIIFServiceParts = imageURL.split('/').reverse()
       let IIIFServiceJson = null
-      let IIIFServiceURL = IIIFServiceParts.slice(4).reverse().join("/")
-
-      if (
-        isValidIIIFQuality(IIIFServiceParts[0].split(".")[0]) &&
-        isValidIIIFRotation(IIIFServiceParts[1]) &&
-        isValidIIIFSize(IIIFServiceParts[2]) &&
-        isValidIIIFRegion(IIIFServiceParts[3])
-      ) {
+      const IIIFServiceURL = IIIFServiceParts.slice(4).reverse().join("/")
+      if (isValidIIIFQuality(IIIFServiceParts[0].split(".")[0]) && isValidIIIFRotation(IIIFServiceParts[1]) && isValidIIIFSize(IIIFServiceParts[2]) && isValidIIIFRegion(IIIFServiceParts[3])) {
         try {
           const response = await fetch(`${IIIFServiceURL}/info.json`)
           if (response.ok) {
             const info = await response.json()
-            if (info?.protocol === "http://iiif.io/api/image") {
-              isIIFImage = true
-              IIIFServiceJson = info
-            }
-          } else {
-            console.warn(`Failed to fetch IIIF info for image ${index + 1}`)
+            if (info?.protocol === "http://iiif.io/api/image") { isIIFImage = true; IIIFServiceJson = info }
           }
-        } catch (err) {
-          console.error("Error fetching IIIF info:", err.message)
-        }
+        } catch (err) { console.warn("IIIF info fetch issue:", err.message) }
       }
-
       const dimensions = await this.getImageDimensions(imageURL)
-
       const canvasLayout = {
         id: `${process.env.TPENSTATIC}/${_id}/canvas-${index + 1}.json`,
         type: "Canvas",
-        label: { "none": [`${label} Page ${index + 1}`] },
-        width: dimensions.width,
-        height: dimensions.height,
+        label: { none: [`${label} Page ${index + 1}`] },
+        width: dimensions?.width,
+        height: dimensions?.height,
         items: [
-          {
-            id: `${process.env.TPENSTATIC}/${_id}/contentPage.json`,
-            type: "AnnotationPage",
-            items: [
-              {
-                id: `${process.env.TPENSTATIC}/${_id}/content.json`,
-                type: "Annotation",
-                motivation: "painting",
-                body: {
-                  id: imageURL,
-                  type: "Image",
-                  format: mime.lookup(imageURL) || "image/jpeg",
-                  width: dimensions.width,
-                  height: dimensions.height,
-                  ...(isIIFImage && {
-                    service: [{
-                      id: IIIFServiceURL,
-                      type: IIIFServiceJson?.type,
-                      profile: IIIFServiceJson?.profile,
-                    }]
-                  })
-                },
-                target: `${process.env.TPENSTATIC}/${_id}/canvas-${index + 1}.json`
-              }
-            ]
-          }
+          { id: `${process.env.TPENSTATIC}/${_id}/contentPage.json`, type: "AnnotationPage", items: [ { id: `${process.env.TPENSTATIC}/${_id}/content.json`, type: "Annotation", motivation: "painting", body: { id: imageURL, type: "Image", format: mime.lookup(imageURL) || "image/jpeg", width: dimensions?.width, height: dimensions?.height, ...(isIIFImage && { service: [{ id: IIIFServiceURL, type: IIIFServiceJson?.type, profile: IIIFServiceJson?.profile }] }) }, target: `${process.env.TPENSTATIC}/${_id}/canvas-${index + 1}.json` } ] }
         ],
         creator: await fetchUserAgent(creator),
       }
-
       projectManifest.items.push(canvasLayout)
-      const projectCanvas = {
-        "@context": "http://iiif.io/api/presentation/3/context.json",
-        ...canvasLayout
-      }
-
+      const projectCanvas = { "@context": "http://iiif.io/api/presentation/3/context.json", ...canvasLayout }
       await this.uploadFileToGitHub(projectCanvas, _id)
     }
-
     await this.uploadFileToGitHub(projectManifest, _id)
-
     return await ProjectFactory.DBObjectFromImage(projectManifest, creator)
-      .then(async (project) => {
+      .then(async project => {
         const projectObj = new Project()
-        const group = await Group.createNewGroup(creator,
-          {
-            label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`,
-            members: { [creator]: { roles: [] } }
-          })
-          .then((group) => group._id)
+        const group = await Group.createNewGroup(creator, { label: project.label ?? project.title ?? `Project ${new Date().toLocaleDateString()}`, members: { [creator]: { roles: [] } } }).then(g => g._id)
         return await projectObj.create({ ...project, creator, group })
       })
-      .catch((err) => {
-        throw {
-          status: err.status ?? 500,
-          message: err.message ?? "Internal Server Error"
-        }
-      })
+      .catch(err => { throw { status: err.status ?? 500, message: err.message ?? "Internal Server Error" } })
   }
 
   /**
@@ -837,19 +771,16 @@ export default class ProjectFactory {
           }
 
           const annotationPages = []
-          await Promise.all(project.layers.map(layer => {
-            return layer.pages.forEach(page => {
-              if ((page.target === canvas.id) && page.id.startsWith(process.env.RERUMIDPREFIX)) {
-                const annotationPage = {
-                  id: page.id,
-                  type: "AnnotationPage"
-                }
-                annotationPages.push(annotationPage)
+          project.layers.forEach(layer => {
+            layer.pages.forEach(page => {
+              if (page.target === canvas.id && page.id.startsWith(process.env.RERUMIDPREFIX)) {
+                annotationPages.push({ id: page.id, type: "AnnotationPage" })
               }
             })
           })
-          )
-          annotationPages.length > 0 && (canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages }))
+          if (annotationPages.length) {
+            canvasItems.annotations = await this.getAnnotations({ annotations: annotationPages })
+          }
           return canvasItems
         } catch (error) {
           console.error(`Error processing layer:`, error)
@@ -942,27 +873,14 @@ export default class ProjectFactory {
     const token = process.env.GITHUB_TOKEN
 
     async function getFileSha() {
-      const res = await fetch(manifestUrl, {
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        return data.sha
-      }
+      const res = await fetch(manifestUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } })
+      if (res.ok) return (await res.json()).sha
       return null
     }
-
     async function uploadWithSha(sha = null) {
-      const res = await fetch(manifestUrl, {
+      return await fetch(manifestUrl, {
         method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: sha ? `Updated ${projectId}/${fileName}` : `Created ${projectId}/${fileName}`,
           content: Buffer.from(JSON.stringify(manifest, null, 2)).toString('base64'),
@@ -970,42 +888,26 @@ export default class ProjectFactory {
           ...(sha && { sha }),
         })
       })
-      return res
     }
-
-    async function delay(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms))
-    }
+    async function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
 
     try {
       let sha = await getFileSha()
       let response
       const maxRetries = 3
-
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         response = await uploadWithSha(sha)
-
         if (response.ok) break
-
-        if (response.status === 409) {
-          await delay(500 * attempt)
-          sha = await getFileSha()
-          continue
-        }
-
+        if (response.status === 409) { await delay(500 * attempt); sha = await getFileSha(); continue }
         const errText = await response.text()
         throw new Error(`GitHub upload failed: ${response.status} - ${errText}`)
       }
-
       if (!response.ok) {
         const errText = await response.text()
         throw new Error(`GitHub upload failed after ${maxRetries} attempts: ${errText}`)
       }
-
       return await response.json()
-    } catch (error) {
-      console.error(`Failed to upload ${projectId}/${fileName}:`, error)
-    }
+    } catch (error) { console.error(`Failed to upload ${projectId}/${fileName}:`, error) }
   }
 
   /**
@@ -1040,95 +942,37 @@ export default class ProjectFactory {
 
     const commitsUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/commits?path=${filePath}&per_page=1`
     const commits = await fetch(commitsUrl, { headers })
-      .then(async (resp) => {
-        if (resp.ok) return resp.json()
-        const errText = await resp.text()
-        return [{ state: -1, "message": `${resp.status} - ${errText}` }]
-      })
-      .catch(err => {
-        console.error(err)
-        return [{ state: -1, "message": `TPEN Services Internal Server Error` }]
-      })
-
-    if (commits?.length && commits[0].state === -1) {
-      console.error(commits[0])
-      return { status: -1, message: commits[0].message }
-    }
-
-    if (!commits.length) {
-      return { status: 1 }
-    }
+      .then(async resp => resp.ok ? resp.json() : [{ state: -1, message: `${resp.status} - ${await resp.text()}` }])
+      .catch(() => [{ state: -1, message: 'TPEN Services Internal Server Error' }])
+    if (commits?.length && commits[0].state === -1) return { status: -1, message: commits[0].message }
+    if (!commits.length) return { status: 1 }
     const commitMessage = commits[0].commit?.message.split(' ')
 
-    if (commitMessage[0] === 'Delete') {
-      return { status: 1 }
-    }
+  if (commitMessage[0] === 'Delete') return { status: 1 }
 
     const latestSha = commits[0].sha
     const deployments = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments?sha=${latestSha}`
     const deployment = await fetch(deployments, { headers })
-      .then(async (resp) => {
-        if (resp.ok) return resp.json()
-        const errText = await resp.text()
-        return [{ state: -1, "message": `${resp.status} - ${errText}` }]
-      })
-      .catch(err => {
-        console.error(err)
-        return [{ state: -1, "message": `TPEN Services Internal Server Error` }]
-      })
-
-    if (deployment?.length && deployment[0].state === -1) {
-      console.error(deployment[0])
-      return { status: -1, message: deployment[0].message }
-    }
-
-    if (deployment.length === 0) {
-      if (await checkIfUrlExists(url)) {
-        if (new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000)) {
-          return { status: 2 }
-        }
-        else {
-          return { status: 3 }
-        }
-      }
+      .then(async resp => resp.ok ? resp.json() : [{ state: -1, message: `${resp.status} - ${await resp.text()}` }])
+      .catch(() => [{ state: -1, message: 'TPEN Services Internal Server Error' }])
+    if (deployment?.length && deployment[0].state === -1) return { status: -1, message: deployment[0].message }
+    if (!deployment.length) {
+      if (await checkIfUrlExists(url)) return new Date(commits[0].commit?.committer?.date) > new Date(Date.now() - 2 * 60 * 1000) ? { status: 2 } : { status: 3 }
       return { status: 9 }
     }
 
     const statusUrl = `https://api.github.com/repos/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/deployments/${deployment[0].id}/statuses`
     const statuses = await fetch(statusUrl, { headers })
-      .then(async (resp) => {
-        if (resp.ok) return resp.json()
-        const errText = await resp.text()
-        return [{ state: -1, "message": `${resp.status} - ${errText}` }]
-      })
-      .catch(err => {
-        console.error(err)
-        return [{ state: -1, "message": `TPEN Services Internal Server Error` }]
-      })
-
-    if (statuses?.length && statuses[0].state === -1) {
-      console.error(statuses[0])
-      return { status: -1, message: statuses[0].message }
-    }
-
-    if (!statuses.length) {
-      return { status: 8 }
-    }
-
-    const latestStatus = statuses[0]
-    const state = latestStatus.state
-
-    if (state === 'success') {
-      return { status: 4 }
-    } else if (['queued', 'in_progress', 'pending'].includes(state)) {
-      return { status: 5 }
-    } else if (state === 'inactive') {
-      return { status: 6 }
-    } else if (state === 'error') {
-      return { status: 7 }
-    } else {
-      return { status: 8 }
-    }
+      .then(async resp => resp.ok ? resp.json() : [{ state: -1, message: `${resp.status} - ${await resp.text()}` }])
+      .catch(() => [{ state: -1, message: 'TPEN Services Internal Server Error' }])
+    if (statuses?.length && statuses[0].state === -1) return { status: -1, message: statuses[0].message }
+    if (!statuses.length) return { status: 8 }
+    const state = statuses[0].state
+    if (state === 'success') return { status: 4 }
+    if (['queued', 'in_progress', 'pending'].includes(state)) return { status: 5 }
+    if (state === 'inactive') return { status: 6 }
+    if (state === 'error') return { status: 7 }
+    return { status: 8 }
   }
 
   static async loadAsUser(project_id, user_id) {
@@ -1195,19 +1039,6 @@ export default class ProjectFactory {
         }
       },
 
-      {
-        $lookup: {
-          from: "hotkeys",
-          localField: "_id",
-          foreignField: "_id",
-          as: "hotkeys"
-        },
-      },
-      {
-        $set: {
-          "options.hotkeys": { $arrayElemAt: ["$hotkeys.symbols", 0] }
-        }
-      },
       {
         $project: {
           _id: 1,

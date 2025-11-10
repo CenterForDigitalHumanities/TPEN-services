@@ -7,8 +7,6 @@
  */ 
 
 import mariadb from 'mariadb'
-import dotenv from 'dotenv'
-let storedEnv = dotenv.config()
 
 class DatabaseController {
     constructor(connect=false) {
