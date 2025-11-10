@@ -44,8 +44,8 @@ async function runCheck(name, fn) {
   }
 }
 
-// One Jest test that runs all smoke checks and asserts none failed
-test('post-deployment smoke checks', async () => {
+// Main smoke check function that can run standalone or in Jest
+async function runSmokeChecks() {
   const checks = []
 
   // Root endpoint returns expected content
@@ -88,8 +88,32 @@ test('post-deployment smoke checks', async () => {
 
   const failed = checks.filter(c => !c.ok)
   if (failed.length > 0) {
-    // Fail the Jest test and print details
     const msg = failed.map(f => `${f.name}: ${f.error}`).join('\n')
     throw new Error(`Smoke tests failed:\n${msg}`)
   }
-}, 30000) // set a longer timeout for the whole test if needed
+  
+  return { total: checks.length, passed: checks.length - failed.length, failed: failed.length }
+}
+
+// If running standalone (node script), execute and exit with appropriate code
+// Check if this file is being run directly (not imported by Jest)
+const isRunningStandalone = import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'))
+if (isRunningStandalone || (typeof test === 'undefined' && process.argv[1]?.includes('smoke.test.js'))) {
+  console.log('Running smoke tests...')
+  runSmokeChecks()
+    .then(result => {
+      console.log(`✓ All ${result.total} smoke checks passed`)
+      process.exit(0)
+    })
+    .catch(err => {
+      console.error('✗ Smoke tests failed:', err.message)
+      process.exit(1)
+    })
+}
+
+// If running in Jest, wrap in a test
+if (typeof test !== 'undefined') {
+  test('post-deployment smoke checks', async () => {
+    await runSmokeChecks()
+  }, 30000) // set a longer timeout for the whole test if needed
+}
