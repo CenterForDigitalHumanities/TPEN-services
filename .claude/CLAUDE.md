@@ -11,7 +11,7 @@ Always reference these instructions first and fallback to search or bash command
 ## Working Effectively
 
 ### Bootstrap, Build, and Test the Repository
-- Copy environment configuration: `cp sample.env .env`
+- Copy environment configuration: `cp .env.development .env`
 - Install dependencies: `npm install` -- takes up to 20 seconds. NEVER CANCEL. Set timeout to 60+ seconds.
 - Run unit tests: `npm run unitTests` -- takes 12 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
 - Run existence tests: `npm run existsTests` -- takes 7 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
@@ -27,7 +27,7 @@ Always reference these instructions first and fallback to search or bash command
 - Node.js >= 22.20.0 
 - MongoDB (for database tests and full functionality)
 - MariaDB (for database tests and full functionality)
-- Copy `sample.env` to `.env` for basic functionality
+- Copy `.env.development` to `.env` for basic functionality
 - For full functionality, configure database connection strings in `.env`
 
 ## Validation
@@ -63,7 +63,9 @@ Always reference these instructions first and fallback to search or bash command
 ├── bin/tpen3_services.js  # Server entry point
 ├── package.json           # Dependencies and scripts
 ├── jest.config.js         # Test configuration
-├── sample.env             # Environment template
+├── config.env             # Safe defaults (committed)
+├── .env.development       # Development template
+├── .env.production        # Production template
 ├── API.md                 # API documentation
 ├── classes/               # Domain model classes
 │   ├── Project/           # Project management
@@ -106,10 +108,10 @@ Always reference these instructions first and fallback to search or bash command
 - MongoDB: Configure MONGODB and MONGODBNAME in `.env`
 - MariaDB: Configure MARIADB, MARIADBNAME, MARIADBUSER, MARIADBPASSWORD in `.env`
 - TinyPEN API: Configure TINYPEN in `.env`
-- Default configurations in `sample.env` point to development services
+- Default configurations in `config.env` point to localhost development services
 
 ### Development Workflow
-1. Always start with: `cp sample.env .env && npm install`
+1. Always start with: `cp .env.development .env && npm install`
 2. Make code changes
 3. Test with: `npm run existsTests` (fast, database-independent)
 4. For database changes: ensure MongoDB/MariaDB running, then `npm run dbTests`
@@ -168,7 +170,7 @@ After making changes, always validate:
 ### Complete Validation Workflow Example
 ```bash
 # Basic setup
-cp sample.env .env
+cp .env.development .env
 npm install
 
 # Test core functionality without databases
@@ -190,7 +192,7 @@ kill %1  # Stop the background server
 - Database controllers: `database/mongo/controller.js`, `database/maria/controller.js`
 - Authentication middleware: `auth/index.js`
 - Domain models: `classes/[Entity]/[Entity].js`
-- Configuration: `sample.env` (template), `.env` (local config)
+- Configuration: `config.env` (safe defaults), `.env.development` and `.env.production` (templates), `.env` (local config, gitignored)
 
 ### Dependencies and Versions
 - Express.js for REST API framework
