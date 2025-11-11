@@ -6,11 +6,11 @@
  * to be loaded correctly.
  *
  * Usage:
- *   pm2 start ecosystem.config.js --env development
- *   pm2 start ecosystem.config.js --env production
+ *   pm2 start ecosystem.config.cjs --env development
+ *   pm2 start ecosystem.config.cjs --env production
  */
 
-export default {
+module.exports = {
   apps: [
     {
       name: 'tpen3-services',
