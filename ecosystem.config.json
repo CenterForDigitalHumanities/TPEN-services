@@ -4,9 +4,8 @@
     {
       "name": "tpen3_services",
       "script": "./bin/tpen3_services.js",
-      "instances": "1",
-      "exec_mode": "fork",
-      "node_args": "--import ./env-loader.js",
+      "instances": "max",
+      "exec_mode": "cluster",
       "env_development": {
         "NODE_ENV": "development"
       },

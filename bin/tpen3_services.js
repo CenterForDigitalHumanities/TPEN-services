@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Load environment variables before anything else
+import '../env-loader.js'
+
 /**
  * Module dependencies.
  */
