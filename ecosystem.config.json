@@ -6,7 +6,7 @@
       "script": "./bin/tpen3_services.js",
       "instances": "max",
       "exec_mode": "cluster",
-      "node_args": "--env-file=config.env --env-file=.env",
+      "node_args": "--import ./env-loader.js",
       "env_development": {
         "NODE_ENV": "development"
       },
