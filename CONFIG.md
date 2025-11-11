@@ -2,7 +2,7 @@
 
 ## Configuration Architecture
 
-TPEN Services uses a layered configuration approach to separate safe defaults from environment-specific secrets. Configuration is loaded using Node.js's native `--env-file` flag (Node.js 22+):
+TPEN Services uses a layered configuration approach to separate safe defaults from environment-specific secrets. Configuration is loaded using `--import ./env-loader.js` with the dotenv package:
 
 1. **`config.env`** (committed) - Safe defaults for development
 2. **`.env`** (gitignored) - Environment-specific overrides
@@ -47,10 +47,11 @@ cp .env.production .env
 # Optional: Database connections, SMTP, etc.
 ```
 
-The application loads configuration via Node.js's native `--env-file` flag in this order:
+The application loads configuration via `--import ./env-loader.js` using the dotenv package in this order:
 
-1. `config.env` - provides defaults
-2. `.env` - overrides with environment-specific values
+1. `config.env` - provides safe defaults
+2. `.env.{NODE_ENV}` - environment-specific overrides (.env.development, .env.production, .env.test)
+3. `.env` - local/server overrides (HIGHEST PRIORITY)
 
 ### What Goes Where?
 

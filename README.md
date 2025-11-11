@@ -36,7 +36,7 @@ Services required by TPEN interfaces in order to interact with data.
 
 ### Configuration Files
 
-TPEN Services uses a layered configuration approach with Node.js's native `--env-file` flag:
+TPEN Services uses a layered configuration approach with `--import ./env-loader.js` using the dotenv package:
 
 - **`config.env`** - Safe defaults, committed to repository
   - Works out-of-the-box for local Docker/MongoDB/MariaDB
@@ -58,10 +58,11 @@ TPEN Services uses a layered configuration approach with Node.js's native `--env
   - Contains your specific settings and secrets
   - Overrides values from `config.env`
 
-Configuration is loaded via Node.js's native `--env-file` flag (Node.js 22+):
+Configuration is loaded via `--import ./env-loader.js` using the dotenv package:
 
 1. `config.env` is loaded first (provides safe defaults)
-2. `.env` is loaded second (overrides with environment-specific values)
+2. `.env.{NODE_ENV}` is loaded second (environment-specific: .env.development, .env.production, .env.test)
+3. `.env` is loaded last (local/server overrides - HIGHEST PRIORITY)
 
 ### Environment Variables
 
