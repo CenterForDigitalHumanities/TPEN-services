@@ -80,7 +80,7 @@ jobs:
           git checkout development
           git pull
           npm install
-          pm2 -s start -i max bin/tpen3_services.js
+          pm2 start ecosystem.config.js --env development
       - name: Wait for service to be ready
         run: sleep 5
       - name: Run smoke tests
