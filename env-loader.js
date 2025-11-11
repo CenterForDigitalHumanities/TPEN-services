@@ -66,6 +66,9 @@ const files = [
 files.forEach(file => {
   if (existsSync(file)) {
     dotenv.config({ path: file, override: true })
+    console.log(`✓ Loaded environment file: ${file}`)
+  } else {
+    console.log(`✗ Missing environment file: ${file}`)
   }
 })
 
