@@ -46,21 +46,25 @@
 
 import dotenv from 'dotenv'
 import { existsSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+// Get the directory where this file lives (absolute path)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const env = process.env.NODE_ENV || 'development'
 
 // Load in priority order (later files override earlier ones)
+// Using absolute paths to ensure they work in PM2 cluster mode on RHEL
 const files = [
-  './config.env',        // 1. Base defaults (lowest priority)
-  `./.env.${env}`,       // 2. Environment-specific (.env.development, .env.production, .env.test)
-  './.env'               // 3. Local/server overrides (HIGHEST PRIORITY)
+  join(__dirname, 'config.env'),        // 1. Base defaults (lowest priority)
+  join(__dirname, `.env.${env}`),       // 2. Environment-specific (.env.development, .env.production, .env.test)
+  join(__dirname, '.env')               // 3. Local/server overrides (HIGHEST PRIORITY)
 ]
-console.log("loop files")
-console.log("files")
+
 files.forEach(file => {
   if (existsSync(file)) {
-    console.log("Applying env")
-    console.log(file)
     dotenv.config({ path: file, override: true })
   }
 })
