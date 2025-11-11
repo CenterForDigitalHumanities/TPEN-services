@@ -21,7 +21,7 @@
    "scripts": {
       "start": "node --import ./env-loader.js ./bin/tpen3_services.js",
       "dev": "nodemon --import ./env-loader.js ./bin/tpen3_services.js",
-      "allTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js --config=jest.all.config.js",
+      "allTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js",
       "unitTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",
       "E2Etests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js -t e2e ",
       "existsTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js -t exists_unit ",

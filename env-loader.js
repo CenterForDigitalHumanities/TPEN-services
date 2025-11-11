@@ -58,6 +58,8 @@ const files = [
 
 files.forEach(file => {
   if (existsSync(file)) {
+    console.log("Applying env")
+    console.log(file)
     dotenv.config({ path: file, override: true })
   }
 })
