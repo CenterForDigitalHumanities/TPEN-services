@@ -6,9 +6,6 @@
  * https://github.com/thehabes
  */
 
-import dotenv from "dotenv"
-let storedEnv = dotenv.config()
-
 import {MongoClient, ObjectId} from "mongodb"
 let err_out = Object.assign(new Error(), {
   status: 123,
@@ -31,7 +28,6 @@ class DatabaseController {
    * */
   async connect() {
     try {
-      console.log(`Connect to mongodb client ${process.env.MONGODB}`)
       this.client = new MongoClient(process.env.MONGODB)
       this.db = this.client.db(process.env.MONGODBNAME)
       await this.client.connect()
@@ -40,8 +36,8 @@ class DatabaseController {
       return
     } catch (err) {
       console.error("MongoDB Connection Failed")
-      // console.error(process.env.MONGODB)
-      // console.error(err)
+      console.error(process.env.MONGODB)
+      console.error(err)
       throw err
     }
   }
