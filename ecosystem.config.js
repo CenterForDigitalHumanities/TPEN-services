@@ -10,7 +10,7 @@
  *   pm2 start ecosystem.config.js --env production
  */
 
-module.exports = {
+export default {
   apps: [
     {
       name: 'tpen3-services',
