@@ -22,7 +22,9 @@ import privateProfileRouter from './userProfile/privateProfile.js'
 import proxyRouter from './utilities/proxy.js'
 import feedbackRouter from './feedback/feedbackRoutes.js'
 import dotenv from 'dotenv'
-let storedEnv = dotenv.config()
+import dotenvExpand from 'dotenv-expand'
+
+dotenvExpand.expand(dotenv.config())
 
 let app = express()
 
