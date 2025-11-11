@@ -19,8 +19,8 @@
    "author": "Research Computing Group <research.computing@slu.edu> (https://slu.edu)",
    "repository": "github:CenterForDigitalHumanities/rerum_server_nodejs",
    "scripts": {
-      "start_want": "node --import ./env-loader.js ./bin/tpen3_services.js",
-      "start" :"node ./bin/tpen3_services.js",
+      "start": "node --import ./env-loader.js ./bin/tpen3_services.js",
+      "start_works" :"node ./bin/tpen3_services.js",
       "dev": "nodemon --import ./env-loader.js ./bin/tpen3_services.js",
       "allTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js",
       "unitTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js -t _unit",

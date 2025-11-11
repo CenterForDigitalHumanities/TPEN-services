@@ -55,7 +55,8 @@ const files = [
   `./.env.${env}`,       // 2. Environment-specific (.env.development, .env.production, .env.test)
   './.env'               // 3. Local/server overrides (HIGHEST PRIORITY)
 ]
-
+console.log("loop files")
+console.log("files")
 files.forEach(file => {
   if (existsSync(file)) {
     console.log("Applying env")
