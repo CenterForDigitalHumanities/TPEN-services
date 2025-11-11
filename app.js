@@ -21,6 +21,8 @@ import userProfileRouter from './userProfile/index.js'
 import privateProfileRouter from './userProfile/privateProfile.js'
 import proxyRouter from './utilities/proxy.js'
 import feedbackRouter from './feedback/feedbackRoutes.js'
+import dotenv from 'dotenv'
+let storedEnv = dotenv.config()
 
 let app = express()
 
