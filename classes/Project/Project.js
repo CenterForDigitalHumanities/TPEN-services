@@ -3,7 +3,6 @@ import { sendMail } from "../../utilities/mailer/index.js"
 import { validateProjectPayload } from "../../utilities/validatePayload.js"
 import { isNotValidName, isNotValidValue } from "../../utilities/validateNameValue.js"
 import User from "../User/User.js"
-import { createHash } from "node:crypto"
 import Group from "../Group/Group.js"
 
 const database = new dbDriver("mongo")
@@ -226,7 +225,7 @@ export default class Project {
  * @returns {Promise<Object>} - A promise that resolves to the updated object after the changes have been saved.
  *
  * @example
- * const newMetadata = [{ label: 'Description'}{value: 'Updated description' }];
+ * const newMetadata = [{ label: 'Description', value: 'Updated description' }];
  * await instance.updateMetadata(newMetadata);
  * console.log(instance.data.metadata); // Outputs: { title: 'New Title', description: 'Updated description' }
  *

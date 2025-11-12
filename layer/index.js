@@ -58,7 +58,6 @@ router.route('/:layerId')
             const project = await Project.getById(projectId)
             if (!project?._id) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
             const layer = await findLayerById(layerId, projectId)
-            const originalPages = layer.pages ?? []
             if (!layer?.id) return respondWithError(res, 404, `Layer '${layerId}' not found in project`)
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
@@ -77,7 +76,7 @@ router.route('/:layerId')
                 pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
                 layer.pages = pages
             }
-            await updateLayerAndProject(layer, project, user._id, originalPages)
+            await updateLayerAndProject(layer, project, user._id)
             res.status(200).json(layer)
         } catch (error) {
             console.error(error)

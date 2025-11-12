@@ -102,12 +102,6 @@ export default class Layer {
         }
     }
 
-    #getPageReference({ id, label, target }) {
-        label ??= id.split("/").pop()
-        const resolvedLabel = label.none?.join(", ") ?? label.en?.join(", ") ?? label
-        return { id, label: resolvedLabel, target }
-    }
-
     async #saveCollectionToRerum() {
         const layerAsCollection = {
             "@context": "http://www.w3.org/ns/anno.jsonld",

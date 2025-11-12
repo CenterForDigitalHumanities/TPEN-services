@@ -48,13 +48,6 @@ export function respondWithError(res, status, message) {
    res.status(status).json({ message })
 }
 
-// Send a successful response with the appropriate JSON
-export function respondWithJSON(res, status, json) {
-   const id = manifest["@id"] ?? manifest.id ?? null
-   res.set("Content-Type", "application/json; charset=utf-8")
-   res.status(status)
-   res.json(json)
-}
 // Fetch a project by ID
 export const getProjectById = async (projectId, res) => {
    const project = await Project.getById(projectId)
@@ -75,45 +68,12 @@ export const findLineInPage = (page, lineId) => {
 }
 
 /**
- * Pages have been reordered upstream.  Their prev/next relationships are not right.
- * Go through the Pages and update them if their prev/next has changed.
- * Record the Page modification as a content change, and make sure it is attributed.
- *
- * @param project - A Project class object
- * @param layer - A Layer class object with page changes applied to layer.pages
- * @param userId - The userId hash that caused the reoder
- */
-export const rebuildPageOrder = async (project, layer, userId) => {
-   if (!project) throw new Error(`Must know project to rebuild Page order`)
-   const pages = layer?.pages
-   if (!pages || !Array.isArray(pages)) throw new Error(`Cannot rebuild page order without an array of pages`)
-   if (!userId) throw new Error(`Must know user id`)
-   for await (const [index, page] of pages.entries()) {
-      const thisPageNext = index < pages.length - 1 ? pages[index + 1].id : null
-      const thisPagePrev = index > 0 ? pages[index - 1].id : null
-      const pageChanged = (page.next !== thisPageNext || page.prev !== thisPagePrev)
-      if (!pageChanged) continue
-      // A reordered page counts as a content change
-      if (!page.creator) page.creator = await fetchUserAgent(userId)
-      // We know these values will be upgraded to RERUM ids, so force it and make sure not to leave temp ids.
-      // FIXME: If there is an error upgrading the referenced page downstream, the rerum ID made here might not resolve.
-      if (page.next !== thisPageNext) page.next = thisPageNext ? process.env.RERUMIDPREFIX + thisPageNext.split("/").pop() : null
-      if (page.prev !== thisPagePrev) page.prev = thisPagePrev ? process.env.RERUMIDPREFIX + thisPagePrev.split("/").pop() : null
-      // It is possible the Layer is still temp.  It will be upgraded, so partOf should be the upgraded RERUM ID
-      page.partOf = process.env.RERUMIDPREFIX + layer.id.split("/").pop()
-      await recordModification(project, page.id, userId)
-      await page.update(pageChanged)
-   }
-}
-
-/**
  * Update a Layer, its Pages, and the Project it belongs to.
  * Upgrade a Layer only if it contains upgraded Pages.
- * 
+ *
  * @param layer - A Layer class object with changes applied to it
  * @param project - A Project class object that will need to update
  * @param userId - The TPEN3 User hash id performing the action
- * @param originalPages - An Array of Page _ids that represent the original upstream Layer.pages organization before any modifications.
  */
 export const updateLayerAndProject = async (layer, project, userId) => {
    if (!project) throw new Error(`Must know project to update Layer`)
