@@ -380,29 +380,107 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
 #### `GET /project/:projectId/layer/:layerId/page/:pageid`
 #### `GET /project/:projectId/page/:pageid`
 
-- **Description**: Get an existing page within a project.
+- **Description**: Get an existing page within a project. Supports optional resolution of referenced objects.
 - **Parameters**:
   - `projectId`: ID of the project.
-  - `layerId`: Optional.  ID of the layer.
+  - `layerId`: Optional. ID of the layer.
   - `pageId`: The ID of the page.
+- **Query Parameters**:
+  - `resolved` (optional): When set to `true`, fetches and embeds full Annotation objects (including their `body` property) and the complete AnnotationCollection, instead of returning just references.
 
 - **Responses**:
 
-    - **200**: Page found
+    - **200**: Page found (Standard Response - default)
         ```json
         {
-            "@context": "string",
-            "id": "string",
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "id": "https://devstore.rerum.io/v1/id/690e3278181d9a1585455f48",
             "type": "AnnotationPage",
             "label": {
-                "none":[
-                    "TPEN3 Page"
+                "none": [
+                    "Page canvas-1.json"
                 ]
             },
-            "target": "string",
-            "items":[ {"type": "Canvas"} ],
-            "prev": "string",
-            "next": "string"
+            "target": "https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+            "partOf": [
+                {
+                    "id": "https://devstore.rerum.io/v1/id/690e3278181d9a1585455f47",
+                    "type": "AnnotationCollection"
+                }
+            ],
+            "items": [
+                {
+                    "id": "https://devstore.rerum.io/v1/id/690e90716f9768af5837f0f6",
+                    "type": "Annotation",
+                    "target": {
+                        "source": "https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+                        "type": "SpecificResource",
+                        "selector": {
+                            "type": "FragmentSelector",
+                            "conformsTo": "http://www.w3.org/TR/media-frags/",
+                            "value": "xywh=pixel:783,3350,679,300"
+                        }
+                    }
+                }
+            ],
+            "prev": null,
+            "next": "https://dev.api.t-pen.org/project/690e3278181d9a1585455f46/page/690e3278181d9a1585455f49"
         }
         ```
+
+    - **200**: Page found (Resolved Response - with `?resolved=true`)
+        ```json
+        {
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "id": "https://devstore.rerum.io/v1/id/690e3278181d9a1585455f48",
+            "type": "AnnotationPage",
+            "label": {
+                "none": [
+                    "Page canvas-1.json"
+                ]
+            },
+            "target": "https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+            "partOf": [
+                {
+                    "@context": "http://iiif.io/api/presentation/3/context.json",
+                    "id": "https://devstore.rerum.io/v1/id/690e3278181d9a1585455f47",
+                    "type": "AnnotationCollection",
+                    "label": {
+                        "none": ["Transcription Layer"]
+                    },
+                    "items": ["..."]
+                }
+            ],
+            "items": [
+                {
+                    "@context": "http://iiif.io/api/presentation/3/context.json",
+                    "id": "https://devstore.rerum.io/v1/id/690e90716f9768af5837f0f6",
+                    "type": "Annotation",
+                    "motivation": "transcribing",
+                    "target": {
+                        "source": "https://tpen-project-examples.habesoftware.app/transcription-project/canvas-1.json",
+                        "type": "SpecificResource",
+                        "selector": {
+                            "type": "FragmentSelector",
+                            "conformsTo": "http://www.w3.org/TR/media-frags/",
+                            "value": "xywh=pixel:783,3350,679,300"
+                        }
+                    },
+                    "body": [
+                        {
+                            "type": "TextualBody",
+                            "value": "Transcribed text content",
+                            "format": "text/plain"
+                        }
+                    ],
+                    "creator": "https://devstore.rerum.io/v1/id/68d6dd6a718ee294f194be04"
+                }
+            ],
+            "prev": null,
+            "next": "https://dev.api.t-pen.org/project/690e3278181d9a1585455f46/page/690e3278181d9a1585455f49"
+        }
+        ```
+        Note: The resolved response includes the full Annotation objects with their `body` properties and the complete AnnotationCollection object. If any individual resolution fails, the endpoint gracefully falls back to returning the reference for that specific object.
+
+    - **404**: Page not found
     - **500**: Server error

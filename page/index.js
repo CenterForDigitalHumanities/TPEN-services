@@ -19,6 +19,7 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
+    const { resolved } = req.query
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
@@ -30,8 +31,9 @@ router.route('/:pageId')
         res.status(200).json(page)
         return
       }
+
       // build as AnnotationPage
-      const pageAsAnnotationPage = {
+      let pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
         id: page.id,
         type: 'AnnotationPage',
@@ -45,6 +47,61 @@ router.route('/:pageId')
         prev: page.prev ?? null,
         next: page.next ?? null
       }
+
+      // If resolved=true, fetch and embed full objects instead of references
+      if (resolved === 'true') {
+        try {
+          // Resolve all Annotation objects in items array
+          const itemPromises = pageAsAnnotationPage.items.map(async (item) => {
+            if (item.id && typeof item.id === 'string' && item.id.startsWith('http')) {
+              try {
+                const response = await fetch(item.id)
+                if (response.ok) {
+                  return await response.json()
+                }
+              } catch (err) {
+                console.error(`Failed to resolve Annotation ${item.id}:`, err.message)
+              }
+            }
+            return item // Fallback to original reference if fetch fails
+          })
+
+          // Resolve AnnotationCollection in partOf
+          const partOfPromises = pageAsAnnotationPage.partOf.map(async (collection) => {
+            if (collection.id && typeof collection.id === 'string' && collection.id.startsWith('http')) {
+              try {
+                const response = await fetch(collection.id)
+                if (response.ok) {
+                  return await response.json()
+                }
+              } catch (err) {
+                console.error(`Failed to resolve AnnotationCollection ${collection.id}:`, err.message)
+              }
+            }
+            return collection // Fallback to original reference if fetch fails
+          })
+
+          // Wait for all resolutions with graceful error handling
+          const [resolvedItems, resolvedPartOf] = await Promise.all([
+            Promise.allSettled(itemPromises),
+            Promise.allSettled(partOfPromises)
+          ])
+
+          // Extract fulfilled values or use original references
+          pageAsAnnotationPage.items = resolvedItems.map((result, index) =>
+            result.status === 'fulfilled' ? result.value : pageAsAnnotationPage.items[index]
+          )
+
+          pageAsAnnotationPage.partOf = resolvedPartOf.map((result, index) =>
+            result.status === 'fulfilled' ? result.value : pageAsAnnotationPage.partOf[index]
+          )
+
+        } catch (resolutionError) {
+          // If resolution fails entirely, log error but continue with references
+          console.error('Error during resolution:', resolutionError.message)
+        }
+      }
+
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
