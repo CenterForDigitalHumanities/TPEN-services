@@ -75,12 +75,12 @@ jobs:
               touch /srv/node/logs/tpen3_services.txt
           fi
           cd /srv/node/tpen-services/
-          pm2 stop tpen3_services
+          pm2 delete tpen3_services || true
           git stash
           git checkout main
           git pull
           npm install
-          pm2 -s start -i max bin/tpen3_services.js
+          pm2 start ecosystem.config.json --env production --cwd .
       - name: Wait for service to be ready
         run: sleep 5
       - name: Run smoke tests

@@ -5,7 +5,6 @@
  * directly inspecting the Express app's routing table.
  */
 
-import request from "supertest"
 import { jest } from "@jest/globals"
 import app from "../app.js"
 import fs from "fs"

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Ai Assistants when working with code in this repository.  There is also a .github/copilot-instructions.md file.
+This file provides guidance to AI Assistants when working with code in this repository.  There is also a .github/copilot-instructions.md file.
 
 ## Project Overview
 
@@ -11,7 +11,7 @@ Always reference these instructions first and fallback to search or bash command
 ## Working Effectively
 
 ### Bootstrap, Build, and Test the Repository
-- Copy environment configuration: `cp sample.env .env`
+- Copy environment configuration: `cp .env.development .env`
 - Install dependencies: `npm install` -- takes up to 20 seconds. NEVER CANCEL. Set timeout to 60+ seconds.
 - Run unit tests: `npm run unitTests` -- takes 12 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
 - Run existence tests: `npm run existsTests` -- takes 7 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
@@ -27,7 +27,7 @@ Always reference these instructions first and fallback to search or bash command
 - Node.js >= 22.20.0 
 - MongoDB (for database tests and full functionality)
 - MariaDB (for database tests and full functionality)
-- Copy `sample.env` to `.env` for basic functionality
+- Copy `.env.development` to `.env` for basic functionality
 - For full functionality, configure database connection strings in `.env`
 
 ## Validation
@@ -63,7 +63,9 @@ Always reference these instructions first and fallback to search or bash command
 ├── bin/tpen3_services.js  # Server entry point
 ├── package.json           # Dependencies and scripts
 ├── jest.config.js         # Test configuration
-├── sample.env             # Environment template
+├── config.env             # Safe defaults (committed)
+├── .env.development       # Development template
+├── .env.production        # Production template
 ├── API.md                 # API documentation
 ├── classes/               # Domain model classes
 │   ├── Project/           # Project management
@@ -106,10 +108,10 @@ Always reference these instructions first and fallback to search or bash command
 - MongoDB: Configure MONGODB and MONGODBNAME in `.env`
 - MariaDB: Configure MARIADB, MARIADBNAME, MARIADBUSER, MARIADBPASSWORD in `.env`
 - TinyPEN API: Configure TINYPEN in `.env`
-- Default configurations in `sample.env` point to development services
+- Default configurations in `config.env` point to localhost development services
 
 ### Development Workflow
-1. Always start with: `cp sample.env .env && npm install`
+1. Always start with: `cp .env.development .env && npm install`
 2. Make code changes
 3. Test with: `npm run existsTests` (fast, database-independent)
 4. For database changes: ensure MongoDB/MariaDB running, then `npm run dbTests`
@@ -168,7 +170,7 @@ After making changes, always validate:
 ### Complete Validation Workflow Example
 ```bash
 # Basic setup
-cp sample.env .env
+cp .env.development .env
 npm install
 
 # Test core functionality without databases
@@ -190,7 +192,7 @@ kill %1  # Stop the background server
 - Database controllers: `database/mongo/controller.js`, `database/maria/controller.js`
 - Authentication middleware: `auth/index.js`
 - Domain models: `classes/[Entity]/[Entity].js`
-- Configuration: `sample.env` (template), `.env` (local config)
+- Configuration: `config.env` (safe defaults), `.env.development` and `.env.production` (templates), `.env` (local config, gitignored)
 
 ### Dependencies and Versions
 - Express.js for REST API framework
@@ -210,6 +212,9 @@ kill %1  # Stop the background server
 - [TPEN3 Services API](https://dev.api.t-pen.org)
 - [TPEN3 Services GitHub](https://github.com/CenterForDigitalHumanities/TPEN-services)
 - [TPEN3 Interfaces GitHub](https://github.com/CenterForDigitalHumanities/TPEN-interfaces)
+- [RERUM API Docs](https://store.rerum.io/v1/API.html)
+- [RERUM API GitHub](https://github.com/CenterForDigitalHumanities/rerum_server_nodejs/)
+- [TPEN3 Homepage](https://three.t-pen.org)
 
 ## Additional Developer Preferences for AI Assistants
 
@@ -218,7 +223,7 @@ kill %1  # Stop the background server
   - Explain what changed and why.
   - Stop before committing.  The developer will decide at what point to commit changes on their own.  You do not need to keep track of it.
 2. No auto compacting.  We will compact ourselves if the context gets too big.
-3. When creating documentation do not add Claude as an @author.
+3. When creating documentation do not add any AI as an @author.
 4. Preference using current libraries and native javascript/ExpressJS/Node capabilities instead of installing new npm packages to solve a problem.
   - However, we understand that sometimes we need a package or a package is perfectly designed to solve our problem.  Ask if we want to use them in these cases.
 5. We like colors in our terminals!  Be diverse and color text in the terminal for the different purposes of the text.  (ex. errors red, success green, logs bold white, etc.)
