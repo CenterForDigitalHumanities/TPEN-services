@@ -90,7 +90,7 @@ export default class Group {
             roles = roles.split(" ")
         }
 
-        washRoles(roles)
+        roles = washRoles(roles)
         this.data.members[memberId].roles = roles
         await this.update()
     }
@@ -120,7 +120,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        washRoles(roles, allowOwner)
+        roles = washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
     }
 
@@ -148,7 +148,7 @@ export default class Group {
             }
             roles = roles.split(" ")
         }
-        washRoles(roles, allowOwner)
+        roles = washRoles(roles, allowOwner)
         const currentRoles = this.data.members[memberId].roles
         if (currentRoles.length <= 1 && roles.includes(currentRoles[0])) {
             throw {
