@@ -7,12 +7,12 @@ import import28Router from "./import28Router.js"
 import projectReadRouter from "./projectReadRouter.js"
 import memberRouter from "./memberRouter.js"
 import customRolesRouter from "./customRolesRouter.js"
-import hotkeysRouter from "./hotkeysRouter.js"
 import metadataRouter from "./metadataRouter.js"
 import projectToolsRouter from "./projectToolsRouter.js"
 import memberUpgradeRouter from "./memberUpgradeRouter.js"
 import memberDeclineInviteRouter from "./memberDeclineInviteRouter.js"
 import projectCopyRouter from "./projectCopyRouter.js"
+import customMetadataRouter from "./customMetadataRouter.js"
 
 const router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
@@ -25,10 +25,10 @@ router.use(import28Router)
 router.use(projectReadRouter)
 router.use(memberRouter)
 router.use(customRolesRouter)
-router.use(hotkeysRouter)
 router.use(metadataRouter)
 router.use(projectToolsRouter)
 router.use(projectCopyRouter)
+router.use(customMetadataRouter)
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)

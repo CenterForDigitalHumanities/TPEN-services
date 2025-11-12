@@ -55,26 +55,41 @@ npm install
 
 ### 3. Environment Configuration
 
-1. Copy the sample environment file:
-```bash
-cp sample.env .env
-```
+TPEN Services uses a layered configuration approach:
 
-2. Edit `.env` to configure your local environment. Key settings include:
-   - **PORT**: Server port (default: 3001)
-   - **MONGODB**: MongoDB connection string
-   - **MONGODBNAME**: MongoDB database name
-   - **AUDIENCE**: Auth0 audience for JWT validation ( or  alternate authentication )
+1. **Copy the development template:**
+
+   ```bash
+   cp .env.development .env
+   ```
+
+2. **Edit `.env` to configure your local environment.** Key settings to update:
+   - **GITHUB_TOKEN**: Your GitHub Personal Access Token (required)
+   - **AUDIENCE**: Auth0 audience for JWT validation
    - **DOMAIN**: Auth0 domain
+   - **MONGODB**: MongoDB connection string (if different from localhost)
+   - **PORT**: Server port (default: 3011)
+
+3. **Configuration files explained:**
+   - `config.env` - Safe defaults (committed, no secrets)
+   - `.env.development` - Development template (committed)
+   - `.env.production` - Production template (committed)
+   - `.env` - Your local config (gitignored, created by you)
+
+The application loads `config.env` first for defaults, then `.env` for your overrides.
 
 **Important**: Never commit your `.env` file to version control. It's included in `.gitignore` for security.
+
+See [CONFIG.md](./CONFIG.md) for complete configuration documentation.
 
 ### 4. Database Setup
 
 #### MongoDB
+
 - Install MongoDB locally or use MongoDB Atlas (cloud)
-- Update the `MONGODB` connection string in your `.env` file
-- Ensure the database specified in `MONGODBNAME` exists
+- The default configuration (`config.env`) uses `mongodb://localhost:27017`
+- Update `MONGODB` in your `.env` file if using a different connection
+- Ensure the database specified in `MONGODBNAME` exists (default: `testTpen`)
 
 **Note**: The project uses MongoDB as its primary database. While the codebase includes a MariaDB controller, it is not actively used and MongoDB is sufficient for development.
 
@@ -95,7 +110,7 @@ Start the development server with hot reloading:
 npm run dev
 ```
 
-The server will start on the port specified in your `.env` file (default: 3001).
+The server will start on the port specified in your `.env` file (default:3011).
 
 ### Production Mode
 Run the server in production mode:
@@ -106,7 +121,7 @@ npm start
 ### Checking the Server
 Once running, you can test the server:
 ```bash
-curl http://localhost:3001
+curl http://localhost:3011
 ```
 
 ## Testing
@@ -233,7 +248,9 @@ TPEN-services/
 ├── __tests__/         # Global tests
 ├── app.js             # Express app configuration
 ├── package.json       # Dependencies and scripts
-├── sample.env         # Environment variables template
+├── config.env         # Safe defaults (committed)
+├── .env.development   # Development template
+├── .env.production    # Production template
 └── README.md          # Basic project information
 ```
 

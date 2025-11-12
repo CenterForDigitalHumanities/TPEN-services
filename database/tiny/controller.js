@@ -6,9 +6,7 @@
  * https://github.com/thehabes 
  */ 
 
-import dotenv from 'dotenv'
 import { ObjectId } from 'mongodb'
-let storedEnv = dotenv.config()
 let err_out = Object.assign(new Error(), {"status":123, "message":"N/A", "_dbaction":"N/A"})
 
 class DatabaseController {
@@ -60,7 +58,7 @@ class DatabaseController {
 
     reserveId(seed) {
         try {
-            return ObjectId(seed).toHexString()
+            return new ObjectId(seed).toHexString()
         } catch (err) {
             return new ObjectId().toHexString()
         }
