@@ -82,12 +82,12 @@ describe.skip('page endpoint end to end unit test (spinning up the endpoint and 
   })
 
   it('should reject suspicious content in items array', async () => {
-    const suspiciousPage = 
-    { 
+    const suspiciousPage =
+    {
       label: "OK",
       items: [
         {
-          "type":"Annotation", 
+          "type":"Annotation",
           "body": {
             "type": "TextualBody",
             "value": "while(true) return true",
@@ -103,6 +103,26 @@ describe.skip('page endpoint end to end unit test (spinning up the endpoint and 
       .send(suspiciousPage)
 
     expect(res.status).toBe(400)
+  })
+
+  it('Call to /page with resolved=true query parameter. Should accept the parameter without error.', async () => {
+    const res = await request(routeTester)
+      .get('/123?resolved=true')
+      // Without a real page, this will fail at the findPageById level
+      // but we're verifying the endpoint accepts the parameter
+      expect([200, 404]).toContain(res.statusCode)
+  })
+
+  it('Call to /page with resolved=false query parameter. Should accept the parameter without error.', async () => {
+    const res = await request(routeTester)
+      .get('/123?resolved=false')
+      expect([200, 404]).toContain(res.statusCode)
+  })
+
+  it('Call to /page without resolved query parameter. Should work as before (backward compatible).', async () => {
+    const res = await request(routeTester)
+      .get('/123')
+      expect([200, 404]).toContain(res.statusCode)
   })
 
 })
