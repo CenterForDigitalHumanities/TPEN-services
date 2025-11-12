@@ -3,7 +3,6 @@ import { sendMail } from "../../utilities/mailer/index.js"
 import { validateProjectPayload } from "../../utilities/validatePayload.js"
 import { isNotValidName, isNotValidValue } from "../../utilities/validateNameValue.js"
 import User from "../User/User.js"
-import { createHash } from "node:crypto"
 import Group from "../Group/Group.js"
 
 const database = new dbDriver("mongo")

@@ -180,15 +180,4 @@ export default class User {
         return userProjects
       })
   }
-  async addPublicInfo(data) {
-    // add or modify public info
-    if (!data) return
-    const previousUser = this.data
-    const publicProfile = { ...previousUser.profile, ...data }
-    const updatedUser = await database.update({
-      ...previousUser,
-      profile: publicProfile
-    }, "User")
-    return updatedUser
-  }
 }

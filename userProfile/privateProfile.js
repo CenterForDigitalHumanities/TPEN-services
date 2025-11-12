@@ -1,5 +1,5 @@
 import express from "express"
-import { respondWithError, isValidJSON } from "../utilities/shared.js"
+import { respondWithError } from "../utilities/shared.js"
 import User from "../classes/User/User.js"
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import cors from "cors"

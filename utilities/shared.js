@@ -48,13 +48,6 @@ export function respondWithError(res, status, message) {
    res.status(status).json({ message })
 }
 
-// Send a successful response with the appropriate JSON
-export function respondWithJSON(res, status, json) {
-   const id = manifest["@id"] ?? manifest.id ?? null
-   res.set("Content-Type", "application/json; charset=utf-8")
-   res.status(status)
-   res.json(json)
-}
 // Fetch a project by ID
 export const getProjectById = async (projectId, res) => {
    const project = await Project.getById(projectId)

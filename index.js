@@ -7,7 +7,7 @@
  * */
 
 import express from 'express'
-import * as utils from './utilities/shared.js'
+import { respondWithError } from './utilities/shared.js'
 
 let router = express.Router()
 
@@ -34,7 +34,7 @@ router
   .get(function (_req,res) {
     fs.readFile('API.md', 'utf8', (err, data) => {
       if (err) {
-        utils.respondWithError(res, 500, 'Failed to read API.md')
+        respondWithError(res, 500, 'Failed to read API.md')
         return
       }
       res.format({
@@ -49,7 +49,7 @@ router
     respondWithHTML(res)
   })
   .all((_req, res, next) => {
-    utils.respondWithError(res, 404, 'There is nothing for you here.')
+    respondWithError(res, 404, 'There is nothing for you here.')
   })
 
 export { router as default }

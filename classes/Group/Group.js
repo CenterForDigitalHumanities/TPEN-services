@@ -281,12 +281,13 @@ function washRoles(roles, allowOwner = false) {
                 message: "Invalid role:" + role
             }
         }
-        role.toUpperCase()
-        if (!allowOwner && role === "OWNER") {
+        const upperRole = role.toUpperCase()
+        if (!allowOwner && upperRole === "OWNER") {
             throw {
                 status: 400,
                 message: "Cannot assign OWNER role"
             }
         }
+        return upperRole
     })
 }
