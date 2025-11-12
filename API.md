@@ -388,6 +388,8 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
 - **Query Parameters**:
   - `resolved` (optional): When set to `true`, fetches and embeds full Annotation objects (including their `body` property) and the complete AnnotationCollection, instead of returning just references.
 
+    > **Performance Note:** Enabling `resolved=true` may significantly increase response times, especially for pages with many annotations or when external URLs are slow to respond. Each referenced object is fetched with a 10-second timeout. Use this parameter only when necessary, and avoid using it with large datasets or in performance-critical workflows. For pages with many annotations, consider fetching annotations individually or implementing client-side caching.
+
 - **Responses**:
 
     - **200**: Page found (Standard Response - default)
