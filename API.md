@@ -380,11 +380,13 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
 #### `GET /project/:projectId/layer/:layerId/page/:pageid`
 #### `GET /project/:projectId/page/:pageid`
 
-- **Description**: Get an existing page within a project.
+- **Description**: Get an existing page within a project. By default, returns an AnnotationPage with references to Annotations and Collections. Use the `fullyResolved=true` query parameter to get fully embedded content.
 - **Parameters**:
   - `projectId`: ID of the project.
   - `layerId`: Optional.  ID of the layer.
   - `pageId`: The ID of the page.
+- **Query Parameters**:
+  - `fullyResolved`: Optional. Set to `true` to resolve and embed all referenced Annotations and Collections. Default is `false`.
 
 - **Responses**:
 
@@ -405,4 +407,7 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
             "next": "string"
         }
         ```
+        
+        When `fullyResolved=true`, the `items` array will contain fully embedded Annotation objects (with `body` properties), and `partOf` will contain fully embedded AnnotationCollection objects instead of just references.
+        
     - **500**: Server error
