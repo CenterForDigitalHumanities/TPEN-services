@@ -225,7 +225,7 @@ export default class Project {
  * @returns {Promise<Object>} - A promise that resolves to the updated object after the changes have been saved.
  *
  * @example
- * const newMetadata = [{ label: 'Description'}{value: 'Updated description' }];
+ * const newMetadata = [{ label: 'Description', value: 'Updated description' }];
  * await instance.updateMetadata(newMetadata);
  * console.log(instance.data.metadata); // Outputs: { title: 'New Title', description: 'Updated description' }
  *
