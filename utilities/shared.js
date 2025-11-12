@@ -336,3 +336,26 @@ export const handleVersionConflict = (res, error) => {
     ...(error.lineId && { lineId: error.lineId })
   })
 }
+
+/**
+ * Resolve a URI reference by fetching its content
+ * @param {string} uri - The URI to resolve
+ * @returns {Promise<Object>} The resolved object or null if resolution fails
+ */
+export const resolveURI = async (uri) => {
+  if (!uri || typeof uri !== 'string') {
+    return null
+  }
+  
+  try {
+    const response = await fetch(uri)
+    if (!response.ok) {
+      console.warn(`Failed to resolve URI ${uri}: ${response.status}`)
+      return null
+    }
+    return await response.json()
+  } catch (error) {
+    console.warn(`Error resolving URI ${uri}:`, error.message)
+    return null
+  }
+}
