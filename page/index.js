@@ -34,9 +34,13 @@ router.route('/:pageId')
       const resolvedItems = await Promise.all(
         (page.items ?? []).map(async item => {
           if (item.id) {
+            console.log("Initial item in page.items:", item);
             const line = new Line(item);
-            return await line.getFullLine();
+            await line.getFullLine(); // Populate the Line instance with full data
+            console.log("Line after getFullLine():", line);
+            return line.asJSON(false); // Return the full JSON representation
           }
+          console.log("Item without ID in page.items:", item);
           return item;
         })
       );

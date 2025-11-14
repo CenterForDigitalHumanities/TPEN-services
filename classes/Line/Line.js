@@ -12,20 +12,19 @@ export default class Line {
         return this
     }
 
-    constructor({ id, target, body, motivation, label, type, creator = null }) {
+    constructor({ id, target, body = '', motivation = 'transcribing', label = '', type = 'Annotation', creator = null }) {
         if (!id || !target)
             throw new Error('Line data is malformed.')
         this.id = id // Ensure the id is assigned
         this.body = body
         this.target = target
         this.creator = creator
+        this.motivation = motivation
+        this.label = label
+        this.type = type
         if (id.startsWith?.(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
-        if (motivation) this.motivation = motivation
-        if (label) this.label = label
-        if (type) this.type = type
-        return this
     }
 
     static build(projectId, pageId, { body, target, motivation, label, type }, creator) {
@@ -153,34 +152,44 @@ export default class Line {
     }
 
     async getFullLine() {
-        if (this.#tinyAction === 'update') {
+        console.log("getFullLine called for ID:", this.id);
+        const isRerumId = this.id.startsWith(process.env.RERUMIDPREFIX);
+        console.log("Is Rerum ID:", isRerumId);
+        if (isRerumId) {
             try {
                 const rerumLine = await fetch(this.id).then(res => res.json());
-                Object.assign(this, rerumLine);
+                console.log("Rerum Line fetched:", rerumLine);
+                // Prioritize properties from rerumLine, ensuring correct mapping
+                this.type = rerumLine.type || this.type;
+                this.motivation = rerumLine.motivation || this.motivation;
+                this.label = rerumLine.label?.none?.[0] || rerumLine.label || this.label; // Handle nested label or direct label
+                this.body = rerumLine.body || this.body;
+                this.target = rerumLine.target || this.target;
+                this.creator = rerumLine.creator || this.creator;
+                // Any other properties that need to be explicitly set
             } catch (err) {
-                console.warn(`Failed to fetch full line from RERUM for ID: ${this.id}, returning partial line.`, err);
+                console.error(`Failed to fetch full line from RERUM for ID: ${this.id}, returning partial line.`, err);
             }
         }
-        return this.asJSON(true);
+        console.log("Line instance after getFullLine execution:", this);
+        return this;
     }
 
     asJSON(isLD) {
-        return isLD ? {
-            '@context': 'http://iiif.io/api/presentation/3/context.json',
+        const base = {
             id: this.id,
-            type: 'Annotation',
-            motivation: this.motivation ?? 'transcribing',
-            target: this.target,
-            body: this.body,
-        } : {
-            id: this.id,
+            type: this.type ?? 'Annotation',
             body: this.body ?? '',
             target: this.target ?? '',
             creator: this.creator,
-            motivation: this.motivation,
-            type: this.type,
-            label: this.label
-        }
+            motivation: this.motivation ?? 'transcribing',
+            label: this.label ?? '',
+        };
+
+        return isLD ? {
+            '@context': 'http://iiif.io/api/presentation/3/context.json',
+            ...base
+        } : base;
     }
 
     asHTML() {
