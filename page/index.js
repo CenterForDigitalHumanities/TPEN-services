@@ -8,6 +8,7 @@ let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { buildResolvedPage } from '../utilities/resolutionService.js'
 
 router.use(
   cors(common_cors)
@@ -19,14 +20,29 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
+    const { resolved } = req.query  // Capture resolved parameter
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
+      
+      // NEW: Handle resolved request
+      if (resolved === 'true') {
+        try {
+          const resolvedPage = await buildResolvedPage(page, projectId)
+          res.status(200).json(resolvedPage)
+          return
+        } catch (resolutionError) {
+          console.error('Page resolution failed:', resolutionError)
+          respondWithError(res, 500, 'Failed to resolve page content')
+          return
+        }
+      }
+      
+      // EXISTING: Original behavior preserved for backward compatibility
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
         res.status(200).json(page)
         return
       }
