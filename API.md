@@ -385,6 +385,9 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
   - `projectId`: ID of the project.
   - `layerId`: Optional.  ID of the layer.
   - `pageId`: The ID of the page.
+- **Query Parameters**:
+  - `embed`: (Optional) Expands related data to reduce API roundtrips. Supported values:
+    - `layers.lines`: Includes layer metadata and all line annotations in the response
 
 - **Responses**:
 
@@ -405,4 +408,45 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
             "next": "string"
         }
         ```
+
+        With `?embed=layers.lines`:
+        ```json
+        {
+            "@context": "string",
+            "id": "string",
+            "type": "AnnotationPage",
+            "label": {
+                "none":[
+                    "TPEN3 Page"
+                ]
+            },
+            "target": "string",
+            "items":[ {"type": "Canvas"} ],
+            "prev": "string",
+            "next": "string",
+            "_embedded": {
+                "layers": {
+                    "id": "string",
+                    "label": "TPEN3 Layer",
+                    "type": "AnnotationCollection",
+                    "pages": 5,
+                    "lines": [
+                        {
+                            "id": "string",
+                            "body": "Line content",
+                            "target": "string",
+                            "creator": "string",
+                            "pageId": "string",
+                            "partOf": "string"
+                        }
+                    ]
+                }
+            }
+        }
+        ```
+
+        - `_embedded`: (Present only when embed parameter is used) Contains expanded layer and line data
+        - `layers.lines[]`: Array of all line annotations in the layer containing the requested page
+
+    - **400**: Invalid embed format
     - **500**: Server error
