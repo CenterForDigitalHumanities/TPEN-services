@@ -31,6 +31,20 @@ router.route('/:pageId')
         return
       }
       // build as AnnotationPage
+      const resolvedItems = await Promise.all(
+        (page.items ?? []).map(async item => {
+          if (item.id) {
+            console.log("Initial item in page.items:", item);
+            const line = new Line(item);
+            await line.getFullLine(); // Populate the Line instance with full data
+            console.log("Line after getFullLine():", line);
+            return line.asJSON(false); // Return the full JSON representation
+          }
+          console.log("Item without ID in page.items:", item);
+          return item;
+        })
+      );
+
       const pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
         id: page.id,
@@ -41,7 +55,7 @@ router.route('/:pageId')
           id: page.partOf,
           type: "AnnotationCollection"
         }],
-        items: page.items ?? [],
+        items: resolvedItems,
         prev: page.prev ?? null,
         next: page.next ?? null
       }
