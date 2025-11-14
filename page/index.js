@@ -7,7 +7,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveAnnotations } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -16,6 +16,61 @@ router.use(
 // This is a nested route for pages within a layer. It may be used 
 // directly from /project/:projectId/page or with /layer/:layerId/page
 // depending on the context of the request.
+// GET /project/:projectId/page/:pageId/resolved - Returns fully resolved page with annotation bodies
+router.route('/:pageId/resolved')
+  .get(async (req, res) => {
+    const { projectId, pageId } = req.params
+    try {
+      const page = await findPageById(pageId, projectId, true)
+      if (!page) {
+        respondWithError(res, 404, 'No page found with that ID.')
+        return
+      }
+      
+      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
+        // If the page is a RERUM document, resolve the annotations
+        const resolvedPage = {
+          '@context': 'http://www.w3.org/ns/anno.jsonld',
+          id: page.id,
+          type: 'AnnotationPage',
+          label: { none: [page.label] },
+          target: page.target,
+          partOf: [{
+            id: page.partOf,
+            type: "AnnotationCollection"
+          }],
+          items: await resolveAnnotations(page.items ?? []),
+          prev: page.prev ?? null,
+          next: page.next ?? null
+        }
+        res.status(200).json(resolvedPage)
+        return
+      }
+      
+      // For non-RERUM pages, still resolve annotations but don't modify the page structure
+      const resolvedPage = {
+        '@context': 'http://www.w3.org/ns/anno.jsonld',
+        id: page.id,
+        type: 'AnnotationPage',
+        label: { none: [page.label] },
+        target: page.target,
+        partOf: [{
+          id: page.partOf,
+          type: "AnnotationCollection"
+        }],
+        items: await resolveAnnotations(page.items ?? []),
+        prev: page.prev ?? null,
+        next: page.next ?? null
+      }
+      res.status(200).json(resolvedPage)
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
+  })
+  .all((req, res, next) => {
+    respondWithError(res, 405, 'Improper request method, please use GET.')
+  })
+
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
