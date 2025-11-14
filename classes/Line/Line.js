@@ -152,6 +152,44 @@ export default class Line {
         return this.update()
     }
 
+    /**
+     * Fetches the full line data from RERUM and merges it with the current instance.
+     * This is used to fully resolve line objects by fetching their complete properties.
+     * @async
+     * @returns {Promise<Object>} The full line data as a plain object
+     */
+    async fetchFullLine() {
+        // Convert line ID to RERUM format if needed
+        let rerumId = this.id
+        if (this.id && this.id.startsWith('http://localhost:3001/v1/id/')) {
+            // Convert from TinyPEN local format to RERUM format
+            const idSuffix = this.id.replace('http://localhost:3001/v1/id/', '')
+            rerumId = `${process.env.RERUMIDPREFIX}${idSuffix}`
+        }
+
+        // Fetch if we have a RERUM ID (either original or converted)
+        if (rerumId && rerumId.startsWith?.(process.env.RERUMIDPREFIX)) {
+            try {
+                const response = await fetch(rerumId)
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch line from RERUM: ${response.status} ${response.statusText}`)
+                }
+                const fullLineData = await response.json()
+                // Return the full line data from RERUM, preserving the original ID
+                return {
+                    ...fullLineData,
+                    id: this.id // Use the original ID, not the RERUM ID
+                }
+            } catch (error) {
+                console.warn(`Failed to fetch full line from RERUM for ID: ${rerumId}. Error: ${error.message}`)
+                // Return current instance data if fetch fails
+                return this.asJSON(false)
+            }
+        }
+        // If not a RERUM document, return current instance data
+        return this.asJSON(false)
+    }
+
     asJSON(isLD) {
         return isLD ? {
             '@context': 'http://iiif.io/api/presentation/3/context.json',
@@ -164,6 +202,10 @@ export default class Line {
             id: this.id,
             body: this.body ?? '',
             target: this.target ?? '',
+            creator: this.creator ?? null,
+            motivation: this.motivation ?? null,
+            type: this.type ?? null,
+            label: this.label ?? null,
         }
     }
 

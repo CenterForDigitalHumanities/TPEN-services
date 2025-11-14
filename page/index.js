@@ -19,18 +19,39 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
+    const { fullyResolved } = req.query // Check for fullyResolved query parameter
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
+
+      // Handle RERUM document pages - check if we need to resolve items
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
+        // If fullyResolved is requested and page has items, resolve them
+        if ((fullyResolved === 'true' || fullyResolved === true) && page.items?.length > 0) {
+          const resolvedItems = await Promise.all(
+            (page.items ?? []).map(async item => {
+              if (item.id) {
+                try {
+                  const line = new Line(item)
+                  return await line.fetchFullLine()
+                } catch (error) {
+                  console.warn(`Failed to resolve line ${item.id}: ${error.message}`)
+                  return item
+                }
+              }
+              return item
+            })
+          )
+          page.items = resolvedItems
+        }
         res.status(200).json(page)
         return
       }
-      // build as AnnotationPage
+
+      // Build as AnnotationPage
       const pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
         id: page.id,
@@ -45,6 +66,28 @@ router.route('/:pageId')
         prev: page.prev ?? null,
         next: page.next ?? null
       }
+
+      // If fullyResolved parameter is present, resolve all line items
+      if (fullyResolved === 'true' || fullyResolved === true) {
+        pageAsAnnotationPage.items = await Promise.all(
+          (page.items ?? []).map(async item => {
+            // If the item has an ID (line reference), fetch the full line data
+            if (item.id) {
+              try {
+                const line = new Line(item)
+                return await line.fetchFullLine()
+              } catch (error) {
+                console.warn(`Failed to resolve line ${item.id}: ${error.message}`)
+                // Return the original item if resolution fails
+                return item
+              }
+            }
+            // Return item as-is if it doesn't have an ID
+            return item
+          })
+        )
+      }
+
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
