@@ -4,10 +4,13 @@ import screenContentMiddleware from '../utilities/checkIfSuspicious.js'
 import { hasSuspiciousPageData } from '../utilities/checkIfSuspicious.js'
 import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
+import dbDriver from '../database/driver.js'
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+
+const databaseTiny = new dbDriver("tiny")
 
 router.use(
   cors(common_cors)
