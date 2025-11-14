@@ -13,7 +13,7 @@ export default class Line {
     }
 
     constructor({ id, target, body, motivation, label, type, creator = null }) {
-        if (!id || !target) 
+        if (!id || !target)
             throw new Error('Line data is malformed.')
         this.id = id // Ensure the id is assigned
         this.body = body
@@ -87,7 +87,7 @@ export default class Line {
     }
     return this.#updateLineForPage()
 }
-    
+
 #updateLineForPage() {
     return {
         id: this.id,
@@ -98,7 +98,7 @@ export default class Line {
     /**
      * Updates the textual content of the annotation body.
      *
-     * Handles various body formats, including arrays of bodies and different textual body variants.
+     100→     * Handles various body formats, including arrays of bodies and different textual body variants.
      * Throws errors if the body format is unexpected or ambiguous.
      *
      * @async
@@ -152,6 +152,18 @@ export default class Line {
         return this.update()
     }
 
+    async getFullLine() {
+        if (this.#tinyAction === 'update') {
+            try {
+                const rerumLine = await fetch(this.id).then(res => res.json());
+                Object.assign(this, rerumLine);
+            } catch (err) {
+                console.warn(`Failed to fetch full line from RERUM for ID: ${this.id}, returning partial line.`, err);
+            }
+        }
+        return this.asJSON(true);
+    }
+
     asJSON(isLD) {
         return isLD ? {
             '@context': 'http://iiif.io/api/presentation/3/context.json',
@@ -164,6 +176,10 @@ export default class Line {
             id: this.id,
             body: this.body ?? '',
             target: this.target ?? '',
+            creator: this.creator,
+            motivation: this.motivation,
+            type: this.type,
+            label: this.label
         }
     }
 
