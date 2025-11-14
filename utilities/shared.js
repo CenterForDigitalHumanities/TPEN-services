@@ -336,3 +336,67 @@ export const handleVersionConflict = (res, error) => {
     ...(error.lineId && { lineId: error.lineId })
   })
 }
+
+/**
+ * Fetch a single annotation from RERUM via TinyPEN
+ * @param {string} annotationId - The ID of the annotation to fetch
+ * @returns {Promise<Object>} The full annotation data or null if not found
+ */
+export const fetchAnnotationFromRerum = async (annotationId) => {
+  if (!annotationId) {
+    return null
+  }
+  
+  // Ensure proper RERUM ID format
+  if (!annotationId.startsWith(process.env.RERUMIDPREFIX)) {
+    annotationId = process.env.RERUMIDPREFIX + annotationId.split("/").pop()
+  }
+  
+  try {
+    const annotation = await fetch(annotationId).then(res => {
+      if (res.ok) return res.json()
+      if (!res.ok) return null
+    })
+    return annotation
+  } catch (err) {
+    console.error(`Error fetching annotation ${annotationId}:`, err)
+    return null
+  }
+}
+
+/**
+ * Resolve all annotation references in a page's items array
+ * @param {Array} items - Array of annotation references
+ * @returns {Promise<Array>} Array of resolved annotations with full data
+ */
+export const resolveAnnotations = async (items) => {
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return []
+  }
+  
+  // Fetch annotations in parallel for better performance
+  const resolutionPromises = items.map(async (item) => {
+    // Skip if no ID or already resolved (has body property)
+    if (!item || !item.id || item.body) {
+      return item
+    }
+    
+    try {
+      const fullAnnotation = await fetchAnnotationFromRerum(item.id)
+      if (fullAnnotation) {
+        // Preserve the original item structure but add the resolved data
+        return {
+          ...item,
+          ...fullAnnotation
+        }
+      }
+      // If fetch failed, return original item
+      return item
+    } catch (err) {
+      console.error(`Error resolving annotation ${item.id}:`, err)
+      return item
+    }
+  })
+  
+  return await Promise.all(resolutionPromises)
+}
