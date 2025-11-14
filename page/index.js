@@ -19,6 +19,7 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
+    const { resolved } = req.query
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
@@ -31,7 +32,7 @@ router.route('/:pageId')
         return
       }
       // build as AnnotationPage
-      const pageAsAnnotationPage = {
+      let pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
         id: page.id,
         type: 'AnnotationPage',
@@ -45,6 +46,52 @@ router.route('/:pageId')
         prev: page.prev ?? null,
         next: page.next ?? null
       }
+
+      // If resolved parameter is true, resolve all references
+      if (resolved === 'true') {
+        // Resolve each annotation in items array
+        const resolvedItems = await Promise.all(pageAsAnnotationPage.items.map(async (item) => {
+          try {
+            // Handle localhost URLs by converting them to the proper RERUM URLs
+            let url = item.id;
+            if (url.startsWith('http://localhost:3001/v1/id/')) {
+              url = url.replace('http://localhost:3001/v1/id/', 'https://devstore.rerum.io/v1/id/');
+            }
+
+            const response = await fetch(url);
+            if (response.ok) {
+              const resolvedItem = await response.json();
+              // Fully replace the item with the resolved item
+              return resolvedItem;
+            }
+            return item; // Return original if fetch fails
+          } catch (err) {
+            console.error(`Failed to resolve annotation ${item.id}:`, err);
+            return item; // Return original if fetch fails
+          }
+        }));
+
+        // Resolve the AnnotationCollection in partOf
+        try {
+          // Handle localhost URLs by converting them to the proper RERUM URLs
+          let url = pageAsAnnotationPage.partOf[0].id;
+          if (url.startsWith('http://localhost:3001/v1/id/')) {
+            url = url.replace('http://localhost:3001/v1/id/', 'https://devstore.rerum.io/v1/id/');
+          }
+
+          const response = await fetch(url);
+          if (response.ok) {
+            const resolvedCollection = await response.json();
+            // Fully replace the collection with the resolved collection
+            pageAsAnnotationPage.partOf[0] = resolvedCollection;
+          }
+        } catch (err) {
+          console.error(`Failed to resolve AnnotationCollection ${pageAsAnnotationPage.partOf[0].id}:`, err);
+        }
+
+        pageAsAnnotationPage.items = resolvedItems;
+      }
+
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
