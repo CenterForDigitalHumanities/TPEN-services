@@ -7,7 +7,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolvePageReferences } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -19,19 +19,29 @@ router.use(
 router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
+    const { resolved } = req.query
+
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
+
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
-        res.status(200).json(page)
+        // If the page is a RERUM document, fetch it from server
+        if (resolved === 'true') {
+          // Resolve references for RERUM page
+          const resolvedPage = await resolvePageReferences(page)
+          res.status(200).json(resolvedPage)
+        } else {
+          res.status(200).json(page)
+        }
         return
       }
-      // build as AnnotationPage
-      const pageAsAnnotationPage = {
+
+      // Build as AnnotationPage
+      let pageAsAnnotationPage = {
         '@context': 'http://www.w3.org/ns/anno.jsonld',
         id: page.id,
         type: 'AnnotationPage',
@@ -45,6 +55,12 @@ router.route('/:pageId')
         prev: page.prev ?? null,
         next: page.next ?? null
       }
+
+      if (resolved === 'true') {
+        // Resolve all references in the page
+        pageAsAnnotationPage = await resolvePageReferences(pageAsAnnotationPage)
+      }
+
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')

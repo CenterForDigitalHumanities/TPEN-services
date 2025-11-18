@@ -178,6 +178,83 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
+/**
+ * Resolve all references in a page to their full objects
+ * @param {Object} page - The page object with items and partOf arrays
+ * @returns {Object} Page with resolved references
+ */
+export async function resolvePageReferences(page) {
+   try {
+      // Resolve annotation items
+      const resolvedItems = await Promise.allSettled(
+         page.items.map(async (item) => {
+            if (item.type === 'Annotation' && item.id) {
+               // Normalize URL if needed
+               let annotationUrl = item.id
+               if (annotationUrl.startsWith('http://localhost:3001')) {
+                  annotationUrl = annotationUrl.replace('http://localhost:3001', process.env.RERUMURL)
+               }
+               try {
+                  const response = await fetch(annotationUrl)
+                  if (response.ok) {
+                     return await response.json()
+                  } else {
+                     console.warn(`Failed to fetch annotation: ${annotationUrl} -_status: ${response.status}`)
+                     return item
+                  }
+               } catch (error) {
+                  console.error(`Error fetching annotation ${annotationUrl}:`, error.message)
+                  return item
+               }
+            }
+            return item
+         })
+      )
+
+      // Resolve partOf collections
+      const resolvedPartOf = await Promise.allSettled(
+         (page.partOf || []).map(async (collection) => {
+            if (collection.type === 'AnnotationCollection' && collection.id) {
+               let collectionUrl = collection.id
+               if (collectionUrl.startsWith('http://localhost:3001')) {
+                  collectionUrl = collectionUrl.replace('http://localhost:3001', process.env.RERUMURL)
+               }
+               try {
+                  const response = await fetch(collectionUrl)
+                  if (response.ok) {
+                     return await response.json()
+                  } else {
+                     console.warn(`Failed to fetch collection: ${collectionUrl} - status: ${response.status}`)
+                     return collection
+                  }
+               } catch (error) {
+                  console.error(`Error fetching collection ${collectionUrl}:`, error.message)
+                  return collection
+               }
+            }
+            return collection
+         })
+      )
+
+      // Extract resolved values from promises
+      const items = resolvedItems.map(result =>
+         result.status === 'fulfilled' ? result.value : result.reason || page.items[resolvedItems.indexOf(result)]
+      )
+      const partOf = resolvedPartOf.map(result =>
+         result.status === 'fulfilled' ? result.value : result.reason || page.partOf[resolvedPartOf.indexOf(result)]
+      )
+
+      return {
+         ...page,
+         items,
+         partOf
+      }
+   } catch (error) {
+      console.error('Error resolving page references:', error)
+      throw error
+   }
+}
+
 export async function findPageById(pageId, projectId, rerum) {
    if (rerum) {
       if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
