@@ -26,7 +26,71 @@ router.route('/:pageId')
         return
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
+        // If the page is a RERUM document, check if resolution is requested
+        const shouldResolve = req.query.resolve === 'full'
+
+        if (shouldResolve) {
+          // Resolve items array: fetch full annotation objects
+          if (page.items?.length > 0) {
+            page.items = await Promise.all(
+              page.items.map(async item => {
+                // Only resolve if item has an HTTP URI
+                if (item?.id?.startsWith('http')) {
+                  try {
+                    // Create a fetch with 10 second timeout
+                    const controller = new AbortController()
+                    const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+                    const response = await fetch(item.id, { signal: controller.signal })
+                    clearTimeout(timeoutId)
+
+                    if (response.ok) {
+                      return await response.json()
+                    } else {
+                      console.warn(`Failed to resolve annotation ${item.id}: HTTP ${response.status}`)
+                    }
+                  } catch (err) {
+                    if (err.name === 'AbortError') {
+                      console.warn(`Timeout resolving annotation ${item.id}`)
+                    } else {
+                      console.warn(`Error resolving annotation ${item.id}:`, err.message)
+                    }
+                  }
+                }
+                // Return reference if fetch fails or not an HTTP URI
+                return item
+              })
+            )
+          }
+
+          // Resolve partOf collection reference
+          if (page.partOf) {
+            const collectionId = Array.isArray(page.partOf) ? page.partOf[0]?.id : page.partOf
+            if (collectionId?.startsWith('http')) {
+              try {
+                // Create a fetch with 10 second timeout
+                const controller = new AbortController()
+                const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+                const response = await fetch(collectionId, { signal: controller.signal })
+                clearTimeout(timeoutId)
+
+                if (response.ok) {
+                  page.partOf = [await response.json()]
+                } else {
+                  console.warn(`Failed to resolve partOf collection ${collectionId}: HTTP ${response.status}`)
+                }
+              } catch (err) {
+                if (err.name === 'AbortError') {
+                  console.warn(`Timeout resolving partOf collection ${collectionId}`)
+                } else {
+                  console.warn(`Error resolving partOf collection ${collectionId}:`, err.message)
+                }
+              }
+            }
+          }
+        }
+
         res.status(200).json(page)
         return
       }
@@ -45,6 +109,72 @@ router.route('/:pageId')
         prev: page.prev ?? null,
         next: page.next ?? null
       }
+
+      // Check if full resolution is requested via query parameter
+      const shouldResolve = req.query.resolve === 'full'
+
+      if (shouldResolve) {
+        // Resolve items array: fetch full annotation objects
+        if (pageAsAnnotationPage.items?.length > 0) {
+          pageAsAnnotationPage.items = await Promise.all(
+            pageAsAnnotationPage.items.map(async item => {
+              // Only resolve if item has an HTTP URI
+              if (item?.id?.startsWith('http')) {
+                try {
+                  // Create a fetch with 10 second timeout
+                  const controller = new AbortController()
+                  const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+                  const response = await fetch(item.id, { signal: controller.signal })
+                  clearTimeout(timeoutId)
+
+                  if (response.ok) {
+                    return await response.json()
+                  } else {
+                    console.warn(`Failed to resolve annotation ${item.id}: HTTP ${response.status}`)
+                  }
+                } catch (err) {
+                  if (err.name === 'AbortError') {
+                    console.warn(`Timeout resolving annotation ${item.id}`)
+                  } else {
+                    console.warn(`Error resolving annotation ${item.id}:`, err.message)
+                  }
+                }
+              }
+              // Return reference if fetch fails or not an HTTP URI
+              return item
+            })
+          )
+        }
+
+        // Resolve partOf collection reference
+        if (pageAsAnnotationPage.partOf?.[0]?.id) {
+          const collectionId = pageAsAnnotationPage.partOf[0].id
+          if (collectionId.startsWith('http')) {
+            try {
+              // Create a fetch with 10 second timeout
+              const controller = new AbortController()
+              const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+              const response = await fetch(collectionId, { signal: controller.signal })
+              clearTimeout(timeoutId)
+
+              if (response.ok) {
+                pageAsAnnotationPage.partOf = [await response.json()]
+              } else {
+                console.warn(`Failed to resolve partOf collection ${collectionId}: HTTP ${response.status}`)
+              }
+            } catch (err) {
+              if (err.name === 'AbortError') {
+                console.warn(`Timeout resolving partOf collection ${collectionId}`)
+              } else {
+                console.warn(`Error resolving partOf collection ${collectionId}:`, err.message)
+              }
+            }
+          }
+        }
+      }
+
       res.status(200).json(pageAsAnnotationPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')

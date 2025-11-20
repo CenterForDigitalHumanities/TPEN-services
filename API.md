@@ -380,11 +380,13 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
 #### `GET /project/:projectId/layer/:layerId/page/:pageid`
 #### `GET /project/:projectId/page/:pageid`
 
-- **Description**: Get an existing page within a project.
+- **Description**: Get an existing page within a project. Optionally resolve all annotation references to include full objects with bodies.
 - **Parameters**:
   - `projectId`: ID of the project.
   - `layerId`: Optional.  ID of the layer.
   - `pageId`: The ID of the page.
+- **Query Parameters**:
+  - `resolve` (optional): Set to `full` to resolve all annotation references to complete objects including their body properties, and resolve the partOf collection to a full AnnotationCollection. By default, only references (id and type) are returned.
 
 - **Responses**:
 
