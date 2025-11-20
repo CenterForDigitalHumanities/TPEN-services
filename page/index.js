@@ -117,47 +117,127 @@ router.route('/:pageId')
     respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 
-async function checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, user, res, unordered) {
-  if (!page.columns.some(column => column.label === "Unordered Column")) {
-    const allColumnLines = page.columns.flatMap(column => column.lines)
-    const remainingAnnotations = page.items.filter(item => !allColumnLines.includes(item.id)).map(item => item.id)
-    if(allColumnLines.length === 0) {
-      delete page.columns
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
-      return res.status(201).json({ message: "No remaining annotations to add to unordered column." })
-    }
-    if(remainingAnnotations.length === 0) {
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
-      return res.status(201).json({ message: "No remaining annotations to add to unordered column." })
-    }
-    const unorderedColumnRecord = await Column.createNewColumn(pageId, projectId, "Unordered Column", remainingAnnotations, unordered)
-    const unorderedColumn = {
-      id: unorderedColumnRecord._id,
-      label: "Unordered Column",
-      lines: unorderedColumnRecord.lines
-    }
-    page.columns.push(unorderedColumn)
-  } else {
-    const allColumnLines = page.columns.filter(column => column.label !== "Unordered Column").flatMap(column => column.lines)
-    const remainingAnnotations = page.items.filter(item => !allColumnLines.includes(item.id)).map(item => item.id)
-    if(remainingAnnotations.length === 0) {
-      const unorderedColumn = page.columns.find(column => column.label === "Unordered Column")
-      const unorderedColumnDB = new Column(unorderedColumn.id)
-      await unorderedColumnDB.delete()
-      page.columns = page.columns.filter(column => column.label !== "Unordered Column")
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
-      return res.status(201).json({ message: "Unordered column deleted as there are no remaining annotations." })
-    }
-    const unorderedColumn = page.columns.find(column => column.label === "Unordered Column")
+/**
+ * Gets all annotation IDs that are not assigned to any column (excluding unordered column).
+ *
+ * @param {Object} page - The page object containing items and columns
+ * @param {boolean} excludeUnordered - Whether to exclude the unordered column from calculation
+ * @returns {string[]} Array of annotation IDs not in any column
+ */
+function getRemainingAnnotations(page, excludeUnordered = false) {
+  const columnsToCheck = excludeUnordered
+    ? page.columns.filter(col => col.label !== "Unordered Column")
+    : page.columns
+  const allColumnLines = columnsToCheck.flatMap(column => column.lines)
+  return page.items.filter(item => !allColumnLines.includes(item.id)).map(item => item.id)
+}
+
+/**
+ * Creates a new unordered column and adds it to the page.
+ *
+ * @param {string} projectId - The project ID
+ * @param {string} pageId - The page ID
+ * @param {Object} page - The page object from project data
+ * @param {string[]} remainingAnnotations - Array of annotation IDs to add to the column
+ * @param {boolean} unordered - Whether the column should be marked as unordered
+ * @returns {Promise<void>}
+ */
+async function createUnorderedColumn(projectId, pageId, page, remainingAnnotations, unordered) {
+  const unorderedColumnRecord = await Column.createNewColumn(
+    pageId,
+    projectId,
+    "Unordered Column",
+    remainingAnnotations,
+    unordered
+  )
+  const unorderedColumn = {
+    id: unorderedColumnRecord._id,
+    label: "Unordered Column",
+    lines: unorderedColumnRecord.lines
+  }
+  page.columns.push(unorderedColumn)
+}
+
+/**
+ * Deletes the unordered column from both the database and the page object.
+ *
+ * @param {Object} page - The page object from project data
+ * @returns {Promise<void>}
+ */
+async function deleteUnorderedColumn(page) {
+  const unorderedColumn = page.columns.find(column => column.label === "Unordered Column")
+  if (unorderedColumn) {
+    const unorderedColumnDB = new Column(unorderedColumn.id)
+    await unorderedColumnDB.delete()
+    page.columns = page.columns.filter(column => column.label !== "Unordered Column")
+  }
+}
+
+/**
+ * Updates an existing unordered column with new annotation assignments.
+ *
+ * @param {Object} page - The page object from project data
+ * @param {string[]} remainingAnnotations - Array of annotation IDs to assign to the column
+ * @returns {Promise<void>}
+ */
+async function updateUnorderedColumn(page, remainingAnnotations) {
+  const unorderedColumn = page.columns.find(column => column.label === "Unordered Column")
+  if (unorderedColumn) {
     const unorderedColumnDB = new Column(unorderedColumn.id)
     const unorderedColumnData = await unorderedColumnDB.getColumnData()
     unorderedColumnData.lines = remainingAnnotations
     unorderedColumnDB.data = unorderedColumnData
     unorderedColumn.lines = remainingAnnotations
     await unorderedColumnDB.update()
+  }
+}
+
+/**
+ * Checks and creates or updates an unordered column for annotations not assigned to any column.
+ * This function ensures all page annotations are organized in columns by creating/updating an "Unordered Column"
+ * for any remaining annotations not assigned to other columns.
+ *
+ * @param {string} projectId - The project ID
+ * @param {string} pageId - The page ID
+ * @param {Object} project - The Project instance for database updates
+ * @param {Object} page - The page object from project data
+ * @param {Object} pageRerum - The full page annotation from RERUM
+ * @param {Object} projectRerum - The full project object from RERUM
+ * @param {Object} user - The user object
+ * @param {Object} res - Express response object
+ * @param {boolean} unordered - Whether the column should be marked as unordered
+ * @returns {Promise<void>}
+ */
+async function checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user, res, unordered) {
+  const hasUnorderedColumn = page.columns.some(column => column.label === "Unordered Column")
+  const allColumnLines = page.columns.flatMap(column => column.lines)
+  const remainingAnnotations = getRemainingAnnotations(page, true)
+
+  // If there are no columns at all, remove the columns property
+  if (allColumnLines.length === 0) {
+    delete page.columns
+    await updatePageAndProject(pageRerum, project, user._id)
+    await projectRerum.update()
+    return res.status(201).json({ message: "No remaining annotations to add to unordered column." })
+  }
+
+  // If no unordered column exists yet
+  if (!hasUnorderedColumn) {
+    if (remainingAnnotations.length === 0) {
+      await updatePageAndProject(pageRerum, project, user._id)
+      await projectRerum.update()
+      return res.status(201).json({ message: "No remaining annotations to add to unordered column." })
+    }
+    await createUnorderedColumn(projectId, pageId, page, remainingAnnotations, unordered)
+  } else {
+    // Unordered column exists - update or delete it
+    if (remainingAnnotations.length === 0) {
+      await deleteUnorderedColumn(page)
+      await updatePageAndProject(pageRerum, project, user._id)
+      await projectRerum.update()
+      return res.status(201).json({ message: "Unordered column deleted as there are no remaining annotations." })
+    }
+    await updateUnorderedColumn(page, remainingAnnotations)
   }
 }
 
@@ -199,7 +279,7 @@ router.route('/:pageId/column')
       })
       page.items = pageRerum.items
 
-      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, user, res, unordered)
+      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user, res, unordered)
       await updatePageAndProject(pageRerum, project, user._id)
       await projectRerum.update()
       res.status(201).json(newColumnRecord)
@@ -231,8 +311,8 @@ router.route('/:pageId/unordered-column')
       if (!page) return
 
       if (!page.columns) page.columns = []
-      
-      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, user, res, unordered)
+
+      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user, res, unordered)
       await updatePageAndProject(pageRerum, project, user._id)
       await projectRerum.update()
       res.status(201).json({ message: "Unordered column updated/created successfully." })   
