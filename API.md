@@ -379,12 +379,14 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
     
 #### `GET /project/:projectId/layer/:layerId/page/:pageid`
 #### `GET /project/:projectId/page/:pageid`
+#### `GET /project/:projectId/page/:pageid/resolved`
 
 - **Description**: Get an existing page within a project.
 - **Parameters**:
   - `projectId`: ID of the project.
   - `layerId`: Optional.  ID of the layer.
   - `pageId`: The ID of the page.
+  - `resolved`: Optional query parameter (`true|1|yes|resolved`) to embed referenced annotations and collections without using the `/resolved` path.
 
 - **Responses**:
 
@@ -405,4 +407,5 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
             "next": "string"
         }
         ```
+        - When requesting `/resolved` or `?resolved=true`, `items` include fully resolved Annotations (with bodies) and `partOf` collections are expanded inline.
     - **500**: Server error

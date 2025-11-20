@@ -8,48 +8,65 @@ let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import resolveAnnotationPage from './resolveAnnotationPage.js'
 
 router.use(
   cors(common_cors)
 )
 
+const shouldResolve = value => {
+  if (value === undefined || value === null) return false
+  const normalized = Array.isArray(value)
+    ? `${value[0]}`.toLowerCase()
+    : `${value}`.toLowerCase()
+  return ['true', '1', 'yes', 'resolved'].includes(normalized)
+}
+
+const buildAnnotationPageResponse = page => {
+  if (page?.id?.startsWith(process.env.RERUMIDPREFIX)) return page
+  return {
+    '@context': 'http://www.w3.org/ns/anno.jsonld',
+    id: page.id,
+    type: 'AnnotationPage',
+    label: { none: [page.label] },
+    target: page.target,
+    partOf: [{
+      id: page.partOf,
+      type: 'AnnotationCollection'
+    }],
+    items: page.items ?? [],
+    prev: page.prev ?? null,
+    next: page.next ?? null
+  }
+}
+
+const handleGetPage = async (req, res, forceResolved = false) => {
+  const { projectId, pageId } = req.params
+  try {
+    const page = await findPageById(pageId, projectId, true)
+    if (!page) {
+      respondWithError(res, 404, 'No page found with that ID.')
+      return
+    }
+    const baseResponse = buildAnnotationPageResponse(page)
+    if (forceResolved || shouldResolve(req.query?.resolved)) {
+      const resolvedPage = await resolveAnnotationPage(baseResponse)
+      res.status(200).json(resolvedPage)
+      return
+    }
+    res.status(200).json(baseResponse)
+  } catch (error) {
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+  }
+}
+
+router.get('/:pageId/resolved', async (req, res) => handleGetPage(req, res, true))
+
 // This is a nested route for pages within a layer. It may be used 
 // directly from /project/:projectId/page or with /layer/:layerId/page
 // depending on the context of the request.
 router.route('/:pageId')
-  .get(async (req, res) => {
-    const { projectId, pageId } = req.params
-    try {
-      const page = await findPageById(pageId, projectId, true)
-      if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
-      }
-      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
-        res.status(200).json(page)
-        return
-      }
-      // build as AnnotationPage
-      const pageAsAnnotationPage = {
-        '@context': 'http://www.w3.org/ns/anno.jsonld',
-        id: page.id,
-        type: 'AnnotationPage',
-        label: { none: [page.label] },
-        target: page.target,
-        partOf: [{
-          id: page.partOf,
-          type: "AnnotationCollection"
-        }],
-        items: page.items ?? [],
-        prev: page.prev ?? null,
-        next: page.next ?? null
-      }
-      res.status(200).json(pageAsAnnotationPage)
-    } catch (error) {
-      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
-    }
-  })
+  .get(async (req, res) => handleGetPage(req, res))
   .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
