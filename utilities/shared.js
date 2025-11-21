@@ -338,46 +338,17 @@ export const handleVersionConflict = (res, error) => {
 }
 
 /**
- * Resolve annotation ID to RERUM URL
- * Supports both RERUM format and TPEN3 local URI format
- * @param {string} annotationId - The annotation ID/URI (either RERUM or TPEN3 format)
- * @returns {string} The RERUM URL for fetching
- */
-const resolveAnnotationUrl = (annotationId) => {
-  // If it's already a RERUM ID, return it directly
-  if (annotationId.startsWith(process.env.RERUMIDPREFIX)) {
-    return annotationId
-  }
-
-  // If it's a TPEN3 local URI, extract the ID and convert to RERUM format
-  // Format: {SERVERURL}/project/{projectId}/page/{pageId}/line/{annotationId}
-  if (annotationId.startsWith(process.env.SERVERURL)) {
-    const lineMatch = annotationId.match(/\/line\/([^\/]+)$/)
-    if (lineMatch && lineMatch[1]) {
-      return `${process.env.RERUMIDPREFIX}${lineMatch[1]}`
-    }
-  }
-
-  // Return as-is if neither format matches
-  return annotationId
-}
-
-/**
  * Fetch a single annotation from RERUM by its ID
  * @param {string} annotationId - The ID/URL of the annotation to fetch (supports both RERUM and TPEN3 formats)
  * @returns {Promise<Object>} The full annotation object from RERUM
  * @throws {Error} If the annotation cannot be fetched or parsed
  */
-export const fetchAnnotationFromRerum = async (annotationId) => {
-  if (!annotationId) {
-    throw new Error('Annotation ID is required')
+export const resolveAnnotation = async (annotationId) => {
+  if (!annotationId || !annotationId.startsWith("http")) {
+    throw new Error('Proper Annotation URI is required')
   }
-
-  // Resolve to RERUM URL (handles both formats)
-  const rerumUrl = resolveAnnotationUrl(annotationId)
-
   try {
-    const response = await fetch(rerumUrl)
+    const response = await fetch(annotationId)
     if (!response.ok) {
       throw new Error(`Failed to fetch annotation from RERUM: ${response.statusText}`)
     }
@@ -395,9 +366,7 @@ export const fetchAnnotationFromRerum = async (annotationId) => {
  * @returns {Promise<Array>} Array of fully resolved annotation objects
  */
 export const resolveAnnotations = async (items) => {
-  if (!Array.isArray(items)) {
-    return []
-  }
+  if (!Array.isArray(items)) return []
 
   // Process all items in parallel for better performance
   const resolvedItems = await Promise.all(
@@ -405,31 +374,23 @@ export const resolveAnnotations = async (items) => {
       // If item is a string, it's an annotation ID - fetch from RERUM
       if (typeof item === 'string') {
         try {
-          return await fetchAnnotationFromRerum(item)
+          return await resolveAnnotation(item)
         } catch (error) {
           console.error(`Failed to resolve annotation ${item}:`, error)
           // Return the ID string if fetching fails
           return { id: item, error: error.message }
         }
       }
-
       // If item is an object with an id, try to fetch the full annotation
       if (item && typeof item === 'object' && item.id) {
         try {
-          // Check if it's a RERUM ID (starts with RERUMIDPREFIX)
-          if (item.id.startsWith(process.env.RERUMIDPREFIX)) {
-            const fullAnnotation = await fetchAnnotationFromRerum(item.id)
+            const fullAnnotation = await resolveAnnotation(item.id)
             // Merge the full annotation with any additional properties from the item
             return { ...fullAnnotation, ...item }
-          }
-          // For non-RERUM IDs, return the item as-is
+         } catch (error) {
           return item
-        } catch (error) {
-          console.error(`Failed to resolve annotation ${item.id}:`, error)
-          return { ...item, error: error.message }
         }
       }
-
       // For any other format, return as-is
       return item
     })

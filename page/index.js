@@ -116,8 +116,6 @@ router.route('/:pageId')
     respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 
-// router.use('/:pageId/line', lineRouter)
-
 // Fully resolved page endpoint - returns page with fully populated annotation data
 router.route('/:pageId/resolved')
   .get(async (req, res) => {
@@ -128,15 +126,13 @@ router.route('/:pageId/resolved')
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
-
       // If the page is from RERUM, resolve its annotations
       let resolvedPage = page
-      if (page.id?.startsWith(process.env.RERUMIDPREFIX) || (page.items && page.items.length > 0)) {
+      if (page.items && page.items.length > 0) {
         // Resolve all annotations in the items array
         const resolvedItems = await resolveAnnotations(page.items ?? [])
         resolvedPage = { ...page, items: resolvedItems }
       }
-
       res.status(200).json(resolvedPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
