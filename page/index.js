@@ -301,6 +301,11 @@ router.route('/:pageId/column')
         return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
       }
 
+      const existingLabels = page.columns ? page.columns.map(column => column.label) : []
+      if (existingLabels.includes(label)) {
+        return respondWithError(res, 400, `A column with the label '${label}' already exists.`)
+      }
+
       const newColumnRecord = await Column.createNewColumn(pageId, projectId, label, annotations, unordered)
       const columns = {
         id: newColumnRecord._id,
@@ -358,6 +363,11 @@ router.route('/:pageId/column')
       const columnsToMerge = page.columns.filter(column => columnLabelsToMerge.includes(column.label))
       if (columnsToMerge.length !== columnLabelsToMerge.length) {
         return respondWithError(res, 404, 'One or more columns to merge not found.')
+      }
+
+      const uniqueLabels = new Set(page.columns.map(column => column.label).filter(label => !columnLabelsToMerge.includes(label)))
+      if (uniqueLabels.has(newLabel)) {
+        return respondWithError(res, 400, `A column with the label '${newLabel}' already exists.`)
       }
 
       const mergedLines = columnsToMerge.flatMap(column => column.lines)
