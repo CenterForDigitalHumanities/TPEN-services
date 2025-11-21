@@ -287,6 +287,116 @@ router.route('/:pageId/column')
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
   })
+  .put(auth0Middleware(), async (req, res) => {
+    const { projectId, pageId } = req.params
+    const { newLabel, columnLabelsToMerge } = req.body
+    if (!newLabel || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
+      return respondWithError(res, 400, 'Invalid column merge data provided.')
+    }
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    try {
+      const project = await Project.getById(projectId)
+      if (!project) return
+      const pageRerum = await findPageById(pageId, projectId)
+      if (!pageRerum) return
+      const projectRerum = await getProjectById(projectId)
+      if (!projectRerum) return
+      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      if (!page) return
+
+      const columnsToMerge = page.columns.filter(column => columnLabelsToMerge.includes(column.label))
+      if (columnsToMerge.length !== columnLabelsToMerge.length) {
+        return respondWithError(res, 404, 'One or more columns to merge not found.')
+      }
+
+      const mergedLines = columnsToMerge.flatMap(column => column.lines)
+      const mergedColumnRecord = await Column.createNewColumn(pageId, projectId, newLabel, mergedLines, false)
+      const mergedColumn = {
+        id: mergedColumnRecord._id,
+        label: mergedColumnRecord.label,
+        lines: mergedColumnRecord.lines
+      }
+
+      for (const label of columnLabelsToMerge) {
+        const columnToDelete = page.columns.find(column => column.label === label)
+        if (columnToDelete) {
+          const columnDB = new Column(columnToDelete.id)
+          await columnDB.delete()
+        }
+      }
+
+      page.columns = page.columns.filter(column => !columnLabelsToMerge.includes(column.label))
+      page.columns.push(mergedColumn)
+
+      const allLineIds = page.columns.flatMap(col => col.lines)
+      pageRerum.items.sort((a, b) => {
+        let indexA = allLineIds.indexOf(a.id)
+        let indexB = allLineIds.indexOf(b.id)
+        if (indexA === -1) indexA = Infinity
+        if (indexB === -1) indexB = Infinity
+        return indexA - indexB
+      })
+      page.items = pageRerum.items
+
+      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, user, res, false)
+      await updatePageAndProject(pageRerum, project, user._id)
+      await projectRerum.update()
+      res.status(200).json(mergedColumnRecord)
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
+  })
+  .patch(auth0Middleware(), async (req, res) => {
+    const { projectId, pageId } = req.params
+    const { columnLabel, annotationIdsToAdd } = req.body
+    if (!columnLabel || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
+      return respondWithError(res, 400, 'Invalid column update data provided.')
+    }
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    try {
+      const project = await Project.getById(projectId)
+      if (!project) return
+      const pageRerum = await findPageById(pageId, projectId)
+      if (!pageRerum) return
+      const projectRerum = await getProjectById(projectId)
+      if (!projectRerum) return
+      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      if (!page) return
+
+      const columnToUpdate = page.columns.find(column => column.label === columnLabel)
+      if (!columnToUpdate) {
+        return respondWithError(res, 404, 'Column to update not found.')
+      }
+
+      const columnDB = new Column(columnToUpdate.id)
+      const columnData = await columnDB.getColumnData()
+      const newLines = Array.from(new Set([...columnData.lines, ...annotationIdsToAdd]))
+      columnData.lines = newLines
+      columnDB.data = columnData
+      await columnDB.update()
+
+      columnToUpdate.lines = newLines
+
+      const allLineIds = page.columns.flatMap(col => col.lines)
+      pageRerum.items.sort((a, b) => {
+        let indexA = allLineIds.indexOf(a.id)
+        let indexB = allLineIds.indexOf(b.id)
+        if (indexA === -1) indexA = Infinity
+        if (indexB === -1) indexB = Infinity
+        return indexA - indexB
+      })
+      page.items = pageRerum.items
+
+      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, user, res, false)
+      await updatePageAndProject(pageRerum, project, user._id)
+      await projectRerum.update()
+      res.status(200).json({ message: "Column updated successfully." })
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
+  })
   .all((req, res, next) => {
     respondWithError(res, 405, 'Improper request method, please use POST.')
   })
