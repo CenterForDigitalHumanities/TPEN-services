@@ -338,8 +338,33 @@ export const handleVersionConflict = (res, error) => {
 }
 
 /**
+ * Resolve annotation ID to RERUM URL
+ * Supports both RERUM format and TPEN3 local URI format
+ * @param {string} annotationId - The annotation ID/URI (either RERUM or TPEN3 format)
+ * @returns {string} The RERUM URL for fetching
+ */
+const resolveAnnotationUrl = (annotationId) => {
+  // If it's already a RERUM ID, return it directly
+  if (annotationId.startsWith(process.env.RERUMIDPREFIX)) {
+    return annotationId
+  }
+
+  // If it's a TPEN3 local URI, extract the ID and convert to RERUM format
+  // Format: {SERVERURL}/project/{projectId}/page/{pageId}/line/{annotationId}
+  if (annotationId.startsWith(process.env.SERVERURL)) {
+    const lineMatch = annotationId.match(/\/line\/([^\/]+)$/)
+    if (lineMatch && lineMatch[1]) {
+      return `${process.env.RERUMIDPREFIX}${lineMatch[1]}`
+    }
+  }
+
+  // Return as-is if neither format matches
+  return annotationId
+}
+
+/**
  * Fetch a single annotation from RERUM by its ID
- * @param {string} annotationId - The ID/URL of the annotation to fetch
+ * @param {string} annotationId - The ID/URL of the annotation to fetch (supports both RERUM and TPEN3 formats)
  * @returns {Promise<Object>} The full annotation object from RERUM
  * @throws {Error} If the annotation cannot be fetched or parsed
  */
@@ -348,15 +373,18 @@ export const fetchAnnotationFromRerum = async (annotationId) => {
     throw new Error('Annotation ID is required')
   }
 
+  // Resolve to RERUM URL (handles both formats)
+  const rerumUrl = resolveAnnotationUrl(annotationId)
+
   try {
-    const response = await fetch(annotationId)
+    const response = await fetch(rerumUrl)
     if (!response.ok) {
       throw new Error(`Failed to fetch annotation from RERUM: ${response.statusText}`)
     }
     const annotation = await response.json()
     return annotation
   } catch (error) {
-    console.error(`Error fetching annotation ${annotationId}:`, error)
+    console.error(`Error fetching annotation ${annotationId} (${rerumUrl}):`, error)
     throw new Error(`Failed to fetch annotation from RERUM: ${error.message}`)
   }
 }
