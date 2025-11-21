@@ -133,7 +133,7 @@ export default class Column {
                 onPage: pageId,
                 inProject: projectId,
                 next: null,
-                previous: null,
+                prev: null,
                 lines: annotations,
                 unordered: unordered
             }
