@@ -7,7 +7,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveAnnotations } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -117,5 +117,30 @@ router.route('/:pageId')
   })
 
 // router.use('/:pageId/line', lineRouter)
+
+// Fully resolved page endpoint - returns page with fully populated annotation data
+router.route('/:pageId/resolved')
+  .get(async (req, res) => {
+    const { projectId, pageId } = req.params
+    try {
+      const page = await findPageById(pageId, projectId, true)
+      if (!page) {
+        respondWithError(res, 404, 'No page found with that ID.')
+        return
+      }
+
+      // If the page is from RERUM, resolve its annotations
+      let resolvedPage = page
+      if (page.id?.startsWith(process.env.RERUMIDPREFIX) || (page.items && page.items.length > 0)) {
+        // Resolve all annotations in the items array
+        const resolvedItems = await resolveAnnotations(page.items ?? [])
+        resolvedPage = { ...page, items: resolvedItems }
+      }
+
+      res.status(200).json(resolvedPage)
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
+  })
 
 export default router
