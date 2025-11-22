@@ -7,7 +7,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveAnnotations } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveReferences } from '../utilities/shared.js'
 
 router.use(
   cors(common_cors)
@@ -130,7 +130,7 @@ router.route('/:pageId/resolved')
       let resolvedPage = page
       if (page.items && page.items.length > 0) {
         // Resolve all annotations in the items array
-        const resolvedItems = await resolveAnnotations(page.items ?? [])
+        const resolvedItems = await resolveReferences(page.items ?? [])
         resolvedPage = { ...page, items: resolvedItems }
       }
       res.status(200).json(resolvedPage)

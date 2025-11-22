@@ -343,7 +343,7 @@ export const handleVersionConflict = (res, error) => {
  * @returns {Promise<Object>} The full annotation object from RERUM
  * @throws {Error} If the annotation cannot be fetched or parsed
  */
-export const resolveAnnotation = async (annotationId) => {
+export const resolveReference = async (annotationId) => {
   if (!annotationId || !annotationId.startsWith("http")) {
     throw new Error('Proper Annotation URI is required')
   }
@@ -365,7 +365,7 @@ export const resolveAnnotation = async (annotationId) => {
  * @param {Array} items - Array of annotation items (can be IDs or partial objects)
  * @returns {Promise<Array>} Array of fully resolved annotation objects
  */
-export const resolveAnnotations = async (items) => {
+export const resolveReferences = async (items) => {
   if (!Array.isArray(items)) return []
 
   // Process all items in parallel for better performance
@@ -374,7 +374,7 @@ export const resolveAnnotations = async (items) => {
       // If item is a string, it's an annotation ID - fetch from RERUM
       if (typeof item === 'string') {
         try {
-          return await resolveAnnotation(item)
+          return await resolveReference(item)
         } catch (error) {
           console.error(`Failed to resolve annotation ${item}:`, error)
           // Return the ID string if fetching fails
@@ -384,7 +384,7 @@ export const resolveAnnotations = async (items) => {
       // If item is an object with an id, try to fetch the full annotation
       if (item && typeof item === 'object' && item.id) {
         try {
-            const fullAnnotation = await resolveAnnotation(item.id)
+            const fullAnnotation = await resolveReference(item.id)
             // Merge the full annotation with any additional properties from the item
             return { ...fullAnnotation, ...item }
          } catch (error) {
