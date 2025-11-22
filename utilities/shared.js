@@ -355,7 +355,7 @@ export const resolveAnnotation = async (annotationId) => {
     const annotation = await response.json()
     return annotation
   } catch (error) {
-    console.error(`Error fetching annotation ${annotationId} (${rerumUrl}):`, error)
+    console.error(`Error fetching annotation: ${annotationId}`, error)
     throw new Error(`Failed to fetch annotation from RERUM: ${error.message}`)
   }
 }
