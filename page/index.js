@@ -296,6 +296,13 @@ router.route('/:pageId/column')
       const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return
 
+      if (unordered === true) {
+        const existingUnorderedColumn = page.columns?.find(column => column.unordered === true)
+        if (existingUnorderedColumn) {
+          return respondWithError(res, 400, 'An unordered column already exists on this page.')
+        }
+      }
+
       const allColumnLines = page.columns ? page.columns.flatMap(column => column.label !== "Unordered Column" ? column.lines : []) : []
       const duplicateAnnotations = annotations.filter(annId => allColumnLines.includes(annId))
       if (duplicateAnnotations.length > 0) {
