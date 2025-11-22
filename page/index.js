@@ -263,14 +263,15 @@ async function updatePrevAndNextColumns(page, newColumnRecord) {
     currentColumnData.prev = previousColumn.id
     currentColumnDB.data = currentColumnData
     await currentColumnDB.update()
-  } else {
-    const currentColumnDB = new Column(newColumnRecord._id)
-    const currentColumnData = await currentColumnDB.getColumnData()
-    currentColumnData.prev = null
-    currentColumnData.next = null
-    currentColumnDB.data = currentColumnData
-    await currentColumnDB.update()
+    return
   }
+  
+  const currentColumnDB = new Column(newColumnRecord._id)
+  const currentColumnData = await currentColumnDB.getColumnData()
+  currentColumnData.prev = null
+  currentColumnData.next = null
+  currentColumnDB.data = currentColumnData
+  await currentColumnDB.update()
 }
 
 router.route('/:pageId/column')
