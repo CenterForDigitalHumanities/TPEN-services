@@ -110,7 +110,7 @@ export default class Column {
      * @returns {Promise<Object>} The saved column record
      * @throws {Error} If validation fails or the save operation fails
      */
-    static async createNewColumn(pageId, projectId, label, annotations=[], unordered=false) {
+    static async createNewColumn(pageId, projectId, label, annotations=[]) {
         try {
             // Input validation
             if (!pageId || typeof pageId !== 'string') {
@@ -134,8 +134,7 @@ export default class Column {
                 inProject: projectId,
                 next: null,
                 prev: null,
-                lines: annotations,
-                unordered: unordered
+                lines: annotations
             }
             return await newColumn.save()
         } catch (error) {

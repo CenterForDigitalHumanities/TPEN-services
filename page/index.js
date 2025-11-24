@@ -8,7 +8,7 @@ let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, getProjectById } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
 import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 router.use(
@@ -119,130 +119,6 @@ router.route('/:pageId')
   })
 
 /**
- * Gets all annotation IDs that are not assigned to any column (excluding unordered column).
- *
- * @param {Object} page - The page object containing items and columns
- * @param {boolean} excludeUnordered - Whether to exclude the unordered column from calculation
- * @returns {string[]} Array of annotation IDs not in any column
- */
-function getRemainingAnnotations(page, excludeUnordered = false) {
-  const columnsToCheck = excludeUnordered
-    ? page.columns.filter(col => col.label !== "Unordered Column")
-    : page.columns
-  const allColumnLines = columnsToCheck.flatMap(column => column.lines)
-  return page.items.filter(item => !allColumnLines.includes(item.id)).map(item => item.id)
-}
-
-/**
- * Creates a new unordered column and adds it to the page.
- *
- * @param {string} projectId - The project ID
- * @param {string} pageId - The page ID
- * @param {Object} page - The page object from project data
- * @param {string[]} remainingAnnotations - Array of annotation IDs to add to the column
- * @param {boolean} unordered - Whether the column should be marked as unordered
- * @returns {Promise<void>}
- */
-async function createUnorderedColumn(projectId, pageId, page, remainingAnnotations) {
-  const unorderedColumnRecord = await Column.createNewColumn(
-    pageId,
-    projectId,
-    "Unordered Column",
-    remainingAnnotations,
-    true
-  )
-  const unorderedColumn = {
-    id: unorderedColumnRecord._id,
-    label: "Unordered Column",
-    lines: unorderedColumnRecord.lines
-  }
-  page.columns.push(unorderedColumn)
-}
-
-/**
- * Deletes the unordered column from both the database and the page object.
- *
- * @param {Object} page - The page object from project data
- * @returns {Promise<void>}
- */
-async function deleteUnorderedColumn(page) {
-  const unorderedColumn = page.columns.find(column => column.label === "Unordered Column")
-  if (unorderedColumn) {
-    const unorderedColumnDB = new Column(unorderedColumn.id)
-    await unorderedColumnDB.delete()
-    page.columns = page.columns.filter(column => column.label !== "Unordered Column")
-  }
-}
-
-/**
- * Updates an existing unordered column with new annotation assignments.
- *
- * @param {Object} page - The page object from project data
- * @param {string[]} remainingAnnotations - Array of annotation IDs to assign to the column
- * @returns {Promise<void>}
- */
-async function updateUnorderedColumn(page, remainingAnnotations) {
-  const unorderedColumn = page.columns.find(column => column.label === "Unordered Column")
-  if (unorderedColumn) {
-    const unorderedColumnDB = new Column(unorderedColumn.id)
-    const unorderedColumnData = await unorderedColumnDB.getColumnData()
-    unorderedColumnData.lines = remainingAnnotations
-    unorderedColumnDB.data = unorderedColumnData
-    unorderedColumn.lines = remainingAnnotations
-    await unorderedColumnDB.update()
-  }
-}
-
-/**
- * Checks and creates or updates an unordered column for annotations not assigned to any column.
- * This function ensures all page annotations are organized in columns by creating/updating an "Unordered Column"
- * for any remaining annotations not assigned to other columns.
- *
- * @param {string} projectId - The project ID
- * @param {string} pageId - The page ID
- * @param {Object} project - The Project instance for database updates
- * @param {Object} page - The page object from project data
- * @param {Object} pageRerum - The full page annotation from RERUM
- * @param {Object} projectRerum - The full project object from RERUM
- * @param {Object} user - The user object
- * @param {Object} res - Express response object
- * @param {boolean} unordered - Whether the column should be marked as unordered
- * @returns {Promise<void>}
- */
-async function checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user) {
-  const hasUnorderedColumn = page.columns?.some(column => column.label === "Unordered Column") ?? false
-  const allColumnLines = page.columns ? page.columns.flatMap(column => column.label !== "Unordered Column" ? column.lines : []) : []
-  const remainingAnnotations = getRemainingAnnotations(page, true)
-
-  // If there are no columns at all, remove the columns property
-  if (allColumnLines.length === 0) {
-    delete page.columns
-    await updatePageAndProject(pageRerum, project, user._id)
-    await projectRerum.update()
-    return
-  }
-
-  // If no unordered column exists yet
-  if (!hasUnorderedColumn) {
-    if (remainingAnnotations.length === 0) {
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
-      return
-    }
-    await createUnorderedColumn(projectId, pageId, page, remainingAnnotations)
-    return
-  }
-  // Unordered column exists - update or delete it
-  if (remainingAnnotations.length === 0) {
-    await deleteUnorderedColumn(page)
-    await updatePageAndProject(pageRerum, project, user._id)
-    await projectRerum.update()
-    return
-  }
-  await updateUnorderedColumn(page, remainingAnnotations)
-}
-
-/**
  * Updates the prev and next pointers of the newly created column and the previous last column.
  *
  * @param {Object} page - The page object containing columns
@@ -250,7 +126,7 @@ async function checkAndCreateUnorderedColumn(projectId, pageId, project, page, p
  * @returns {Promise<void>}
  */
 async function updatePrevAndNextColumns(page, newColumnRecord) {
-  const previousColumn = page.columns ? page.columns[page.columns.length - 3] : null
+  const previousColumn = page.columns ? page.columns[page.columns.length - 2] : null
   if (previousColumn) {
     const previousColumnDB = new Column(previousColumn.id)
     const previousColumnData = await previousColumnDB.getColumnData()
@@ -277,14 +153,14 @@ async function updatePrevAndNextColumns(page, newColumnRecord) {
 router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
-    const { label, annotations, unordered = false } = req.body
+    const { label, annotations } = req.body
     if (!label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
     }
-    if (!unordered && annotations.length === 0) {
-      return respondWithError(res, 400, 'Ordered columns must contain at least one annotation.')
+    if (annotations.length === 0) {
+      return respondWithError(res, 400, 'Columns must contain at least one annotation.')
     }
-    if(isSuspiciousValueString(label)) {
+    if (isSuspiciousValueString(label)) {
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     const user = req.user
@@ -292,32 +168,17 @@ router.route('/:pageId/column')
     try {
       const project = await Project.getById(projectId)
       if (!project) return respondWithError(res, 404, "Project not found")
-      const pageRerum = await findPageById(pageId, projectId)
-      if (!pageRerum) return respondWithError(res, 404, "Page not found")
+      
+      const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      if (!page) return respondWithError(res, 404, "Page not found in project")
 
-      if (!pageRerum.items || pageRerum.items.length === 0) {
-        return respondWithError(res, 400, 'Cannot create columns on a page without lines.')
-      }
-
-      const pageItemIds = pageRerum.items?.map(item => item.id) || []
+      const pageItemIds = page.items?.map(item => item.id) || []
       const invalidAnnotations = annotations.filter(id => !pageItemIds.includes(id))
       if (invalidAnnotations.length > 0) {
         return respondWithError(res, 400, `The following annotations do not exist on this page: ${invalidAnnotations.join(', ')}`)
       }
 
-      const projectRerum = await getProjectById(projectId)
-      if (!projectRerum) return respondWithError(res, 404, "Project not found")
-      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
-      if (!page) return respondWithError(res, 404, "Page not found in project")
-
-      if (unordered === true) {
-        const existingUnorderedColumn = page.columns?.find(column => column.unordered === true || column.label === "Unordered Column")
-        if (existingUnorderedColumn) {
-          return respondWithError(res, 400, 'An unordered column already exists on this page.')
-        }
-      }
-
-      const allColumnLines = page.columns ? page.columns.flatMap(column => column.label !== "Unordered Column" ? column.lines : []) : []
+      const allColumnLines = page.columns ? page.columns.flatMap(column => column.lines) : []
       const duplicateAnnotations = annotations.filter(annId => allColumnLines.includes(annId))
       if (duplicateAnnotations.length > 0) {
         return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
@@ -328,7 +189,7 @@ router.route('/:pageId/column')
         return respondWithError(res, 400, `A column with the label '${label}' already exists.`)
       }
 
-      const newColumnRecord = await Column.createNewColumn(pageId, projectId, label, annotations, unordered)
+      const newColumnRecord = await Column.createNewColumn(pageId, projectId, label, annotations)
       const columns = {
         id: newColumnRecord._id,
         label: newColumnRecord.label,
@@ -337,25 +198,8 @@ router.route('/:pageId/column')
     
       page.columns = [...(page.columns || []), columns]
 
-      const allLineIds = page.columns.flatMap(col => col.lines)
-      pageRerum.items.sort((a, b) => {
-        let indexA = allLineIds.indexOf(a.id)
-        let indexB = allLineIds.indexOf(b.id)
-        if (indexA === -1) indexA = Infinity
-        if (indexB === -1) indexB = Infinity
-        return indexA - indexB
-      })
-      page.items = pageRerum.items
-
-      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user)
-      const unorderedColumn = page.columns?.find(column => column.label === "Unordered Column")
-      page.columns = page.columns?.filter(column => column.label !== "Unordered Column") ?? []
-      if (unorderedColumn) {
-        page.columns.push(unorderedColumn)
-      }
       await updatePrevAndNextColumns(page, newColumnRecord)
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
+      await project.update()
       res.status(201).json(newColumnRecord)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
@@ -367,7 +211,7 @@ router.route('/:pageId/column')
     if (!newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
       return respondWithError(res, 400, 'Invalid column merge data provided.')
     }
-    if(isSuspiciousValueString(newLabel)) {
+    if (isSuspiciousValueString(newLabel)) {
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     const user = req.user
@@ -375,11 +219,8 @@ router.route('/:pageId/column')
     try {
       const project = await Project.getById(projectId)
       if (!project) return respondWithError(res, 404, "Project not found")
-      const pageRerum = await findPageById(pageId, projectId)
-      if (!pageRerum) return respondWithError(res, 404, "Page not found")
-      const projectRerum = await getProjectById(projectId)
-      if (!projectRerum) return respondWithError(res, 404, "Project not found")
-      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      
+      const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
       if (!page.columns || page.columns.length === 0) {
@@ -397,12 +238,12 @@ router.route('/:pageId/column')
       }
 
       const mergedLines = columnsToMerge.flatMap(column => column.lines)
-      const allColumnLines = page.columns ? page.columns.flatMap(column => !columnLabelsToMerge.includes(column.label) && column.label !== "Unordered Column" ? column.lines : []) : []
+      const allColumnLines = page.columns ? page.columns.flatMap(column => !columnLabelsToMerge.includes(column.label)) : []
       const duplicateAnnotations = mergedLines.filter(annId => allColumnLines.includes(annId))
       if (duplicateAnnotations.length > 0) {
         return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
       }
-      const mergedColumnRecord = await Column.createNewColumn(pageId, projectId, newLabel, mergedLines, false)
+      const mergedColumnRecord = await Column.createNewColumn(pageId, projectId, newLabel, mergedLines)
       const mergedColumn = {
         id: mergedColumnRecord._id,
         label: mergedColumnRecord.label,
@@ -420,25 +261,8 @@ router.route('/:pageId/column')
       page.columns = page.columns.filter(column => !columnLabelsToMerge.includes(column.label))
       page.columns.push(mergedColumn)
 
-      const allLineIds = page.columns.flatMap(col => col.lines)
-      pageRerum.items.sort((a, b) => {
-        let indexA = allLineIds.indexOf(a.id)
-        let indexB = allLineIds.indexOf(b.id)
-        if (indexA === -1) indexA = Infinity
-        if (indexB === -1) indexB = Infinity
-        return indexA - indexB
-      })
-      page.items = pageRerum.items
-
-      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user)
-      const unorderedColumn = page.columns?.find(column => column.label === "Unordered Column")
-      page.columns = page.columns?.filter(column => column.label !== "Unordered Column") ?? []
-      if (unorderedColumn) {
-        page.columns.push(unorderedColumn)
-      }
       await updatePrevAndNextColumns(page, mergedColumnRecord)
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
+      await project.update()
       res.status(200).json(mergedColumnRecord)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
@@ -447,7 +271,7 @@ router.route('/:pageId/column')
   .patch(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { columnLabel, annotationIdsToAdd } = req.body
-    if (!columnLabel || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
+    if (!columnLabel.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
       return respondWithError(res, 400, 'Invalid column update data provided.')
     }
     if(isSuspiciousValueString(columnLabel)) {
@@ -458,11 +282,8 @@ router.route('/:pageId/column')
     try {
       const project = await Project.getById(projectId)
       if (!project) return respondWithError(res, 404, "Project not found")
-      const pageRerum = await findPageById(pageId, projectId)
-      if (!pageRerum) return respondWithError(res, 404, "Page not found")
-      const projectRerum = await getProjectById(projectId)
-      if (!projectRerum) return respondWithError(res, 404, "Project not found")
-      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      
+      const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
       if (!page.columns || page.columns.length === 0) {
@@ -474,7 +295,7 @@ router.route('/:pageId/column')
         return respondWithError(res, 404, 'Column to update not found.')
       }
 
-      const allColumnLines = page.columns ? page.columns.flatMap(column => column.label !== "Unordered Column" ? column.lines : []) : []
+      const allColumnLines = page.columns ? page.columns.flatMap(column => column.lines) : []
       const duplicateAnnotations = annotationIdsToAdd.filter(annId => allColumnLines.includes(annId))
       if (duplicateAnnotations.length > 0) {
         return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
@@ -489,19 +310,7 @@ router.route('/:pageId/column')
 
       columnToUpdate.lines = newLines
 
-      const allLineIds = page.columns.flatMap(col => col.lines)
-      pageRerum.items.sort((a, b) => {
-        let indexA = allLineIds.indexOf(a.id)
-        let indexB = allLineIds.indexOf(b.id)
-        if (indexA === -1) indexA = Infinity
-        if (indexB === -1) indexB = Infinity
-        return indexA - indexB
-      })
-      page.items = pageRerum.items
-
-      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user)
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
+      await project.update()
       res.status(200).json({ message: "Column updated successfully." })
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
@@ -509,48 +318,6 @@ router.route('/:pageId/column')
   })
   .all((req, res, next) => {
     respondWithError(res, 405, 'Improper request method. Supported: POST, PUT, PATCH.')
-  })
-
-router.route('/:pageId/unordered-column')
-  .post(auth0Middleware(), async (req, res) => {
-    const { projectId, pageId } = req.params
-    const { label, annotations, unordered = true } = req.body
-    if (!label?.trim() || !Array.isArray(annotations)) {
-      return respondWithError(res, 400, 'Invalid column data provided.')
-    }
-    if(isSuspiciousValueString(label)) {
-      return respondWithError(res, 400, "Suspicious column label will not be processed.")
-    }
-    const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    try {
-      const project = await Project.getById(projectId)
-      if (!project) return respondWithError(res, 404, "Project not found")
-      const pageRerum = await findPageById(pageId, projectId)
-      if (!pageRerum) return respondWithError(res, 404, "Page not found")
-      const projectRerum = await getProjectById(projectId)
-      if (!projectRerum) return respondWithError(res, 404, "Project not found")
-      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
-      if (!page) return respondWithError(res, 404, "Page not found in project")
-
-      const allColumnLines = page.columns ? page.columns.flatMap(column => column.label !== "Unordered Column" ? column.lines : []) : []
-      const duplicateAnnotations = annotations.filter(annId => allColumnLines.includes(annId))
-      if (duplicateAnnotations.length > 0) {
-        return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
-      }
-
-      if (!page.columns) page.columns = []
-
-      await checkAndCreateUnorderedColumn(projectId, pageId, project, page, pageRerum, projectRerum, user)
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
-      res.status(201).json({ message: "Unordered column updated/created successfully." })   
-    } catch (error) {
-      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
-    }
-  })
-  .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method, please use POST.')
   })
 
 router.route('/:pageId/clear-columns')
@@ -561,12 +328,8 @@ router.route('/:pageId/clear-columns')
     try {
       const project = await Project.getById(projectId)
       if (!project) return respondWithError(res, 404, "Project not found")
-      const pageRerum = await findPageById(pageId, projectId)
-      if (!pageRerum) return respondWithError(res, 404, "Page not found")
-      const projectRerum = await getProjectById(projectId)
-      if (!projectRerum) return respondWithError(res, 404, "Project not found")
-
-      const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      
+      const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
       if (!page.columns || page.columns.length === 0) {
@@ -579,8 +342,8 @@ router.route('/:pageId/clear-columns')
         await columnDB.delete()
       }
       delete page.columns
-      await updatePageAndProject(pageRerum, project, user._id)
-      await projectRerum.update()
+
+      await project.update()
       res.status(204).send()
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
