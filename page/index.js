@@ -115,7 +115,6 @@ router.route('/:pageId')
     }
   })
   .all((req, res, next) => {
-    // LOW-2: List all supported methods
     respondWithError(res, 405, 'Improper request method. Supported: GET, PUT.')
   })
 
@@ -279,11 +278,9 @@ router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { label, annotations, unordered = false } = req.body
-    // HIGH-4: Reject whitespace-only labels
-    if (!label?.trim() || !Array.isArray(annotations)) {
+    if (!label || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
     }
-    // HIGH-1: Ordered columns must have at least one annotation
     if (!unordered && annotations.length === 0) {
       return respondWithError(res, 400, 'Ordered columns must contain at least one annotation.')
     }
@@ -298,12 +295,10 @@ router.route('/:pageId/column')
       const pageRerum = await findPageById(pageId, projectId)
       if (!pageRerum) return respondWithError(res, 404, "Page not found")
 
-      // HIGH-5: Reject columns on pages without lines
       if (!pageRerum.items || pageRerum.items.length === 0) {
         return respondWithError(res, 400, 'Cannot create columns on a page without lines.')
       }
 
-      // HIGH-3: Validate annotation IDs belong to current page
       const pageItemIds = pageRerum.items?.map(item => item.id) || []
       const invalidAnnotations = annotations.filter(id => !pageItemIds.includes(id))
       if (invalidAnnotations.length > 0) {
@@ -315,7 +310,6 @@ router.route('/:pageId/column')
       const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
-      // HIGH-2: Only one unordered column per page (regardless of label)
       if (unordered === true) {
         const existingUnorderedColumn = page.columns?.find(column => column.unordered === true || column.label === "Unordered Column")
         if (existingUnorderedColumn) {
@@ -370,7 +364,6 @@ router.route('/:pageId/column')
   .put(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { newLabel, columnLabelsToMerge } = req.body
-    // HIGH-4: Reject whitespace-only labels
     if (!newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
       return respondWithError(res, 400, 'Invalid column merge data provided.')
     }
@@ -389,7 +382,6 @@ router.route('/:pageId/column')
       const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
-      // CRITICAL-3: Guard against null/empty columns array
       if (!page.columns || page.columns.length === 0) {
         return respondWithError(res, 404, "No columns exist on this page")
       }
@@ -473,7 +465,6 @@ router.route('/:pageId/column')
       const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
-      // CRITICAL-3: Guard against null/empty columns array
       if (!page.columns || page.columns.length === 0) {
         return respondWithError(res, 404, "No columns exist on this page")
       }
@@ -517,7 +508,6 @@ router.route('/:pageId/column')
     }
   })
   .all((req, res, next) => {
-    // LOW-2: List all supported methods
     respondWithError(res, 405, 'Improper request method. Supported: POST, PUT, PATCH.')
   })
 
@@ -525,8 +515,7 @@ router.route('/:pageId/unordered-column')
   .post(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { label, annotations, unordered = true } = req.body
-    // HIGH-4: Reject whitespace-only labels
-    if (!label?.trim() || !Array.isArray(annotations)) {
+    if (!label || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
     }
     if(isSuspiciousValueString(label)) {
@@ -580,7 +569,6 @@ router.route('/:pageId/clear-columns')
       const page = projectRerum.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
 
-      // CRITICAL-2: Guard against null/empty columns array
       if (!page.columns || page.columns.length === 0) {
         return res.status(204).send()
       }

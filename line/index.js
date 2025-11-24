@@ -132,7 +132,6 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     }
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    // LOW-1: Use forEach for side effects, not map
     page.columns?.forEach(col => {
       col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
     })
@@ -182,7 +181,6 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     const updatedLine = await line.updateText(req.body, {"creator": user._id})
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    // LOW-1: Use forEach for side effects, not map
     page.columns?.forEach(col => {
       col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
     })
@@ -237,7 +235,6 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     const updatedLine = await line.updateBounds(req.body)
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    // LOW-1: Use forEach for side effects, not map
     page.columns?.forEach(col => {
       col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
     })
