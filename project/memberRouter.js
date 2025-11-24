@@ -107,7 +107,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
     const groupId = projectObj.data.group
     const group = new Group(groupId)
     await group.removeMemberRoles(collaboratorId, roles)
-    res.status(204)
+    res.sendStatus(204)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error removing roles from member.")
   }
