@@ -45,6 +45,15 @@ function auth0Middleware() {
           next()
           return
         }
+
+        // If user exists but has wrong _sub (e.g., from temp user), update it
+        if (u._sub !== payload.sub) {
+          u._sub = payload.sub
+          const userObj = new User(uid)
+          userObj.data = u
+          await userObj.update()
+        }
+
         req.user = u
         next()
         return
