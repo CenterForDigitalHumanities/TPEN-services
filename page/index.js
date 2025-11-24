@@ -118,37 +118,25 @@ router.route('/:pageId')
     respondWithError(res, 405, 'Improper request method. Supported: GET, PUT.')
   })
 
-/**
- * Updates the prev and next pointers of the newly created column and the previous last column.
- *
- * @param {Object} page - The page object containing columns
- * @param {Object} newColumnRecord - The newly created column record
- * @returns {Promise<void>}
- */
-async function updatePrevAndNextColumns(page, newColumnRecord) {
-  const previousColumn = page.columns ? page.columns[page.columns.length - 2] : null
-  if (previousColumn) {
-    const previousColumnDB = new Column(previousColumn.id)
-    const previousColumnData = await previousColumnDB.getColumnData()
-    previousColumnData.next = newColumnRecord._id
-    previousColumnDB.data = previousColumnData
-    await previousColumnDB.update()
-    
-    const currentColumnDB = new Column(newColumnRecord._id)
-    const currentColumnData = await currentColumnDB.getColumnData()
-    currentColumnData.prev = previousColumn.id
-    currentColumnDB.data = currentColumnData
-    await currentColumnDB.update()
-    return
+  /**
+   * Updates the prev and next pointers for all columns in the given page.
+   *
+   * @param {Object} page - The page object containing columns
+   * @returns {Promise<void>}
+   */
+  async function updatePrevAndNextColumns(page) {
+    if (!page.columns || page.columns.length === 0) return
+    const allColumnIds = page.columns.map(column => column.id)
+    for (let i = 0; i < page.columns.length; i++) {
+      const column = page.columns[i]
+      const columnDB = new Column(column.id)
+      const columnData = await columnDB.getColumnData()
+      columnData.prev = i > 0 ? allColumnIds[i - 1] : null
+      columnData.next = i < page.columns.length - 1 ? allColumnIds[i + 1] : null
+      columnDB.data = columnData
+      await columnDB.update()
+    }
   }
-  
-  const currentColumnDB = new Column(newColumnRecord._id)
-  const currentColumnData = await currentColumnDB.getColumnData()
-  currentColumnData.prev = null
-  currentColumnData.next = null
-  currentColumnDB.data = currentColumnData
-  await currentColumnDB.update()
-}
 
 router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
@@ -178,15 +166,23 @@ router.route('/:pageId/column')
         return respondWithError(res, 400, `The following annotations do not exist on this page: ${invalidAnnotations.join(', ')}`)
       }
 
-      const allColumnLines = page.columns ? page.columns.flatMap(column => column.lines) : []
-      const duplicateAnnotations = annotations.filter(annId => allColumnLines.includes(annId))
-      if (duplicateAnnotations.length > 0) {
-        return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
-      }
-
       const existingLabels = page.columns ? page.columns.map(column => column.label) : []
       if (existingLabels.includes(label)) {
         return respondWithError(res, 400, `A column with the label '${label}' already exists.`)
+      }
+
+      if (page.columns && page.columns.length > 0) {
+        for (const column of page.columns) {
+          const overlappingAnnotations = column.lines.filter(annId => annotations.includes(annId))
+          if (overlappingAnnotations.length > 0) {
+            const columnDB = new Column(column.id)
+            const columnData = await columnDB.getColumnData()
+            columnData.lines = columnData.lines.filter(annId => !annotations.includes(annId))
+            columnDB.data = columnData
+            await columnDB.update()
+            column.lines = column.lines.filter(annId => !annotations.includes(annId))
+          }
+        }
       }
 
       const newColumnRecord = await Column.createNewColumn(pageId, projectId, label, annotations)
@@ -198,7 +194,7 @@ router.route('/:pageId/column')
     
       page.columns = [...(page.columns || []), columns]
 
-      await updatePrevAndNextColumns(page, newColumnRecord)
+      await updatePrevAndNextColumns(page)
       await project.update()
       res.status(201).json(newColumnRecord)
     } catch (error) {
@@ -261,7 +257,7 @@ router.route('/:pageId/column')
       page.columns = page.columns.filter(column => !columnLabelsToMerge.includes(column.label))
       page.columns.push(mergedColumn)
 
-      await updatePrevAndNextColumns(page, mergedColumnRecord)
+      await updatePrevAndNextColumns(page)
       await project.update()
       res.status(200).json(mergedColumnRecord)
     } catch (error) {
