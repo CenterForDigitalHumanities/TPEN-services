@@ -126,17 +126,20 @@ router.route('/:pageId/resolved')
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
-      // If the page is from RERUM, resolve its annotations
+      // Resolve all annotation references in the items array
       let resolvedPage = page
       if (page.items && page.items.length > 0) {
         // Resolve all annotations in the items array
-        const resolvedItems = await resolveReferences(page.items ?? [])
+        const resolvedItems = await resolveReferences(page.items)
         resolvedPage = { ...page, items: resolvedItems }
       }
       res.status(200).json(resolvedPage)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 
 export default router

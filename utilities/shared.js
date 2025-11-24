@@ -384,10 +384,11 @@ export const resolveReferences = async (items) => {
       // If item is an object with an id, try to fetch the full annotation
       if (item && typeof item === 'object' && item.id) {
         try {
-            const fullAnnotation = await resolveReference(item.id)
-            // Merge the full annotation with any additional properties from the item
-            return { ...fullAnnotation, ...item }
-         } catch (error) {
+          const fullAnnotation = await resolveReference(item.id)
+          // Merge with resolved annotation properties taking precedence over local
+          return { ...item, ...fullAnnotation }
+        } catch (error) {
+          console.error(`Failed to resolve annotation ${item.id}:`, error)
           return item
         }
       }
