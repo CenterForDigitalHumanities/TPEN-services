@@ -278,7 +278,7 @@ router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { label, annotations, unordered = false } = req.body
-    if (!label || !Array.isArray(annotations)) {
+    if (!label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
     }
     if (!unordered && annotations.length === 0) {
@@ -515,7 +515,7 @@ router.route('/:pageId/unordered-column')
   .post(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { label, annotations, unordered = true } = req.body
-    if (!label || !Array.isArray(annotations)) {
+    if (!label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
     }
     if(isSuspiciousValueString(label)) {
