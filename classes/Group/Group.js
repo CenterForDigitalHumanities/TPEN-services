@@ -36,7 +36,7 @@ export default class Group {
             throw err
         }
         const roles = this.data.members[memberId]?.roles
-        const allRoles = Object.assign(Group.defaultRoles, this.data.customRoles)
+        const allRoles = { ...Group.defaultRoles, ...this.data.customRoles }
         return Object.fromEntries(roles.map(role => [role, allRoles[role]]))
     }
 
@@ -61,7 +61,7 @@ export default class Group {
             throw err
         }
         this.data.members[memberId] = { roles: [] }
-        this.setMemberRoles(memberId, roles)
+        await this.setMemberRoles(memberId, roles)
     }
 
     /**
@@ -122,6 +122,7 @@ export default class Group {
         }
         roles = washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
+        await this.update()
     }
 
     /**
@@ -166,6 +167,7 @@ export default class Group {
             await this.#loadFromDB()
         }
         delete this.data.members[memberId]
+        await this.update()
     }
 
     getByRole(role) {

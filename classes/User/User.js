@@ -25,7 +25,10 @@ export default class User {
   }
 
   async getSelf() {
-    return await (this.data ?? this.#loadFromDB().then(u => u.data))
+    if (!this.data) {
+      await this.#loadFromDB()
+    }
+    return this.data
   }
   
   async getPublicInfo() {
@@ -107,6 +110,21 @@ export default class User {
     if (!this.data.profile?.displayName) {
       throw new Error("User must have a profile with a displayName")
     }
+
+    // Check for duplicate email
+    try {
+      const existingUser = await this.getByEmail(this.data.email)
+      if (existingUser && existingUser._id !== this._id) {
+        throw new Error(`User with email ${this.data.email} already exists`)
+      }
+    } catch (err) {
+      // getByEmail throws if not found - that's ok, continue
+      // But re-throw if it's our duplicate error or other errors
+      if (err.message.includes("already exists") || (!err.message.includes("not found") && err.message !== "No email provided")) {
+        throw err
+      }
+    }
+
     // save user to database
     return database.save({ _id: this._id, ...this.data }, "users")
   }
