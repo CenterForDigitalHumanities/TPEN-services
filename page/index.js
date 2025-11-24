@@ -126,6 +126,11 @@ router.route('/:pageId/resolved')
         respondWithError(res, 404, 'No page found with that ID.')
         return
       }
+      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
+        // RERUM pages already have fully resolved items
+        res.status(200).json(page)
+        return
+      }
       // Resolve all annotation references in the items array
       let resolvedPage = page
       if (page.items && page.items.length > 0) {
