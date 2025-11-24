@@ -234,7 +234,7 @@ router.route('/:pageId/column')
       }
 
       const mergedLines = columnsToMerge.flatMap(column => column.lines)
-      const allColumnLines = page.columns ? page.columns.flatMap(column => !columnLabelsToMerge.includes(column.label)) : []
+      const allColumnLines = page.columns ? page.columns.flatMap(column => !columnLabelsToMerge.includes(column.label) ? column.lines : []) : []
       const duplicateAnnotations = mergedLines.filter(annId => allColumnLines.includes(annId))
       if (duplicateAnnotations.length > 0) {
         return respondWithError(res, 400, `The following annotations are already assigned to other columns: ${duplicateAnnotations.join(', ')}`)
@@ -267,7 +267,7 @@ router.route('/:pageId/column')
   .patch(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
     const { columnLabel, annotationIdsToAdd } = req.body
-    if (!columnLabel.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
+    if (!columnLabel?.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
       return respondWithError(res, 400, 'Invalid column update data provided.')
     }
     if(isSuspiciousValueString(columnLabel)) {
@@ -289,6 +289,12 @@ router.route('/:pageId/column')
       const columnToUpdate = page.columns.find(column => column.label === columnLabel)
       if (!columnToUpdate) {
         return respondWithError(res, 404, 'Column to update not found.')
+      }
+
+      const pageItemIds = page.items?.map(item => item.id) || []
+      const invalidAnnotations = annotationIdsToAdd.filter(id => !pageItemIds.includes(id))
+      if (invalidAnnotations.length > 0) {
+        return respondWithError(res, 400, `The following annotations do not exist on this page: ${invalidAnnotations.join(', ')}`)
       }
 
       const allColumnLines = page.columns ? page.columns.flatMap(column => column.lines) : []
