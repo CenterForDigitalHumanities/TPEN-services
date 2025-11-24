@@ -106,7 +106,6 @@ export default class Column {
      * @param {string} projectId - The ID of the project this column belongs to
      * @param {string} label - The label/name for this column
      * @param {string[]} [annotations=[]] - Array of annotation IDs in this column
-     * @param {boolean} [unordered=false] - Whether this column represents unordered content
      * @returns {Promise<Object>} The saved column record
      * @throws {Error} If validation fails or the save operation fails
      */
