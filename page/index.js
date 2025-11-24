@@ -141,6 +141,8 @@ router.route('/:pageId')
 router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
+    if (!projectId) return respondWithError(res, 400, "Project ID is required")
+    if (!pageId) return respondWithError(res, 400, "Page ID is required")
     const { label, annotations } = req.body
     if (!label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
@@ -203,6 +205,8 @@ router.route('/:pageId/column')
   })
   .put(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
+    if (!projectId) return respondWithError(res, 400, "Project ID is required")
+    if (!pageId) return respondWithError(res, 400, "Page ID is required")
     const { newLabel, columnLabelsToMerge } = req.body
     if (!newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
       return respondWithError(res, 400, 'Invalid column merge data provided.')
@@ -266,6 +270,8 @@ router.route('/:pageId/column')
   })
   .patch(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
+    if (!projectId) return respondWithError(res, 400, "Project ID is required")
+    if (!pageId) return respondWithError(res, 400, "Page ID is required")
     const { columnLabel, annotationIdsToAdd } = req.body
     if (!columnLabel?.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
       return respondWithError(res, 400, 'Invalid column update data provided.')
@@ -325,6 +331,8 @@ router.route('/:pageId/column')
 router.route('/:pageId/clear-columns')
   .delete(auth0Middleware(), async (req, res) => {
     const { projectId, pageId } = req.params
+    if (!projectId) return respondWithError(res, 400, "Project ID is required")
+    if (!pageId) return respondWithError(res, 400, "Page ID is required")
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
     try {
