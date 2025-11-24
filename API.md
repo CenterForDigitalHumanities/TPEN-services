@@ -409,7 +409,7 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
 
 #### `GET /project/:projectId/page/:pageid/resolved`
 
-- **Description**: Get a fully resolved page with complete annotation data from RERUM. This endpoint resolves all annotation references in the page's items array by fetching the full annotation objects from RERUM, including bodies, context, and metadata.
+- **Description**: Get a fully resolved page with complete annotation data from RERUM. This endpoint resolves all annotation references in the page's items array by fetching the full annotation objects from RERUM which will include the Annotation body.
 - **Parameters**:
   - `projectId`: ID of the project.
   - `pageId`: The ID of the page.
@@ -457,6 +457,7 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
                     }
                 }
             ],
+            "partOf": [{"type":"Collection"}],
             "prev": "string",
             "next": "string",
             "_createdAt": "timestamp",
