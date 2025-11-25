@@ -159,7 +159,7 @@ router.route('/:pageId/column')
     }
     try {
       const project = await Project.getById(projectId)
-      if (!project.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -228,7 +228,7 @@ router.route('/:pageId/column')
     }
     try {
       const project = await Project.getById(projectId)
-      if (!project.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -295,7 +295,7 @@ router.route('/:pageId/column')
     }
     try {
       const project = await Project.getById(projectId)
-      if (!project.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -350,7 +350,7 @@ router.route('/:pageId/clear-columns')
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
     try {
       const project = await Project.getById(projectId)
-      if (!project.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")

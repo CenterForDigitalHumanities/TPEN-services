@@ -138,10 +138,11 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     })
     const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
     if (columnContainingLine) {
-      const colInstance = new Column(columnContainingLine)
-      const linePos = colInstance.data.lines.indexOf(oldLine.id)
+      const colInstance = new Column(columnContainingLine.id)
+      const columnData = await colInstance.getColumnData()
+      const linePos = columnData.lines.indexOf(oldLine.id)
       if (linePos !== -1) {
-        colInstance.data.lines[linePos] = updatedLine.id
+        columnData.lines[linePos] = updatedLine.id
         await colInstance.update()
       }
     }
@@ -196,10 +197,11 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     })
     const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
     if (columnContainingLine) {
-      const colInstance = new Column(columnContainingLine)
-      const linePos = colInstance.data.lines.indexOf(oldLine.id)
+      const colInstance = new Column(columnContainingLine.id)
+      const columnData = await colInstance.getColumnData()
+      const linePos = columnData.lines.indexOf(oldLine.id)
       if (linePos !== -1) {
-        colInstance.data.lines[linePos] = updatedLine.id
+        columnData.lines[linePos] = updatedLine.id
         await colInstance.update()
       }
     }
@@ -259,10 +261,11 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     })
     const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
     if (columnContainingLine) {
-      const colInstance = new Column(columnContainingLine)
-      const linePos = colInstance.data.lines.indexOf(oldLine.id)
+      const colInstance = new Column(columnContainingLine.id)
+      const columnData = await colInstance.getColumnData()
+      const linePos = columnData.lines.indexOf(oldLine.id)
       if (linePos !== -1) {
-        colInstance.data.lines[linePos] = updatedLine.id
+        columnData.lines[linePos] = updatedLine.id
         await colInstance.update()
       }
     }
