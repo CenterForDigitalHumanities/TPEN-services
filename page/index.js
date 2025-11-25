@@ -196,13 +196,13 @@ router.route('/:pageId/column')
       }
 
       const newColumnRecord = await Column.createNewColumn(pageId, projectId, label, annotations)
-      const columns = {
+      const newColumn = {
         id: newColumnRecord._id,
         label: newColumnRecord.label,
         lines: newColumnRecord.lines
       }
     
-      page.columns = [...(page.columns || []), columns]
+      page.columns = [...(page.columns || []), newColumn]
 
       await updatePrevAndNextColumns(page)
       await project.update()
