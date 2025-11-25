@@ -44,14 +44,14 @@ export const sendMail = async (email, subject, message) => {
     "TPEN_EMAIL_CC"
   ]
 
-  requiredEnvVars.forEach(varName => {
+  for (const varName of requiredEnvVars) {
     if (!process.env[varName]) {
       return {
         status: 500,
         message: `${varName} environment variable is not set.`
       }
     }
-  })
+  }
 
    try {
     const transporter = nodemailer.createTransport({
@@ -59,13 +59,14 @@ export const sendMail = async (email, subject, message) => {
       port: process.env.SMTP_PORT,
     })
 
-    transporter.verify((error, success) => {
-      if (error) {
-        console.log("Error in SMTP configuration: ", error)
-        return {status: 500, message: error.toString()}
-      }
+    // Verify SMTP connection before attempting to send
+    try {
+      await transporter.verify()
       console.log("Server is ready to take our messages")
-    })
+    } catch (error) {
+      console.error("Error in SMTP configuration: ", error)
+      return {status: 500, message: `SMTP connection failed: ${error.message}`}
+    }
 
     const mailOptions = {
       from: process.env.TPEN_SUPPORT_EMAIL,

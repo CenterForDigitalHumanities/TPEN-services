@@ -8,7 +8,7 @@ let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveReferences } from '../utilities/shared.js'
 import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 
 router.use(
@@ -375,6 +375,36 @@ router.route('/:pageId/clear-columns')
   .all((req, res, next) => {
     respondWithError(res, 405, 'Improper request method, please use DELETE.')
   })
-// router.use('/:pageId/line', lineRouter)
-
+  
+// Fully resolved page endpoint - returns page with fully populated annotation data
+router.route('/:pageId/resolved')
+  .get(async (req, res) => {
+    const { projectId, pageId } = req.params
+    try {
+      const page = await findPageById(pageId, projectId, true)
+      if (!page) {
+        respondWithError(res, 404, 'No page found with that ID.')
+        return
+      }
+      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
+        // RERUM pages already have fully resolved items
+        res.status(200).json(page)
+        return
+      }
+      // Resolve all annotation references in the items array
+      let resolvedPage = page
+      if (page.items && page.items.length > 0) {
+        // Resolve all annotations in the items array
+        const resolvedItems = await resolveReferences(page.items)
+        resolvedPage = { ...page, items: resolvedItems }
+      }
+      res.status(200).json(resolvedPage)
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    }
+  })
+  .all((req, res) => {
+    respondWithError(res, 405, 'Improper request method, please use GET.')
+  })
+  // router.use('/:pageId/line', lineRouter)
 export default router
