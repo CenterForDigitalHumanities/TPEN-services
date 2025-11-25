@@ -122,7 +122,8 @@ export default class Group {
         }
         roles = washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
-        await this.update()
+        // If we need the group to update first (caused error)
+        // await this.update()
     }
 
     /**
@@ -167,7 +168,8 @@ export default class Group {
             await this.#loadFromDB()
         }
         delete this.data.members[memberId]
-        await this.update()
+        // If we need the group to update first (caused error)
+        // await this.update()
     }
 
     getByRole(role) {
