@@ -53,8 +53,8 @@ function auth0Middleware() {
               email: email,
               profile: { displayName: payload.nickname },
             }
-            await user.mergeFromTemporaryUser(existingUser)
             await user.save()
+            await user.mergeFromTemporaryUser(existingUser)
             req.user = user
             next()
             return
