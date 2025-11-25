@@ -84,12 +84,18 @@ function auth0Middleware() {
 
         // If user exists but has wrong _sub (e.g., from temp user), update it
         if (u._sub !== payload.sub) {
+          const hadInviteCode = !!u.inviteCode
           u._sub = payload.sub
+          // Remove inviteCode if present - this user is now fully authenticated
+          delete u.inviteCode
           const userObj = new User(uid)
           userObj.data = u
           await userObj.update()
+          console.log(`\x1b[32mUpdated _sub for user ${uid}${hadInviteCode ? ' and removed inviteCode' : ''}\x1b[0m`)
         }
 
+        // Ensure no inviteCode on authenticated user (belt and suspenders)
+        delete u.inviteCode
         req.user = u
         next()
         return
