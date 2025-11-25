@@ -133,18 +133,26 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     }
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    page.columns?.forEach(col => {
-      col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
-    })
-    const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
-    if (columnContainingLine) {
-      const colInstance = new Column(columnContainingLine.id)
-      const columnData = await colInstance.getColumnData()
-      const linePos = columnData.lines.indexOf(oldLine.id)
-      if (linePos !== -1) {
-        columnData.lines[linePos] = updatedLine.id
-        await colInstance.update()
+
+    const pageId = req.params.pageId.split('/').pop()
+    const pageProject = project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId)
+    const oldLineInColumn = pageProject.columns.find(col => col.lines.includes(oldLine.id))
+    if (oldLineInColumn) {
+      const column = new Column(oldLineInColumn.id)
+      const columnData = await column.getColumnData()
+      const lineIndexInColumn = columnData.lines.indexOf(oldLine.id)
+      if (lineIndexInColumn !== -1) {
+        columnData.lines[lineIndexInColumn] = updatedLine.id
+        column.data = columnData
+        await column.update()
       }
+    }
+    const saveWholeColumns = pageProject.columns
+    const columnInPageIndex = saveWholeColumns.findIndex(col => col.lines.includes(oldLine.id))
+    if (columnInPageIndex !== -1) {
+      saveWholeColumns[columnInPageIndex].lines = saveWholeColumns[columnInPageIndex].lines.map(lineId =>
+        lineId === oldLine.id ? updatedLine.id : lineId
+      )
     }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
@@ -162,6 +170,8 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
         return updatePageAndProject(page, project, user._id)
       }
     )
+    project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
+    await project.update()
     res.json(line.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
@@ -192,18 +202,26 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     const updatedLine = await line.updateText(req.body, {"creator": user._id})
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    page.columns?.forEach(col => {
-      col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
-    })
-    const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
-    if (columnContainingLine) {
-      const colInstance = new Column(columnContainingLine.id)
-      const columnData = await colInstance.getColumnData()
-      const linePos = columnData.lines.indexOf(oldLine.id)
-      if (linePos !== -1) {
-        columnData.lines[linePos] = updatedLine.id
-        await colInstance.update()
+
+    const pageId = req.params.pageId.split('/').pop()
+    const pageProject = project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId)
+    const oldLineInColumn = pageProject.columns.find(col => col.lines.includes(oldLine.id))
+    if (oldLineInColumn) {
+      const column = new Column(oldLineInColumn.id)
+      const columnData = await column.getColumnData()
+      const lineIndexInColumn = columnData.lines.indexOf(oldLine.id)
+      if (lineIndexInColumn !== -1) {
+        columnData.lines[lineIndexInColumn] = updatedLine.id
+        column.data = columnData
+        await column.update()
       }
+    }
+    const saveWholeColumns = pageProject.columns
+    const columnInPageIndex = saveWholeColumns.findIndex(col => col.lines.includes(oldLine.id))
+    if (columnInPageIndex !== -1) {
+      saveWholeColumns[columnInPageIndex].lines = saveWholeColumns[columnInPageIndex].lines.map(lineId =>
+        lineId === oldLine.id ? updatedLine.id : lineId
+      )
     }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
@@ -225,6 +243,8 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
       }
     )
     if(res.headersSent) return
+    project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
+    await project.update()
     res.json(line.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
@@ -256,18 +276,26 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     const updatedLine = await line.updateBounds(req.body)
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
-    page.columns?.forEach(col => {
-      col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
-    })
-    const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
-    if (columnContainingLine) {
-      const colInstance = new Column(columnContainingLine.id)
-      const columnData = await colInstance.getColumnData()
-      const linePos = columnData.lines.indexOf(oldLine.id)
-      if (linePos !== -1) {
-        columnData.lines[linePos] = updatedLine.id
-        await colInstance.update()
+
+    const pageId = req.params.pageId.split('/').pop()
+    const pageProject = project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId)
+    const oldLineInColumn = pageProject.columns.find(col => col.lines.includes(oldLine.id))
+    if (oldLineInColumn) {
+      const column = new Column(oldLineInColumn.id)
+      const columnData = await column.getColumnData()
+      const lineIndexInColumn = columnData.lines.indexOf(oldLine.id)
+      if (lineIndexInColumn !== -1) {
+        columnData.lines[lineIndexInColumn] = updatedLine.id
+        column.data = columnData
+        await column.update()
       }
+    }
+    const saveWholeColumns = pageProject.columns
+    const columnInPageIndex = saveWholeColumns.findIndex(col => col.lines.includes(oldLine.id))
+    if (columnInPageIndex !== -1) {
+      saveWholeColumns[columnInPageIndex].lines = saveWholeColumns[columnInPageIndex].lines.map(lineId =>
+        lineId === oldLine.id ? updatedLine.id : lineId
+      )
     }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
@@ -286,6 +314,8 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
         return updatePageAndProject(page, project, user._id)
       }
     )
+    project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
+    await project.update()
     res.json(line.asJSON(true))
   } catch (error) {    // Handle version conflicts with optimistic locking
     if (error.status === 409) {
