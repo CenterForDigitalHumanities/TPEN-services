@@ -1,5 +1,4 @@
 import { auth } from "express-oauth2-jwt-bearer"
-import { extractToken, extractUser, isTokenExpired } from "../utilities/token.js"
 import User from "../classes/User/User.js"
 
 /**
@@ -17,7 +16,7 @@ function auth0Middleware() {
     issuerBaseURL: `https://${process.env.DOMAIN}/`,
   })
 
-  // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sib, roles, etc.
+  // Extract user from the token and set req.user. req.user can be set to specific info from the payload, like sub, roles, etc.
   async function setUser(req, res, next) {
     const { payload } = req.auth
 
@@ -46,6 +45,15 @@ function auth0Middleware() {
           next()
           return
         }
+
+        // If user exists but has wrong _sub (e.g., from temp user), update it
+        if (u._sub !== payload.sub) {
+          u._sub = payload.sub
+          const userObj = new User(uid)
+          userObj.data = u
+          await userObj.update()
+        }
+
         req.user = u
         next()
         return
