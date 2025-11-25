@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import Group from "../Group/Group.js"
 
 const database = new dbDriver("mongo")
 export default class User {
@@ -59,6 +60,35 @@ export default class User {
       .catch((err) => {
         throw err
       })
+  }
+
+  /**
+   * Merge a temporary user's group memberships into this user and delete the temp user.
+   * Used when a user signs up independently after being invited to projects.
+   * @param {Object} tempUserData - The temporary user's data (must have inviteCode field)
+   * @throws {Error} If tempUserData does not have an inviteCode (not a temporary user)
+   */
+  async mergeFromTemporaryUser(tempUserData) {
+    if (!tempUserData?.inviteCode) {
+      throw new Error("Cannot merge: provided user is not a temporary user")
+    }
+
+    // Find all groups containing the temp user
+    const groups = await Group.getGroupsByMember(tempUserData._id)
+    console.log(`\x1b[36mFound ${groups.length} group(s) for temp user ${tempUserData._id}\x1b[0m`)
+
+    // Transfer membership in each group
+    for (const groupData of groups) {
+      const group = new Group(groupData._id)
+      group.data = groupData
+      await group.transferMembership(tempUserData._id, this._id)
+      console.log(`\x1b[36mTransferred membership from ${tempUserData._id} to ${this._id} in group ${groupData._id}\x1b[0m`)
+    }
+
+    // Delete the temporary user
+    const tempUser = new User(tempUserData._id)
+    await tempUser.delete()
+    console.log(`\x1b[36mDeleted temporary user ${tempUserData._id}\x1b[0m`)
   }
 
   static async create(data) {

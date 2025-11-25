@@ -161,9 +161,28 @@ export default class Project {
   }
 
   /**
-    * Add a new temporary user to the users collection and send the invite E-mail.
-    */
+   * Add a new temporary user to the users collection and send the invite E-mail.
+   * If a temp user with this email already exists (invited to another project), reuse it.
+   * This allows users invited to multiple projects to use any invite link to complete signup.
+   */
   async inviteNewTPENUser(email, roles) {
+    // Check if a temp user already exists with this email
+    const existingUserLookup = new User()
+    let tempUser = null
+    try {
+      tempUser = await existingUserLookup.getByEmail(email)
+    } catch (err) {
+      // No user found - that's fine, we'll create one
+    }
+
+    if (tempUser && tempUser.inviteCode) {
+      // Reuse existing temp user - just add to this project's group
+      console.log(`\x1b[33mReusing existing temp user ${tempUser._id} for email ${email}\x1b[0m`)
+      await this.inviteExistingTPENUser(tempUser._id, roles)
+      return { "tpenUserID": tempUser._id, "tpenGroupID": this.data.group }
+    }
+
+    // Create new temp user
     const user = new User()
     const inviteCode = user._id
     const agent = `https://store.rerum.io/v1/id/${user._id}`
@@ -171,9 +190,10 @@ export default class Project {
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
+    console.log(`\x1b[33mCreated new temp user ${user._id} for email ${email}\x1b[0m`)
     // FIXME this does not have the functionality of an 'invite'.
     await this.inviteExistingTPENUser(user._id, roles)
-    return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
+    return { "tpenUserID": user._id, "tpenGroupID": this.data.group }
   }
 
   /**

@@ -1,5 +1,6 @@
 import { auth } from "express-oauth2-jwt-bearer"
 import User from "../classes/User/User.js"
+import Group from "../classes/Group/Group.js"
 
 /**
  * This function verifies authorization tokens using Auth0 library. to protect a route using this function in a different component:
@@ -33,17 +34,52 @@ function auth0Middleware() {
       const user = new User(uid)
       user.getSelf().then(async (u) => {
         if(!u || !u?.profile) {
-          user.data = {
-            _id: uid,
-            agent,
-            _sub: payload.sub,
-            email: payload.name,
-            profile: { displayName: payload.nickname },
+          const email = payload.name
+
+          // Check if a temporary user exists with this email
+          let existingUser = null
+          try {
+            existingUser = await user.getByEmail(email)
+          } catch (err) {
+            // No user found - that's fine, continue
           }
-          user.save()
-          req.user = user
-          next()
-          return
+
+          if (existingUser && existingUser.inviteCode) {
+            // Found a temporary user - merge their memberships into this new user
+            user.data = {
+              _id: uid,
+              agent,
+              _sub: payload.sub,
+              email: email,
+              profile: { displayName: payload.nickname },
+            }
+            await user.mergeFromTemporaryUser(existingUser)
+            await user.save()
+            console.log(`\x1b[32mMerged temporary user ${existingUser._id} into ${uid}\x1b[0m`)
+            req.user = user
+            next()
+            return
+          } else if (existingUser) {
+            // Non-temporary user with same email - this is a conflict
+            console.error(`\x1b[31mEmail conflict: ${email} already registered to user ${existingUser._id}\x1b[0m`)
+            const err = new Error(`User with email ${email} already exists. Please contact TPEN3 administrators for assistance.`)
+            err.status = 409
+            next(err)
+            return
+          } else {
+            // No existing user - create new
+            user.data = {
+              _id: uid,
+              agent,
+              _sub: payload.sub,
+              email: email,
+              profile: { displayName: payload.nickname },
+            }
+            await user.save()
+            req.user = user
+            next()
+            return
+          }
         }
 
         // If user exists but has wrong _sub (e.g., from temp user), update it

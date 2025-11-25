@@ -172,6 +172,35 @@ export default class Group {
         // await this.update()
     }
 
+    /**
+     * Transfer membership from one user to another.
+     * Copies all roles from sourceMemberId to targetMemberId and removes sourceMemberId.
+     * If targetMemberId already exists, roles are merged (union).
+     * @param {String} sourceMemberId - The member being replaced (e.g., temp user)
+     * @param {String} targetMemberId - The member receiving the membership (e.g., real user)
+     */
+    async transferMembership(sourceMemberId, targetMemberId) {
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
+
+        const sourceRoles = this.data.members[sourceMemberId]?.roles || []
+        if (!sourceRoles.length) return
+
+        if (this.data.members[targetMemberId]) {
+            // Merge roles if target already exists
+            this.data.members[targetMemberId].roles = [
+                ...new Set([...this.data.members[targetMemberId].roles, ...sourceRoles])
+            ]
+        } else {
+            // Add target with source's roles
+            this.data.members[targetMemberId] = { roles: [...sourceRoles] }
+        }
+
+        delete this.data.members[sourceMemberId]
+        await this.update()
+    }
+
     getByRole(role) {
         return this.data.members && Object.keys(this.data.members).filter(memberId => this.data.members[memberId].roles.includes(role))
     }
@@ -267,6 +296,18 @@ export default class Group {
         ))
         await newGroup.validateGroup()
         return await newGroup.save()
+    }
+
+    /**
+     * Find all groups containing a specific member.
+     * @param {String} memberId - The _id of the member to search for
+     * @returns {Promise<Array>} - Array of group documents containing this member
+     */
+    static async getGroupsByMember(memberId) {
+        return database.find(
+            { [`members.${memberId}`]: { $exists: true } },
+            process.env.TPENGROUPS
+        )
     }
 
     static defaultRoles = {
