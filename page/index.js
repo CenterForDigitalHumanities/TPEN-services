@@ -178,6 +178,12 @@ router.route('/:pageId/column')
       if (page.columns && page.columns.length > 0) {
         for (const column of page.columns) {
           const overlappingAnnotations = column.lines.filter(annId => annotations.includes(annId))
+          if (column.lines.length === overlappingAnnotations.length) {  
+            const columnDB = new Column(column.id)
+            await columnDB.delete()
+            page.columns = page.columns.filter(col => col.id !== column.id)
+            continue
+          }
           if (overlappingAnnotations.length > 0) {
             const columnDB = new Column(column.id)
             const columnData = await columnDB.getColumnData()
