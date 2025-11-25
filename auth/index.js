@@ -55,13 +55,11 @@ function auth0Middleware() {
             }
             await user.mergeFromTemporaryUser(existingUser)
             await user.save()
-            console.log(`\x1b[32mMerged temporary user ${existingUser._id} into ${uid}\x1b[0m`)
             req.user = user
             next()
             return
           } else if (existingUser) {
             // Non-temporary user with same email - this is a conflict
-            console.error(`\x1b[31mEmail conflict: ${email} already registered to user ${existingUser._id}\x1b[0m`)
             const err = new Error(`User with email ${email} already exists. Please contact TPEN3 administrators for assistance.`)
             err.status = 409
             next(err)
@@ -84,14 +82,12 @@ function auth0Middleware() {
 
         // If user exists but has wrong _sub (e.g., from temp user), update it
         if (u._sub !== payload.sub) {
-          const hadInviteCode = !!u.inviteCode
           u._sub = payload.sub
           // Remove inviteCode if present - this user is now fully authenticated
           delete u.inviteCode
           const userObj = new User(uid)
           userObj.data = u
           await userObj.update()
-          console.log(`\x1b[32mUpdated _sub for user ${uid}${hadInviteCode ? ' and removed inviteCode' : ''}\x1b[0m`)
         }
 
         // Ensure no inviteCode on authenticated user (belt and suspenders)

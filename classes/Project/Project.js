@@ -181,7 +181,6 @@ export default class Project {
 
     if (tempUser && tempUser.inviteCode) {
       // Reuse existing temp user - just add to this project's group
-      console.log(`\x1b[33mReusing existing temp user ${tempUser._id} for email ${email}\x1b[0m`)
       await this.inviteExistingTPENUser(tempUser._id, roles)
       return { "tpenUserID": tempUser._id, "tpenGroupID": this.data.group }
     }
@@ -194,7 +193,6 @@ export default class Project {
     const _sub = `temp-${user._id}` // This is a temporary sub for the user until they verify their email
     user.data = { email, _sub, profile, agent, inviteCode }
     await user.save()
-    console.log(`\x1b[33mCreated new temp user ${user._id} for email ${email}\x1b[0m`)
     // FIXME this does not have the functionality of an 'invite'.
     await this.inviteExistingTPENUser(user._id, roles)
     return { "tpenUserID": user._id, "tpenGroupID": this.data.group }
@@ -236,9 +234,6 @@ export default class Project {
         const remainingGroups = await Group.getGroupsByMember(userId)
         if (remainingGroups.length === 0) {
           await member.delete()
-          console.log(`\x1b[33mDeleted temp user ${userId} - no remaining group memberships\x1b[0m`)
-        } else {
-          console.log(`\x1b[36mTemp user ${userId} still has ${remainingGroups.length} group membership(s) - not deleting\x1b[0m`)
         }
       }
       return this

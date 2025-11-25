@@ -75,20 +75,17 @@ export default class User {
 
     // Find all groups containing the temp user
     const groups = await Group.getGroupsByMember(tempUserData._id)
-    console.log(`\x1b[36mFound ${groups.length} group(s) for temp user ${tempUserData._id}\x1b[0m`)
 
     // Transfer membership in each group
     for (const groupData of groups) {
       const group = new Group(groupData._id)
       group.data = groupData
       await group.transferMembership(tempUserData._id, this._id)
-      console.log(`\x1b[36mTransferred membership from ${tempUserData._id} to ${this._id} in group ${groupData._id}\x1b[0m`)
     }
 
     // Delete the temporary user
     const tempUser = new User(tempUserData._id)
     await tempUser.delete()
-    console.log(`\x1b[36mDeleted temporary user ${tempUserData._id}\x1b[0m`)
   }
 
   static async create(data) {
