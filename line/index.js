@@ -6,6 +6,7 @@ import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
+import Column from '../classes/Column/Column.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -135,6 +136,15 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     page.columns?.forEach(col => {
       col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
     })
+    const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
+    if (columnContainingLine) {
+      const colInstance = new Column(columnContainingLine)
+      const linePos = colInstance.data.lines.indexOf(oldLine.id)
+      if (linePos !== -1) {
+        colInstance.data.lines[linePos] = updatedLine.id
+        await colInstance.update()
+      }
+    }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
@@ -184,6 +194,15 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     page.columns?.forEach(col => {
       col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
     })
+    const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
+    if (columnContainingLine) {
+      const colInstance = new Column(columnContainingLine)
+      const linePos = colInstance.data.lines.indexOf(oldLine.id)
+      if (linePos !== -1) {
+        colInstance.data.lines[linePos] = updatedLine.id
+        await colInstance.update()
+      }
+    }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
@@ -238,6 +257,15 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     page.columns?.forEach(col => {
       col.lines = col.lines.map(lineId => lineId === oldLine.id ? updatedLine.id : lineId)
     })
+    const columnContainingLine = page.columns?.find(col => col.lines.includes(oldLine.id))
+    if (columnContainingLine) {
+      const colInstance = new Column(columnContainingLine)
+      const linePos = colInstance.data.lines.indexOf(oldLine.id)
+      if (linePos !== -1) {
+        colInstance.data.lines[linePos] = updatedLine.id
+        await colInstance.update()
+      }
+    }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {

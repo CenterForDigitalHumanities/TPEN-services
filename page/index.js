@@ -140,12 +140,15 @@ router.route('/:pageId')
 
 router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
     
     const { label, annotations } = req.body
-    if (!label?.trim() || !Array.isArray(annotations)) {
+    if (typeof label !== 'string' || !label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
     }
     if (annotations.length === 0) {
@@ -154,11 +157,9 @@ router.route('/:pageId/column')
     if (isSuspiciousValueString(label)) {
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
-    const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
     try {
       const project = await Project.getById(projectId)
-      if (!project) return respondWithError(res, 404, "Project not found")
+      if (!project.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -205,22 +206,23 @@ router.route('/:pageId/column')
     }
   })
   .put(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
     
     const { newLabel, columnLabelsToMerge } = req.body
-    if (!newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
+    if (typeof newLabel !== 'string' || !newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
       return respondWithError(res, 400, 'Invalid column merge data provided.')
     }
     if (isSuspiciousValueString(newLabel)) {
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
-    const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
     try {
       const project = await Project.getById(projectId)
-      if (!project) return respondWithError(res, 404, "Project not found")
+      if (!project.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -271,22 +273,23 @@ router.route('/:pageId/column')
     }
   })
   .patch(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
     
     const { columnLabel, annotationIdsToAdd } = req.body
-    if (!columnLabel?.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
+    if (typeof columnLabel !== 'string' || !columnLabel?.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
       return respondWithError(res, 400, 'Invalid column update data provided.')
     }
     if(isSuspiciousValueString(columnLabel)) {
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
-    const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
     try {
       const project = await Project.getById(projectId)
-      if (!project) return respondWithError(res, 404, "Project not found")
+      if (!project.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -333,15 +336,15 @@ router.route('/:pageId/column')
 
 router.route('/:pageId/clear-columns')
   .delete(auth0Middleware(), async (req, res) => {
+    const user = req.user
+    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
-    const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
     try {
       const project = await Project.getById(projectId)
-      if (!project) return respondWithError(res, 404, "Project not found")
+      if (!project.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
