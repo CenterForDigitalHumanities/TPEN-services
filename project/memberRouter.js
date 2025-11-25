@@ -59,7 +59,7 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   if (!roles) return respondWithError(res, 400, "Provide role(s) to add")
   try {
-    const projectObj = new Project(projectId)
+    const projectObj = await Project.getById(projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER))) {
       return respondWithError(res, 403, "You do not have permission to add roles to members.")
     }
@@ -80,7 +80,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   if (!roles) return respondWithError(res, 400, "Provide role(s) to update")
   try {
-    const projectObj = new Project(projectId)
+    const projectObj = await Project.getById(projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.MEMBER))) {
       return respondWithError(res, 403, "You do not have permission to update member roles.")
     }
@@ -100,14 +100,14 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
   if (!roles) return respondWithError(res, 400, "Provide role(s) to remove")
   if (roles.includes("OWNER")) return respondWithError(res, 400, "The OWNER role cannot be removed.")
   try {
-    const projectObj = new Project(projectId)
+    const projectObj = await Project.getById(projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER))) {
       return respondWithError(res, 403, "You do not have permission to remove roles from members.")
     }
     const groupId = projectObj.data.group
     const group = new Group(groupId)
     await group.removeMemberRoles(collaboratorId, roles)
-    res.status(204).send(`Roles [${roles}] removed from member ${collaboratorId}.`)
+    res.sendStatus(204)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error removing roles from member.")
   }
@@ -122,14 +122,11 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
   if (!newOwnerId) return respondWithError(res, 400, "Provide the ID of the new owner.")
   if (user._id === newOwnerId) return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
   try {
-    const projectObj = new Project(projectId)
+    const projectObj = await Project.getById(projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.ALL, SCOPES.ALL, ENTITIES.ALL))) {
       return respondWithError(res, 403, "You do not have permission to transfer ownership.")
     }
     const group = new Group(projectObj.data.group)
-    if (user._id === newOwnerId) {
-      return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
-    }
     const currentRoles = await group.getMemberRoles(user._id)
     Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
     await group.addMemberRoles(newOwnerId, ["OWNER"], true)
