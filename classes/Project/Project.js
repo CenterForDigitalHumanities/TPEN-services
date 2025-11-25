@@ -62,13 +62,17 @@ export default class Project {
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
-      let message = `You have been invited to the TPEN project ${projectTitle}. 
+      let message = `You have been invited to the TPEN project ${projectTitle}.
       View project <a href='${process.env.TPENINTERFACES}project?projectID=${this.data._id}'>here</a>.`
-      if (user) {
+
+      if (user && !user.inviteCode) {
+        // Existing registered TPEN3 user (not a temp user)
         // FIXME this does not have the functionality of an 'invite'.
         await this.inviteExistingTPENUser(user._id, roles)
-      } 
+      }
       else {
+        // Either no user exists, or user is a temp user (has inviteCode)
+        // In both cases, we need to send invite email with accept/reject links
         const inviteData = await this.inviteNewTPENUser(email, roles)
         const returnTo = encodeURIComponent(`${process.env.TPENINTERFACES}project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
         // Signup starting at the TPEN3 public site
@@ -77,9 +81,9 @@ export default class Project {
         const decline = `${process.env.TPENINTERFACES}project/decline?email=${encodeURIComponent(email)}&user=${inviteData.tpenUserID}&project=${this.data._id}&projectTitle=${encodeURIComponent(projectTitle)}`
         message += `
           <p>
-            Click the button below to get started with your project</p> 
+            Click the button below to get started with your project</p>
             <button class="buttonStyle" ><a href="${signup}">Get Started</a></button>
-            or copy the following link into your web browser <a href="${signup}">${signup}</a> 
+            or copy the following link into your web browser <a href="${signup}">${signup}</a>
           </p>
           <p>
             This E-mail address may be visible to members of the project so that they know
@@ -216,7 +220,7 @@ export default class Project {
 
   /**
    * Remove a member from the Project Group.
-   * If the member is an invitee (temporary) User, delete that User from the db.
+   * If the member is an invitee (temporary) User with no remaining group memberships, delete that User from the db.
    *
    * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
    */
@@ -225,10 +229,18 @@ export default class Project {
       const group = new Group(this.data.group)
       await group.removeMember(userId)
       await group.update()
-      // Don't leave orphaned invitees in the db.
+      // Don't leave orphaned invitees in the db, but only delete if they have no remaining memberships
       const member = new User(userId)
       const memberData = await member.getSelf()
-      if (memberData?.inviteCode) member.delete()
+      if (memberData?.inviteCode) {
+        const remainingGroups = await Group.getGroupsByMember(userId)
+        if (remainingGroups.length === 0) {
+          await member.delete()
+          console.log(`\x1b[33mDeleted temp user ${userId} - no remaining group memberships\x1b[0m`)
+        } else {
+          console.log(`\x1b[36mTemp user ${userId} still has ${remainingGroups.length} group membership(s) - not deleting\x1b[0m`)
+        }
+      }
       return this
     } catch (error) {
       throw {
