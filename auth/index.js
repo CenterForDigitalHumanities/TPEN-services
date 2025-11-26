@@ -1,7 +1,5 @@
 import { auth } from "express-oauth2-jwt-bearer"
 import User from "../classes/User/User.js"
-import Group from "../classes/Group/Group.js"
-
 /**
  * This function verifies authorization tokens using Auth0 library. to protect a route using this function in a different component:
   1. import the function in that component
