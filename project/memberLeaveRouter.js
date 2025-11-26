@@ -8,11 +8,6 @@ const router = express.Router({ mergeParams: true })
 /**
  * Allows an authenticated member to voluntarily leave a project.
  *
- * Validations (handled by Project.removeMember):
- * - User must be a member of the project
- * - User cannot be the only OWNER (must transfer ownership first)
- * - User cannot be the only LEADER (another leader must exist)
- *
  * @route POST /project/:projectId/leave
  * @param {string} projectId - The project the user wants to leave
  * @returns {Object} Success message with projectId
