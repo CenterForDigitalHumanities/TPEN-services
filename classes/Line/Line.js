@@ -71,7 +71,6 @@ export default class Line {
         // Skip RERUM update if no content changes detected (Issue #418)
         // Uses hasAnnotationChanges from shared.js for testability (not a private method)
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
-            console.log(`Line ${this.id} unchanged, skipping RERUM update`)
             return this  // Return without versioning
         }
 
