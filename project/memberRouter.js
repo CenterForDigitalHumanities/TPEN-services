@@ -39,13 +39,12 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   if (!userId) return respondWithError(res, 400, "User ID is required")
   try {
-    const project = new Project(projectId)
-    if (await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER)) {
-      await project.removeMember(userId)
-      res.sendStatus(204)
-    } else {
-      res.status(403).send("You do not have permission to remove members from this project")
+    const project = await Project.getById(projectId)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.MEMBER))) {
+      return respondWithError(res, 403, "You do not have permission to remove members from this project")
     }
+    await project.removeMember(userId)
+    res.sendStatus(204)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error removing member from project.")
   }
