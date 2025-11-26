@@ -72,6 +72,18 @@ describe("hasAnnotationChanges - Annotation change detection utility. #shared_un
       const incoming = { id: 'new-id', body: 'text', target: 'canvas', motivation: 'commenting', creator: 'userB', '@context': 'http://www.w3.org/ns/anno.jsonld' }
       expect(hasAnnotationChanges(existing, incoming)).toBe(false)
     })
+
+    it('returns false when body and target objects have same content but different property order', () => {
+      const existing = {
+        body: { type: 'TextualBody', value: 'text', format: 'text/plain' },
+        target: { source: 'canvas', selector: { type: 'FragmentSelector', value: 'xywh=0,0,100,100' } }
+      }
+      const incoming = {
+        body: { format: 'text/plain', value: 'text', type: 'TextualBody' },
+        target: { selector: { value: 'xywh=0,0,100,100', type: 'FragmentSelector' }, source: 'canvas' }
+      }
+      expect(hasAnnotationChanges(existing, incoming)).toBe(false)
+    })
   })
 
   describe("Edge cases", () => {

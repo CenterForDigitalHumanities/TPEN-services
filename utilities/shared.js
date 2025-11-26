@@ -401,11 +401,40 @@ export const resolveReferences = async (items) => {
 }
 
 /**
+ * Deep equality comparison that is order-insensitive for object properties.
+ * Arrays are compared in order, but object key order does not matter.
+ *
+ * @param {*} a - First value to compare
+ * @param {*} b - Second value to compare
+ * @returns {boolean} True if values are deeply equal
+ */
+const deepEqual = (a, b) => {
+  if (a === b) return true
+  if (a == null || b == null) return a === b
+  if (typeof a !== typeof b) return false
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((val, i) => deepEqual(val, b[i]))
+  }
+
+  if (typeof a === 'object') {
+    const keysA = Object.keys(a)
+    const keysB = Object.keys(b)
+    if (keysA.length !== keysB.length) return false
+    return keysA.every(key => Object.hasOwn(b, key) && deepEqual(a[key], b[key]))
+  }
+
+  return false
+}
+
+/**
  * Compare two annotations to detect meaningful content changes.
  * Only compares body and target - other fields (id, creator, motivation, etc.)
  * are not considered content changes.
  *
- * Use JSON.stringify for deep comparison since both body and target can be complex objects.
+ * Uses order-insensitive deep comparison since both body and target can be
+ * complex objects and property order should not affect equality.
  *
  * NOTE: This function is intentionally placed in shared.js rather than as a
  * private method in Line.js to enable unit testing without mocking.
@@ -415,11 +444,10 @@ export const resolveReferences = async (items) => {
  * @returns {boolean} True if there are meaningful changes, false otherwise
  */
 export const hasAnnotationChanges = (existing, compare) => {
-  // Compare only the content-relevant fields: body and target
-  if (JSON.stringify(existing?.body) !== JSON.stringify(compare?.body)) {
+  if (!deepEqual(existing?.body, compare?.body)) {
     return true
   }
-  if (JSON.stringify(existing?.target) !== JSON.stringify(compare?.target)) {
+  if (!deepEqual(existing?.target, compare?.target)) {
     return true
   }
   return false
