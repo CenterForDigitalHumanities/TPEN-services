@@ -444,11 +444,6 @@ const deepEqual = (a, b) => {
  * @returns {boolean} True if there are meaningful changes, false otherwise
  */
 export const hasAnnotationChanges = (existing, compare) => {
-  if (!deepEqual(existing?.body, compare?.body)) {
-    return true
-  }
-  if (!deepEqual(existing?.target, compare?.target)) {
-    return true
-  }
-  return false
+  return !deepEqual(existing?.body, compare?.body) ||
+         !deepEqual(existing?.target, compare?.target)
 }
