@@ -403,25 +403,23 @@ export const resolveReferences = async (items) => {
 /**
  * Compare two annotations to detect meaningful content changes.
  * Only compares body and target - other fields (id, creator, motivation, etc.)
- * are not considered content changes requiring versioning.
+ * are not considered content changes.
+ *
+ * Use JSON.stringify for deep comparison since both body and target can be complex objects.
  *
  * NOTE: This function is intentionally placed in shared.js rather than as a
  * private method in Line.js to enable unit testing without mocking.
- * See Issue #418 for context.
  *
- * @param {Object} existing - The existing annotation from RERUM
- * @param {Object} incoming - The incoming annotation to compare
+ * @param {Object} existing - The existing annotation
+ * @param {Object} compare - The incoming annotation to compare
  * @returns {boolean} True if there are meaningful changes, false otherwise
  */
-export const hasAnnotationChanges = (existing, incoming) => {
+export const hasAnnotationChanges = (existing, compare) => {
   // Compare only the content-relevant fields: body and target
-  // Use JSON.stringify for deep comparison since both can be complex objects
-  // body: can be string, TextualBody object, or array of bodies
-  // target: can be string URI or SpecificResource object with selectors
-  if (JSON.stringify(existing?.body) !== JSON.stringify(incoming?.body)) {
+  if (JSON.stringify(existing?.body) !== JSON.stringify(compare?.body)) {
     return true
   }
-  if (JSON.stringify(existing?.target) !== JSON.stringify(incoming?.target)) {
+  if (JSON.stringify(existing?.target) !== JSON.stringify(compare?.target)) {
     return true
   }
   return false

@@ -68,8 +68,8 @@ export default class Line {
             this.#tinyAction = 'create'
         }
 
-        // Skip RERUM update if no content changes detected (Issue #418)
-        // Uses hasAnnotationChanges from shared.js for testability (not a private method)
+        // Skip RERUM update if no content changes detected
+        // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
             return this  // Return without versioning
         }
