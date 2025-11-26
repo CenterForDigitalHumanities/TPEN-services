@@ -288,16 +288,16 @@ export default class Project {
       try {
         if (memberData?.email) {
           const subject = voluntary
-            ? `You left project: ${projectTitle}`
-            : `Removed from project: ${projectTitle}`
+            ? `You left ${projectTitle}`
+            : `Removed from ${projectTitle}`
 
           const message = voluntary
             ? `<p>You have successfully left the project <strong>${projectTitle}</strong>.</p>
-               <p>Your contributions to the project remain attributed to you, but you no longer have access.</p>
-               <p>If you wish to rejoin, please contact the project administrator.</p>`
+               <p>Your contributions to the project remain attributed to you, but you may no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
+               <p>If you wish to rejoin, please contact a project administrator.</p>`
             : `<p>You have been removed from the project <strong>${projectTitle}</strong> by a project administrator.</p>
-               <p>Your contributions to the project remain attributed to you, but you no longer have access.</p>
-               <p>If you believe this was done in error, please contact the project administrator.</p>`
+               <p>Your contributions to the project remain attributed to you, but you no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
+               <p>If you believe this was done in error, please contact a project administrator.</p>`
 
           await sendMail(memberData.email, subject, message)
         }
