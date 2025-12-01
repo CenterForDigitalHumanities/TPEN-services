@@ -229,7 +229,6 @@ export default class Project {
         await this.loadProject()
       }
       const group = new Group(this.data.group)
-      const members = await group.getMembers()
       await group.removeMember(userId, voluntary)
       await group.update()
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
