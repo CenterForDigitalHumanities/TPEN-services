@@ -17,7 +17,7 @@ router.route("/:id/leave").post(auth0Middleware(), async (req, res) => {
   const user = req.user
 
   if (!user) return respondWithError(res, 401, "Authentication required")
-  if (!id) return respondWithError(res, 400, "Project ID is required")
+  if (!projectId) return respondWithError(res, 400, "Project ID is required")
 
   try {
     const project = await Project.getById(projectId)
