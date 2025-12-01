@@ -260,10 +260,10 @@ export default class Project {
       try {
         // Don't leave orphaned invitees in the db, delete if they have no remaining memberships (non-blocking)
         if (userData.inviteCode) {
-            const remainingGroups = await Group.getGroupsByMember(userId)
-            if (remainingGroups.length === 0) {
-                await user.delete()
-            }
+          const remainingGroups = await Group.getGroupsByMember(userId)
+          if (remainingGroups.length === 0) {
+              await user.delete()
+          }
         }
       } catch (cleanupError) {
         console.error("Failed to remove orphaned temp user:", cleanupError)
