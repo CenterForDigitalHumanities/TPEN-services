@@ -217,24 +217,56 @@ export default class Project {
   }
 
   /**
-   * Remove a member from the Project Group.
-   * If the member is an invitee (temporary) User with no remaining group memberships, delete that User from the db.
+   * Remove a member from the Project Group
+   * Sends a confirmation email to the removed member (non-blocking).
+   * The member may be leaving voluntarily themselves or is being removed by a project admin.
+   * If the user is an orphaned temp user after they are removed from the project, delete the user. 
    *
-   * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
+   * @param {string} userId The User/member _id to remove from the Group and perhaps delete from the db.
+   * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
    */
-  async removeMember(userId) {
+  async removeMember(userId, voluntary = false) {
     try {
+      if (!this.data?.group) {
+        await this.loadProject()
+      }
       const group = new Group(this.data.group)
-      await group.removeMember(userId)
+      const user = new User(userId)
+      const userData = await user.getSelf()
+      await group.removeMember(userId, voluntary)
       await group.update()
-      // Don't leave orphaned invitees in the db, but only delete if they have no remaining memberships
-      const member = new User(userId)
-      const memberData = await member.getSelf()
-      if (memberData?.inviteCode) {
-        const remainingGroups = await Group.getGroupsByMember(userId)
-        if (remainingGroups.length === 0) {
-          await member.delete()
+      const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
+      try {
+        // Send confirmation email (non-blocking)
+        
+        if (userData?.email) {
+          const subject = voluntary
+            ? `You left ${projectTitle}`
+            : `Removed from ${projectTitle}`
+
+          const message = voluntary
+            ? `<p>You have successfully left the project <strong>${projectTitle}</strong>.</p>
+<p>Your contributions to the project remain attributed to you, but you may no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
+<p>If you wish to rejoin, please contact a project administrator.</p>`
+            : `<p>You have been removed from the project <strong>${projectTitle}</strong> by a project administrator.</p>
+<p>Your contributions to the project remain attributed to you, but you no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
+<p>If you believe this was done in error, please contact a project administrator.</p>`
+
+          await sendMail(userData.email, subject, message)
         }
+      } catch (emailError) {
+        console.error("Failed to send removal confirmation email:", emailError)
+      }
+      try {
+        // Don't leave orphaned invitees in the db, delete if they have no remaining memberships (non-blocking)
+        if (userData.inviteCode) {
+          const remainingGroups = await Group.getGroupsByMember(userId)
+          if (remainingGroups.length === 0) {
+              await user.delete()
+          }
+        }
+      } catch (cleanupError) {
+        console.error("Failed to remove orphaned temp user:", cleanupError)
       }
       return this
     } catch (error) {
