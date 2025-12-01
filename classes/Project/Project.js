@@ -217,15 +217,9 @@ export default class Project {
   }
 
   /**
-   * Remove a member from the Project Group.
-   * If the member is an invitee (temporary) User with no remaining group memberships, delete that User from the db.
+   * Remove a member from the Project Group
    * Sends a confirmation email to the removed member (non-blocking).
-   *
-   * Validations:
-   * - User must be a member of the project
-   * - Cannot remove the only OWNER (must transfer ownership first)
-   * - Cannot remove the only LEADER (must assign another leader first)
-   *
+
    * @param {string} userId The User/member _id to remove from the Group and perhaps delete from the db.
    * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
    */
@@ -234,58 +228,13 @@ export default class Project {
       if (!this.data?.group) {
         await this.loadProject()
       }
-
       const group = new Group(this.data.group)
       const members = await group.getMembers()
-
-      // Check if user is a member
-      if (!members[userId]) {
-        throw {
-          status: 400,
-          message: "User is not a member of this project"
-        }
-      }
-
-      const userRoles = members[userId].roles
-
-      // Prevent removing the only OWNER
-      if (userRoles.includes("OWNER")) {
-        const owners = group.getByRole("OWNER")
-        if (owners.length <= 1) {
-          throw {
-            status: 403,
-            message: "Cannot remove: This user is the only owner. Transfer ownership first."
-          }
-        }
-      }
-
-      // Prevent removing the only LEADER
-      if (userRoles.includes("LEADER")) {
-        const leaders = group.getByRole("LEADER")
-        if (leaders.length <= 1) {
-          throw {
-            status: 403,
-            message: "Cannot remove: This user is the only leader. Assign another leader first."
-          }
-        }
-      }
-
-      await group.removeMember(userId)
+      await group.removeMember(userId, voluntary)
       await group.update()
-
-      // Don't leave orphaned invitees in the db, but only delete if they have no remaining memberships
-      const member = new User(userId)
-      const memberData = await member.getSelf()
-      if (memberData?.inviteCode) {
-        const remainingGroups = await Group.getGroupsByMember(userId)
-        if (remainingGroups.length === 0) {
-          await member.delete()
-        }
-      }
-
-      // Send confirmation email (non-blocking)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       try {
+        // Send confirmation email (non-blocking)
         if (memberData?.email) {
           const subject = voluntary
             ? `You left ${projectTitle}`
@@ -304,14 +253,13 @@ export default class Project {
       } catch (emailError) {
         console.error("Failed to send removal confirmation email:", emailError)
       }
-
       return this
-    } catch (error) {
-      throw {
-        status: error.status || 500,
-        message: error.message || "An error occurred while removing the member."
+      } catch (error) {
+        throw {
+          status: error.status || 500,
+          message: error.message || "An error occurred while removing the member."
+        }
       }
-    }
   }
 
   /**

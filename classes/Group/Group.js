@@ -163,12 +163,50 @@ export default class Group {
         await this.update()
     }
 
-    async removeMember(memberId) {
+    /**
+     *  Remove a member from a Group.
+     *  A member can be removed by an admin or by themselves.
+     *  Validations:
+     *    - User must be a member of the project
+     *    - Cannot remove the only OWNER (must transfer ownership first)
+     *    - If the member is an invitee (temporary) User with no remaining group memberships, delete that User from the db.
+     *
+     * @param {string} userId The User/member _id to remove from the Group and perhaps delete from the db.
+     * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
+    */
+    async removeMember(memberId, voluntary = false) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
+        const member = this.data.members[memberId]
+        if (!member) {
+            throw {
+              status: 400,
+              message: "User is not a member of this group"
+            }
+        }
+        const userRoles = member.roles
+        // Prevent removing the only OWNER
+        if (userRoles.includes("OWNER")) {
+            const owners = this.getByRole("OWNER")
+            if (owners.length === 1) {
+                throw {
+                    status: 403,
+                    message: "Cannot remove: This user is the only owner. Transfer ownership first."
+                }
+            }
+        }
         delete this.data.members[memberId]
-        // If we need the group to update first (caused error)
+        // Don't leave orphaned invitees in the db, but only delete if they have no remaining memberships
+        const user = new User(memberId)
+        const userData = await user.getSelf()
+        if (userData.inviteCode) {
+            const remainingGroups = await this.getGroupsByMember(memberId)
+            if (remainingGroups.length === 0) {
+                await user.delete()
+            }
+        }
+        // If we need the Group to update in the db in addition to the Class data.
         // await this.update()
     }
 
