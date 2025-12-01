@@ -1,5 +1,4 @@
 import dbDriver from "../../database/driver.js"
-import User from "../User/User.js"
 const database = new dbDriver("mongo")
 
 export default class Group {
