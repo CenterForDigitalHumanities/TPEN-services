@@ -12,7 +12,7 @@ const router = express.Router({ mergeParams: true })
  * @param {string} projectId - The project the user wants to leave
  * @returns {Object} Success message with projectId
  */
-router.route("/:projectId/leave").post(auth0Middleware(), async (req, res) => {
+router.route("/:id/leave").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const user = req.user
 
