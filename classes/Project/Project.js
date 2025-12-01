@@ -255,12 +255,12 @@ export default class Project {
         console.error("Failed to send removal confirmation email:", emailError)
       }
       return this
-      } catch (error) {
-        throw {
-          status: error.status || 500,
-          message: error.message || "An error occurred while removing the member."
-        }
+    } catch (error) {
+      throw {
+        status: error.status || 500,
+        message: error.message || "An error occurred while removing the member."
       }
+    }
   }
 
   /**

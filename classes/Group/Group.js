@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import User from "../User/User.js"
 const database = new dbDriver("mongo")
 
 export default class Group {
@@ -171,7 +172,7 @@ export default class Group {
      *    - Cannot remove the only OWNER (must transfer ownership first)
      *    - If the member is an invitee (temporary) User with no remaining group memberships, delete that User from the db.
      *
-     * @param {string} userId The User/member _id to remove from the Group and perhaps delete from the db.
+     * @param {string} memberId The User/member _id to remove from the Group and perhaps delete from the db.
      * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
     */
     async removeMember(memberId, voluntary = false) {
@@ -201,7 +202,7 @@ export default class Group {
         const user = new User(memberId)
         const userData = await user.getSelf()
         if (userData.inviteCode) {
-            const remainingGroups = await this.getGroupsByMember(memberId)
+            const remainingGroups = await Group.getGroupsByMember(memberId)
             if (remainingGroups.length === 0) {
                 await user.delete()
             }
