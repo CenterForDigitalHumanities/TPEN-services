@@ -219,7 +219,9 @@ export default class Project {
   /**
    * Remove a member from the Project Group
    * Sends a confirmation email to the removed member (non-blocking).
-
+   * The member may be leaving voluntarily themselves or is being removed by a project admin.
+   * If the user is an orphaned temp user after they are removed from the project, delete the user. 
+   *
    * @param {string} userId The User/member _id to remove from the Group and perhaps delete from the db.
    * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
    */
@@ -229,13 +231,14 @@ export default class Project {
         await this.loadProject()
       }
       const group = new Group(this.data.group)
+      const user = new User(userId)
+      const userData = await user.getSelf()
       await group.removeMember(userId, voluntary)
       await group.update()
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       try {
         // Send confirmation email (non-blocking)
-        const user = new User(userId)
-        const userData = await user.getSelf()
+        
         if (userData?.email) {
           const subject = voluntary
             ? `You left ${projectTitle}`
@@ -253,6 +256,19 @@ export default class Project {
         }
       } catch (emailError) {
         console.error("Failed to send removal confirmation email:", emailError)
+      }
+      try {
+        // Don't leave orphaned invitees in the db, delete if they have no remaining memberships (non-blocking)
+        const user = new User(memberId)
+        const userData = await user.getSelf()
+        if (userData.inviteCode) {
+            const remainingGroups = await Group.getGroupsByMember(memberId)
+            if (remainingGroups.length === 0) {
+                await user.delete()
+            }
+        }
+      } catch (cleanupError) {
+        console.error("Failed to removed orphaned temp user:", cleanupError)
       }
       return this
     } catch (error) {

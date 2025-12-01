@@ -170,7 +170,6 @@ export default class Group {
      *  Validations:
      *    - User must be a member of the project
      *    - Cannot remove the only OWNER (must transfer ownership first)
-     *    - If the member is an invitee (temporary) User with no remaining group memberships, delete that User from the db.
      *
      * @param {string} memberId The User/member _id to remove from the Group and perhaps delete from the db.
      * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
@@ -198,15 +197,6 @@ export default class Group {
             }
         }
         delete this.data.members[memberId]
-        // Don't leave orphaned invitees in the db, but only delete if they have no remaining memberships
-        const user = new User(memberId)
-        const userData = await user.getSelf()
-        if (userData.inviteCode) {
-            const remainingGroups = await Group.getGroupsByMember(memberId)
-            if (remainingGroups.length === 0) {
-                await user.delete()
-            }
-        }
         // If we need the Group to update in the db in addition to the Class data.
         // await this.update()
     }
