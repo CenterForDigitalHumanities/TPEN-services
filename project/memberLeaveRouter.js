@@ -8,16 +8,16 @@ const router = express.Router({ mergeParams: true })
 /**
  * Allows an authenticated member to voluntarily leave a project.
  *
- * @route POST /project/:projectId/leave
+ * @route POST /project/:id/leave
  * @param {string} projectId - The project the user wants to leave
  * @returns {Object} Success message with projectId
  */
 router.route("/:id/leave").post(auth0Middleware(), async (req, res) => {
-  const { projectId } = req.params
+  const { id: projectId } = req.params
   const user = req.user
 
   if (!user) return respondWithError(res, 401, "Authentication required")
-  if (!projectId) return respondWithError(res, 400, "Project ID is required")
+  if (!id) return respondWithError(res, 400, "Project ID is required")
 
   try {
     const project = await Project.getById(projectId)
