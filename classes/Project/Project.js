@@ -234,7 +234,9 @@ export default class Project {
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       try {
         // Send confirmation email (non-blocking)
-        if (memberData?.email) {
+        const user = new User(userId)
+        const userData = await user.getSelf()
+        if (userData?.email) {
           const subject = voluntary
             ? `You left ${projectTitle}`
             : `Removed from ${projectTitle}`
@@ -247,7 +249,7 @@ export default class Project {
 <p>Your contributions to the project remain attributed to you, but you no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
 <p>If you believe this was done in error, please contact a project administrator.</p>`
 
-          await sendMail(memberData.email, subject, message)
+          await sendMail(userData.email, subject, message)
         }
       } catch (emailError) {
         console.error("Failed to send removal confirmation email:", emailError)
