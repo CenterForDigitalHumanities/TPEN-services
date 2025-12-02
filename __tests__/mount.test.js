@@ -193,7 +193,7 @@ describe('Check to see that all expected route patterns exist. #exists_unit', ()
     })
 
     it('POST /project/:projectId/leave -- member leave project', () => {
-      expect(routeExists('/:projectId/leave', 'post')).toBe(true)
+      expect(routeExists('/:id/leave', 'post')).toBe(true)
     })
   })
   
