@@ -24,14 +24,14 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
   } catch (error) {
     console.log("Project creation error")
     console.error(error)
-    respondWithError(
+    return respondWithError(
       res,
-      error.status ?? error.code ?? 500,
+      error.status ?? 500,
       error.message ?? "Unknown server error"
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/import").post(auth0Middleware(), async (req, res) => {
@@ -39,20 +39,14 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
   let user = req.user
   createFrom = createFrom?.toLowerCase()
   if (!createFrom)
-    return res.status(400).json({
-      message:
-        "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC' "
-    })
+    return respondWithError(res, 400, "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC'")
   if (createFrom === "url") {
     const manifestURL = req?.body?.url
     let tools = req?.body?.tools ?? []
     tools = await new Tools().validateAllTools(tools)
     let checkURL = await validateURL(manifestURL)
     if (!checkURL.valid)
-      return res.status(checkURL.status).json({
-        message: checkURL.message,
-        resolvedPayload: checkURL.resolvedPayload
-      })
+      return respondWithError(res, checkURL.status, checkURL.message)
     try {
       if (isSuspiciousJSON(checkURL.resolvedPayload)) return respondWithError(res, 400, "Suspicious data will not be processed.")
       const result = await ProjectFactory.fromManifestURL(
@@ -64,11 +58,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     } catch (error) {
       console.log("project import error")
       console.error(error)
-      res.status(error.status ?? 500).json({
-        status: error.status ?? 500,
-        message: error.message,
-        data: error.resolvedPayload
-      })
+      return respondWithError(res, error.status ?? 500, error.message ?? "Error importing project")
     }
   } else if (createFrom === "tpen28url") {
     const manifestURL = req?.body?.url
@@ -76,10 +66,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     tools = await new Tools().validateAllTools(tools)
     let checkURL = await validateURL(manifestURL)
     if (!checkURL.valid)
-      return res.status(checkURL.status).json({
-        message: checkURL.message,
-        resolvedPayload: checkURL.resolvedPayload
-      })
+      return respondWithError(res, checkURL.status, checkURL.message)
     try {
       if (isSuspiciousJSON(checkURL.resolvedPayload)) return respondWithError(res, 400, "Suspicious data will not be processed.")
       const result = await ProjectFactory.fromManifestURL(
@@ -92,19 +79,13 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
     } catch (error) {
       console.log("TPEN 2.8 project import error")
       console.error(error)
-      res.status(error.status ?? 500).json({
-        status: error.status ?? 500,
-        message: error.message,
-        data: error.resolvedPayload
-      })
+      return respondWithError(res, error.status ?? 500, error.message ?? "Error importing TPEN 2.8 project")
     }
   } else {
-    res.status(400).json({
-      message: `Import from ${createFrom} is not available. Create from URL instead`
-    })
+    return respondWithError(res, 400, `Import from ${createFrom} is not available. Create from URL instead`)
   }
 }).all((req, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/import-image").post(auth0Middleware(), async (req, res) => {
@@ -124,15 +105,15 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   } catch (error) {
     console.log("Create project from image error")
     console.error(error)
-    respondWithError(
+    return respondWithError(
       res,
-      error.status ?? error.code ?? 500,
+      error.status ?? 500,
       error.message ?? "Unknown server error"
     )
   }
 }
 ).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 /**
@@ -152,14 +133,14 @@ router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddlewa
     project = await project.setLabel(label)
     res.status(200).json(project)
   } catch (error) {
-    respondWithError(
+    return respondWithError(
       res,
-      error.status ?? error.code ?? 500,
+      error.status ?? 500,
       error.message ?? "Unknown server error"
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use PATCH instead")
+  return respondWithError(res, 405, "Improper request method. Use PATCH instead")
 })
 
 export default router

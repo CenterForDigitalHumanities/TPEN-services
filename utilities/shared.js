@@ -326,9 +326,9 @@ export const fetchUserAgent = async (userId) => {
  */
 export const handleVersionConflict = (res, error) => {
   return res.status(409).json({
-    error: error.message,
-    currentVersion: error.currentVersion,
+    message: error.message,
     code: 'VERSION_CONFLICT',
+    currentVersion: error.currentVersion,
     details: 'The document was modified by another process.',
     // Include additional context if available
     ...(error.pageId && { pageId: error.pageId }),

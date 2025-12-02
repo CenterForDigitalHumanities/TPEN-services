@@ -6,7 +6,7 @@ import User from "../classes/User/User.js"
 const router = express.Router({ mergeParams: true })
 
 /**
- * A user is declining from the E-mail they recieved.  It is unauthenticated.
+ * A user is declining from the E-mail they received.  It is unauthenticated.
  * Their member entry should be removed from the Group.
  * Their temporary user should be removed from the db.
  *
@@ -30,7 +30,7 @@ router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req,
   } catch (error) {
     return respondWithError(
       res,
-      error.status || error.code || 500,
+      error.status ?? 500,
       error.message ?? "There was an error declining the invitation."
     )
   }

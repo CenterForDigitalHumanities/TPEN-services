@@ -20,8 +20,7 @@ router.route('/:layerId')
         try {
             const layer = await findLayerById(layerId, projectId, true)
             if (!layer) {
-                respondWithError(res, 404, 'No layer found with that ID.')
-                return
+                return respondWithError(res, 404, 'No layer found with that ID.')
             }
             if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
                 // If the page is a RERUM document, we need to fetch it from the server

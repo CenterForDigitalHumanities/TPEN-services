@@ -23,10 +23,10 @@ router.route("/:id/invite-member").post(auth0Middleware(), async (req, res) => {
       const response = await project.sendInvite(email, roles)
       res.status(200).json(response)
     } else {
-      res.status(403).send("You do not have permission to invite members to this project")
+      return respondWithError(res, 403, "You do not have permission to invite members to this project")
     }
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error inviting member")
   }
 })
 
@@ -44,7 +44,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
       await project.removeMember(userId)
       res.sendStatus(204)
     } else {
-      res.status(403).send("You do not have permission to remove members from this project")
+      return respondWithError(res, 403, "You do not have permission to remove members from this project")
     }
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error removing member from project.")

@@ -16,12 +16,10 @@ router.use(cors(common_cors))
 router.get('/:lineId', async (req, res) => {
   const { projectId, pageId, lineId } = req.params
   if (!lineId) {
-    respondWithError(res, 400, 'Line ID is required.')
-    return
+    return respondWithError(res, 400, 'Line ID is required.')
   }
   if (!projectId || !pageId) {
-    respondWithError(res, 400, 'Project ID and Page ID are required.')
-    return
+    return respondWithError(res, 400, 'Project ID and Page ID are required.')
   }
   try {
     if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
@@ -39,16 +37,14 @@ router.get('/:lineId', async (req, res) => {
     }
     const projectData = (await getProjectById(projectId)).data
     if (!projectData) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return
+      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
     }
     const pageContainingLine = projectData.layers
       .flatMap(layer => layer.pages)
       .find(page => findLineInPage(page, lineId))
 
     if (!pageContainingLine) {
-      respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
-      return
+      return respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
     }
     const lineRef = findLineInPage(pageContainingLine, lineId)
     const line = (lineRef.id ?? lineRef).startsWith?.(process.env.RERUMIDPREFIX)
@@ -56,7 +52,7 @@ router.get('/:lineId', async (req, res) => {
     : new Line({ lineRef })
     res.json(line?.asJSON?.(true))
   } catch (error) {
-    res.status(error.status ?? 500).json({ error: error.message })
+    return respondWithError(res, error.status ?? 500, error.message)
   }
 })
 
@@ -83,8 +79,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
       newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData }, user.agent.split('/').pop())
       const existingLine = findLineInPage(page, newLine.id, res)
       if (existingLine) {
-        respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
-        return
+        return respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
       }
       const savedLine = await newLine.update()
       page.items.push(savedLine)
@@ -94,8 +89,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
       () => updatePageAndProject(page, project, user._id, ifNewContent),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
-          return
+          return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
         }
         currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
       Object.assign(page, currentVersion)
@@ -120,8 +114,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     const page = await findPageById(req.params.pageId, req.params.projectId)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
-      respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-      return
+      return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
     }
     if (!(oldLine.id && oldLine.target && oldLine.body)) oldLine = await fetch(oldLine.id).then(res => res.json())
     const line = new Line(oldLine)
@@ -158,12 +151,11 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
       () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
+          return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
         if (newLineIndex === -1) {
-          respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-          return
+          return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
         }
         currentVersion.items[newLineIndex] = updatedLine
         Object.assign(page, currentVersion)
@@ -180,7 +172,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     if (error.status === 409) {
       return handleVersionConflict(res, error)
     }
-    res.status(error.status ?? 500).json({ error: error.message })
+    return respondWithError(res, error.status ?? 500, error.message)
   }
 })
 
@@ -190,15 +182,13 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     if (typeof req.body !== 'string') {
-      respondWithError(res, 400, 'Invalid request body. Expected a string.')
-      return
+      return respondWithError(res, 400, 'Invalid request body. Expected a string.')
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
-      respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-      return
+      return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
     }
     const line = new Line(oldLine)
     const updatedLine = await line.updateText(req.body, {"creator": user._id})
@@ -230,14 +220,12 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           if(res.headersSent) return
-          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
-          return
+          return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
         if (newLineIndex === -1) {
           if(res.headersSent) return
-          respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-          return
+          return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
         }
         currentVersion.items[newLineIndex] = updatedLine
         Object.assign(page, currentVersion)
@@ -253,10 +241,9 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
-      handleVersionConflict(res, error)
-      return
+      return handleVersionConflict(res, error)
     }
-    res.status(error.status ?? 500).json({ error: error.message })
+    return respondWithError(res, error.status ?? 500, error.message)
   }
 })
 
@@ -266,15 +253,13 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
     if (typeof req.body !== 'object' || !req.body.x || !req.body.y || !req.body.w || !req.body.h) {
-      respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
-      return
+      return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
-      respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-      return
+      return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
     }
     const line = new Line(oldLine)
     const updatedLine = await line.updateBounds(req.body)
@@ -305,13 +290,11 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       () => updatePageAndProject(page, project, user._id, true),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
-          respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
-          return
+          return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
         }
         const newLineIndex = currentVersion.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
         if (newLineIndex === -1) {
-          respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-          return
+          return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
         }
         currentVersion.items[newLineIndex] = updatedLine
         Object.assign(page, currentVersion)
@@ -327,7 +310,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     if (error.status === 409) {
       return handleVersionConflict(res, error)
     }
-    res.status(error.status ?? 500).json({ error: error.message })
+    return respondWithError(res, error.status ?? 500, error.message)
   }
 })
 
