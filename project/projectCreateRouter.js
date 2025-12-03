@@ -91,6 +91,9 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
 router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   try {
     const { imageUrls, projectLabel } = req.body
     if (!imageUrls || !projectLabel) {
@@ -124,6 +127,9 @@ router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddlewa
   if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
   const projectId = req.params.projectId
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const { label } = req.body
   if (typeof label !== "string" || !label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank and must be a string.")
   try {

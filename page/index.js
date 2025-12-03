@@ -61,6 +61,12 @@ router.route('/:pageId')
       respondWithError(res, 400, 'No update data provided.')
       return
     }
+    if (update.items !== undefined && !Array.isArray(update.items)) {
+      return respondWithError(res, 400, 'Items must be an array')
+    }
+    if (update.items && update.items.some(item => typeof item !== 'object' || item === null)) {
+      return respondWithError(res, 400, 'Each item must be an object')
+    }
     const project = await Project.getById(projectId)
     if (!project) {
       respondWithError(res, 404, `Project with ID '${projectId}' not found`)
@@ -142,11 +148,14 @@ router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
+
+    if (!req.body || typeof req.body !== 'object') {
+      return respondWithError(res, 400, "Request body is required")
+    }
     const { label, annotations } = req.body
     if (typeof label !== 'string' || !label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
@@ -214,11 +223,14 @@ router.route('/:pageId/column')
   .put(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
+
+    if (!req.body || typeof req.body !== 'object') {
+      return respondWithError(res, 400, "Request body is required")
+    }
     const { newLabel, columnLabelsToMerge } = req.body
     if (typeof newLabel !== 'string' || !newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
       return respondWithError(res, 400, 'Invalid column merge data provided.')
@@ -281,11 +293,14 @@ router.route('/:pageId/column')
   .patch(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
+
+    if (!req.body || typeof req.body !== 'object') {
+      return respondWithError(res, 400, "Request body is required")
+    }
     const { columnLabel, annotationIdsToAdd } = req.body
     if (typeof columnLabel !== 'string' || !columnLabel?.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
       return respondWithError(res, 400, 'Invalid column update data provided.')

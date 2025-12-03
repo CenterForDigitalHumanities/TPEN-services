@@ -7,7 +7,10 @@ const router = express.Router({ mergeParams: true })
 
 //Add Tool to Project
 router.route("/:projectId/tool").post(async (req, res) => {
-  const { label, toolName, url, location, custom } = req?.body
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
+  const { label, toolName, url, location, custom } = req.body
   let { enabled, tagName } = custom ?? {}
   if (!label || !toolName || !location) {
     return respondWithError(res, 400, "label, toolName, and location are required fields.")
@@ -45,6 +48,9 @@ router.route("/:projectId/tool").post(async (req, res) => {
     respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
   }
 }).delete(async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
@@ -79,6 +85,9 @@ router.route("/:projectId/tool").post(async (req, res) => {
 
 // Toggle Tool State in Project
 router.route("/:projectId/toggleTool").put(async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")

@@ -52,6 +52,9 @@ router.route('/:layerId')
         const user = req.user
         if (!projectId) return respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
+        if (providedPages !== undefined && !Array.isArray(providedPages)) {
+            return respondWithError(res, 400, 'Pages must be an array')
+        }
         try {
             if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
             const project = await Project.getById(projectId)
@@ -88,6 +91,9 @@ router.route('/:layerId')
 // Route to create a new layer within a project
 router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
+    if (!req.body || typeof req.body !== 'object') {
+        return respondWithError(res, 400, 'Request body is required')
+    }
     const { label, canvases } = req.body
     if (!projectId) return respondWithError(res, 400, 'Project ID is required')
     if (!label || !Array.isArray(canvases) || canvases.length === 0) {

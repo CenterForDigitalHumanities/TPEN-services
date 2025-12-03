@@ -66,6 +66,9 @@ router.post('/', auth0Middleware(), async (req, res) => {
     const page = await findPageById(req.params.pageId, req.params.projectId)
     if (!page) return
 
+    if (!req.body || (Array.isArray(req.body) && req.body.length === 0)) {
+      return respondWithError(res, 400, "Request body with line data is required")
+    }
     const inputLines = Array.isArray(req.body) ? req.body : [req.body]
     // Check each annotation for suspicious content.  The body itself will be checked during the recursion.
     for (const anno of inputLines) {

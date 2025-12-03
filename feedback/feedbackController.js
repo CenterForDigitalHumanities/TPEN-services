@@ -10,6 +10,9 @@ import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
  * @returns 200 if feedback is submitted successfully, 204 if no feedback is provided, or an error response if the submission fails.
  */
 export async function submitFeedback(req, res) {
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const user = req.user ? `${req.user.profile.displayName} (${req.user._id})` : 'Anonymous'
   const { page, feedback } = req.body
   if (!feedback) return res.status(204).send()
@@ -30,6 +33,9 @@ export async function submitFeedback(req, res) {
  * @returns 200 if the bug report is submitted successfully, 204 if no bug description is provided, or an error response if the submission fails.
  */
 export async function submitBug(req, res) {
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const user = req.user ? `${req.user.profile.displayName} (${req.user._id})` : 'Anonymous'
   const { page, bugDescription } = req.body
   if (!bugDescription) return res.status(204).send()
