@@ -83,36 +83,6 @@ router.route('/:pageId')
         return
       }
 
-      let pageColumnsUpdate = null
-      let pageInProject = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
-      let pageItemIds = page.items ? page.items.map(item => item.id) : []
-      if (update.items) {
-        const updateItemIds = update.items.map(item => item.id)
-        const deletedIds = pageItemIds.filter(id => !updateItemIds.includes(id))
-        if (deletedIds.length > 0 && pageInProject.columns && pageInProject.columns.length > 0) {
-          for (const column of pageInProject.columns) {
-            const columnDB = new Column(column.id)
-            const columnData = await columnDB.getColumnData()
-            const newLines = columnData.lines.filter(lineId => !deletedIds.includes(lineId))
-            if (newLines.length !== columnData.lines.length) {
-              columnData.lines = newLines
-              columnDB.data = columnData
-              if (newLines.length === 0) {
-                await columnDB.delete()
-                pageInProject.columns = pageInProject.columns.filter(col => col.id !== column.id)
-                await updatePrevAndNextColumns(pageInProject)
-              } else {
-                await columnDB.update()
-                column.lines = newLines
-              }
-            }
-          }
-          pageColumnsUpdate = pageInProject.columns.map(column => {
-            const newLines = column.lines.filter(lineId => !deletedIds.includes(lineId))
-            return { ...column, lines: newLines }
-          })
-        }
-      }
       // Only update top-level properties that are present in the request
       Object.keys(update).forEach(key => {
         page[key] = update[key]
@@ -130,69 +100,10 @@ router.route('/:pageId')
             ? new Line(item)
             : Line.build(projectId, pageId, item, user.agent.split('/').pop())
           line.creator ??= user.agent.split('/').pop()
-          const updatedLine = await line.update()
-          console.log(item.id, updatedLine.id)
-
-          if (pageItemIds.includes(item.id)) {
-            console.log('I was here from the start')
-            for (const column of pageInProject.columns) {
-              if (column.lines.includes(item.id)) {
-                const columnDB = new Column(column.id)
-                const columnData = await columnDB.getColumnData()
-                const lineIndex = columnData.lines.indexOf(item.id)
-                if (lineIndex !== -1) {
-                  columnData.lines[lineIndex] = updatedLine.id
-                  columnDB.data = columnData
-                  await columnDB.update()
-                }
-              }
-              if (pageColumnsUpdate) {
-                pageColumnsUpdate = pageColumnsUpdate.map(col => {
-                  if (col.lines.includes(item.id)) {
-                    const newLines = col.lines.map(lineId => lineId === item.id ? updatedLine.id : lineId)
-                    return { ...col, lines: newLines }
-                  }
-                  return col
-                })
-              } else {
-                pageColumnsUpdate = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p).columns.map(col => {
-                  if (col.lines.includes(item.id)) {
-                    const newLines = col.lines.map(lineId => lineId === item.id ? updatedLine.id : lineId)
-                    return { ...col, lines: newLines }
-                  }
-                  return col
-                })
-              }
-            }
-          }
-          if (!item.id.includes(process.env.RERUMIDPREFIX)) {
-            console.log('New Column')
-            console.log(pageColumnsUpdate ? pageColumnsUpdate.length : 'no pageColumnsUpdate')
-            const newColumn = await Column.createNewColumn(pageId, projectId, `Column ${pageColumnsUpdate ? pageColumnsUpdate.length + 1 : 1}`, [updatedLine.id])            
-            const columnToAdd = {
-              id: newColumn._id,
-              label: newColumn.label,
-              lines: newColumn.lines
-            }
-            console.log(newColumn, columnToAdd)
-            pageInProject.columns = [...(pageInProject.columns || []), columnToAdd]
-            if (pageColumnsUpdate) {
-              pageColumnsUpdate.push(columnToAdd)
-            } else {
-              pageColumnsUpdate = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p).columns
-            }
-            await updatePrevAndNextColumns(pageInProject)
-            pageItemIds.push(updatedLine.id)
-          }
-          return updatedLine
+          return await line.update()
         }))
       }
       await updatePageAndProject(page, project, user._id)
-      if (pageColumnsUpdate) {
-        const pageInProject = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
-        pageInProject.columns = pageColumnsUpdate
-        await project.update()
-      }
       res.status(200).json(page)
     } catch (error) {
       // Handle version conflicts with optimistic locking
