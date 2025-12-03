@@ -100,6 +100,9 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
     const project = await ProjectFactory.loadAsUser(id, null)
+    if (!project) {
+      return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
+    }
     const collaboratorIdList = Object.keys(project.collaborators)
     if (!collaboratorIdList.includes(user._id)) {
       return respondWithError(res, 403, "You do not have permission to export this project")
