@@ -62,13 +62,17 @@ export default class Project {
       let user = await userObj.getByEmail(email)
       const roles = this.parseRoles(rolesString)
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
-      let message = `You have been invited to the TPEN project ${projectTitle}. 
+      let message = `You have been invited to the TPEN project ${projectTitle}.
       View project <a href='${process.env.TPENINTERFACES}project?projectID=${this.data._id}'>here</a>.`
-      if (user) {
+
+      if (user && !user.inviteCode) {
+        // Existing registered TPEN3 user (not a temp user)
         // FIXME this does not have the functionality of an 'invite'.
         await this.inviteExistingTPENUser(user._id, roles)
-      } 
+      }
       else {
+        // Either no user exists, or user is a temp user (has inviteCode)
+        // In both cases, we need to send invite email with accept/reject links
         const inviteData = await this.inviteNewTPENUser(email, roles)
         const returnTo = encodeURIComponent(`${process.env.TPENINTERFACES}project?projectID=${this.data._id}&inviteCode=${inviteData.tpenUserID}`)
         // Signup starting at the TPEN3 public site
@@ -77,9 +81,9 @@ export default class Project {
         const decline = `${process.env.TPENINTERFACES}project/decline?email=${encodeURIComponent(email)}&user=${inviteData.tpenUserID}&project=${this.data._id}&projectTitle=${encodeURIComponent(projectTitle)}`
         message += `
           <p>
-            Click the button below to get started with your project</p> 
+            Click the button below to get started with your project</p>
             <button class="buttonStyle" ><a href="${signup}">Get Started</a></button>
-            or copy the following link into your web browser <a href="${signup}">${signup}</a> 
+            or copy the following link into your web browser <a href="${signup}">${signup}</a>
           </p>
           <p>
             This E-mail address may be visible to members of the project so that they know
@@ -161,9 +165,27 @@ export default class Project {
   }
 
   /**
-    * Add a new temporary user to the users collection and send the invite E-mail.
-    */
+   * Add a new temporary user to the users collection and send the invite E-mail.
+   * If a temp user with this email already exists (invited to another project), reuse it.
+   * This allows users invited to multiple projects to use any invite link to complete signup.
+   */
   async inviteNewTPENUser(email, roles) {
+    // Check if a temp user already exists with this email
+    const existingUserLookup = new User()
+    let tempUser = null
+    try {
+      tempUser = await existingUserLookup.getByEmail(email)
+    } catch (err) {
+      // No user found - that's fine, we'll create one
+    }
+
+    if (tempUser && tempUser.inviteCode) {
+      // Reuse existing temp user - just add to this project's group
+      await this.inviteExistingTPENUser(tempUser._id, roles)
+      return { "tpenUserID": tempUser._id, "tpenGroupID": this.data.group }
+    }
+
+    // Create new temp user
     const user = new User()
     const inviteCode = user._id
     const agent = `https://store.rerum.io/v1/id/${user._id}`
@@ -173,7 +195,7 @@ export default class Project {
     await user.save()
     // FIXME this does not have the functionality of an 'invite'.
     await this.inviteExistingTPENUser(user._id, roles)
-    return { "tpenUserID":user._id, "tpenGroupID":this.data.group }
+    return { "tpenUserID": user._id, "tpenGroupID": this.data.group }
   }
 
   /**
@@ -195,20 +217,57 @@ export default class Project {
   }
 
   /**
-   * Remove a member from the Project Group.
-   * If the member is an invitee (temporary) User, delete that User from the db.
+   * Remove a member from the Project Group
+   * Sends a confirmation email to the removed member (non-blocking).
+   * The member may be leaving voluntarily themselves or is being removed by a project admin.
+   * If the user is an orphaned temp user after they are removed from the project, delete the user. 
    *
-   * @param userId The User/member _id to remove from the Group and perhaps delete from the db.
+   * @param {string} userId The User/member _id to remove from the Group and perhaps delete from the db.
+   * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
    */
-  async removeMember(userId) {
+  async removeMember(userId, voluntary = false) {
     try {
+      if (!this.data?.group) {
+        await this.loadProject()
+      }
       const group = new Group(this.data.group)
-      await group.removeMember(userId)
+      const user = new User(userId)
+      const userData = await user.getSelf()
+      await group.removeMember(userId, voluntary)
       await group.update()
-      // Don't leave orphaned invitees in the db.
-      const member = new User(userId)
-      const memberData = await member.getSelf()
-      if (memberData?.inviteCode) member.delete()
+      const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
+      try {
+        // Send confirmation email (non-blocking)
+        
+        if (userData?.email) {
+          const subject = voluntary
+            ? `You left ${projectTitle}`
+            : `Removed from ${projectTitle}`
+
+          const message = voluntary
+            ? `<p>You have successfully left the project <strong>${projectTitle}</strong>.</p>
+<p>Your contributions to the project remain attributed to you, but you may no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
+<p>If you wish to rejoin, please contact a project administrator.</p>`
+            : `<p>You have been removed from the project <strong>${projectTitle}</strong> by a project administrator.</p>
+<p>Your contributions to the project remain attributed to you, but you no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
+<p>If you believe this was done in error, please contact a project administrator.</p>`
+
+          await sendMail(userData.email, subject, message)
+        }
+      } catch (emailError) {
+        console.error("Failed to send removal confirmation email:", emailError)
+      }
+      try {
+        // Don't leave orphaned invitees in the db, delete if they have no remaining memberships (non-blocking)
+        if (userData.inviteCode) {
+          const remainingGroups = await Group.getGroupsByMember(userId)
+          if (remainingGroups.length === 0) {
+              await user.delete()
+          }
+        }
+      } catch (cleanupError) {
+        console.error("Failed to remove orphaned temp user:", cleanupError)
+      }
       return this
     } catch (error) {
       throw {

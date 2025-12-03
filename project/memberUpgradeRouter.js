@@ -1,5 +1,5 @@
 import express from "express"
-import { validateID, respondWithError } from "../utilities/shared.js"
+import { respondWithError } from "../utilities/shared.js"
 import Project from "../classes/Project/Project.js"
 import Group from "../classes/Group/Group.js"
 import User from "../classes/User/User.js"

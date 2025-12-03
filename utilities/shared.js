@@ -336,3 +336,114 @@ export const handleVersionConflict = (res, error) => {
     ...(error.lineId && { lineId: error.lineId })
   })
 }
+
+/**
+ * Fetch a single annotation from RERUM by its ID
+ * @param {string} annotationId - The ID/URL of the annotation to fetch (supports both RERUM and TPEN3 formats)
+ * @returns {Promise<Object>} The full annotation object from RERUM
+ * @throws {Error} If the annotation cannot be fetched or parsed
+ */
+export const resolveReference = async (annotationId) => {
+  if (!annotationId || !annotationId.startsWith("http")) {
+    throw new Error('Proper Annotation URI is required')
+  }
+  try {
+    const response = await fetch(annotationId)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch annotation from RERUM: ${response.statusText}`)
+    }
+    const annotation = await response.json()
+    return annotation
+  } catch (error) {
+    console.error(`Error fetching annotation: ${annotationId}`, error)
+    throw new Error(`Failed to fetch annotation from RERUM: ${error.message}`)
+  }
+}
+
+/**
+ * Resolve all annotations in a page's items array by fetching their full data from RERUM
+ * @param {Array} items - Array of annotation items (can be IDs or partial objects)
+ * @returns {Promise<Array>} Array of fully resolved annotation objects
+ */
+export const resolveReferences = async (items) => {
+  if (!Array.isArray(items)) return []
+
+  // Process all items in parallel for better performance
+  const resolvedItems = await Promise.all(
+    items.map(async (item) => {
+      // If item is a string, it's an annotation ID - fetch from RERUM
+      if (typeof item === 'string') {
+        try {
+          return await resolveReference(item)
+        } catch (error) {
+          console.error(`Failed to resolve annotation ${item}:`, error)
+          // Return the ID string if fetching fails
+          return { id: item, error: error.message }
+        }
+      }
+      // If item is an object with an id, try to fetch the full annotation
+      if (item && typeof item === 'object' && item.id) {
+        try {
+          const fullAnnotation = await resolveReference(item.id)
+          // Merge with resolved annotation properties taking precedence over local
+          return { ...item, ...fullAnnotation }
+        } catch (error) {
+          console.error(`Failed to resolve annotation ${item.id}:`, error)
+          return item
+        }
+      }
+      // For any other format, return as-is
+      return item
+    })
+  )
+
+  return resolvedItems
+}
+
+/**
+ * Deep equality comparison that is order-insensitive for object properties.
+ * Arrays are compared in order, but object key order does not matter.
+ *
+ * @param {*} a - First value to compare
+ * @param {*} b - Second value to compare
+ * @returns {boolean} True if values are deeply equal
+ */
+const deepEqual = (a, b) => {
+  if (a === b) return true
+  if (a == null || b == null) return a === b
+  if (typeof a !== typeof b) return false
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((val, i) => deepEqual(val, b[i]))
+  }
+
+  if (typeof a === 'object') {
+    const keysA = Object.keys(a)
+    const keysB = Object.keys(b)
+    if (keysA.length !== keysB.length) return false
+    return keysA.every(key => Object.hasOwn(b, key) && deepEqual(a[key], b[key]))
+  }
+
+  return false
+}
+
+/**
+ * Compare two annotations to detect meaningful content changes.
+ * Only compares body and target - other fields (id, creator, motivation, etc.)
+ * are not considered content changes.
+ *
+ * Uses order-insensitive deep comparison since both body and target can be
+ * complex objects and property order should not affect equality.
+ *
+ * NOTE: This function is intentionally placed in shared.js rather than as a
+ * private method in Line.js to enable unit testing without mocking.
+ *
+ * @param {Object} existing - The existing annotation
+ * @param {Object} compare - The incoming annotation to compare
+ * @returns {boolean} True if there are meaningful changes, false otherwise
+ */
+export const hasAnnotationChanges = (existing, compare) => {
+  return !deepEqual(existing?.body, compare?.body) ||
+         !deepEqual(existing?.target, compare?.target)
+}

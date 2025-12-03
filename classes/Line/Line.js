@@ -1,5 +1,5 @@
 import dbDriver from "../../database/driver.js"
-import { fetchUserAgent } from "../../utilities/shared.js"
+import { fetchUserAgent, hasAnnotationChanges } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
 export default class Line {
@@ -67,6 +67,13 @@ export default class Line {
             // This id doesn't exist in RERUM, so we need to create it
             this.#tinyAction = 'create'
         }
+
+        // Skip RERUM update if no content changes detected
+        // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
+        if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
+            return this  // Return without versioning
+        }
+
         const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
         const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.id)
         .catch(err => {

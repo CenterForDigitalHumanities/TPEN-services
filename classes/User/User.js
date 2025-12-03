@@ -1,4 +1,5 @@
 import dbDriver from "../../database/driver.js"
+import Group from "../Group/Group.js"
 
 const database = new dbDriver("mongo")
 export default class User {
@@ -25,7 +26,10 @@ export default class User {
   }
 
   async getSelf() {
-    return await (this.data ?? this.#loadFromDB().then(u => u.data))
+    if (!this.data) {
+      await this.#loadFromDB()
+    }
+    return this.data
   }
   
   async getPublicInfo() {
@@ -56,6 +60,32 @@ export default class User {
       .catch((err) => {
         throw err
       })
+  }
+
+  /**
+   * Merge a temporary user's group memberships into this user and delete the temp user.
+   * Used when a user signs up independently after being invited to projects.
+   * @param {Object} tempUserData - The temporary user's data (must have inviteCode field)
+   * @throws {Error} If tempUserData does not have an inviteCode (not a temporary user)
+   */
+  async mergeFromTemporaryUser(tempUserData) {
+    if (!tempUserData?.inviteCode) {
+      throw new Error("Cannot merge: provided user is not a temporary user")
+    }
+
+    // Find all groups containing the temp user
+    const groups = await Group.getGroupsByMember(tempUserData._id)
+
+    // Transfer membership in each group
+    for (const groupData of groups) {
+      const group = new Group(groupData._id)
+      group.data = groupData
+      await group.transferMembership(tempUserData._id, this._id)
+    }
+
+    // Delete the temporary user
+    const tempUser = new User(tempUserData._id)
+    await tempUser.delete()
   }
 
   static async create(data) {
@@ -107,6 +137,21 @@ export default class User {
     if (!this.data.profile?.displayName) {
       throw new Error("User must have a profile with a displayName")
     }
+
+    // Check for duplicate email
+    try {
+      const existingUser = await this.getByEmail(this.data.email)
+      if (existingUser && existingUser._id !== this._id) {
+        throw new Error(`User with email ${this.data.email} already exists`)
+      }
+    } catch (err) {
+      // getByEmail throws if not found - that's ok, continue
+      // But re-throw if it's our duplicate error or other errors
+      if (err.message.includes("already exists") || (!err.message.includes("not found") && err.message !== "No email provided")) {
+        throw err
+      }
+    }
+
     // save user to database
     return database.save({ _id: this._id, ...this.data }, "users")
   }
