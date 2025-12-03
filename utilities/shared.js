@@ -240,7 +240,7 @@ export async function findLayerById(layerId, projectId, rerum = false) {
       if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const p = await Project.getById(projectId)
-   if (!p) {
+   if (!p?.data) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
       throw error
