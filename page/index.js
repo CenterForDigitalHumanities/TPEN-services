@@ -168,8 +168,7 @@ router.route('/:pageId')
           if (!item.id.includes(process.env.RERUMIDPREFIX)) {
             console.log('New Column')
             console.log(pageColumnsUpdate ? pageColumnsUpdate.length : 'no pageColumnsUpdate')
-            const newColumn = await Column.createNewColumn(pageId, projectId, `Column ${pageColumnsUpdate ? pageColumnsUpdate.length + 1 : 1}`, [updatedLine.id])
-            await newColumn.update()
+            const newColumn = await Column.createNewColumn(pageId, projectId, `Column ${pageColumnsUpdate ? pageColumnsUpdate.length + 1 : 1}`, [updatedLine.id])            
             const columnToAdd = {
               id: newColumn._id,
               label: newColumn.label,
