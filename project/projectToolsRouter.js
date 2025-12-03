@@ -8,7 +8,7 @@ const router = express.Router({ mergeParams: true })
 //Add Tool to Project
 router.route("/:projectId/tool").post(async (req, res) => {
   const { label, toolName, url, location, custom } = req?.body
-  let { enabled, tagName } = custom
+  let { enabled, tagName } = custom ?? {}
   if (!label || !toolName || !location) {
     return respondWithError(res, 400, "label, toolName, and location are required fields.")
   }
