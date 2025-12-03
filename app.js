@@ -21,6 +21,7 @@ import userProfileRouter from './userProfile/index.js'
 import privateProfileRouter from './userProfile/privateProfile.js'
 import proxyRouter from './utilities/proxy.js'
 import feedbackRouter from './feedback/feedbackRoutes.js'
+import routeErrorHandler from './utilities/routeErrorHandler.js'
 
 let app = express()
 
@@ -83,38 +84,7 @@ app.use('/proxy', proxyRouter)
 app.use('/beta', feedbackRouter)
 
 // Centralized error handling middleware
-// Catches all thrown errors (auth, body-parser, unhandled exceptions)
-// Note: Morgan already logs request info, so we focus on error details
-app.use((err, req, res, next) => {
-  const status = err.status || err.statusCode || 500
-  const message = err.message || 'Internal Server Error'
-
-  // ANSI color codes for pm2 logs visibility
-  const colors = {
-    red: '\x1b[31m',
-    yellow: '\x1b[33m',
-    cyan: '\x1b[36m',
-    reset: '\x1b[0m'
-  }
-
-  // Color based on status code: red for 5xx, yellow for 4xx
-  const statusColor = status >= 500 ? colors.red : colors.yellow
-
-  // Log error details (Morgan already logs the request)
-  console.error(`${statusColor}Error ${status}: ${message}${colors.reset}`)
-
-  // Log stack trace for server errors only
-  if (status >= 500 && err.stack) {
-    console.error(`${colors.cyan}${err.stack}${colors.reset}`)
-  }
-
-  // Return consistent JSON, hide internal details from clients
-  if (!res.headersSent) {
-    res.status(status).json({
-      message: status >= 500 ? 'Internal Server Error' : message
-    })
-  }
-})
+app.use(routeErrorHandler)
 
 //catch 404 because of an invalid site path
 app.use('*_', (req, res) => {
