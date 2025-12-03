@@ -35,6 +35,10 @@ const proxy = (req, res, next) => {
   headers['X-Forwarded-For'] = (forwardedFor ? forwardedFor + ',' : '') + req.connection.remoteAddress
   try {
     const parsedUrl = new URL(targetUrl)
+    // Only allow http and https protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return respondWithError(res, 400, 'Only HTTP and HTTPS URLs are supported')
+    }
     if (parsedUrl.protocol === 'http:') {
       parsedUrl.protocol = 'https:'
       targetUrl = parsedUrl.toString()
