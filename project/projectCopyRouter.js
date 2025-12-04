@@ -17,7 +17,7 @@ router.route("/:projectId/copy").post(auth0Middleware(), async (req, res) => {
     } catch (error) {
         return respondWithError(
             res,
-            error.status ?? error.code ?? 500,
+            error.status ?? 500,
             error.message ?? "Unknown server error"
         )
     }
@@ -37,7 +37,7 @@ router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), asy
     } catch (error) {
         return respondWithError(
             res,
-            error.status ?? error.code ?? 500,
+            error.status ?? 500,
             error.message ?? "Unknown server error"
         )
     }
@@ -57,7 +57,7 @@ router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, 
     } catch (error) {
         return respondWithError(
             res,
-            error.status ?? error.code ?? 500,
+            error.status ?? 500,
             error.message ?? "Unknown server error"
         )
     }
@@ -84,7 +84,7 @@ router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), asy
     } catch (error) {
         return respondWithError(
             res,
-            error.status ?? error.code ?? 500,
+            error.status ?? 500,
             error.message ?? "Unknown server error"
         )
     }

@@ -77,6 +77,8 @@ function auth0Middleware() {
           return
         }
       }
+       // Ensure no inviteCode on authenticated user
+      delete u.inviteCode
 
       // If user exists but has wrong _sub (e.g., from temp user), update it
       if (u._sub !== payload.sub) {
@@ -87,8 +89,6 @@ function auth0Middleware() {
         await userObj.update()
       }
 
-      // Ensure no inviteCode on authenticated user (belt and suspenders)
-      delete u.inviteCode
       req.user = u
       next()
       return
