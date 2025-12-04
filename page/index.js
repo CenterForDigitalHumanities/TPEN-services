@@ -62,7 +62,7 @@ router.route('/:pageId')
     if (update.items !== undefined && !Array.isArray(update.items)) {
       return respondWithError(res, 400, 'Items must be an array')
     }
-    if (update.items && update.items.some(item => typeof item !== 'object' || item === null)) {
+    if (Array.isArray(update.items) && update.items.some(item => typeof item !== 'object' || item === null)) {
       return respondWithError(res, 400, 'Each item must be an object')
     }
     const project = await Project.getById(projectId)

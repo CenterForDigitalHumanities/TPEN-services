@@ -52,9 +52,7 @@ router.route('/:layerId')
         const user = req.user
         if (!projectId) return respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
-        if (providedPages !== undefined && !Array.isArray(providedPages)) {
-            return respondWithError(res, 400, 'Pages must be an array')
-        }
+        if (!providedPages || !Array.isArray(providedPages)) return respondWithError(res, 400, 'Pages must be an array')
         try {
             if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
             const project = await Project.getById(projectId)
