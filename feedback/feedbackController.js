@@ -21,7 +21,7 @@ export async function submitFeedback(req, res) {
     await createGitHubIssue('Feedback', `Feedback from ${user}`, `Page: ${page}\n\nFeedback: ${sanitizeUserInput(feedback)}`)
     res.status(200).json({ message: 'Feedback submitted successfully' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Failed to submit feedback')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Failed to submit feedback')
   }
 }
 
@@ -44,7 +44,7 @@ export async function submitBug(req, res) {
     await createGitHubIssue('Bug Report', `Bug reported by ${user}`, `Page: ${page}\n\nBug: ${sanitizeUserInput(bugDescription)}`)
     res.status(200).json({ message: 'Bug report submitted successfully' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ??'Failed to submit bug report')
+    return respondWithError(res, error.status ?? 500, error.message ??'Failed to submit bug report')
   }
 }
 

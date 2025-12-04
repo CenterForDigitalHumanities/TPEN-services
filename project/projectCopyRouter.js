@@ -15,14 +15,14 @@ router.route("/:projectId/copy").post(auth0Middleware(), async (req, res) => {
         const project = await ProjectFactory.copyProject(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
-        respondWithError(
+        return respondWithError(
             res,
             error.status ?? error.code ?? 500,
             error.message ?? "Unknown server error"
         )
     }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), async (req, res) => {
@@ -35,14 +35,14 @@ router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), asy
         const project = await ProjectFactory.cloneWithoutAnnotations(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
-        respondWithError(
+        return respondWithError(
             res,
             error.status ?? error.code ?? 500,
             error.message ?? "Unknown server error"
         )
     }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, res) => {
@@ -55,14 +55,14 @@ router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, 
         const project = await ProjectFactory.cloneWithGroup(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
-        respondWithError(
+        return respondWithError(
             res,
             error.status ?? error.code ?? 500,
             error.message ?? "Unknown server error"
         )
     }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), async (req, res) => {
@@ -82,14 +82,14 @@ router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), asy
         const project = await ProjectFactory.cloneWithCustomizations(projectId, user._id, modules)
         res.status(201).json(project)
     } catch (error) {
-        respondWithError(
+        return respondWithError(
             res,
             error.status ?? error.code ?? 500,
             error.message ?? "Unknown server error"
         )
     }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST instead")
+  return respondWithError(res, 405, "Improper request method. Use POST instead")
 })
 
 export default router

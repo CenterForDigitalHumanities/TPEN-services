@@ -35,7 +35,7 @@ router.route("/:projectId/collaborator/:collaboratorId/decline").get(async (req,
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  return respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 export default router

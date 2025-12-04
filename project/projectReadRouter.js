@@ -121,7 +121,7 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  return respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) => {
@@ -145,7 +145,7 @@ router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) =>
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  return respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 router.route("/:id").get(auth0Middleware(), async (req, res) => {
@@ -172,7 +172,7 @@ router.route("/:id").get(auth0Middleware(), async (req, res) => {
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  return respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 export default router

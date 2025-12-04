@@ -82,7 +82,6 @@ function auth0Middleware() {
       if (u._sub !== payload.sub) {
         u._sub = payload.sub
         // Remove inviteCode if present - this user is now fully authenticated
-        delete u.inviteCode
         const userObj = new User(uid)
         userObj.data = u
         await userObj.update()

@@ -104,7 +104,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     if (error.status === 409) {
       return handleVersionConflict(res, error)
     }
-    respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
   }
 })
 

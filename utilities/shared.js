@@ -45,15 +45,14 @@ export function validateID(id, type = "mongo") {
 
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message) {
-   res.status(status).json({ message })
+   return res.status(status).json({ message })
 }
 
 // Fetch a project by ID
 export const getProjectById = async (projectId, res) => {
    const project = await Project.getById(projectId)
    if (!project) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return null
+      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
    }
    return project
 }
@@ -62,7 +61,7 @@ export const getProjectById = async (projectId, res) => {
 export const findLineInPage = (page, lineId) => {
    const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
    if (!line) {
-      return null
+      return respondWithError(res, 404, `Line with ID '${lineId}' not found`)
    }
    return line
 }

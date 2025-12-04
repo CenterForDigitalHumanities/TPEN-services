@@ -24,8 +24,7 @@ router.route('/:pageId')
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
+        return respondWithError(res, 404, 'No page found with that ID.')
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // If the page is a RERUM document, we need to fetch it from the server
@@ -58,8 +57,7 @@ router.route('/:pageId')
     const { projectId, pageId } = req.params
     const update = req.body
     if (!update || typeof update !== 'object' || Object.keys(update).length === 0) {
-      respondWithError(res, 400, 'No update data provided.')
-      return
+      return respondWithError(res, 400, 'No update data provided.')
     }
     if (update.items !== undefined && !Array.isArray(update.items)) {
       return respondWithError(res, 400, 'Items must be an array')
@@ -69,13 +67,11 @@ router.route('/:pageId')
     }
     const project = await Project.getById(projectId)
     if (!project) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return
+      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
     }
     const layerId = getLayerContainingPage(project, pageId)?.id
     if (!layerId) {
-      respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
-      return
+      return respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
     }
 
     try {
@@ -85,8 +81,7 @@ router.route('/:pageId')
       page.creator = user.agent.split('/').pop()
       page.partOf = layerId
       if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
+        return respondWithError(res, 404, 'No page found with that ID.')
       }
       // Only update top-level properties that are present in the request
       Object.keys(update).forEach(key => {
@@ -121,7 +116,7 @@ router.route('/:pageId')
     }
   })
   .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method. Supported: GET, PUT.')
+    return respondWithError(res, 405, 'Improper request method. Supported: GET, PUT.')
   })
 
   /**
@@ -352,7 +347,7 @@ router.route('/:pageId/column')
     }
   })
   .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method. Supported: POST, PUT, PATCH.')
+    return respondWithError(res, 405, 'Improper request method. Supported: POST, PUT, PATCH.')
   })
 
 router.route('/:pageId/clear-columns')
@@ -388,7 +383,7 @@ router.route('/:pageId/clear-columns')
     }
   })
   .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method, please use DELETE.')
+    return respondWithError(res, 405, 'Improper request method, please use DELETE.')
   })
   
 // Fully resolved page endpoint - returns page with fully populated annotation data
@@ -398,8 +393,7 @@ router.route('/:pageId/resolved')
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
+        return respondWithError(res, 404, 'No page found with that ID.')
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // RERUM pages already have fully resolved items
@@ -419,7 +413,7 @@ router.route('/:pageId/resolved')
     }
   })
   .all((req, res) => {
-    respondWithError(res, 405, 'Improper request method, please use GET.')
+    return respondWithError(res, 405, 'Improper request method, please use GET.')
   })
   // router.use('/:pageId/line', lineRouter)
 export default router

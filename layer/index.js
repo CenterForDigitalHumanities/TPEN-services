@@ -85,7 +85,7 @@ router.route('/:layerId')
         }
     })
     .all((req, res) => {
-        respondWithError(res, 405, 'Improper request method. Use GET instead.')
+        return respondWithError(res, 405, 'Improper request method. Use GET instead.')
     })
 
 // Route to create a new layer within a project
