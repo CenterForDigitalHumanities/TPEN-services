@@ -59,6 +59,11 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
       console.log("project import error")
       console.error(error)
       return respondWithError(res, error.status ?? 500, error.message ?? "Error importing project")
+      // res.status(error.status ?? 500).json({
+      //   status: error.status ?? 500,
+      //   message: error.message,
+      //   data: error.resolvedPayload
+      // })
     }
   } else if (createFrom === "tpen28url") {
     const manifestURL = req?.body?.url
