@@ -15,6 +15,36 @@ router.use(
   cors(common_cors)
 )
 
+/**
+ * Splits a list of items into groups based on non-date IDs.
+ *
+ * @param {Array} items - The list of items to be split
+ * @returns {Array} An array of objects, each containing a non-date ID as the key and an array of date IDs as the value
+ */
+function splitFilterIds(items) {
+  const isDateId = (id) => /^\d+$/.test(id)
+  let result = []
+  let currentKey = null
+  let currentDates = []
+
+  for (const item of items) {
+    const id = item.id
+    if (!isDateId(id)) {
+      if (currentKey && currentDates.length > 0) {
+        result.push({ [currentKey]: currentDates })
+      }
+      currentKey = id
+      currentDates = []
+    } else {
+      currentDates.push(id)
+    }
+  }
+  if (currentKey && currentDates.length > 0) {
+    result.push({ [currentKey]: currentDates })
+  }
+  return result
+}
+
 // This is a nested route for pages within a layer. It may be used 
 // directly from /project/:projectId/page or with /layer/:layerId/page
 // depending on the context of the request.
@@ -83,6 +113,13 @@ router.route('/:pageId')
         return
       }
 
+      let splitIds = splitFilterIds(update.items)
+      const updatedItemsList = []
+      let pageInProject = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+      let pageColumnsUpdate = pageInProject.columns ? [...pageInProject.columns] : null
+      let pageItemIds = page.items ? page.items.map(item => item.id) : []
+      const deletedIds = pageItemIds.filter(id => !update.items?.map(item => item.id).includes(id))
+      updatedItemsList.push(...deletedIds.map(id => ({ [id]: null })))
       // Only update top-level properties that are present in the request
       Object.keys(update).forEach(key => {
         page[key] = update[key]
@@ -100,10 +137,113 @@ router.route('/:pageId')
             ? new Line(item)
             : Line.build(projectId, pageId, item, user.agent.split('/').pop())
           line.creator ??= user.agent.split('/').pop()
-          return await line.update()
+          const updatedLine = await line.update()
+          if (item.id !== updatedLine.id && !/^\d+$/.test(item.id)) {
+            updatedItemsList.push({ [item.id]: updatedLine.id })
+          }
+          if (splitIds.length === 0) return updatedLine
+          splitIds.forEach(pair => {
+            const oldKey = Object.keys(pair)[0]
+            const dateIds = pair[oldKey]
+            if (oldKey === item.id) {
+              const newDateIds = dateIds.map(dateId => {
+                if (dateId === item.id) {
+                  return updatedLine.id
+                }
+                return dateId
+              })
+              pair[updatedLine.id] = newDateIds
+              delete pair[oldKey]
+            } else if (dateIds.includes(item.id)) {
+              const newDateIds = dateIds.map(dateId => {
+                if (dateId === item.id) {
+                  return updatedLine.id
+                }
+                return dateId
+              })
+              pair[oldKey] = newDateIds
+            }
+          })
+          return updatedLine
         }))
       }
+      for (const updatePair of updatedItemsList) {
+        const oldId = Object.keys(updatePair)[0]
+        const newId = updatePair[oldId]
+        if (pageInProject.columns && pageInProject.columns.length > 0) {
+          for (const column of pageInProject.columns) {
+            if (column.lines.includes(oldId)) {
+              const columnDB = new Column(column.id)
+              const columnData = await columnDB.getColumnData()
+              const lineIndex = columnData.lines.indexOf(oldId)
+              if (lineIndex !== -1 && newId !== null && newId !== oldId) {
+                columnData.lines[lineIndex] = newId
+              }
+              if (newId === null) {
+                columnData.lines = columnData.lines.filter(lineId => lineId !== oldId)
+              }
+              columnDB.data = columnData
+              await columnDB.update()
+              pageColumnsUpdate = pageColumnsUpdate.map(col => {
+                if (col.id === column.id) {
+                  return {
+                    id: column.id,
+                    label: column.label,
+                    lines: columnData.lines
+                  }
+                }
+                return col
+              })
+              if (columnData.lines.length === 0) {
+                await columnDB.delete()
+                pageColumnsUpdate = pageColumnsUpdate.filter(col => col.id !== column.id)
+              }
+            }
+          }
+        }
+        if (!oldId.startsWith(process.env.RERUMIDPREFIX)) {
+          const checkSplitIdsIndex = splitIds.find(pair => Object.keys(pair)[0] === newId)
+          const newColumnRecord = await Column.createNewColumn(pageId, projectId, null, [newId, ...(checkSplitIdsIndex ? splitIds.find(pair => Object.keys(pair)[0] === newId)[newId] : [])])
+          const newColumn = {
+            id: newColumnRecord._id,
+            label: newColumnRecord.label,
+            lines: newColumnRecord.lines
+          }
+          pageColumnsUpdate = pageColumnsUpdate ? [...pageColumnsUpdate, newColumn] : [newColumn]
+        } 
+        else {
+          const columnToUpdate = pageColumnsUpdate.find(col => col.lines.includes(newId))
+          if (columnToUpdate) {
+            const columnDB = new Column(columnToUpdate.id)
+            const columnData = await columnDB.getColumnData()
+            const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
+            if (splitIdsEntry) {
+              const dateIds = splitIdsEntry[newId]
+              columnData.lines.push(...dateIds)
+              columnDB.data = columnData
+              await columnDB.update()
+              pageColumnsUpdate = pageColumnsUpdate.map(col => {
+                if (col.id === columnToUpdate.id) {
+                  return {
+                    id: columnToUpdate.id,
+                    label: columnToUpdate.label,
+                    lines: columnData.lines
+                  }
+                }
+                return col
+              })
+            }
+          }
+        }
+      }
+
       await updatePageAndProject(page, project, user._id)
+      if (pageColumnsUpdate) {
+        const pageInProject = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
+        pageInProject.columns = pageColumnsUpdate
+        await updatePrevAndNextColumns(pageInProject)
+        await project.update()
+      }
       res.status(200).json(page)
     } catch (error) {
       // Handle version conflicts with optimistic locking
