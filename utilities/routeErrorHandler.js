@@ -31,12 +31,14 @@ const routeErrorHandler = (err, req, res, next) => {
     console.error(`${colors.cyan}${err.stack}${colors.reset}`)
   }
 
-  // Return consistent JSON, hide internal details from clients
-  if (!res.headersSent) {
-    res.status(status).json({
-      message: status >= 500 ? 'Internal Server Error' : message
-    })
+  if (res.headersSent) {
+    return next(err)
   }
+
+  // Return consistent JSON, hide internal details from clients
+  return res.status(status).json({
+    message: status >= 500 ? 'Internal Server Error' : message
+  })
 }
 
 export default routeErrorHandler

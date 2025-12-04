@@ -59,10 +59,10 @@ router.route('/:pageId')
     if (!update || typeof update !== 'object' || Object.keys(update).length === 0) {
       return respondWithError(res, 400, 'No update data provided.')
     }
-    if (update.items !== undefined && !Array.isArray(update.items)) {
+    if (update.items && !Array.isArray(update.items)) {
       return respondWithError(res, 400, 'Items must be an array')
     }
-    if (Array.isArray(update.items) && update.items.some(item => typeof item !== 'object' || item === null)) {
+    if (Array.isArray(update.items) && update.items.some(item => (typeof item !== 'object' && typeof item !== 'string') || item === null)) {
       return respondWithError(res, 400, 'Each item must be an object')
     }
     const project = await Project.getById(projectId)

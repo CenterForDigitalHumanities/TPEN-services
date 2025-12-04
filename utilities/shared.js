@@ -58,10 +58,10 @@ export const getProjectById = async (projectId, res) => {
 }
 
 // Find a line in a page
-export const findLineInPage = (page, lineId, res) => {
+export const findLineInPage = (page, lineId) => {
    const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
    if (!line) {
-      return respondWithError(res, 404, `Line with ID '${lineId}' not found`)
+      return null
    }
    return line
 }
