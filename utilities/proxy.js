@@ -77,7 +77,7 @@ const proxy = (req, res, next) => {
     })
   })
   proxyReq.on('error', err => {
-    respondWithError(res, 500, 'Proxy request failed')
+    return respondWithError(res, 500, 'Proxy request failed')
   })
   proxyReq.end()
 }
