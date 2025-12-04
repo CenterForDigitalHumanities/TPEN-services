@@ -228,7 +228,7 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
 })
 
 router.route("/:id/custom").all((_, res) => {
-    respondWithError(res, 405, "Improper request method. Use GET, POST, or PUT instead")
+    return respondWithError(res, 405, "Improper request method. Use GET, POST, or PUT instead")
 })
 
 export default router

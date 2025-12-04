@@ -29,7 +29,7 @@ router.get('/:projectId/customRoles', auth0Middleware(), async (req, res) => {
     res.status(200).json(customRoles)
   } catch (error) {
     console.error(error)
-    respondWithError(res, error.status ?? 500, error.message ?? "Internal Server Error")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Internal Server Error")
   }
 })
 
@@ -52,7 +52,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     await group.addCustomRoles(customRoles)
     res.status(201).json({ message: 'Custom roles added successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
   }
 })
 
@@ -75,7 +75,7 @@ router.put('/:projectId/updateCustomRoles', auth0Middleware(), async (req, res) 
     await group.updateCustomRoles(roles)
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
   }
 })
 
@@ -103,7 +103,7 @@ router.delete('/:projectId/removeCustomRoles', auth0Middleware(), async (req, re
     await group.removeCustomRoles(rolesToRemove)
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
 

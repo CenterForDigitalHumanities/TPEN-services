@@ -46,12 +46,12 @@ router.route("/:projectId/collaborator/:collaboratorId/agent/:agentId").get(asyn
   } catch (error) {
     return respondWithError(
       res,
-      error.status || error.code || 500,
+      error.status ?? 500,
       error.message ?? "An error occurred."
     )
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use GET instead")
+  return respondWithError(res, 405, "Improper request method. Use GET instead")
 })
 
 export default router
