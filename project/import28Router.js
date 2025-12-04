@@ -167,7 +167,7 @@ router.route("/import28/selectedproject/:selectedProjectId").get(
             try {
                 importData = await ProjectFactory.fromManifestURL(manifestURL, user.agent.split('/').pop(), tools, true)
             } catch (error) {
-                return respondWithError(res, error.status ?? 500, message: error.message ?? "An error occurred during project import")
+                return respondWithError(res, error.status ?? 500, message: error.message ?? "An error occurred during project import"))
 
                 // res.status(error.status ?? 500).json({
                 //     status: error.status ?? 500,
