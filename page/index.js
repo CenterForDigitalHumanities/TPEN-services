@@ -113,12 +113,13 @@ router.route('/:pageId')
         return
       }
 
-      let splitIds = splitFilterIds(update.items)
+      const itemsProvided = Array.isArray(update.items) && update.items.length > 0
+      let splitIds = itemsProvided ? splitFilterIds(update.items) : []
       const updatedItemsList = []
       let pageInProject = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       let pageColumnsUpdate = pageInProject.columns ? [...pageInProject.columns] : null
       let pageItemIds = page.items ? page.items.map(item => item.id) : []
-      const deletedIds = pageItemIds.filter(id => !update.items?.map(item => item.id).includes(id))
+      const deletedIds = itemsProvided ? pageItemIds.filter(id => !update.items?.map(item => item.id).includes(id)) : []
       updatedItemsList.push(...deletedIds.map(id => ({ [id]: null })))
       // Only update top-level properties that are present in the request
       Object.keys(update).forEach(key => {
@@ -131,8 +132,9 @@ router.route('/:pageId')
           else page[key] = null
         }
       })
-      if (update.items) {
-        page.items = await Promise.all(page.items.map(async item => {
+
+      if (itemsProvided) {
+        page.items = await Promise.all(page.items.map(async (item) => {
           const line = item.id?.startsWith?.('http')
             ? new Line(item)
             : Line.build(projectId, pageId, item, user.agent.split('/').pop())
@@ -141,7 +143,6 @@ router.route('/:pageId')
           if (item.id !== updatedLine.id && !/^\d+$/.test(item.id)) {
             updatedItemsList.push({ [item.id]: updatedLine.id })
           }
-          if (splitIds.length === 0) return updatedLine
           splitIds.forEach(pair => {
             const oldKey = Object.keys(pair)[0]
             const dateIds = pair[oldKey]
@@ -210,8 +211,7 @@ router.route('/:pageId')
             lines: newColumnRecord.lines
           }
           pageColumnsUpdate = pageColumnsUpdate ? [...pageColumnsUpdate, newColumn] : [newColumn]
-        } 
-        else {
+        } else {
           const columnToUpdate = pageColumnsUpdate.find(col => col.lines.includes(newId))
           if (columnToUpdate) {
             const columnDB = new Column(columnToUpdate.id)
