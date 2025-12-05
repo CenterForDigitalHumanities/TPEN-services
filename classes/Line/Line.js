@@ -146,12 +146,39 @@ export default class Line {
         throw new Error('Unexpected body format. Cannot update text.')
     }
 
+    updateTargetXYWH(target, x, y, w, h) {
+        if (typeof target === "object" && target.selector?.value) {
+            const prefix = target.selector.value.includes("pixel:")? "xywh=pixel": "xywh"
+            target.selector.value = `${prefix}:${x},${y},${w},${h}`
+            return target
+        }
+
+        if (typeof target === "object" && target.id) {
+            return {
+                ...target,
+                id: target.id.replace(/#xywh(=pixel)?:?.*/, `#xywh=pixel:${x},${y},${w},${h}`)
+            }
+        }
+
+        if (typeof target === "string") {
+            const hasPixel = /xywh=pixel/.test(target)
+            const prefix = hasPixel ? "#xywh=pixel" : "#xywh=pixel"
+            if (target.includes("#xywh")) {
+                return target.replace(/#xywh(=pixel)?:?.*/, `${prefix}:${x},${y},${w},${h}`)
+            }
+            return `${target}#xywh=pixel:${x},${y},${w},${h}`
+        }
+        throw new Error("Unsupported target format")
+    }
+
     async updateBounds({x, y, w, h}) {
         if (!x || !y || !w || !h) {
             throw new Error('Bounds ({x,y,w,h}) must be provided')
         }
         this.target ??= ''
-        const newTarget = `${this.target.split('=')[0]}=${x},${y},${w},${h}`
+        const newTarget = this.updateTargetXYWH(this.target, x, y, w, h)
+        console.log('New Target:', newTarget)
+        console.log('old Target:', this.target)
         if (this.target === newTarget) {
             return this
         }
