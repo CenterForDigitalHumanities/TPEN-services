@@ -117,7 +117,7 @@ router.route('/:pageId')
       let splitIds = itemsProvided ? splitFilterIds(update.items) : []
       const updatedItemsList = []
       let pageInProject = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
-      let pageColumnsUpdate = pageInProject.columns ? [...pageInProject.columns] : null
+      let pageColumnsUpdate = pageInProject?.columns ? [...pageInProject.columns] : null
       let pageItemIds = page.items ? page.items.map(item => item.id) : []
       const deletedIds = itemsProvided ? pageItemIds.filter(id => !update.items?.map(item => item.id).includes(id)) : []
       updatedItemsList.push(...deletedIds.map(id => ({ [id]: null })))
@@ -203,8 +203,8 @@ router.route('/:pageId')
           }
         }
         if (!oldId.startsWith(process.env.RERUMIDPREFIX)) {
-          const checkSplitIdsIndex = splitIds.find(pair => Object.keys(pair)[0] === newId)
-          const newColumnRecord = await Column.createNewColumn(pageId, projectId, null, [newId, ...(checkSplitIdsIndex ? splitIds.find(pair => Object.keys(pair)[0] === newId)[newId] : [])])
+          const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
+          const newColumnRecord = await Column.createNewColumn(pageId, projectId, null, [newId, ...(splitIdsEntry ? splitIdsEntry[newId] : [])])
           const newColumn = {
             id: newColumnRecord._id,
             label: newColumnRecord.label,

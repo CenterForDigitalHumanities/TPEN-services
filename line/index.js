@@ -290,7 +290,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     }
     const line = new Line(oldLine)
     console.log(line, 'Old Line')
-    const updatedLine = await line.updateBounds(req.body)
+    const updatedLine = await line.updateBounds(req.body, { creator: user._id })
     console.log(updatedLine, 'Updated Line')
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine

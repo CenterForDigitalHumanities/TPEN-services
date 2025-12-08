@@ -42,7 +42,7 @@ export default class Line {
             motivation: this.motivation ?? "transcribing",
             target: this.target,
             creator: await fetchUserAgent(this.creator),
-            body: this.body
+            body: this.body ?? []
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }
         if (this.#tinyAction === 'create') {
@@ -149,8 +149,13 @@ export default class Line {
     updateTargetXYWH(target, x, y, w, h) {
         if (typeof target === "object" && target.selector?.value) {
             const prefix = target.selector.value.includes("pixel:")? "xywh=pixel": "xywh"
-            target.selector.value = `${prefix}:${x},${y},${w},${h}`
-            return target
+            return {
+                ...target,
+                selector: {
+                    ...target.selector,
+                    value: `${prefix}:${x},${y},${w},${h}`
+                }
+            }
         }
 
         if (typeof target === "object" && target.id) {
@@ -171,10 +176,11 @@ export default class Line {
         throw new Error("Unsupported target format")
     }
 
-    async updateBounds({x, y, w, h}) {
+    async updateBounds({x, y, w, h}, options = {}) {
         if (!x || !y || !w || !h) {
             throw new Error('Bounds ({x,y,w,h}) must be provided')
         }
+        if (options.creator) this.creator = options.creator
         this.target ??= ''
         const newTarget = this.updateTargetXYWH(this.target, x, y, w, h)
         console.log('New Target:', newTarget)
