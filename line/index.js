@@ -210,9 +210,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
       return
     }
     const line = new Line(oldLine)
-    console.log(line)
     const updatedLine = await line.updateText(req.body, {"creator": user._id})
-    console.log(updatedLine)
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
 
@@ -283,15 +281,14 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
-    const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+    let oldLine = await fetch(page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop()).id).then(res => res.json())
+    delete oldLine.label
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
     const line = new Line(oldLine)
-    console.log(line, 'Old Line')
     const updatedLine = await line.updateBounds(req.body, { creator: user._id })
-    console.log(updatedLine, 'Updated Line')
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
 

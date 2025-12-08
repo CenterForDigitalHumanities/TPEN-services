@@ -183,8 +183,6 @@ export default class Line {
         if (options.creator) this.creator = options.creator
         this.target ??= ''
         const newTarget = this.updateTargetXYWH(this.target, x, y, w, h)
-        console.log('New Target:', newTarget)
-        console.log('old Target:', this.target)
         if (this.target === newTarget) {
             return this
         }
