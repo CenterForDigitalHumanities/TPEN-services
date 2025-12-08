@@ -168,70 +168,72 @@ router.route('/:pageId')
           return updatedLine
         }))
       }
-      for (const updatePair of updatedItemsList) {
-        const oldId = Object.keys(updatePair)[0]
-        const newId = updatePair[oldId]
-        if (pageInProject.columns && pageInProject.columns.length > 0) {
-          for (const column of pageInProject.columns) {
-            if (column.lines.includes(oldId)) {
-              const columnDB = new Column(column.id)
-              const columnData = await columnDB.getColumnData()
-              const lineIndex = columnData.lines.indexOf(oldId)
-              if (lineIndex !== -1 && newId !== null && newId !== oldId) {
-                columnData.lines[lineIndex] = newId
-              }
-              if (newId === null) {
-                columnData.lines = columnData.lines.filter(lineId => lineId !== oldId)
-              }
-              columnDB.data = columnData
-              await columnDB.update()
-              pageColumnsUpdate = pageColumnsUpdate.map(col => {
-                if (col.id === column.id) {
-                  return {
-                    id: column.id,
-                    label: column.label,
-                    lines: columnData.lines
-                  }
+      if (itemsProvided) {
+        for (const updatePair of updatedItemsList) {
+          const oldId = Object.keys(updatePair)[0]
+          const newId = updatePair[oldId]
+          if (pageInProject.columns && pageInProject.columns.length > 0) {
+            for (const column of pageInProject.columns) {
+              if (column.lines.includes(oldId)) {
+                const columnDB = new Column(column.id)
+                const columnData = await columnDB.getColumnData()
+                const lineIndex = columnData.lines.indexOf(oldId)
+                if (lineIndex !== -1 && newId !== null && newId !== oldId) {
+                  columnData.lines[lineIndex] = newId
                 }
-                return col
-              })
-              if (columnData.lines.length === 0) {
-                await columnDB.delete()
-                pageColumnsUpdate = pageColumnsUpdate.filter(col => col.id !== column.id)
+                if (newId === null) {
+                  columnData.lines = columnData.lines.filter(lineId => lineId !== oldId)
+                }
+                columnDB.data = columnData
+                await columnDB.update()
+                pageColumnsUpdate = pageColumnsUpdate.map(col => {
+                  if (col.id === column.id) {
+                    return {
+                      id: column.id,
+                      label: column.label,
+                      lines: columnData.lines
+                    }
+                  }
+                  return col
+                })
+                if (columnData.lines.length === 0) {
+                  await columnDB.delete()
+                  pageColumnsUpdate = pageColumnsUpdate.filter(col => col.id !== column.id)
+                }
               }
             }
           }
-        }
-        if (!oldId.startsWith(process.env.RERUMIDPREFIX)) {
-          const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
-          const newColumnRecord = await Column.createNewColumn(pageId, projectId, null, [newId, ...(splitIdsEntry ? splitIdsEntry[newId] : [])])
-          const newColumn = {
-            id: newColumnRecord._id,
-            label: newColumnRecord.label,
-            lines: newColumnRecord.lines
-          }
-          pageColumnsUpdate = pageColumnsUpdate ? [...pageColumnsUpdate, newColumn] : [newColumn]
-        } else {
-          const columnToUpdate = pageColumnsUpdate.find(col => col.lines.includes(newId))
-          if (columnToUpdate) {
-            const columnDB = new Column(columnToUpdate.id)
-            const columnData = await columnDB.getColumnData()
+          if (!oldId.startsWith(process.env.RERUMIDPREFIX)) {
             const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
-            if (splitIdsEntry) {
-              const dateIds = splitIdsEntry[newId]
-              columnData.lines.push(...dateIds)
-              columnDB.data = columnData
-              await columnDB.update()
-              pageColumnsUpdate = pageColumnsUpdate.map(col => {
-                if (col.id === columnToUpdate.id) {
-                  return {
-                    id: columnToUpdate.id,
-                    label: columnToUpdate.label,
-                    lines: columnData.lines
+            const newColumnRecord = await Column.createNewColumn(pageId, projectId, null, [newId, ...(splitIdsEntry ? splitIdsEntry[newId] : [])])
+            const newColumn = {
+              id: newColumnRecord._id,
+              label: newColumnRecord.label,
+              lines: newColumnRecord.lines
+            }
+            pageColumnsUpdate = pageColumnsUpdate ? [...pageColumnsUpdate, newColumn] : [newColumn]
+          } else {
+            const columnToUpdate = pageColumnsUpdate.find(col => col.lines.includes(newId))
+            if (columnToUpdate) {
+              const columnDB = new Column(columnToUpdate.id)
+              const columnData = await columnDB.getColumnData()
+              const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
+              if (splitIdsEntry) {
+                const dateIds = splitIdsEntry[newId]
+                columnData.lines.push(...dateIds)
+                columnDB.data = columnData
+                await columnDB.update()
+                pageColumnsUpdate = pageColumnsUpdate.map(col => {
+                  if (col.id === columnToUpdate.id) {
+                    return {
+                      id: columnToUpdate.id,
+                      label: columnToUpdate.label,
+                      lines: columnData.lines
+                    }
                   }
-                }
-                return col
-              })
+                  return col
+                })
+              }
             }
           }
         }
