@@ -24,39 +24,22 @@ router.get('/:lineId', async (req, res) => {
     return
   }
   try {
-    if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
-      const resolved = await fetch(lineId)
-        .then(resp => {
-          if (resp.ok) return resp.json()
-          else {
-            return {"code": resp.status ?? 500, "message": resp.statusText ?? `Communication error with RERUM`}
-          }
-        }).catch(err => {
-          return {"code": 500, "message": `Communication error with RERUM`}
-        })
-        if (resolved.id || resolved["@id"]) return res.json(resolved)
-        else return respondWithError(res, resolved.code, resolved.message)
-    }
-    const projectData = (await getProjectById(projectId)).data
-    if (!projectData) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+    const project = await getProjectById(projectId)
+    if (!project) return
+    const page = await findPageById(pageId, projectId)
+    if (!page) return
+    let lineData = page.items?.find(l => l.id.split('/').pop() === lineId?.split('/').pop())
+    if (!lineData) {
+      respondWithError(res, 404, `Line with ID '${lineId}' not found in page '${pageId}'`)
       return
     }
-    const pageContainingLine = projectData.layers
-      .flatMap(layer => layer.pages)
-      .find(page => findLineInPage(page, lineId))
-
-    if (!pageContainingLine) {
-      respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
-      return
+    if (!(lineData.id && lineData.target && lineData.body)) {
+      lineData = await fetch(lineData.id).then(res => res.json())
     }
-    const lineRef = findLineInPage(pageContainingLine, lineId)
-    const line = (lineRef.id ?? lineRef).startsWith?.(process.env.RERUMIDPREFIX)
-    ? await fetch(lineRef.id ?? lineRef).then(res => res.json())
-    : new Line({ lineRef })
-    res.json(line?.asJSON?.(true))
+    const line = new Line(lineData)
+    res.json(line.asJSON(true))
   } catch (error) {
-    res.status(error.status ?? 500).json({ error: error.message })
+    respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
   }
 })
 
@@ -81,7 +64,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     // This feels like a use case for /bulkCreate in RERUM.  Make all these lines with one call.
     for (const lineData of inputLines) {
       newLine = Line.build(req.params.projectId, req.params.pageId, { ...lineData }, user.agent.split('/').pop())
-      const existingLine = findLineInPage(page, newLine.id, res)
+      const existingLine = findLineInPage(page, newLine.id)
       if (existingLine) {
         respondWithError(res, 409, `Line with ID '${newLine.id}' already exists in page '${req.params.pageId}'`)
         return
@@ -281,12 +264,12 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
-    let oldLine = await fetch(page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop()).id).then(res => res.json())
-    delete oldLine.label
+    let oldLine = await fetch(page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())?.id).then(res => res.json())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
+    delete oldLine.label
     const line = new Line(oldLine)
     const updatedLine = await line.updateBounds(req.body, { creator: user._id })
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
