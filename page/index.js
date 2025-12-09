@@ -549,5 +549,4 @@ router.route('/:pageId/resolved')
   .all((req, res) => {
     respondWithError(res, 405, 'Improper request method, please use GET.')
   })
-  // router.use('/:pageId/line', lineRouter)
 export default router
