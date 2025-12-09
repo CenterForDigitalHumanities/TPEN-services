@@ -248,20 +248,35 @@ Users can always see and manipulate their own profile. The profile object is a p
 - **Description**: Retrieve a list of projects the authenticated user is a member of.
 - **Responses**:
 
-    - **200**: Projects found
+    - **200**: Projects found (or empty list if user has no projects)
         ```json
-        [
-            {
-                "_id": "hexstring",
-                "label": "string",
-                "roles": ["string"]
-            }, ...
-        ]
+        {
+            "metrics": {
+                "newest": "project:hexstring/page:hexstring",
+                "lastModified": "project:hexstring/page:hexstring",
+                "myRecent": "hexstring"
+            },
+            "projects": [
+                {
+                    "_id": "hexstring",
+                    "label": "string",
+                    "roles": ["string"]
+                }, ...
+            ]
+        }
+        ```
+        
+        When the user has no projects, returns:
+        ```json
+        {
+            "metrics": null,
+            "projects": []
+        }
         ```
     - **401**: Unauthorized
     - **500**: Server error
 
-The response is a list of projects the user is a member of regardless of the permissions afforded to them in each project.
+The response includes a list of projects the user is a member of regardless of the permissions afforded to them in each project, along with metrics about the newest and most recently modified projects.
 
 #### `GET /user/:id`
 
