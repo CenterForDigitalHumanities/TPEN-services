@@ -120,21 +120,52 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
    page.creator ??= await fetchUserAgent(userId)
-   // .update() returns a Page prepped for saving to Project
-   const updatedPage = await page.update()
+
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) throw new Error("Cannot update Page.  Its Layer was not found.")
    const layer = project.data.layers[layerIndex]
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
-   layer.pages[pageIndex] = updatedPage
-   if (updatedPage.id.startsWith(process.env.RERUMIDPREFIX)) {
-      // If Page id has changed, we need to update the Layer (and the Project)
+
+   // Predict the RERUM page ID (same logic as Page.#setRerumId)
+   const rerumPageId = page.id.startsWith(process.env.RERUMIDPREFIX)
+      ? page.id
+      : `${process.env.RERUMIDPREFIX}${page.id.split("/").pop()}`
+
+   // Create formatted page with predicted ID for layer reference
+   const formattedPage = {
+      id: rerumPageId,
+      label: page.label,
+      target: page.target,
+      items: page.items ?? []
+   }
+
+   // Update layer's pages array BEFORE creating Layer
+   layer.pages[pageIndex] = formattedPage
+
+   if (rerumPageId.startsWith(process.env.RERUMIDPREFIX)) {
+      // Page and Layer updates are independent - run in parallel
+      console.log(`\x1b[36m[PERF] updatePageAndProject: starting PARALLEL page+layer update\x1b[0m`)
+      const parallelStart = Date.now()
+
       const updatedLayer = new Layer(project._id, layer)
       updatedLayer.creator ??= await fetchUserAgent(userId)
-      project.data.layers[layerIndex] = await updatedLayer.update()
-      await recordModification(project, page.id, userId)
+
+      // PARALLEL: Both write to different RERUM documents
+      const [, finalLayer] = await Promise.all([
+         page.update(),           // Saves page to RERUM
+         updatedLayer.update()    // Saves layer to RERUM
+      ])
+
+      console.log(`\x1b[36m[PERF] updatePageAndProject: PARALLEL done: ${Date.now() - parallelStart}ms\x1b[0m`)
+
+      project.data.layers[layerIndex] = finalLayer
+      await recordModification(project, rerumPageId, userId)
    }
+
+   console.log(`\x1b[36m[PERF] updatePageAndProject: starting project.update()\x1b[0m`)
+   const projectUpdateStart = Date.now()
    await project.update()
+   console.log(`\x1b[36m[PERF] updatePageAndProject: project.update() done: ${Date.now() - projectUpdateStart}ms\x1b[0m`)
 }
 
 // Log modifications for recent changes. We don't need to know much about it. 

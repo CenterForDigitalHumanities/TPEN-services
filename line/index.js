@@ -189,12 +189,18 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   try {
+    const startTime = Date.now()
+    console.log(`\x1b[36m[PERF] PATCH /line/:lineId/text started for line ${req.params.lineId}\x1b[0m`)
+
     if (typeof req.body !== 'string') {
       respondWithError(res, 400, 'Invalid request body. Expected a string.')
       return
     }
     const project = await getProjectById(req.params.projectId)
+    console.log(`\x1b[33m[PERF] getProjectById: ${Date.now() - startTime}ms\x1b[0m`)
+
     const page = await findPageById(req.params.pageId, req.params.projectId)
+    console.log(`\x1b[33m[PERF] findPageById: ${Date.now() - startTime}ms\x1b[0m`)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -202,6 +208,8 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     }
     const line = new Line(oldLine)
     const updatedLine = await line.updateText(req.body, {"creator": user._id})
+    console.log(`\x1b[33m[PERF] line.updateText: ${Date.now() - startTime}ms\x1b[0m`)
+
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
 
@@ -224,6 +232,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
           lineId === oldLine.id ? updatedLine.id : lineId
         )
       }
+      console.log(`\x1b[33m[PERF] column updates: ${Date.now() - startTime}ms\x1b[0m`)
     }
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, true),
@@ -244,11 +253,15 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
         return updatePageAndProject(page, project, user._id)
       }
     )
+    console.log(`\x1b[33m[PERF] withOptimisticLocking (updatePageAndProject): ${Date.now() - startTime}ms\x1b[0m`)
+
     if(res.headersSent) return
     if(saveWholeColumns) {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
+      console.log(`\x1b[33m[PERF] project.update (columns): ${Date.now() - startTime}ms\x1b[0m`)
     }
+    console.log(`\x1b[32m[PERF] Total PATCH /line/:lineId/text: ${Date.now() - startTime}ms\x1b[0m`)
     res.json(line.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking

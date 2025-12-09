@@ -70,6 +70,7 @@ export default class Page {
     }
 
     async #savePageToRerum() {
+        const perfStart = Date.now()
         const prev = this.prev ?? null
         const next = this.next ?? null
         const pageAsAnnotationPage = {
@@ -90,19 +91,24 @@ export default class Page {
                     console.error(err, pageAsAnnotationPage)
                     throw new Error(`Failed to save Page to RERUM: ${err.message}`)
                 })
+            console.log(`\x1b[34m[PERF] Page: create to RERUM: ${Date.now() - perfStart}ms\x1b[0m`)
             this.#tinyAction = 'update'
             return this
         }
         // ...else Update the existing page in RERUM
+        const fetchStart = Date.now()
         const existingPage = await fetch(this.id).then(res => res.json())
+        console.log(`\x1b[34m[PERF] Page: fetch existing from RERUM: ${Date.now() - fetchStart}ms\x1b[0m`)
         if (!existingPage) {
             throw new Error(`Failed to find Page in RERUM: ${this.id}`)
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-        
+
         // Handle optimistic locking version if available
         try {
+            const overwriteStart = Date.now()
             await databaseTiny.overwrite(updatedPage)
+            console.log(`\x1b[34m[PERF] Page: overwrite to RERUM: ${Date.now() - overwriteStart}ms\x1b[0m`)
             return this
         } catch (err) {
             if (err.status === 409) {

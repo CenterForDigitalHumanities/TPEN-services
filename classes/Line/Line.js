@@ -35,6 +35,7 @@ export default class Line {
     }
 
     async #saveLineToRerum() {
+        const perfStart = Date.now()
         const lineAsAnnotation = {
             "@context": "http://iiif.io/api/presentation/3/context.json",
             id: this.id,
@@ -50,10 +51,12 @@ export default class Line {
                 .catch(err => {
                     throw new Error(`Failed to save Line to RERUM: ${err.message}`)
                 })
+            console.log(`\x1b[35m[PERF] Line: create to RERUM: ${Date.now() - perfStart}ms\x1b[0m`)
             this.#tinyAction = 'update'
             return this
         }
         // ...else Update the existing page in RERUM
+        const fetchStart = Date.now()
         const existingLine = await fetch(this.id).then(res => res.json())
         .catch(err => {
             if (err.status === 404) {
@@ -62,6 +65,7 @@ export default class Line {
             }
             throw new Error(`Failed to fetch existing Line from RERUM: ${err.message}`)
         })
+        console.log(`\x1b[35m[PERF] Line: fetch existing from RERUM: ${Date.now() - fetchStart}ms\x1b[0m`)
 
         if (!existingLine) {
             // This id doesn't exist in RERUM, so we need to create it
@@ -71,14 +75,17 @@ export default class Line {
         // Skip RERUM update if no content changes detected
         // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
+            console.log(`\x1b[35m[PERF] Line: no changes detected, skipping RERUM update\x1b[0m`)
             return this  // Return without versioning
         }
 
+        const saveStart = Date.now()
         const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
         const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.id)
         .catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })
+        console.log(`\x1b[35m[PERF] Line: ${this.#tinyAction} to RERUM: ${Date.now() - saveStart}ms\x1b[0m`)
         this.id = newURI
         this.#tinyAction = 'update'
         return this
