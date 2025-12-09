@@ -264,11 +264,12 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
-    let oldLine = await fetch(page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())?.id).then(res => res.json())
-    if (!oldLine) {
+    const findOldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+    if (!findOldLine) {
       respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
       return
     }
+    let oldLine = await fetch(findOldLine.id).then(res => res.json())
     delete oldLine.label
     const line = new Line(oldLine)
     const updatedLine = await line.updateBounds(req.body, { creator: user._id })
