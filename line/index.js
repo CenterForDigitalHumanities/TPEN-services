@@ -202,7 +202,6 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     }
     const line = new Line(oldLine)
     const updatedLine = await line.updateText(req.body, {"creator": user._id})
-
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
 
@@ -245,7 +244,6 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
         return updatePageAndProject(page, project, user._id)
       }
     )
-
     if(res.headersSent) return
     if(saveWholeColumns) {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns

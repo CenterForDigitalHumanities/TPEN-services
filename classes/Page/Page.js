@@ -99,7 +99,7 @@ export default class Page {
             throw new Error(`Failed to find Page in RERUM: ${this.id}`)
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-
+        
         // Handle optimistic locking version if available
         try {
             await databaseTiny.overwrite(updatedPage)

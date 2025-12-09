@@ -128,8 +128,8 @@ export default class Layer {
             throw new Error(`Layer not found in RERUM: ${this.id}`)
         }
         const updatedLayer = { ...existingLayer, ...layerAsCollection }
-
-        // Handle optimistic locking version if available
+        
+        // Handle optimistic locking version if available        
         try {
             await databaseTiny.overwrite(updatedLayer)
             return this
