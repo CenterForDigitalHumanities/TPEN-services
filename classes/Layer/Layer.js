@@ -115,19 +115,15 @@ export default class Layer {
         }
 
         if (this.#tinyAction === 'create') {
-            const createStart = Date.now()
             await databaseTiny.save(layerAsCollection).catch(err => {
                 console.error(err, layerAsCollection)
                 throw new Error(`Failed to save Layer to RERUM: ${err.message}`)
             })
-            console.log(`\x1b[34m[PERF] Layer: create to RERUM: ${Date.now() - createStart}ms\x1b[0m`)
             this.#tinyAction = 'update'
             return this
         }
 
-        const fetchStart = Date.now()
         const existingLayer = await fetch(this.id).then(res => res.json())
-        console.log(`\x1b[34m[PERF] Layer: fetch existing from RERUM: ${Date.now() - fetchStart}ms\x1b[0m`)
         if (!existingLayer) {
             throw new Error(`Layer not found in RERUM: ${this.id}`)
         }
@@ -135,9 +131,7 @@ export default class Layer {
 
         // Handle optimistic locking version if available
         try {
-            const overwriteStart = Date.now()
             await databaseTiny.overwrite(updatedLayer)
-            console.log(`\x1b[34m[PERF] Layer: overwrite to RERUM: ${Date.now() - overwriteStart}ms\x1b[0m`)
             return this
         } catch (err) {
             if (err.status === 409) {

@@ -144,9 +144,6 @@ export const updatePageAndProject = async (page, project, userId) => {
 
    if (rerumPageId.startsWith(process.env.RERUMIDPREFIX)) {
       // Page and Layer updates are independent - run in parallel
-      console.log(`\x1b[36m[PERF] updatePageAndProject: starting PARALLEL page+layer update\x1b[0m`)
-      const parallelStart = Date.now()
-
       const updatedLayer = new Layer(project._id, layer)
       updatedLayer.creator ??= await fetchUserAgent(userId)
 
@@ -156,16 +153,11 @@ export const updatePageAndProject = async (page, project, userId) => {
          updatedLayer.update()    // Saves layer to RERUM
       ])
 
-      console.log(`\x1b[36m[PERF] updatePageAndProject: PARALLEL done: ${Date.now() - parallelStart}ms\x1b[0m`)
-
       project.data.layers[layerIndex] = finalLayer
       await recordModification(project, rerumPageId, userId)
    }
 
-   console.log(`\x1b[36m[PERF] updatePageAndProject: starting project.update()\x1b[0m`)
-   const projectUpdateStart = Date.now()
    await project.update()
-   console.log(`\x1b[36m[PERF] updatePageAndProject: project.update() done: ${Date.now() - projectUpdateStart}ms\x1b[0m`)
 }
 
 // Log modifications for recent changes. We don't need to know much about it. 
