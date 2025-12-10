@@ -20,8 +20,7 @@ router.route('/:layerId')
         try {
             const layer = await findLayerById(layerId, projectId, true)
             if (!layer) {
-                respondWithError(res, 404, 'No layer found with that ID.')
-                return
+                return respondWithError(res, 404, 'No layer found with that ID.')
             }
             if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
                 // If the page is a RERUM document, we need to fetch it from the server
@@ -70,9 +69,8 @@ router.route('/:layerId')
                   else layer[key] = null
                 }
             })
-            if (providedPages?.length === 0) providedPages = undefined
             let pages = []
-            if (providedPages && providedPages.length) {
+            if (providedPages && Array.isArray(providedPages) && providedPages.length > 0) {
                 pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
                 layer.pages = pages
             }
@@ -84,12 +82,15 @@ router.route('/:layerId')
         }
     })
     .all((req, res) => {
-        respondWithError(res, 405, 'Improper request method. Use GET instead.')
+        return respondWithError(res, 405, 'Improper request method. Use GET instead.')
     })
 
 // Route to create a new layer within a project
 router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
+    if (!req.body || typeof req.body !== 'object') {
+        return respondWithError(res, 400, 'Request body is required')
+    }
     const { label, canvases } = req.body
     if (!projectId) return respondWithError(res, 400, 'Project ID is required')
     if (!label || !Array.isArray(canvases) || canvases.length === 0) {

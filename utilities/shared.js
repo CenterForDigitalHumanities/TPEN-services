@@ -45,15 +45,14 @@ export function validateID(id, type = "mongo") {
 
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message) {
-   res.status(status).json({ message })
+   return res.status(status).json({ message })
 }
 
 // Fetch a project by ID
 export const getProjectById = async (projectId, res) => {
    const project = await Project.getById(projectId)
    if (!project) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return null
+      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
    }
    return project
 }
@@ -281,7 +280,7 @@ export async function findLayerById(layerId, projectId, rerum = false) {
       if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const p = await Project.getById(projectId)
-   if (!p) {
+   if (!p?.data) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
       throw error
@@ -367,9 +366,9 @@ export const fetchUserAgent = async (userId) => {
  */
 export const handleVersionConflict = (res, error) => {
   return res.status(409).json({
-    error: error.message,
-    currentVersion: error.currentVersion,
+    message: error.message,
     code: 'VERSION_CONFLICT',
+    currentVersion: error.currentVersion,
     details: 'The document was modified by another process.',
     // Include additional context if available
     ...(error.pageId && { pageId: error.pageId }),

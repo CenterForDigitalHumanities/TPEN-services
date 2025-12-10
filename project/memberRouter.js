@@ -13,8 +13,11 @@ const router = express.Router({ mergeParams: true })
 router.route("/:id/invite-member").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { id: projectId } = req.params
-  const { email, roles } = req.body
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
+  const { email, roles } = req.body
   if (!email) return respondWithError(res, 400, "Invitee's email is required")
   if (!isValidEmail(email)) return respondWithError(res, 400, "Invitee email is invalid")
   try {
@@ -23,10 +26,10 @@ router.route("/:id/invite-member").post(auth0Middleware(), async (req, res) => {
       const response = await project.sendInvite(email, roles)
       res.status(200).json(response)
     } else {
-      res.status(403).send("You do not have permission to invite members to this project")
+      return respondWithError(res, 403, "You do not have permission to invite members to this project")
     }
   } catch (error) {
-    res.status(error.status || 500).send(error.message.toString())
+    return respondWithError(res, error.status ?? 500, error.message ?? "Error inviting member")
   }
 })
 
@@ -34,9 +37,12 @@ router.route("/:id/invite-member").post(auth0Middleware(), async (req, res) => {
 router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { id: projectId } = req.params
-  const { userId } = req.body
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
+  const { userId } = req.body
   if (!userId) return respondWithError(res, 400, "User ID is required")
   try {
     const project = new Project(projectId)
@@ -44,7 +50,7 @@ router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
       await project.removeMember(userId)
       res.sendStatus(204)
     } else {
-      res.status(403).send("You do not have permission to remove members from this project")
+      return respondWithError(res, 403, "You do not have permission to remove members from this project")
     }
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error removing member from project.")
@@ -116,9 +122,12 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
 // Switch project owner
 router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
-  const { newOwnerId } = req.body
   const user = req.user
   if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
+  const { newOwnerId } = req.body
   if (!newOwnerId) return respondWithError(res, 400, "Provide the ID of the new owner.")
   if (user._id === newOwnerId) return respondWithError(res, 400, "Cannot transfer ownership to the current owner.")
   try {

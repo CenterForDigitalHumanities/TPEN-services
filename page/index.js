@@ -54,8 +54,7 @@ router.route('/:pageId')
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
+        return respondWithError(res, 404, 'No page found with that ID.')
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // If the page is a RERUM document, we need to fetch it from the server
@@ -88,18 +87,21 @@ router.route('/:pageId')
     const { projectId, pageId } = req.params
     const update = req.body
     if (!update || typeof update !== 'object' || Object.keys(update).length === 0) {
-      respondWithError(res, 400, 'No update data provided.')
-      return
+      return respondWithError(res, 400, 'No update data provided.')
+    }
+    if (update.items && !Array.isArray(update.items)) {
+      return respondWithError(res, 400, 'Items must be an array')
+    }
+    if (Array.isArray(update.items) && update.items.some(item => (typeof item !== 'object' && typeof item !== 'string') || item === null)) {
+      return respondWithError(res, 400, 'Each item must be an object')
     }
     const project = await Project.getById(projectId)
     if (!project) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return
+      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
     }
     const layerId = getLayerContainingPage(project, pageId)?.id
     if (!layerId) {
-      respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
-      return
+      return respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
     }
 
     try {
@@ -109,8 +111,7 @@ router.route('/:pageId')
       page.creator = user.agent.split('/').pop()
       page.partOf = layerId
       if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
+        return respondWithError(res, 404, 'No page found with that ID.')
       }
 
       const itemsProvided = Array.isArray(update.items) && update.items.length > 0
@@ -258,7 +259,7 @@ router.route('/:pageId')
     }
   })
   .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method. Supported: GET, PUT.')
+    return respondWithError(res, 405, 'Improper request method. Supported: GET, PUT.')
   })
 
   /**
@@ -285,11 +286,14 @@ router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
+
+    if (!req.body || typeof req.body !== 'object') {
+      return respondWithError(res, 400, "Request body is required")
+    }
     const { label, annotations } = req.body
     if (typeof label !== 'string' || !label?.trim() || !Array.isArray(annotations)) {
       return respondWithError(res, 400, 'Invalid column data provided.')
@@ -357,11 +361,14 @@ router.route('/:pageId/column')
   .put(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
+
+    if (!req.body || typeof req.body !== 'object') {
+      return respondWithError(res, 400, "Request body is required")
+    }
     const { newLabel, columnLabelsToMerge } = req.body
     if (typeof newLabel !== 'string' || !newLabel?.trim() || !Array.isArray(columnLabelsToMerge) || columnLabelsToMerge.length < 2) {
       return respondWithError(res, 400, 'Invalid column merge data provided.')
@@ -424,11 +431,14 @@ router.route('/:pageId/column')
   .patch(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
-    
+
+    if (!req.body || typeof req.body !== 'object') {
+      return respondWithError(res, 400, "Request body is required")
+    }
     const { columnLabel, annotationIdsToAdd } = req.body
     if (typeof columnLabel !== 'string' || !columnLabel?.trim() || !Array.isArray(annotationIdsToAdd) || annotationIdsToAdd.length === 0) {
       return respondWithError(res, 400, 'Invalid column update data provided.')
@@ -480,7 +490,7 @@ router.route('/:pageId/column')
     }
   })
   .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method. Supported: POST, PUT, PATCH.')
+    return respondWithError(res, 405, 'Improper request method. Supported: POST, PUT, PATCH.')
   })
 
 router.route('/:pageId/clear-columns')
@@ -516,7 +526,7 @@ router.route('/:pageId/clear-columns')
     }
   })
   .all((req, res, next) => {
-    respondWithError(res, 405, 'Improper request method, please use DELETE.')
+    return respondWithError(res, 405, 'Improper request method, please use DELETE.')
   })
   
 // Fully resolved page endpoint - returns page with fully populated annotation data
@@ -526,8 +536,7 @@ router.route('/:pageId/resolved')
     try {
       const page = await findPageById(pageId, projectId, true)
       if (!page) {
-        respondWithError(res, 404, 'No page found with that ID.')
-        return
+        return respondWithError(res, 404, 'No page found with that ID.')
       }
       if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
         // RERUM pages already have fully resolved items
@@ -547,6 +556,6 @@ router.route('/:pageId/resolved')
     }
   })
   .all((req, res) => {
-    respondWithError(res, 405, 'Improper request method, please use GET.')
+    return respondWithError(res, 405, 'Improper request method, please use GET.')
   })
 export default router
