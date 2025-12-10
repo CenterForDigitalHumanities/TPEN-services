@@ -156,6 +156,7 @@ export const updatePageAndProject = async (page, project, userId) => {
       } catch (err) {
          const error = new Error(`There was an error updating Page and Project data`)
          error.status = 500
+         console.error(`There was an error updating Page and Project data`, err)
          throw error
       }
    }
