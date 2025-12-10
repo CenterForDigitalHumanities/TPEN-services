@@ -119,7 +119,8 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   page.creator ??= await fetchUserAgent(userId)
+   const agent = await fetchUserAgent(userId)
+   page.creator ??= agent
 
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
    if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) throw new Error("Cannot update Page.  Its Layer was not found.")
@@ -145,7 +146,7 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (rerumPageId.startsWith(process.env.RERUMIDPREFIX)) {
       // Page and Layer updates are independent - run in parallel
       const updatedLayer = new Layer(project._id, layer)
-      updatedLayer.creator ??= await fetchUserAgent(userId)
+      updatedLayer.creator ??= agent
 
       // PARALLEL: Both write to different RERUM documents
       const [, finalLayer] = await Promise.all([
