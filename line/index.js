@@ -91,6 +91,9 @@ router.post('/', auth0Middleware(), async (req, res) => {
       page.items.push(savedLine)
     }
     const ifNewContent = (page.items && page.items.length)
+    const pageId = req.params.pageId.split('/').pop()
+    const pageProject = project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId)
+    const saveWholeColumns = pageProject?.columns
     await withOptimisticLocking(
       () => updatePageAndProject(page, project, user._id, ifNewContent),
       (currentVersion) => {
@@ -100,7 +103,12 @@ router.post('/', auth0Middleware(), async (req, res) => {
         currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
       Object.assign(page, currentVersion)
       return updatePageAndProject(page, project, user._id)
-     })
+    })
+    // Updating the project again to save updated columns as columns is not handled in updatePageAndProject
+    if(saveWholeColumns) {
+      project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
+      await project.update()
+    }
     res.status(201).json(newLine.asJSON(true))
   } catch (error) {
     // Handle version conflicts with optimistic locking
@@ -168,6 +176,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
         return updatePageAndProject(page, project, user._id)
       }
     )
+    // Updating the project again to save updated columns as columns is not handled in updatePageAndProject
     if(saveWholeColumns) {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
@@ -239,6 +248,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
       }
     )
     if(res.headersSent) return
+    // Updating the project again to save updated columns as columns is not handled in updatePageAndProject
     if(saveWholeColumns) {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
@@ -263,12 +273,15 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
-    const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
-    if (!oldLine) {
-      return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
+    const findOldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
+    if (!findOldLine) {
+      respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
+      return
     }
+    let oldLine = await fetch(findOldLine.id).then(res => res.json())
+    delete oldLine.label
     const line = new Line(oldLine)
-    const updatedLine = await line.updateBounds(req.body)
+    const updatedLine = await line.updateBounds(req.body, { creator: user._id })
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
 
@@ -307,6 +320,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
         return updatePageAndProject(page, project, user._id)
       }
     )
+    // Updating the project again to save updated columns as columns is not handled in updatePageAndProject
     if(saveWholeColumns) {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()

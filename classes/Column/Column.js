@@ -112,6 +112,10 @@ export default class Column {
     static async createNewColumn(pageId, projectId, label, annotations=[]) {
         try {
             // Input validation
+            let newColumn = new Column()
+            if (label === null || label === undefined) {
+                label = `Column ${newColumn._id}`
+            }
             if (!pageId || typeof pageId !== 'string') {
                 throw new Error('pageId must be a non-empty string')
             }
@@ -125,7 +129,6 @@ export default class Column {
                 throw new Error('annotations must be an array')
             }
 
-            let newColumn = new Column()
             newColumn.data = {
                 _id: newColumn._id,
                 label: label,

@@ -42,7 +42,7 @@ export default class Line {
             motivation: this.motivation ?? "transcribing",
             target: this.target,
             creator: await fetchUserAgent(this.creator),
-            body: this.body
+            body: this.body ?? []
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }
         if (this.#tinyAction === 'create') {
@@ -146,12 +146,43 @@ export default class Line {
         throw new Error('Unexpected body format. Cannot update text.')
     }
 
-    async updateBounds({x, y, w, h}) {
+    updateTargetXYWH(target, x, y, w, h) {
+        if (typeof target === "object" && target.selector?.value) {
+            const prefix = target.selector.value.includes("pixel:")? "xywh=pixel": "xywh"
+            return {
+                ...target,
+                selector: {
+                    ...target.selector,
+                    value: `${prefix}:${x},${y},${w},${h}`
+                }
+            }
+        }
+
+        if (typeof target === "object" && target.id) {
+            return {
+                ...target,
+                id: target.id.replace(/#xywh(=pixel)?:?.*/, `#xywh=pixel:${x},${y},${w},${h}`)
+            }
+        }
+
+        if (typeof target === "string") {
+            const hasPixel = /xywh=pixel/.test(target)
+            const prefix = hasPixel ? "#xywh=pixel" : "#xywh=pixel"
+            if (target.includes("#xywh")) {
+                return target.replace(/#xywh(=pixel)?:?.*/, `${prefix}:${x},${y},${w},${h}`)
+            }
+            return `${target}#xywh=pixel:${x},${y},${w},${h}`
+        }
+        throw new Error("Unsupported target format")
+    }
+
+    async updateBounds({x, y, w, h}, options = {}) {
         if (!x || !y || !w || !h) {
             throw new Error('Bounds ({x,y,w,h}) must be provided')
         }
+        if (options.creator) this.creator = options.creator
         this.target ??= ''
-        const newTarget = `${this.target.split('=')[0]}=${x},${y},${w},${h}`
+        const newTarget = this.updateTargetXYWH(this.target, x, y, w, h)
         if (this.target === newTarget) {
             return this
         }
