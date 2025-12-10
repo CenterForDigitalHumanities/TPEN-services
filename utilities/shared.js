@@ -119,21 +119,62 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   page.creator ??= await fetchUserAgent(userId)
-   // .update() returns a Page prepped for saving to Project
-   const updatedPage = await page.update()
+   const agent = await fetchUserAgent(userId)
+   page.creator ??= agent
+   let error_out
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) throw new Error("Cannot update Page.  Its Layer was not found.")
+   if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) {
+      error_out = new Error("Cannot update Page.  Its Layer was not found.")
+      error_out.status = 500
+      throw error_out
+   }
    const layer = project.data.layers[layerIndex]
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
-   layer.pages[pageIndex] = updatedPage
-   if (updatedPage.id.startsWith(process.env.RERUMIDPREFIX)) {
-      // If Page id has changed, we need to update the Layer (and the Project)
+
+   // Determine if page will actually be saved to RERUM (same logic as Page.update())
+   const isAlreadyInRerum = page.id.startsWith(process.env.RERUMIDPREFIX)
+   const hasContent = page.items?.length > 0
+   const willBeSavedToRerum = isAlreadyInRerum || hasContent
+
+   if (willBeSavedToRerum) {
+      // Predict the RERUM page ID (same logic as Page.#setRerumId)
+      const rerumPageId = isAlreadyInRerum
+         ? page.id
+         : `${process.env.RERUMIDPREFIX}${page.id.split("/").pop()}`
+
+      // Create formatted page with predicted ID for layer reference
+      const formattedPage = {
+         id: rerumPageId,
+         label: page.label,
+         target: page.target,
+         items: page.items ?? []
+      }
+
+      // Update layer's pages array BEFORE creating Layer
+      layer.pages[pageIndex] = formattedPage
       const updatedLayer = new Layer(project._id, layer)
-      updatedLayer.creator ??= await fetchUserAgent(userId)
-      project.data.layers[layerIndex] = await updatedLayer.update()
-      await recordModification(project, page.id, userId)
+      updatedLayer.creator ??= agent
+
+      try {
+         const [, finalLayer] = await Promise.all([
+            page.update(),
+            updatedLayer.update()
+         ])
+         project.data.layers[layerIndex] = finalLayer
+         await recordModification(project, rerumPageId, userId)
+      } catch (err) {
+         error_out = new Error(`There was an error updating Page and Project data`)
+         error_out.status = 500
+         console.error(`There was an error updating Page and Project data`, err)
+         throw error_out
+      }
+   } else {
+      // Page won't be saved to RERUM (no content, not already in RERUM)
+      // Just update local page reference in layer without touching RERUM
+      const updatedPage = await page.update()
+      layer.pages[pageIndex] = updatedPage
    }
+
    await project.update()
 }
 
