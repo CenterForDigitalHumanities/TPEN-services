@@ -154,3 +154,28 @@ describe("GET /my/projects #user_class", () => {
     expect(response.status).toBe(401)
   })
 })
+
+describe("GET /my/projects with no projects #user_class", () => {
+  beforeAll(() => {
+    jest.spyOn(User.prototype, "getProjects").mockResolvedValue([])
+    jest.spyOn(User.prototype, "getSelf").mockResolvedValue({
+      _id: "123456",
+      _lastModified: null
+    })
+  })
+
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
+  it.skip("should return 200 with empty projects array when user has no projects", async () => {
+    const response = await request(app)
+      .get("/my/projects")
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(200)
+    expect(response.body).toHaveProperty("projects")
+    expect(Array.isArray(response.body.projects)).toBe(true)
+    expect(response.body.projects.length).toBe(0)
+    expect(response.body.metrics).toBeNull()
+  })
+})
