@@ -146,7 +146,8 @@ export const updatePageAndProject = async (page, project, userId) => {
          id: rerumPageId,
          label: page.label,
          target: page.target,
-         items: page.items ?? []
+         items: page.items ?? [],
+         columns: layer.pages[pageIndex].columns
       }
 
       // Update layer's pages array BEFORE creating Layer
@@ -171,6 +172,7 @@ export const updatePageAndProject = async (page, project, userId) => {
       // Page won't be saved to RERUM (no content, not already in RERUM)
       // Just update local page reference in layer without touching RERUM
       const updatedPage = await page.update()
+      updatedPage.columns = layer.pages[pageIndex].columns
       layer.pages[pageIndex] = updatedPage
    }
 
