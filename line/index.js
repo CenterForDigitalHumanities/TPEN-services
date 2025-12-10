@@ -15,26 +15,10 @@ router.use(cors(common_cors))
 // Load Line as temp line or from RERUM
 router.get('/:lineId', async (req, res) => {
   const { projectId, pageId, lineId } = req.params
-  if (!lineId) {
-    return respondWithError(res, 400, 'Line ID is required.')
-  }
-  if (!projectId || !pageId) {
-    return respondWithError(res, 400, 'Project ID and Page ID are required.')
+  if (!(projectId && pageId && lineId)) {
+    return respondWithError(res, 400, 'Project ID, Page ID, and Line ID are required.')
   }
   try {
-    if (lineId.startsWith(process.env.RERUMIDPREFIX)) {
-      const resolved = await fetch(lineId)
-        .then(resp => {
-          if (resp.ok) return resp.json()
-          else {
-            return {"code": resp.status ?? 500, "message": resp.statusText ?? `Communication error with RERUM`}
-          }
-        }).catch(err => {
-          return {"code": 500, "message": `Communication error with RERUM`}
-        })
-        if (resolved.id || resolved["@id"]) return res.json(resolved)
-        else return respondWithError(res, resolved.code, resolved.message)
-    }
     const projectData = (await getProjectById(projectId)).data
     if (!projectData) {
       return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
@@ -53,7 +37,7 @@ router.get('/:lineId', async (req, res) => {
     const line = (lineRef.id ?? lineRef).startsWith?.(process.env.RERUMIDPREFIX)
     ? await fetch(lineRef.id ?? lineRef).then(res => res.json())
     : new Line({ lineRef })
-    res.json(line?.asJSON?.(true))
+    res.json(line?.asJSON?.(true) ?? line)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message)
   }

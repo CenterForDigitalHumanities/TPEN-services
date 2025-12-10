@@ -59,7 +59,7 @@ export const getProjectById = async (projectId, res) => {
 
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
-   const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
+   const line = page.items?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
    if (!line) {
       return null
    }
