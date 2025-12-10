@@ -144,18 +144,20 @@ export const updatePageAndProject = async (page, project, userId) => {
    layer.pages[pageIndex] = formattedPage
 
    if (rerumPageId.startsWith(process.env.RERUMIDPREFIX)) {
-      // Page and Layer updates are independent - run in parallel
       const updatedLayer = new Layer(project._id, layer)
       updatedLayer.creator ??= agent
-
-      // PARALLEL: Both write to different RERUM documents
-      const [, finalLayer] = await Promise.all([
-         page.update(),           // Saves page to RERUM
-         updatedLayer.update()    // Saves layer to RERUM
-      ])
-
-      project.data.layers[layerIndex] = finalLayer
-      await recordModification(project, rerumPageId, userId)
+      try {
+         const [, finalLayer] = await Promise.all([
+            page.update(),
+            updatedLayer.update()
+         ])
+         project.data.layers[layerIndex] = finalLayer
+         await recordModification(project, rerumPageId, userId)
+      } catch (err) {
+         const error = new Error(`There was an error updating Page and Project data`)
+         error.status = 500
+         throw error
+      }
    }
 
    await project.update()
