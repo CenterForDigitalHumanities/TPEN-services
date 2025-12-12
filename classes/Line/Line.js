@@ -167,7 +167,7 @@ export default class Line {
 
         if (typeof target === "string") {
             const hasPixel = /xywh=pixel/.test(target)
-            const prefix = hasPixel ? "#xywh=pixel" : "#xywh=pixel"
+            const prefix = hasPixel ? "#xywh=pixel" : "#xywh"
             if (target.includes("#xywh")) {
                 return target.replace(/#xywh(=pixel)?:?.*/, `${prefix}:${x},${y},${w},${h}`)
             }
