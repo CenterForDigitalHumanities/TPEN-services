@@ -148,28 +148,31 @@ export default class Line {
 
     updateTargetXYWH(target, x, y, w, h) {
         if (typeof target === "object" && target.selector?.value) {
-            const prefix = target.selector.value.includes("pixel:")? "xywh=pixel": "xywh"
+            const hasPixel = target.selector.value.includes("pixel:")
+            const prefix = hasPixel ? "xywh=pixel:" : "xywh="
             return {
                 ...target,
                 selector: {
                     ...target.selector,
-                    value: `${prefix}:${x},${y},${w},${h}`
+                    value: `${prefix}${x},${y},${w},${h}`
                 }
             }
         }
 
         if (typeof target === "object" && target.id) {
+            const hasPixel = /xywh=pixel/.test(target.id)
+            const prefix = hasPixel ? "#xywh=pixel:" : "#xywh="
             return {
                 ...target,
-                id: target.id.replace(/#xywh(=pixel)?:?.*/, `#xywh=pixel:${x},${y},${w},${h}`)
+                id: target.id.replace(/#xywh(=pixel)?:?.*/, `${prefix}${x},${y},${w},${h}`)
             }
         }
 
         if (typeof target === "string") {
             const hasPixel = /xywh=pixel/.test(target)
-            const prefix = hasPixel ? "#xywh=pixel" : "#xywh"
+            const prefix = hasPixel ? "#xywh=pixel:" : "#xywh="
             if (target.includes("#xywh")) {
-                return target.replace(/#xywh(=pixel)?:?.*/, `${prefix}:${x},${y},${w},${h}`)
+                return target.replace(/#xywh(=pixel)?:?.*/, `${prefix}${x},${y},${w},${h}`)
             }
             return `${target}#xywh=pixel:${x},${y},${w},${h}`
         }
