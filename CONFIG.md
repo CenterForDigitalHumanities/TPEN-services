@@ -104,13 +104,13 @@ The application loads configuration via `--import ./env-loader.js` using the dot
 **RERUM Store:**
 
 - `RERUMIDPREFIX` - RERUM ID prefix
-  - Dev: `https://devstore.rerum.io/v1/id/`
+  - Dev: `http://localhost:3001/v1/id/`
   - Prod: `https://store.rerum.io/v1/id/`
 
 **TinyPEN:**
 
 - `TINYPEN` - TinyPEN API base URL
-  - Dev: `https://dev.tiny.t-pen.org/`
+  - Dev: `http://localhost:3010/`
   - Prod: `https://tiny.t-pen.org/`
 
 **Static Storage (GitHub):**
@@ -143,7 +143,7 @@ Key differences between environments:
 |----------|-------------|------------|
 | SERVERURL | <https://dev.api.t-pen.org> | <https://api.t-pen.org> |
 | MONGODBNAME | testTpen | tpen |
-| RERUMIDPREFIX | <https://devstore.rerum.io/v1/id/> | <https://store.rerum.io/v1/id/> |
+| RERUMIDPREFIX | <http://localhost:3001/v1/id/> | <https://store.rerum.io/v1/id/> |
 | REPO_NAME | TPEN-Static-Dev | TPEN-static |
 
 ## GitHub Secrets Configuration
