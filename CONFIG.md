@@ -143,7 +143,7 @@ Key differences between environments:
 |----------|-------------|------------|
 | SERVERURL | <https://dev.api.t-pen.org> | <https://api.t-pen.org> |
 | MONGODBNAME | testTpen | tpen |
-| RERUMIDPREFIX | <httpa://devstore.rerum.io/v1/id/> | <https://store.rerum.io/v1/id/> |
+| RERUMIDPREFIX | <https://devstore.rerum.io/v1/id/> | <https://store.rerum.io/v1/id/> |
 | REPO_NAME | TPEN-Static-Dev | TPEN-static |
 
 ## GitHub Secrets Configuration
