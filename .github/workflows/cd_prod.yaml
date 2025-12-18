@@ -40,7 +40,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@master
         with:
-          node-version: "^22.20.0"
+          node-version: "24"
       - name: Cache node modules
         uses: actions/cache@master
         env:
