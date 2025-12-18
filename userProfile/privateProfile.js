@@ -17,7 +17,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   try {
     res.status(200).json(user)
   } catch (error) {
-    respondWithError(res, error.status || error.code || 500, error.message ?? "An error occurred while fetching the user data.")
+    return respondWithError(res, error.status || error.code || 500, error.message ?? "An error occurred while fetching the user data.")
   }
 }).put(auth0Middleware(), async (req, res) => {
   const user = req.user
@@ -33,7 +33,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
     const userProfile = await userObj.updateProfile(req.body)
     res.status(200).json(userProfile)
   } catch (error) {
-    respondWithError(res, error.status || error.code || 500, error.message ?? "An error occurred while fetching the user data.")
+    return respondWithError(res, error.status || error.code || 500, error.message ?? "An error occurred while fetching the user data.")
   }
 }).all((req, res) => respondWithError(res, 405, "Improper request method. Use PUT instead"))
 
@@ -44,8 +44,15 @@ router.route("/projects").get(auth0Middleware(), async (req, res) => {
     const userObj = await new User(user._id)
     const userProjects = await userObj.getProjects()
     const validMetrics = userProjects.filter((proj) => proj._createdAt && proj._modifiedAt && proj._lastModified)
+    
+    res.set("Content-Type", "application/json; charset=utf-8")
+
     if (validMetrics.length === 0) {
-      return respondWithError(res, 404, "No valid projects found")
+      // Return empty response when user has no projects
+      return res.status(200).json({
+        metrics: null,
+        projects: []
+      })
     }
 
     // TODO: When the projects are all formatted correctly, we will not need this
@@ -59,8 +66,6 @@ router.route("/projects").get(auth0Middleware(), async (req, res) => {
     const userData = await userObj.getSelf()
     const myRecent = userData._lastModified
 
-    res.set("Content-Type", "application/json; charset=utf-8")
-
     res.status(200).json({
       metrics: {
         newest,
@@ -70,7 +75,7 @@ router.route("/projects").get(auth0Middleware(), async (req, res) => {
       projects: userProjects
     })
   } catch (error) {
-    respondWithError(res, error?.status ?? 500, error?.message ?? error.toString())
+    return respondWithError(res, error?.status ?? 500, error?.message ?? error.toString())
   }
 }).all((req, res) => respondWithError(res, 405, "Improper request method. Use GET instead")
 )

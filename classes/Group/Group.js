@@ -36,7 +36,7 @@ export default class Group {
             throw err
         }
         const roles = this.data.members[memberId]?.roles
-        const allRoles = Object.assign(Group.defaultRoles, this.data.customRoles)
+        const allRoles = { ...Group.defaultRoles, ...this.data.customRoles }
         return Object.fromEntries(roles.map(role => [role, allRoles[role]]))
     }
 
@@ -61,7 +61,7 @@ export default class Group {
             throw err
         }
         this.data.members[memberId] = { roles: [] }
-        this.setMemberRoles(memberId, roles)
+        await this.setMemberRoles(memberId, roles)
     }
 
     /**
@@ -122,6 +122,8 @@ export default class Group {
         }
         roles = washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
+        // If we need the group to update first (caused error)
+        // await this.update()
     }
 
     /**
@@ -161,11 +163,70 @@ export default class Group {
         await this.update()
     }
 
-    async removeMember(memberId) {
+    /**
+     *  Remove a member from a Group.
+     *  A member can be removed by an admin or by themselves.
+     *  Validations:
+     *    - User must be a member of the project
+     *    - Cannot remove the only OWNER (must transfer ownership first)
+     *
+     * @param {string} memberId The User/member _id to remove from the Group and perhaps delete from the db.
+     * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
+    */
+    async removeMember(memberId, voluntary = false) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
+        const member = this.data.members[memberId]
+        if (!member) {
+            throw {
+              status: 400,
+              message: "User is not a member of this group"
+            }
+        }
+        const userRoles = member.roles
+        // Prevent removing the only OWNER
+        if (userRoles.includes("OWNER")) {
+            const owners = this.getByRole("OWNER")
+            if (owners.length === 1) {
+                throw {
+                    status: 403,
+                    message: "Cannot remove: This user is the only owner. Transfer ownership first."
+                }
+            }
+        }
         delete this.data.members[memberId]
+        // If we need the Group to update in the db in addition to the Class data.
+        // await this.update()
+    }
+
+    /**
+     * Transfer membership from one user to another.
+     * Copies all roles from sourceMemberId to targetMemberId and removes sourceMemberId.
+     * If targetMemberId already exists, roles are merged (union).
+     * @param {String} sourceMemberId - The member being replaced (e.g., temp user)
+     * @param {String} targetMemberId - The member receiving the membership (e.g., real user)
+     */
+    async transferMembership(sourceMemberId, targetMemberId) {
+        if (!Object.keys(this.data.members).length) {
+            await this.#loadFromDB()
+        }
+
+        const sourceRoles = this.data.members[sourceMemberId]?.roles || []
+        if (!sourceRoles.length) return
+
+        if (this.data.members[targetMemberId]) {
+            // Merge roles if target already exists
+            this.data.members[targetMemberId].roles = [
+                ...new Set([...this.data.members[targetMemberId].roles, ...sourceRoles])
+            ]
+        } else {
+            // Add target with source's roles
+            this.data.members[targetMemberId] = { roles: [...sourceRoles] }
+        }
+
+        delete this.data.members[sourceMemberId]
+        await this.update()
     }
 
     getByRole(role) {
@@ -263,6 +324,18 @@ export default class Group {
         ))
         await newGroup.validateGroup()
         return await newGroup.save()
+    }
+
+    /**
+     * Find all groups containing a specific member.
+     * @param {String} memberId - The _id of the member to search for
+     * @returns {Promise<Array>} - Array of group documents containing this member
+     */
+    static async getGroupsByMember(memberId) {
+        return database.find(
+            { [`members.${memberId}`]: { $exists: true } },
+            process.env.TPENGROUPS
+        )
     }
 
     static defaultRoles = {

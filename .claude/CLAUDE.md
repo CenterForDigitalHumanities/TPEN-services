@@ -109,6 +109,7 @@ Always reference these instructions first and fallback to search or bash command
 - MariaDB: Configure MARIADB, MARIADBNAME, MARIADBUSER, MARIADBPASSWORD in `.env`
 - TinyPEN API: Configure TINYPEN in `.env`
 - Default configurations in `config.env` point to localhost development services
+- MongoDB Collections: TPENPROJECTS, TPENGROUPS, TPENUSERS, TPENCOLUMNS (configured in `config.env`)
 
 ### Development Workflow
 1. Always start with: `cp .env.development .env && npm install`
@@ -150,6 +151,12 @@ Required for database functionality:
 - `MONGODBNAME` (MongoDB database name)
 - `MARIADB` (MariaDB host)
 - `MARIADBNAME`, `MARIADBUSER`, `MARIADBPASSWORD` (MariaDB credentials)
+
+MongoDB collection names (configured in `config.env`):
+- `TPENPROJECTS` (default: projects) - Project documents collection
+- `TPENGROUPS` (default: groups) - User groups collection
+- `TPENUSERS` (default: users) - User profiles collection
+- `TPENCOLUMNS` (default: columns) - Column annotations collection
 
 Required for authentication:
 - `AUDIENCE` (Auth0 audience)

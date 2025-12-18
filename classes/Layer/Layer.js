@@ -98,7 +98,11 @@ export default class Layer {
         return {
             id: this.id,
             label: this.label,
-            pages: this.pages.map(p => new Page(this.id, p).asProjectPage())
+            pages: this.pages.map(p => {
+                const page = new Page(this.id, p).asProjectPage()
+                if (p.columns) page.columns = p.columns
+                return page
+            })
         }
     }
 

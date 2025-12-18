@@ -162,15 +162,18 @@ router.route("/import28/selectedproject/:selectedProjectId").get(
             tools = await new Tools().validateAllTools(tools)
             let importData
             if (!checkURL.valid)
-                return res.status(checkURL.status).json({message: checkURL.message, resolvedPayload: checkURL.resolvedPayload})
+                return respondWithError(res, checkURL.status, checkURL.message)
+                //return res.status(checkURL.status).json({message: checkURL.message, resolvedPayload: checkURL.resolvedPayload})
             try {
                 importData = await ProjectFactory.fromManifestURL(manifestURL, user.agent.split('/').pop(), tools, true)
             } catch (error) {
-                res.status(error.status ?? 500).json({
-                    status: error.status ?? 500,
-                    message: error.message,
-                    data: error.resolvedPayload
-                })
+                return respondWithError(res, error.status ?? 500, error.message ?? "An error occurred during project import")
+
+                // res.status(error.status ?? 500).json({
+                //     status: error.status ?? 500,
+                //     message: error.message,
+                //     data: error.resolvedPayload
+                // })
             }
 
             await ProjectFactory.importTPEN28(parsedData, importData, req.cookies.userToken, req.protocol)

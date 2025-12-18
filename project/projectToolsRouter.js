@@ -7,8 +7,11 @@ const router = express.Router({ mergeParams: true })
 
 //Add Tool to Project
 router.route("/:projectId/tool").post(async (req, res) => {
-  const { label, toolName, url, location, custom } = req?.body
-  let { enabled, tagName } = custom
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
+  const { label, toolName, url, location, custom } = req.body
+  let { enabled, tagName } = custom ?? {}
   if (!label || !toolName || !location) {
     return respondWithError(res, 400, "label, toolName, and location are required fields.")
   }
@@ -42,9 +45,12 @@ router.route("/:projectId/tool").post(async (req, res) => {
     res.status(200).json(addedTool)
   } catch (error) {
     console.error("Error adding tool:", error)
-    respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
+    return respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
   }
 }).delete(async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
@@ -71,14 +77,17 @@ router.route("/:projectId/tool").post(async (req, res) => {
     res.status(200).json(removedTool)
   } catch (error) {
     console.error("Error removing tool:", error)
-    respondWithError(res, error.status || 500, error.message || "An error occurred while removing the tool.")
+    return respondWithError(res, error.status || 500, error.message || "An error occurred while removing the tool.")
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use POST to add a tool or DELETE to remove a tool.")
+  return respondWithError(res, 405, "Improper request method. Use POST to add a tool or DELETE to remove a tool.")
 })
 
 // Toggle Tool State in Project
 router.route("/:projectId/toggleTool").put(async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return respondWithError(res, 400, "Request body is required")
+  }
   const { toolName } = req.body
   if (!toolName) {
     return respondWithError(res, 400, "toolName is a required field.")
@@ -102,10 +111,10 @@ router.route("/:projectId/toggleTool").put(async (req, res) => {
     res.status(200).json(toggledTool)
   } catch (error) {
     console.error("Error toggling tool state:", error)
-    respondWithError(res, error.status || 500, error.message || "An error occurred while toggling the tool state.")
+    return respondWithError(res, error.status || 500, error.message || "An error occurred while toggling the tool state.")
   }
 }).all((_, res) => {
-  respondWithError(res, 405, "Improper request method. Use PUT instead")
+  return respondWithError(res, 405, "Improper request method. Use PUT instead")
 })
 
 export default router
