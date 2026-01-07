@@ -68,7 +68,7 @@ router.route("/import28/:uid").get(
         const jsessionid = req.cookies?.JSESSIONID
         const uid = req.params?.uid
 
-        if (!user) return respondWithError(res, 401, "Unauthenticated request")
+        if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
         if (!jsessionid) return respondWithError(res, 400, "Missing jsessionid in query")
         if (!uid) return respondWithError(res, 400, "Missing uid in query")
 
@@ -123,7 +123,7 @@ router.route("/import28/selectedproject/:selectedProjectId").get(
         const jsessionid = req.cookies?.JSESSIONID
         const selectedProjectId = req.params?.selectedProjectId
 
-        if (!user) return respondWithError(res, 401, "Unauthenticated request")
+        if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
         if (!jsessionid) return respondWithError(res, 400, "Missing jsessionid in query")
         if (!selectedProjectId) return respondWithError(res, 400, "Missing selectedProjectId in query")
 

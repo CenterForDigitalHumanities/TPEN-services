@@ -84,7 +84,7 @@ router.route('/:pageId')
   })
   .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     const { projectId, pageId } = req.params
     const update = req.body
     if (!update || typeof update !== 'object' || Object.keys(update).length === 0) {
@@ -294,7 +294,7 @@ router.route('/:pageId')
 router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
@@ -378,7 +378,7 @@ router.route('/:pageId/column')
   })
   .put(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
@@ -457,7 +457,7 @@ router.route('/:pageId/column')
   })
   .patch(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
@@ -532,7 +532,7 @@ router.route('/:pageId/column')
 router.route('/:pageId/clear-columns')
   .delete(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")

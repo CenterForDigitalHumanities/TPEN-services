@@ -10,7 +10,7 @@ const router = express.Router({ mergeParams: true })
 router.route("/:projectId/copy").post(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) {
-        return respondWithError(res, 401, "Unauthorized: User not authenticated")
+        return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     }
     try {
         const { projectId } = req.params
@@ -34,7 +34,7 @@ router.route("/:projectId/copy").post(auth0Middleware(), async (req, res) => {
 router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) {
-        return respondWithError(res, 401, "Unauthorized: User not authenticated")
+        return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     }
     try {
         const { projectId } = req.params
@@ -58,7 +58,7 @@ router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), asy
 router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) {
-        return respondWithError(res, 401, "Unauthorized: User not authenticated")
+        return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     }
     try {
         const { projectId } = req.params
@@ -82,7 +82,7 @@ router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, 
 router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), async (req, res) => {
     const user = req.user
     if (!user) {
-        return respondWithError(res, 401, "Unauthorized: User not authenticated")
+        return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     }
     if (!req.body || typeof req.body !== 'object') {
         return respondWithError(res, 400, "Request body is required")

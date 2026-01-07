@@ -78,7 +78,7 @@ router.route("/:id/custom").get(auth0Middleware(), async (req, res) => {
     const user = req.user
     const { id } = req.params
 
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
 
@@ -116,7 +116,7 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
     const payload = req.body
 
 
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -171,7 +171,7 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
     const { id } = req.params
     const payload = req.body
 
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {

@@ -13,7 +13,7 @@ const router = express.Router({ mergeParams: true })
 
 router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   let project = req.body
   try {
     if (hasSuspiciousProjectData(project)) return respondWithError(res, 400, "Suspicious project data will not be processed.")
@@ -96,7 +96,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
 
 router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -130,7 +130,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
  */
 router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   const projectId = req.params.projectId
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   if (!req.body || typeof req.body !== 'object') {

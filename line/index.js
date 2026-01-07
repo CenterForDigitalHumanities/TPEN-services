@@ -48,7 +48,7 @@ router.get('/:lineId', async (req, res) => {
 // Add a new line/lines to an existing Page, save it in RERUM if it has body content.
 router.post('/', auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const projectObj = new Project(req.params.projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.SELECTOR, ENTITIES.LINE))) {
@@ -112,7 +112,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
 // Update an existing line, including in RERUM
 router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const projectObj = new Project(req.params.projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LINE))) {
@@ -188,7 +188,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
 // Update the text of an existing line
 router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const projectObj = new Project(req.params.projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.TEXT, ENTITIES.LINE))) {
@@ -264,7 +264,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
 // Update the xywh (bounds) of an existing line
 router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const projectObj = new Project(req.params.projectId)
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.SELECTOR, ENTITIES.LINE))) {

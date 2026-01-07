@@ -51,7 +51,7 @@ router.route('/:layerId')
         const update = req.body
         const providedPages = update?.pages
         const user = req.user
-        if (!user) return respondWithError(res, 401, 'Unauthenticated request')
+        if (!user) return respondWithError(res, 401, 'Not authenticated. Please provide a valid, unexpired Bearer token')
         if (!projectId) return respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
         try {
@@ -95,7 +95,7 @@ router.route('/:layerId')
 router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
     const user = req.user
-    if (!user) return respondWithError(res, 401, 'Unauthenticated request')
+    if (!user) return respondWithError(res, 401, 'Not authenticated. Please provide a valid, unexpired Bearer token')
     if (!req.body || typeof req.body !== 'object') {
         return respondWithError(res, 400, 'Request body is required')
     }

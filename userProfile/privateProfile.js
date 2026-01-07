@@ -13,7 +13,7 @@ router.use(
 
 router.route("/profile").get(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthorized user")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     res.status(200).json(user)
   } catch (error) {
@@ -21,7 +21,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
   }
 }).put(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthorized user")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     if (req.body && !Array.isArray(req.body)) {
       for (const key in req.body) {
@@ -39,7 +39,7 @@ router.route("/profile").get(auth0Middleware(), async (req, res) => {
 
 router.route("/projects").get(auth0Middleware(), async (req, res) => {
   const user = await req.user
-  if (!user) return respondWithError(res, 401, "Unauthorized user")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const userObj = await new User(user._id)
     const userProjects = await userObj.getProjects()

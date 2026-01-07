@@ -16,7 +16,7 @@ router.route("/:id/leave").post(auth0Middleware(), async (req, res) => {
   const { id: projectId } = req.params
   const user = req.user
 
-  if (!user) return respondWithError(res, 401, "Authentication required")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
 
   try {

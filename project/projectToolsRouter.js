@@ -11,7 +11,7 @@ const router = express.Router({ mergeParams: true })
 //Add Tool to Project
 router.route("/:projectId/tool").post(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -58,7 +58,7 @@ router.route("/:projectId/tool").post(auth0Middleware(), async (req, res) => {
   }
 }).delete(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -101,7 +101,7 @@ router.route("/:projectId/tool").post(auth0Middleware(), async (req, res) => {
 // Toggle Tool State in Project
 router.route("/:projectId/toggleTool").put(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
