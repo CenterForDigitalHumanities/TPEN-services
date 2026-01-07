@@ -7,6 +7,7 @@ import Project from "../classes/Project/Project.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import { isSuspiciousJSON, isSuspiciousValueString, hasSuspiciousProjectData } from "../utilities/checkIfSuspicious.js"
 import Tools from "../classes/Tools/Tools.js"
+import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -139,6 +140,9 @@ router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddlewa
   if (typeof label !== "string" || !label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank and must be a string.")
   try {
     let project = new Project(projectId)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.PROJECT))) {
+      return respondWithError(res, 403, "You do not have permission to update this project's label")
+    }
     const loadedProject = await project.loadProject()
     if (!loadedProject) return respondWithError(res, 404, "Project not found")
     project = await project.setLabel(label)

@@ -8,6 +8,7 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
 import { findPageById, findLayerById, updateLayerAndProject, respondWithError } from '../utilities/shared.js'
+import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -50,10 +51,15 @@ router.route('/:layerId')
         const update = req.body
         const providedPages = update?.pages
         const user = req.user
+        if (!user) return respondWithError(res, 401, 'Unauthenticated request')
         if (!projectId) return respondWithError(res, 400, 'Project ID is required')
         if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
         try {
             if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
+            const projectObj = new Project(projectId)
+            if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
+                return respondWithError(res, 403, 'You do not have permission to update this layer')
+            }
             const project = await Project.getById(projectId)
             if (!project?._id) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
             const layer = await findLayerById(layerId, projectId)
@@ -88,6 +94,8 @@ router.route('/:layerId')
 // Route to create a new layer within a project
 router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const { projectId } = req.params
+    const user = req.user
+    if (!user) return respondWithError(res, 401, 'Unauthenticated request')
     if (!req.body || typeof req.body !== 'object') {
         return respondWithError(res, 400, 'Request body is required')
     }
@@ -98,6 +106,10 @@ router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req,
     }
     try {
         if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
+        const projectObj = new Project(projectId)
+        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
+            return respondWithError(res, 403, 'You do not have permission to create layers in this project')
+        }
         const project = await Project.getById(projectId)
         if (!project) return respondWithError(res, 404, 'Project does not exist')
         const newLayer = Layer.build(projectId, label, canvases)

@@ -125,10 +125,16 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
 })
 
 router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) => {
+  const user = req.user
   const { id } = req.params
+  if (!user) return respondWithError(res, 401, "Unauthenticated request")
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
+    const project = new Project(id)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+      return respondWithError(res, 403, "You do not have permission to view this project's deployment status")
+    }
     const { status } = await ProjectFactory.checkManifestUploadAndDeployment(id)
     if (!status) {
       return respondWithError(res, 404, `No deployment status found for project with ID '${id}'`)

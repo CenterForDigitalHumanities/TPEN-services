@@ -2,6 +2,8 @@ import express from "express"
 import { respondWithError } from "../utilities/shared.js"
 import auth0Middleware from "../auth/index.js"
 import ProjectFactory from "../classes/Project/ProjectFactory.js"
+import Project from "../classes/Project/Project.js"
+import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
@@ -12,6 +14,10 @@ router.route("/:projectId/copy").post(auth0Middleware(), async (req, res) => {
     }
     try {
         const { projectId } = req.params
+        const projectObj = new Project(projectId)
+        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+            return respondWithError(res, 403, "You do not have permission to copy this project")
+        }
         const project = await ProjectFactory.copyProject(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
@@ -32,6 +38,10 @@ router.route("/:projectId/copy-without-annotations").post(auth0Middleware(), asy
     }
     try {
         const { projectId } = req.params
+        const projectObj = new Project(projectId)
+        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+            return respondWithError(res, 403, "You do not have permission to copy this project")
+        }
         const project = await ProjectFactory.cloneWithoutAnnotations(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
@@ -52,6 +62,10 @@ router.route("/:projectId/copy-with-group").post(auth0Middleware(), async (req, 
     }
     try {
         const { projectId } = req.params
+        const projectObj = new Project(projectId)
+        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+            return respondWithError(res, 403, "You do not have permission to copy this project")
+        }
         const project = await ProjectFactory.cloneWithGroup(projectId, user._id)
         res.status(201).json(project)
     } catch (error) {
@@ -79,6 +93,10 @@ router.route("/:projectId/copy-with-customizations").post(auth0Middleware(), asy
     }
     try {
         const { projectId } = req.params
+        const projectObj = new Project(projectId)
+        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+            return respondWithError(res, 403, "You do not have permission to copy this project")
+        }
         const project = await ProjectFactory.cloneWithCustomizations(projectId, user._id, modules)
         res.status(201).json(project)
     } catch (error) {
