@@ -92,7 +92,7 @@ export default class Group {
 
         roles = washRoles(roles)
         this.data.members[memberId].roles = roles
-        await this.update()
+        return this.update()
     }
 
     /**
@@ -158,7 +158,7 @@ export default class Group {
         }
 
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
-        await this.update()
+        return this.update()
     }
 
     async removeMember(memberId) {
@@ -194,7 +194,7 @@ export default class Group {
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = roles
-        await this.update()
+        return this.update()
     }
 
     async addCustomRoles(roleMap) {
@@ -204,7 +204,7 @@ export default class Group {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        await this.update()
+        return this.update()
     }
 
     async removeCustomRoles(roleName) {
@@ -213,7 +213,7 @@ export default class Group {
         }
 
         delete this.data.customRoles[roleName]
-        await this.update()
+        return this.update()
     }
 
     async save() {
@@ -248,10 +248,10 @@ export default class Group {
         }
 
         if (!this.getByRole("OWNER")?.length) {
-            await this.addMemberRoles(this.data.creator, "OWNER", true)
+            this.addMemberRoles(this.data.creator, "OWNER", true)
         }
         if (!this.getByRole("LEADER")?.length) {
-            await this.addMemberRoles(this.data.creator, "LEADER")
+            this.addMemberRoles(this.data.creator, "LEADER")
         }
     }
 
