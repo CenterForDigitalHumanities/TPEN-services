@@ -51,7 +51,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
   if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const projectObj = new Project(req.params.projectId)
-    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.SELECTOR, ENTITIES.LINE))) {
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to create lines in this project')
     }
     const project = await getProjectById(req.params.projectId, res)
