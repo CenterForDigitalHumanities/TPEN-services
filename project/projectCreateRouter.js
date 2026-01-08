@@ -38,6 +38,7 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
 router.route("/import").post(auth0Middleware(), async (req, res) => {
   let { createFrom } = req.query
   let user = req.user
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   createFrom = createFrom?.toLowerCase()
   if (!createFrom)
     return respondWithError(res, 400, "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC'")
