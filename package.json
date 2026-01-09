@@ -43,7 +43,7 @@
       "express-list-endpoints": "^7.1.1",
       "express-oauth2-jwt-bearer": "^1.7.2",
       "image-size": "^2.0.2",
-      "jsdom": "^27.4.0",
+      "jsdom": "27.0.0",
       "mariadb": "^3.4.5",
       "marked": "^17.0.1",
       "mime-types": "^3.0.2",
