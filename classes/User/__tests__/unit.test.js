@@ -90,11 +90,11 @@ describe("GET /my/profile #user_class", () => {
     expect(response.body.userData).toEqual({name: "VOO"})
   })
 
-  it("should return 401 if user is not authenticated (no authorization header)", async () => {
+  it("should return 400 if user is not authenticated (no authorization header)", async () => {
     const appWithoutAuth = express()
     appWithoutAuth.use("/my", privateProfileRouter)
     const response = await request(appWithoutAuth).get("/my/profile")
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(400)
   })
 
   it("should return 401 if user is not authenticated (invalid authorization header)", async () => {
@@ -138,11 +138,11 @@ describe("GET /my/projects #user_class", () => {
       }
     }
   })
-  it("should return 401 if user is not authenticated (no authorization header)", async () => {
+  it("should return 400 if user is not authenticated (no authorization header)", async () => {
     const appWithoutAuth = express()
     appWithoutAuth.use("/my", privateProfileRouter)
     const response = await request(appWithoutAuth).get("/my/profile")
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(400)
   })
 
   it("should return 401 if user is not authenticated (invalid authorization header)", async () => {

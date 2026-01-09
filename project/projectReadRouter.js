@@ -96,19 +96,16 @@ function filterProjectInterfaces(project, namespaces) {
 router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
   const { id } = req.params
   const user = req.user
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
+    if (!await new Project(id).checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
+      return respondWithError(res, 403, "You do not have permission to export this project")
+    }
     const project = await ProjectFactory.loadAsUser(id, null)
     if (!project) {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
-    }
-    const collaboratorIdList = Object.keys(project.collaborators)
-    if (!collaboratorIdList.includes(user._id)) {
-      return respondWithError(res, 403, "You do not have permission to export this project")
-    }
-    if (!await new Project(id).checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
-      return respondWithError(res, 403, "You do not have permission to export this project")
     }
     const manifest = await ProjectFactory.exportManifest(id)
     await ProjectFactory.uploadFileToGitHub(manifest, `${id}`)
@@ -125,10 +122,16 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
 })
 
 router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) => {
+  const user = req.user
   const { id } = req.params
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
+    const project = new Project(id)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+      return respondWithError(res, 403, "You do not have permission to view this project's deployment status")
+    }
     const { status } = await ProjectFactory.checkManifestUploadAndDeployment(id)
     if (!status) {
       return respondWithError(res, 404, `No deployment status found for project with ID '${id}'`)
@@ -150,18 +153,23 @@ router.route("/:id/deploymentStatus").get(auth0Middleware(), async (req, res) =>
 
 router.route("/:id").get(auth0Middleware(), async (req, res) => {
   const user = req.user
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   let id = req.params.id
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
-    const project = await ProjectFactory.loadAsUser(id, user._id)
-    if (!project) {
+    const project = new Project(id)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
+      return respondWithError(res, 403, "You do not have permission to view this project")
+    }
+    const projectData = await ProjectFactory.loadAsUser(id, user._id)
+    if (!projectData) {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
     }
-    
+
     // Filter interfaces based on origin and query parameters
     const namespacesToInclude = getNamespacesToInclude(req)
-    const filteredProject = filterProjectInterfaces(project, namespacesToInclude)
+    const filteredProject = filterProjectInterfaces(projectData, namespacesToInclude)
 
     res.status(200).json(filteredProject)
   } catch (error) {

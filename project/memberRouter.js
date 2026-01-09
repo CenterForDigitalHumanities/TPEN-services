@@ -13,7 +13,7 @@ const router = express.Router({ mergeParams: true })
 router.route("/:id/invite-member").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { id: projectId } = req.params
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -37,7 +37,7 @@ router.route("/:id/invite-member").post(auth0Middleware(), async (req, res) => {
 router.route("/:id/remove-member").post(auth0Middleware(), async (req, res) => {
   const user = req.user
   const { id: projectId } = req.params
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
@@ -62,7 +62,7 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!roles) return respondWithError(res, 400, "Provide role(s) to add")
   try {
     const projectObj = await Project.getById(projectId)
@@ -83,7 +83,7 @@ router.route("/:projectId/collaborator/:collaboratorId/setRoles").put(auth0Middl
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!roles) return respondWithError(res, 400, "Provide role(s) to update")
   try {
     const projectObj = await Project.getById(projectId)
@@ -102,7 +102,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
   const { projectId, collaboratorId } = req.params
   const roles = req.body.roles ?? req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!roles) return respondWithError(res, 400, "Provide role(s) to remove")
   if (roles.includes("OWNER")) return respondWithError(res, 400, "The OWNER role cannot be removed.")
   try {
@@ -123,7 +123,7 @@ router.route("/:projectId/collaborator/:collaboratorId/removeRoles").post(auth0M
 router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }

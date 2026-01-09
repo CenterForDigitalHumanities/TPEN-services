@@ -7,6 +7,8 @@ import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
+import Project from '../classes/Project/Project.js'
+import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
 const router = express.Router({ mergeParams: true })
 
@@ -46,8 +48,12 @@ router.get('/:lineId', async (req, res) => {
 // Add a new line/lines to an existing Page, save it in RERUM if it has body content.
 router.post('/', auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
+    const projectObj = new Project(req.params.projectId)
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LINE))) {
+      return respondWithError(res, 403, 'You do not have permission to create lines in this project')
+    }
     const project = await getProjectById(req.params.projectId, res)
     if (!project) return
     const page = await findPageById(req.params.pageId, req.params.projectId)
@@ -106,8 +112,12 @@ router.post('/', auth0Middleware(), async (req, res) => {
 // Update an existing line, including in RERUM
 router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
+    const projectObj = new Project(req.params.projectId)
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LINE))) {
+      return respondWithError(res, 403, 'You do not have permission to update lines in this project')
+    }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
@@ -178,8 +188,12 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
 // Update the text of an existing line
 router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
+    const projectObj = new Project(req.params.projectId)
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.TEXT, ENTITIES.LINE))) {
+      return respondWithError(res, 403, 'You do not have permission to update line text in this project')
+    }
     if (typeof req.body !== 'string') {
       return respondWithError(res, 400, 'Invalid request body. Expected a string.')
     }
@@ -250,8 +264,12 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
 // Update the xywh (bounds) of an existing line
 router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
+    const projectObj = new Project(req.params.projectId)
+    if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.SELECTOR, ENTITIES.LINE))) {
+      return respondWithError(res, 403, 'You do not have permission to update line bounds in this project')
+    }
     if (typeof req.body !== 'object' || !req.body.x || !req.body.y || !req.body.w || !req.body.h) {
       return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
     }

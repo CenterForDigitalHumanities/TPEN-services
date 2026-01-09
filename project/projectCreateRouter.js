@@ -7,12 +7,13 @@ import Project from "../classes/Project/Project.js"
 import screenContentMiddleware from "../utilities/checkIfSuspicious.js"
 import { isSuspiciousJSON, isSuspiciousValueString, hasSuspiciousProjectData } from "../utilities/checkIfSuspicious.js"
 import Tools from "../classes/Tools/Tools.js"
+import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
 router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   let project = req.body
   try {
     if (hasSuspiciousProjectData(project)) return respondWithError(res, 400, "Suspicious project data will not be processed.")
@@ -37,6 +38,7 @@ router.route("/create").post(auth0Middleware(), screenContentMiddleware(), async
 router.route("/import").post(auth0Middleware(), async (req, res) => {
   let { createFrom } = req.query
   let user = req.user
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   createFrom = createFrom?.toLowerCase()
   if (!createFrom)
     return respondWithError(res, 400, "Query string 'createFrom' is required, specify manifest source as 'URL' or 'DOC'")
@@ -95,7 +97,7 @@ router.route("/import").post(auth0Middleware(), async (req, res) => {
 
 router.route("/import-image").post(auth0Middleware(), async (req, res) => {
   const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -129,7 +131,7 @@ router.route("/import-image").post(auth0Middleware(), async (req, res) => {
  */
 router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
   const user = req.user
-  if (!user?.agent) return respondWithError(res, 401, "Unauthenticated user")
+  if (!user?.agent) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   const projectId = req.params.projectId
   if (!projectId) return respondWithError(res, 400, "Project ID is required")
   if (!req.body || typeof req.body !== 'object') {
@@ -139,6 +141,9 @@ router.route("/:projectId/label").patch(auth0Middleware(), screenContentMiddlewa
   if (typeof label !== "string" || !label?.trim()) return respondWithError(res, 400, "JSON with a 'label' property required in the request body.  It cannot be null or blank and must be a string.")
   try {
     let project = new Project(projectId)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.METADATA, ENTITIES.PROJECT))) {
+      return respondWithError(res, 403, "You do not have permission to update this project's label")
+    }
     const loadedProject = await project.loadProject()
     if (!loadedProject) return respondWithError(res, 404, "Project not found")
     project = await project.setLabel(label)

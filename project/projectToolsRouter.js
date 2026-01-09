@@ -2,11 +2,16 @@ import express from "express"
 import { respondWithError } from "../utilities/shared.js"
 import validateURL from "../utilities/validateURL.js"
 import Tools from "../classes/Tools/Tools.js"
+import auth0Middleware from "../auth/index.js"
+import Project from "../classes/Project/Project.js"
+import { ACTIONS, ENTITIES, SCOPES } from "./groups/permissions_parameters.js"
 
 const router = express.Router({ mergeParams: true })
 
 //Add Tool to Project
-router.route("/:projectId/tool").post(async (req, res) => {
+router.route("/:projectId/tool").post(auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -19,6 +24,10 @@ router.route("/:projectId/tool").post(async (req, res) => {
     const projectId = req.params.projectId
     if (!projectId || !validateURL(projectId)) {
       return respondWithError(res, 400, "A valid project ID is required.")
+    }
+    const project = new Project(projectId)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.TOOLS))) {
+      return respondWithError(res, 403, "You do not have permission to add tools to this project")
     }
     const tools = new Tools(projectId)
     await tools.validateToolArray(req?.body)
@@ -47,7 +56,9 @@ router.route("/:projectId/tool").post(async (req, res) => {
     console.error("Error adding tool:", error)
     return respondWithError(res, error.status || 500, error.message || "An error occurred while adding the tool.")
   }
-}).delete(async (req, res) => {
+}).delete(auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -62,6 +73,10 @@ router.route("/:projectId/tool").post(async (req, res) => {
     const projectId = req.params.projectId
     if (!projectId || !validateURL(projectId)) {
       return respondWithError(res, 400, "A valid project ID is required.")
+    }
+    const project = new Project(projectId)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.TOOLS))) {
+      return respondWithError(res, 403, "You do not have permission to remove tools from this project")
     }
     const tools = new Tools(projectId)
     if (!await tools.checkToolPattern(toolName)) {
@@ -84,7 +99,9 @@ router.route("/:projectId/tool").post(async (req, res) => {
 })
 
 // Toggle Tool State in Project
-router.route("/:projectId/toggleTool").put(async (req, res) => {
+router.route("/:projectId/toggleTool").put(auth0Middleware(), async (req, res) => {
+  const user = req.user
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!req.body || typeof req.body !== 'object') {
     return respondWithError(res, 400, "Request body is required")
   }
@@ -99,6 +116,10 @@ router.route("/:projectId/toggleTool").put(async (req, res) => {
     const projectId = req.params.projectId
     if (!projectId || !validateURL(projectId)) {
       return respondWithError(res, 400, "A valid project ID is required.")
+    }
+    const project = new Project(projectId)
+    if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.TOOLS))) {
+      return respondWithError(res, 403, "You do not have permission to toggle tools in this project")
     }
     const tools = new Tools(projectId)
     if (!await tools.checkToolPattern(toolName)) {

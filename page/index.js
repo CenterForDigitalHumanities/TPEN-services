@@ -10,6 +10,7 @@ import Line from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
 import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveReferences } from '../utilities/shared.js'
 import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
+import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
 router.use(
   cors(common_cors)
@@ -83,7 +84,7 @@ router.route('/:pageId')
   })
   .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     const { projectId, pageId } = req.params
     const update = req.body
     if (!update || typeof update !== 'object' || Object.keys(update).length === 0) {
@@ -94,6 +95,14 @@ router.route('/:pageId')
     }
     if (Array.isArray(update.items) && update.items.some(item => (typeof item !== 'object' && typeof item !== 'string') || item === null)) {
       return respondWithError(res, 400, 'Each item must be an object')
+    }
+    try {
+      const projectObj = new Project(projectId)
+      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+        return respondWithError(res, 403, 'You do not have permission to update this page')
+      }
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
     }
     const project = await Project.getById(projectId)
     if (!project) {
@@ -285,11 +294,20 @@ router.route('/:pageId')
 router.route('/:pageId/column')
   .post(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
+
+    try {
+      const projectObj = new Project(projectId)
+      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+        return respondWithError(res, 403, 'You do not have permission to update columns on this page')
+      }
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
+    }
 
     if (!req.body || typeof req.body !== 'object') {
       return respondWithError(res, 400, "Request body is required")
@@ -360,11 +378,20 @@ router.route('/:pageId/column')
   })
   .put(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
+
+    try {
+      const projectObj = new Project(projectId)
+      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+        return respondWithError(res, 403, 'You do not have permission to merge columns on this page')
+      }
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
+    }
 
     if (!req.body || typeof req.body !== 'object') {
       return respondWithError(res, 400, "Request body is required")
@@ -430,11 +457,20 @@ router.route('/:pageId/column')
   })
   .patch(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
 
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
+
+    try {
+      const projectObj = new Project(projectId)
+      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+        return respondWithError(res, 403, 'You do not have permission to update columns on this page')
+      }
+    } catch (error) {
+      return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
+    }
 
     if (!req.body || typeof req.body !== 'object') {
       return respondWithError(res, 400, "Request body is required")
@@ -496,12 +532,16 @@ router.route('/:pageId/column')
 router.route('/:pageId/clear-columns')
   .delete(auth0Middleware(), async (req, res) => {
     const user = req.user
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
-    
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
+
     const { projectId, pageId } = req.params
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
     try {
+      const projectObj = new Project(projectId)
+      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.PAGE))) {
+        return respondWithError(res, 403, 'You do not have permission to clear columns on this page')
+      }
       const project = await Project.getById(projectId)
       if (!project?.data) return respondWithError(res, 404, "Project not found")
       
