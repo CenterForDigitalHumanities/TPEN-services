@@ -98,7 +98,7 @@ class DatabaseController {
                 method: 'post',
                 body: JSON.stringify(query),
                 headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
+                    'Content-Type': 'application/ld+json; charset=utf-8'
                 }
             })
             .then(resp => {
@@ -129,7 +129,7 @@ class DatabaseController {
                 method: 'post',
                 body: JSON.stringify(data),
                 headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
+                    'Content-Type': 'application/ld+json; charset=utf-8'
                 }
             })
             .then(resp => {
@@ -160,7 +160,7 @@ class DatabaseController {
                 method: 'put',
                 body: JSON.stringify(data),
                 headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
+                    'Content-Type': 'application/ld+json; charset=utf-8'
                 }
             })
             .then(resp => {
@@ -190,7 +190,7 @@ class DatabaseController {
         err_out._dbaction = this.URLS.OVERWRITE
         
         const headers = {
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/ld+json; charset=utf-8'
         }
         
         // Add optimistic locking header if __rerum.isOverwritten exists
@@ -255,7 +255,7 @@ class DatabaseController {
                 method: 'delete',
                 body: JSON.stringify(data),
                 headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
+                    'Content-Type': 'application/ld+json; charset=utf-8'
                 }
             })
             .then(resp => {
