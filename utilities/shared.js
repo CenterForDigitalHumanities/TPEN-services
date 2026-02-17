@@ -471,9 +471,32 @@ const deepEqual = (a, b) => {
 }
 
 /**
+ * Normalize a W3C Annotation target for comparison by extracting only
+ * content-bearing properties. Strips decorative type declarations like
+ * "SpecificResource" that don't affect the actual targeting semantics.
+ * Annotorious and other clients may omit target.type, while RERUM stores it,
+ * causing false-positive change detection in deepEqual.
+ *
+ * @param {*} target - The annotation target to normalize
+ * @returns {*} The normalized target, or the original if not a SpecificResource
+ */
+const normalizeTarget = (target) => {
+  if (!target || typeof target !== 'object') return target
+  if (target.source !== undefined && target.selector !== undefined) {
+    const { type, ...rest } = target
+    return rest
+  }
+  return target
+}
+
+/**
  * Compare two annotations to detect meaningful content changes.
  * Only compares body and target - other fields (id, creator, motivation, etc.)
  * are not considered content changes.
+ *
+ * Targets are normalized before comparison to ignore non-content properties
+ * like type ("SpecificResource") that may be present in stored annotations
+ * but absent from client submissions.
  *
  * Uses order-insensitive deep comparison since both body and target can be
  * complex objects and property order should not affect equality.
@@ -487,5 +510,5 @@ const deepEqual = (a, b) => {
  */
 export const hasAnnotationChanges = (existing, compare) => {
   return !deepEqual(existing?.body, compare?.body) ||
-         !deepEqual(existing?.target, compare?.target)
+         !deepEqual(normalizeTarget(existing?.target), normalizeTarget(compare?.target))
 }
