@@ -6,7 +6,7 @@ import {fileURLToPath} from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const sendMail = async (email, subject, message) => {
+export const sendMail = async (email, subject, message, userName) => {
   if (!email || typeof email !== "string") {
     return {
       status: 400,
@@ -32,7 +32,8 @@ export const sendMail = async (email, subject, message) => {
   const templatepath = path.join(__dirname, "template.html")
   let htmlTemplate = fs.readFileSync(templatepath, "utf-8")
 
-  htmlTemplate = htmlTemplate.replace("{{userName}}", "TPEN User")
+  const displayName = userName || email.split("@")[0] || "TPEN User"
+  htmlTemplate = htmlTemplate.replace("{{userName}}", displayName)
   htmlTemplate = htmlTemplate.replace("{{subject}}", subject)
   htmlTemplate = htmlTemplate.replace("{{messageBody}}", message)
 
