@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename)
  * @param {string} email - Recipient email address.
  * @param {string} subject - Email subject line.
  * @param {string} message - HTML message body content.
- * @param {string} [userName] - Recipient display name for the greeting. Falls back to the email local part, then "TPEN User".
+ * @param {string} [userName] - Recipient display name for the greeting.
  * @returns {Promise<{status: number, message: string}>}
  */
 export const sendMail = async (email, subject, message, userName) => {
