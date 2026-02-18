@@ -93,7 +93,8 @@ export default class Project {
           </p>
         `
       }
-      await sendMail(email, `Invitation to ${projectTitle}`, message)
+      const recipientName = user?.profile?.displayName || email.split("@")[0]
+      await sendMail(email, `Invitation to ${projectTitle}`, message, recipientName)
       return this
     } catch (error) {
       throw error
@@ -252,7 +253,8 @@ export default class Project {
 <p>Your contributions to the project remain attributed to you, but you no longer have access to some TPEN3 data.  *Access to RERUM data is not affected.</p>
 <p>If you believe this was done in error, please contact a project administrator.</p>`
 
-          await sendMail(userData.email, subject, message)
+          const recipientName = userData?.profile?.displayName || userData?.email?.split("@")[0]
+          await sendMail(userData.email, subject, message, recipientName)
         }
       } catch (emailError) {
         console.error("Failed to send removal confirmation email:", emailError)
