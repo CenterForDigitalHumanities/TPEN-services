@@ -6,6 +6,14 @@ import {fileURLToPath} from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+/**
+ * Send an email using the HTML template.
+ * @param {string} email - Recipient email address.
+ * @param {string} subject - Email subject line.
+ * @param {string} message - HTML message body content.
+ * @param {string} [userName] - Recipient display name for the greeting. Falls back to the email local part, then "TPEN User".
+ * @returns {Promise<{status: number, message: string}>}
+ */
 export const sendMail = async (email, subject, message, userName) => {
   if (!email || typeof email !== "string") {
     return {
