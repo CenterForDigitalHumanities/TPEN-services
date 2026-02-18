@@ -40,7 +40,7 @@ export const sendMail = async (email, subject, message, userName) => {
   const templatepath = path.join(__dirname, "template.html")
   let htmlTemplate = fs.readFileSync(templatepath, "utf-8")
 
-  const displayName = userName || email.split("@")[0] || "TPEN User"
+  const displayName = userName || email.split("@")[0]
   htmlTemplate = htmlTemplate.replace("{{userName}}", displayName)
   htmlTemplate = htmlTemplate.replace("{{subject}}", subject)
   htmlTemplate = htmlTemplate.replace("{{messageBody}}", message)
