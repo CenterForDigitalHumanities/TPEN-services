@@ -270,8 +270,9 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.SELECTOR, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to update line bounds in this project')
     }
-    if (typeof req.body !== 'object' || !req.body.x || !req.body.y || !req.body.w || !req.body.h) {
-      return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h properties.')
+    const isValidBound = v => Number.isInteger(v) && v >= 0
+    if (typeof req.body !== 'object' || !isValidBound(req.body.x) || !isValidBound(req.body.y) || !isValidBound(req.body.w) || !isValidBound(req.body.h)) {
+      return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h as non-negative integers.')
     }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
