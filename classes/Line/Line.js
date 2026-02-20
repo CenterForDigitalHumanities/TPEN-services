@@ -180,10 +180,11 @@ export default class Line {
     }
 
     async updateBounds({x, y, w, h}, options = {}) {
-        const isValidBound = v => Number.isInteger(v) && v >= 0
+        const isValidBound = v => (Number.isInteger(v) && v >= 0) || (typeof v === 'string' && /^\d+$/.test(v))
         if (!isValidBound(x) || !isValidBound(y) || !isValidBound(w) || !isValidBound(h)) {
             throw new Error('Bounds ({x,y,w,h}) must be non-negative integers')
         }
+        x = parseInt(x, 10); y = parseInt(y, 10); w = parseInt(w, 10); h = parseInt(h, 10)
         if (options.creator) this.creator = options.creator
         this.target ??= ''
         const newTarget = this.updateTargetXYWH(this.target, x, y, w, h)

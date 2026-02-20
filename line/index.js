@@ -270,10 +270,11 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.SELECTOR, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to update line bounds in this project')
     }
-    const isValidBound = v => Number.isInteger(v) && v >= 0
-    if (typeof req.body !== 'object' || !isValidBound(req.body.x) || !isValidBound(req.body.y) || !isValidBound(req.body.w) || !isValidBound(req.body.h)) {
+    const isValidBound = v => (Number.isInteger(v) && v >= 0) || (typeof v === 'string' && /^\d+$/.test(v))
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || !isValidBound(req.body.x) || !isValidBound(req.body.y) || !isValidBound(req.body.w) || !isValidBound(req.body.h)) {
       return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h as non-negative integers.')
     }
+    const bounds = { x: parseInt(req.body.x, 10), y: parseInt(req.body.y, 10), w: parseInt(req.body.w, 10), h: parseInt(req.body.h, 10) }
     const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
     const findOldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
@@ -284,7 +285,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     let oldLine = await fetch(findOldLine.id).then(res => res.json())
     delete oldLine.label
     const line = new Line(oldLine)
-    const updatedLine = await line.updateBounds(req.body, { creator: user._id })
+    const updatedLine = await line.updateBounds(bounds, { creator: user._id })
     const lineIndex = page.items.findIndex(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     page.items[lineIndex] = updatedLine
 
