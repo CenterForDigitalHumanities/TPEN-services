@@ -235,7 +235,6 @@ export default class Project {
       const user = new User(userId)
       const userData = await user.getSelf()
       await group.removeMember(userId, voluntary)
-      await group.update()
       const projectTitle = this.data?.label ?? this.data?.title ?? 'TPEN Project'
       try {
         // Send confirmation email (non-blocking)

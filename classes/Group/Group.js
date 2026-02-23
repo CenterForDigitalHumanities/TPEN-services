@@ -68,8 +68,9 @@ export default class Group {
      * Replace all roles for a member with the provided roles.
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
+     * @param {boolean} shouldUpdate Persist changes when true
      */
-    async setMemberRoles(memberId, roles) {
+    async setMemberRoles(memberId, roles, shouldUpdate = true) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -92,7 +93,9 @@ export default class Group {
 
         roles = washRoles(roles)
         this.data.members[memberId].roles = roles
-        await this.update()
+        if (shouldUpdate) {
+            await this.update()
+        }
     }
 
     /**
@@ -133,8 +136,10 @@ export default class Group {
      * Remove roles if found for a member.
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
+     * @param {boolean} allowOwner Allow removal of OWNER role
+     * @param {boolean} shouldUpdate Persist changes when true
      */
-    async removeMemberRoles(memberId, roles, allowOwner = false) {
+    async removeMemberRoles(memberId, roles, allowOwner = false, shouldUpdate = true) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -163,7 +168,9 @@ export default class Group {
         }
 
         this.data.members[memberId].roles = this.data.members[memberId].roles.filter(role => !roles.includes(role))
-        await this.update()
+        if (shouldUpdate) {
+            await this.update()
+        }
     }
 
     /**
