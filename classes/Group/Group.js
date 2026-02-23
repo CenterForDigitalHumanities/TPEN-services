@@ -99,8 +99,10 @@ export default class Group {
      * Add if not in roles for a member with the provided roles.
      * @param {String} memberId _id of the member
      * @param {Array | String} roles [ROLE, ROLE, ...] or "ROLE ROLE ..."
+     * @param {boolean} allowOwner Allow assignment of OWNER role
+     * @param {boolean} shouldUpdate Persist changes when true
      */
-    async addMemberRoles(memberId, roles, allowOwner = false) {
+    async addMemberRoles(memberId, roles, allowOwner = false, shouldUpdate = true) {
 
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
@@ -122,8 +124,9 @@ export default class Group {
         }
         roles = washRoles(roles, allowOwner)
         this.data.members[memberId].roles = [...new Set([...this.data.members[memberId].roles, ...roles])]
-        // If we need the group to update first (caused error)
-        // await this.update()
+        if (shouldUpdate) {
+            await this.update()
+        }
     }
 
     /**
@@ -172,8 +175,9 @@ export default class Group {
      *
      * @param {string} memberId The User/member _id to remove from the Group and perhaps delete from the db.
      * @param {boolean} voluntary Whether the user is leaving voluntarily (true) or being removed by admin (false).
+     * @param {boolean} shouldUpdate Persist changes when true
     */
-    async removeMember(memberId, voluntary = false) {
+    async removeMember(memberId, voluntary = false, shouldUpdate = true) {
         if (!Object.keys(this.data.members).length) {
             await this.#loadFromDB()
         }
@@ -196,8 +200,9 @@ export default class Group {
             }
         }
         delete this.data.members[memberId]
-        // If we need the Group to update in the db in addition to the Class data.
-        // await this.update()
+        if (shouldUpdate) {
+            await this.update()
+        }
     }
 
     /**
@@ -309,11 +314,11 @@ export default class Group {
         }
 
         if (!this.getByRole("OWNER")?.length) {
-            await this.addMemberRoles(this.data.creator, "OWNER", true)
+            await this.addMemberRoles(this.data.creator, "OWNER", true, false)
         }
         if (!this.getByRole("LEADER")?.length) {
-            await this.addMemberRoles(this.data.creator, "LEADER")
-        }
+                        await this.addMemberRoles(this.data.creator, "LEADER", false, false)
+                }
     }
 
     static async createNewGroup(creator, payload) {
