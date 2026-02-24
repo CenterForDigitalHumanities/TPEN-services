@@ -80,7 +80,6 @@
         .post { background-color: #28a745; color: white; }
         .get { background-color: #007bff; color: white; }
         .put { background-color: #ffc107; color: black; }
-        .patch { background-color: #6f42c1; color: white; }
         .delete { background-color: #dc3545; color: white; }
         .auth-required {
             display: inline-block;
@@ -194,7 +193,6 @@
             <li><a href="#collaborators">3. Collaborators</a></li>
             <li><a href="#users">4. Users</a></li>
             <li><a href="#layers">5. Layers</a></li>
-            <li><a href="#lines">6. Lines</a></li>
         </ul>
     </div>
 
@@ -685,180 +683,6 @@
     "prev": "string",
     "next": "string"
 }</code></pre>
-    </div>
-
-    <h2 id="lines">6. Lines</h2>
-    <p>Annotation lines within a project page. Lines represent individual transcription annotations targeting regions of a canvas.</p>
-
-    <div class="endpoint">
-        <h4><span class="method get">GET</span>/project/:projectId/page/:pageId/line/:lineId</h4>
-        <p><strong>Description:</strong> Retrieve a single line annotation from a project page. By default returns the annotation as JSON-LD. Use the <code>text</code> query parameter to retrieve just the plain text content.</p>
-
-        <p><strong>Parameters:</strong></p>
-        <ul>
-            <li><code>projectId</code>: ID of the project</li>
-            <li><code>pageId</code>: ID of the page</li>
-            <li><code>lineId</code>: ID of the line</li>
-        </ul>
-
-        <p><strong>Query Parameters:</strong></p>
-        <ul>
-            <li><code>text=blob</code>: Returns only the plain text content of the annotation body as <code>text/plain</code> instead of the full JSON-LD annotation.</li>
-        </ul>
-
-        <p><strong>Responses:</strong></p>
-        <div class="response-codes">
-            <span class="response-code code-200">200</span>
-            <span>Line found</span>
-            <span class="response-code code-404">404</span>
-            <span>Line, page, or project not found</span>
-            <span class="response-code code-500">500</span>
-            <span>Server error</span>
-        </div>
-
-        <p><strong>Default JSON-LD Response Example:</strong></p>
-        <pre><code>{
-    "@context": "http://iiif.io/api/presentation/3/context.json",
-    "id": "string",
-    "type": "Annotation",
-    "motivation": "transcribing",
-    "target": "string",
-    "body": "string | object | array"
-}</code></pre>
-        <p>With <code>?text=blob</code>: Returns <code>text/plain</code> content type with the extracted text string.</p>
-        <p><em>Note: Text extraction handles all W3C Web Annotation body format variants: plain string bodies, objects with <code>value</code>, <code>chars</code>, or <code>cnt:asChars</code> properties, and arrays of bodies (returns text from the first textual body found). If no textual body exists, an empty string is returned.</em></p>
-    </div>
-
-    <div class="endpoint">
-        <h4><span class="method post">POST</span>/project/:projectId/page/:pageId/line <span class="auth-required">🔐</span></h4>
-        <p><strong>Description:</strong> Add one or more new line annotations to a page. Lines with body content are saved to RERUM.</p>
-
-        <p><strong>Parameters:</strong></p>
-        <ul>
-            <li><code>projectId</code>: ID of the project</li>
-            <li><code>pageId</code>: ID of the page</li>
-        </ul>
-
-        <p><strong>Request Body:</strong></p>
-        <p>A single annotation object or an array of annotation objects:</p>
-        <pre><code>{
-    "body": "string | object",
-    "target": "string",
-    "motivation": "string",
-    "label": "string",
-    "type": "string"
-}</code></pre>
-
-        <p><strong>Responses:</strong></p>
-        <div class="response-codes">
-            <span class="response-code code-201">201</span>
-            <span>Line(s) created successfully (returns the last created line as JSON-LD)</span>
-            <span class="response-code code-400">400</span>
-            <span>Invalid request body or suspicious input</span>
-            <span class="response-code code-401">401</span>
-            <span>Unauthorized</span>
-            <span class="response-code code-403">403</span>
-            <span>Forbidden</span>
-            <span class="response-code code-500">500</span>
-            <span>Server error</span>
-        </div>
-    </div>
-
-    <div class="endpoint">
-        <h4><span class="method put">PUT</span>/project/:projectId/page/:pageId/line/:lineId <span class="auth-required">🔐</span></h4>
-        <p><strong>Description:</strong> Update an existing line annotation, including in RERUM.</p>
-
-        <p><strong>Parameters:</strong></p>
-        <ul>
-            <li><code>projectId</code>: ID of the project</li>
-            <li><code>pageId</code>: ID of the page</li>
-            <li><code>lineId</code>: ID of the line</li>
-        </ul>
-
-        <p><strong>Request Body:</strong> Annotation properties to update.</p>
-
-        <p><strong>Responses:</strong></p>
-        <div class="response-codes">
-            <span class="response-code code-200">200</span>
-            <span>Line updated successfully</span>
-            <span class="response-code code-400">400</span>
-            <span>Invalid request</span>
-            <span class="response-code code-401">401</span>
-            <span>Unauthorized</span>
-            <span class="response-code code-403">403</span>
-            <span>Forbidden</span>
-            <span class="response-code code-404">404</span>
-            <span>Line not found</span>
-            <span class="response-code code-500">500</span>
-            <span>Server error</span>
-        </div>
-    </div>
-
-    <div class="endpoint">
-        <h4><span class="method patch">PATCH</span>/project/:projectId/page/:pageId/line/:lineId/text <span class="auth-required">🔐</span></h4>
-        <p><strong>Description:</strong> Update only the text content of a line annotation body.</p>
-
-        <p><strong>Parameters:</strong></p>
-        <ul>
-            <li><code>projectId</code>: ID of the project</li>
-            <li><code>pageId</code>: ID of the page</li>
-            <li><code>lineId</code>: ID of the line</li>
-        </ul>
-
-        <p><strong>Request Body:</strong> A plain string with the new text content.</p>
-
-        <p><strong>Responses:</strong></p>
-        <div class="response-codes">
-            <span class="response-code code-200">200</span>
-            <span>Text updated successfully</span>
-            <span class="response-code code-400">400</span>
-            <span>Invalid request body (expected a string)</span>
-            <span class="response-code code-401">401</span>
-            <span>Unauthorized</span>
-            <span class="response-code code-403">403</span>
-            <span>Forbidden</span>
-            <span class="response-code code-404">404</span>
-            <span>Line not found</span>
-            <span class="response-code code-500">500</span>
-            <span>Server error</span>
-        </div>
-    </div>
-
-    <div class="endpoint">
-        <h4><span class="method patch">PATCH</span>/project/:projectId/page/:pageId/line/:lineId/bounds <span class="auth-required">🔐</span></h4>
-        <p><strong>Description:</strong> Update the spatial bounds (xywh) of a line annotation target.</p>
-
-        <p><strong>Parameters:</strong></p>
-        <ul>
-            <li><code>projectId</code>: ID of the project</li>
-            <li><code>pageId</code>: ID of the page</li>
-            <li><code>lineId</code>: ID of the line</li>
-        </ul>
-
-        <p><strong>Request Body:</strong></p>
-        <pre><code>{
-    "x": "integer",
-    "y": "integer",
-    "w": "integer",
-    "h": "integer"
-}</code></pre>
-        <p>All values must be non-negative integers.</p>
-
-        <p><strong>Responses:</strong></p>
-        <div class="response-codes">
-            <span class="response-code code-200">200</span>
-            <span>Bounds updated successfully</span>
-            <span class="response-code code-400">400</span>
-            <span>Invalid request body</span>
-            <span class="response-code code-401">401</span>
-            <span>Unauthorized</span>
-            <span class="response-code code-403">403</span>
-            <span>Forbidden</span>
-            <span class="response-code code-404">404</span>
-            <span>Line not found</span>
-            <span class="response-code code-500">500</span>
-            <span>Server error</span>
-        </div>
     </div>
 
     <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666;">
