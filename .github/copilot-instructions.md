@@ -14,11 +14,6 @@ TPEN Services is a Node.js Express API service for TPEN3 (Transcription for Pale
 - Environment configuration is in .env.  Copy environment configuration: `cp .env.development .env`
 - Install dependencies: `npm install` -- takes up to 20 seconds. NEVER CANCEL. Set timeout to 60+ seconds.
 
-### Environment Requirements
-- Node.js >= 22.20.0 
-- MongoDB (for database tests and full functionality)
-- For full functionality, configure database connection strings, GITHUB_TOKEN, and Auth0 credentials in `.env`
-
 ### Environment Configuration
 
 TPEN Services uses a layered configuration approach with `--import ./env-loader.js` using the dotenv package:
