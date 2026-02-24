@@ -2,6 +2,17 @@ import dbDriver from "../../database/driver.js"
 import { fetchUserAgent, hasAnnotationChanges } from "../../utilities/shared.js"
 
 const databaseTiny = new dbDriver("tiny")
+
+/**
+ * Determine whether the given body entry is a textual body variant.
+ * Recognizes: plain string, object with `value`, `chars`, or `cnt:asChars` string property.
+ * @param {*} body - A single body entry (string, object, or other).
+ * @returns {boolean} True if the body is a textual body variant.
+ */
+export function isVariantTextualBody(body) {
+    return typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
+}
+
 export default class Line {
 
     #tinyAction = 'create'
@@ -122,7 +133,6 @@ export default class Line {
         if (typeof text !== 'string') throw new Error('Text content must be a string')
         if (!this.body) this.body = "" // simple variant for no body
         this.creator = options.creator
-        const isVariantTextualBody = body => typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
 
         if (Array.isArray(this.body)) {
             const textualBodies = this.body.filter(body => isVariantTextualBody(body))
@@ -212,6 +222,33 @@ export default class Line {
 
     asHTML() {
         return Promise.resolve('<html><body>This is the HTML document content.</body></html>')
+    }
+
+    /**
+     * Extract the plain text content from the annotation body.
+     *
+     * Handles all W3C Web Annotation body format variants:
+     * - Plain string body
+     * - Object body with `value`, `chars`, or `cnt:asChars` property
+     * - Array of bodies (returns text from the first textual body found)
+     * - null/undefined/empty array bodies return empty string
+     *
+     * @returns {string} The text content of the annotation, or empty string if no textual body exists.
+     */
+    textContent() {
+        if (!this.body && this.body !== '') return ''
+
+        if (Array.isArray(this.body)) {
+            const textualBody = this.body.find(b => isVariantTextualBody(b))
+            if (!textualBody) return ''
+            return textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
+        }
+
+        if (isVariantTextualBody(this.body)) {
+            return this.body.value ?? this.body.chars ?? this.body['cnt:asChars'] ?? this.body
+        }
+
+        return ''
     }
 
     async delete() {
