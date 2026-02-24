@@ -41,12 +41,11 @@ router.get('/:lineId', async (req, res) => {
       : lineRef
     let line
     try {
-      line = resolvedLine instanceof Line ? resolvedLine : new Line(resolvedLine)
+      line = new Line(resolvedLine)
     } catch (e) {
-      // Malformed line data — fall back to raw resolved object
+      // Malformed line data — fall back to raw object
       line = resolvedLine
     }
-
     if (req.query.text === 'blob') {
       return res.type('text/plain').send(line?.textContent?.() ?? '')
     }
