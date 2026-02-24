@@ -115,7 +115,7 @@ Required for external services:
 3. Make code changes
 4. Test with: `npm run existsTests` (fast, database-independent)
 5. For all other tests use `npm run allTests`
-8. Test manually: `curl http://localhost:3011/` and relevant endpoints
+6. Test manually: `curl http://localhost:3011/` and relevant endpoints
 
 NEVER CANCEL long-running commands. Application builds and tests are designed to complete within documented timeouts. Always wait for completion to ensure accurate validation of changes.
 
