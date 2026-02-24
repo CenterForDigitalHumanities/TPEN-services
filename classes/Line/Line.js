@@ -4,13 +4,23 @@ import { fetchUserAgent, hasAnnotationChanges } from "../../utilities/shared.js"
 const databaseTiny = new dbDriver("tiny")
 
 /**
+ * Extract the text value from a textual body entry.
+ * Priority: value → cnt:asChars → chars → raw body.
+ * @param {string|Object} body - A textual body entry.
+ * @returns {*} The text content, or the raw body if no text property found.
+ */
+export function extractTextValue(body) {
+    return body?.value ?? body?.['cnt:asChars'] ?? body?.chars ?? body
+}
+
+/**
  * Determine whether the given body entry is a textual body variant.
  * Recognizes: plain string, object with `value`, `chars`, or `cnt:asChars` string property.
  * @param {*} body - A single body entry (string, object, or other).
  * @returns {boolean} True if the body is a textual body variant.
  */
 export function isVariantTextualBody(body) {
-    return typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
+    return typeof extractTextValue(body) === 'string'
 }
 
 export default class Line {
@@ -139,7 +149,7 @@ export default class Line {
             if (textualBodies.length !== 1) throw new Error(textualBodies.length > 1 ? 'Multiple textual bodies found. Cannot determine which one to update.' : 'No textual body found in the array to update.')
 
             const textualBody = textualBodies[0]
-            const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
+            const currentValue = extractTextValue(textualBody)
             if (currentValue === text) return this
             Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
             // discard Annotation-level options if only one body entry is modified.
@@ -147,7 +157,7 @@ export default class Line {
         }
 
         if (isVariantTextualBody(this.body)) {
-            const currentValue = this.body.chars ?? this.body['cnt:asChars'] ?? this.body.value ?? this.body
+            const currentValue = extractTextValue(this.body)
             if (currentValue === text) return this
             this.body = { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language }
             return this.update()
@@ -241,11 +251,11 @@ export default class Line {
         if (Array.isArray(this.body)) {
             const textualBody = this.body.find(b => isVariantTextualBody(b))
             if (!textualBody) return ''
-            return textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
+            return extractTextValue(textualBody)
         }
 
         if (isVariantTextualBody(this.body)) {
-            return this.body.value ?? this.body.chars ?? this.body['cnt:asChars'] ?? this.body
+            return extractTextValue(this.body)
         }
 
         return ''

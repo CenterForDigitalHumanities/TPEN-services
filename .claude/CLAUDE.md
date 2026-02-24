@@ -11,11 +11,10 @@ Always reference these instructions first and fallback to search or bash command
 ## Working Effectively
 
 ### Bootstrap, Build, and Test the Repository
-- Copy environment configuration: `cp .env.development .env`
+- Environment configuration is in .env.  Do not overwrite the existing .env file.  If an .env file does not exist then copy environment configuration: `cp .env.development .env`
 - Install dependencies: `npm install` -- takes up to 20 seconds. NEVER CANCEL. Set timeout to 60+ seconds.
-- Run unit tests: `npm run unitTests` -- takes 12 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
-- Run existence tests: `npm run existsTests` -- takes 7 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
-- Run all tests: `npm run allTests` -- takes 12 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
+- Run tests: `npm run allTests` -- this is the only test command AI assistants should use. NEVER CANCEL. Set timeout to 120+ seconds.
+- Tests can take minutes to run. Only run tests once you have completed a task and must verify it to continue. Do not run tests speculatively or repeatedly.
 
 ### Run the Application
 - ALWAYS run the bootstrapping steps first.
@@ -33,26 +32,14 @@ Always reference these instructions first and fallback to search or bash command
 ## Validation
 
 ### Always Validate Core Functionality After Changes
-- Start the application: `npm start` or `npm run dev`
-- Test the root endpoint: `curl http://localhost:3011/` -- should return HTML with "TPEN3 SERVICES BABY!!!"
-- Run unit tests that don't require databases: `npm run unitTests` -- many tests pass without database connections
-- Run existence tests: `npm run existsTests` -- validates route registration and class imports
-- ALWAYS wait for full test completion. Tests may appear to hang but will complete within 12 seconds.
+- Run `npm run allTests` once you have completed your task and need to verify correctness before continuing. This is the only test command to use.
+- ALWAYS wait for full test completion. Tests can take minutes. NEVER CANCEL.
 - NOTE: Application may crash after serving initial requests due to database connection attempts - this is expected behavior without running MongoDB/MariaDB.
-
-### Test Categories Available
-- `npm run unitTests` -- Core unit tests (some require databases)
-- `npm run existsTests` -- Route and class existence validation (database-independent)
-- `npm run functionsTests` -- Function-level tests
-- `npm run E2Etests` -- End-to-end API tests
-- `npm run dbTests` -- Database-specific tests (require running databases)
-- `npm run authTest` -- Authentication tests (require Auth0 configuration)
 
 ### Expected Test Behavior
 - Tests requiring databases will timeout/fail without MongoDB/MariaDB running
 - Auth tests fail without proper AUDIENCE and DOMAIN environment variables
 - Core functionality tests (exists, basic units) should pass with minimal `.env` setup
-- Database-independent tests complete in 6-15 seconds
 
 ## Common Tasks
 
@@ -112,13 +99,11 @@ Always reference these instructions first and fallback to search or bash command
 - MongoDB Collections: TPENPROJECTS, TPENGROUPS, TPENUSERS, TPENCOLUMNS (configured in `config.env`)
 
 ### Development Workflow
-1. Always start with: `cp .env.development .env && npm install`
+1. Ensure .env exists (if not: `cp .env.development .env`) and run `npm install`
 2. Make code changes
-3. Test with: `npm run existsTests` (fast, database-independent)
-4. For database changes: ensure MongoDB/MariaDB running, then `npm run dbTests`
-5. For API changes: `npm run E2Etests`
-6. Start dev server: `npm run dev`
-7. Test manually: `curl http://localhost:3011/` and relevant endpoints
+3. Once the task is complete and verification is needed: `npm run allTests`
+4. Start dev server if manual testing is needed: `npm run dev`
+5. Test manually: `curl http://localhost:3011/` and relevant endpoints
 
 ### Debugging and Troubleshooting
 - Application logs appear in console when running `npm start` or `npm run dev`
@@ -137,9 +122,7 @@ Always reference these instructions first and fallback to search or bash command
 ### Performance Notes
 - Application startup: 2-3 seconds
 - npm install: ~1-20 seconds depending on cache (timeout: 60+ seconds)
-- Unit tests: ~12 seconds (timeout: 30+ seconds)
-- Existence tests: ~7 seconds (timeout: 30+ seconds)
-- Database tests: variable depending on database response times
+- Tests (`npm run allTests`): can take minutes (timeout: 120+ seconds). Only run when task is complete and verification is needed.
 
 ### Critical Environment Variables
 Required for basic functionality:
@@ -167,24 +150,22 @@ Required for external services:
 - `RERUMURL` (RERUM repository URL)
 
 ### Manual Testing Scenarios
-After making changes, always validate:
-1. **Basic Service**: Start server with `npm start`, test with `curl http://localhost:3011/` - should return HTML containing "TPEN3 SERVICES BABY!!!" in the response body
-2. **Route Registration**: `npm run existsTests` passes without errors
-3. **Core Logic**: `npm run unitTests` passes tests that don't require databases (some MongoDB tests will timeout - this is expected)
-4. **API Authentication**: Protected endpoints like `/my/profile` return 401 status code without valid tokens
-5. **Application Behavior**: Server may crash after serving requests when MongoDB is not available - this is expected and indicates database connection attempts are working correctly
+After completing a task, validate:
+1. **Run tests**: `npm run allTests` — the single command for all test verification
+2. **Basic Service** (if needed): Start server with `npm start`, test with `curl http://localhost:3011/` - should return HTML containing "TPEN3 SERVICES BABY!!!"
+3. **API Authentication**: Protected endpoints like `/my/profile` return 401 status code without valid tokens
+4. **Application Behavior**: Server may crash after serving requests when MongoDB is not available - this is expected
 
 ### Complete Validation Workflow Example
 ```bash
-# Basic setup
+# Basic setup (only if .env does not exist)
 cp .env.development .env
 npm install
 
-# Test core functionality without databases
-npm run existsTests  # Should pass completely
-npm run unitTests   # Should pass most tests, MongoDB tests will timeout
+# Run all tests once task is complete
+npm run allTests
 
-# Test application serving
+# Optional: test application serving
 npm start &
 sleep 3
 curl http://localhost:3011/  # Should return HTML with service name

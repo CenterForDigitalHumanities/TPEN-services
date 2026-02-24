@@ -39,12 +39,18 @@ router.get('/:lineId', async (req, res) => {
     const resolvedLine = (lineRef.id ?? lineRef).startsWith?.(process.env.RERUMIDPREFIX)
       ? await fetch(lineRef.id ?? lineRef).then(res => res.json())
       : lineRef
-    const line = resolvedLine instanceof Line ? resolvedLine : new Line(resolvedLine)
+    let line
+    try {
+      line = resolvedLine instanceof Line ? resolvedLine : new Line(resolvedLine)
+    } catch (e) {
+      // Malformed line data — fall back to raw resolved object
+      line = resolvedLine
+    }
 
     if (req.query.text === 'blob') {
-      return res.type('text/plain').send(line.textContent())
+      return res.type('text/plain').send(line?.textContent?.() ?? '')
     }
-    res.json(line.asJSON(true))
+    res.json(line?.asJSON?.(true) ?? line)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message)
   }
