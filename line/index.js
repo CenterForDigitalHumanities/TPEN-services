@@ -37,7 +37,7 @@ router.get('/:lineId', async (req, res) => {
       return respondWithError(res, 404, `Line with ID '${lineId}' not found in project '${projectId}'`)
     }
     const resolvedLine = (lineRef.id ?? lineRef).startsWith?.(process.env.RERUMIDPREFIX)
-      ? await fetch(lineRef.id ?? lineRef).then(res => res.json())
+      ? await fetch(lineRef.id ?? lineRef).then(resp => resp.json())
       : lineRef
     let line
     try {
