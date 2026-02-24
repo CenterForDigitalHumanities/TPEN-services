@@ -246,18 +246,15 @@ export default class Line {
      * @returns {string} The text content of the annotation, or empty string if no textual body exists.
      */
     textContent() {
-        if (!this.body && this.body !== '') return ''
-
+        if (this.body === null || this.body === undefined) return ''
         if (Array.isArray(this.body)) {
             const textualBody = this.body.find(b => isVariantTextualBody(b))
             if (!textualBody) return ''
             return extractTextValue(textualBody)
         }
-
         if (isVariantTextualBody(this.body)) {
             return extractTextValue(this.body)
         }
-
         return ''
     }
 
