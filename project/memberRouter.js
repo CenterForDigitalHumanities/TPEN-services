@@ -72,7 +72,6 @@ router.route("/:projectId/collaborator/:collaboratorId/addRoles").post(auth0Midd
     const groupId = projectObj.data.group
     const group = new Group(groupId)
     await group.addMemberRoles(collaboratorId, roles)
-    await group.update()
     res.status(200).send(`Roles added to member ${collaboratorId}.`)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message ?? "Error adding roles to member.")
@@ -137,9 +136,9 @@ router.route("/:projectId/switch/owner").post(auth0Middleware(), async (req, res
     }
     const group = new Group(projectObj.data.group)
     const currentRoles = await group.getMemberRoles(user._id)
-    Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"])
-    await group.addMemberRoles(newOwnerId, ["OWNER"], true)
-    await group.removeMemberRoles(user._id, ["OWNER"], true)
+    Object.keys(currentRoles).length === 1 && await group.addMemberRoles(user._id, ["CONTRIBUTOR"], false, false)
+    await group.addMemberRoles(newOwnerId, ["OWNER"], true, false)
+    await group.removeMemberRoles(user._id, ["OWNER"], true, false)
     await group.update()
     res.status(200).json({ message: `Ownership successfully transferred to member ${newOwnerId}.` })
   } catch (error) {
