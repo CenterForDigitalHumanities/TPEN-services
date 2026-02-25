@@ -261,12 +261,6 @@ export default class Line {
     /**
      * Extract the plain text content from the Line body.
      *
-     * Handles all W3C Web Annotation body format variants:
-     * - Plain string body
-     * - Object body with `value`, `chars`, or `cnt:asChars` property
-     * - Array of bodies (returns text from the first textual body found)
-     * - null/undefined/empty array bodies return empty string
-     *
      * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
     asTextBlob() {
