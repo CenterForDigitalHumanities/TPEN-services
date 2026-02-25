@@ -6,7 +6,6 @@ import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
-import { extractTextFromAnnotationBody } from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
 import Project from '../classes/Project/Project.js'
 import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
@@ -39,7 +38,7 @@ router.get('/:lineId', async (req, res) => {
     }
     line = new Line(lineRef)
     if (req.query.text === 'blob') {
-      return res.type('text/plain').send(line.asTextBlob())
+      return res.text(line.asTextBlob())
     }
     res.json(line.asJson())
   } catch (error) {
