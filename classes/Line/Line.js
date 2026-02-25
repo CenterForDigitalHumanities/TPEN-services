@@ -264,7 +264,6 @@ export default class Line {
      * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
     asTextBlob() {
-        if (this.body === null || this.body === undefined) return ''
         return extractTextFromAnnotationBody(this.body)
     }
 

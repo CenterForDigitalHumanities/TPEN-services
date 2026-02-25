@@ -41,9 +41,9 @@ router.get('/:lineId', async (req, res) => {
     let line
     let rawLineText = ""
     if (ref.startsWith?.(process.env.RERUMIDPREFIX)) {
-      let rawLineData = await fetch(ref).then(resp => {
+      const rawLineData = await fetch(ref).then(resp => {
         if (resp.ok) return resp.json()
-        let rerum_err_out = {
+        const rerum_err_out = {
           "status": resp.status ?? 500,
           "message": "RERUM Error"
         }
@@ -51,12 +51,11 @@ router.get('/:lineId', async (req, res) => {
       })
       rawLineText = rawLineData.hasOwnProperty("body") ? extractTextFromAnnotationBody(rawLineData.body) : ""
       line = rawLineData
-    }
-    else{
+    } else {
       line = new Line({ lineRef })
     }
     if (req.query.text === 'blob') {
-      return res.type('text/plain').send(line?.textContent?.() ?? rawLineText)
+      return res.type('text/plain').send(line?.asTextBlob?.() ?? rawLineText)
     }
     res.json(line?.asJSON?.(true) ?? line)
   } catch (error) {
