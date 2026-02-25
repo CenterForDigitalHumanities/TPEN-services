@@ -39,9 +39,9 @@ router.get('/:lineId', async (req, res) => {
     }
     line = new Line(lineRef)
     if (req.query.text === 'blob') {
-      return res.type('text/plain').send(line?.asTextBlob?.() ?? extractTextFromAnnotationBody(line?.body))
+      return res.type('text/plain').send(line.asTextBlob())
     }
-    res.json(line?.asJSON?.(true) ?? line)
+    res.json(line.asJson())
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message)
   }
