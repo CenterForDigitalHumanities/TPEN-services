@@ -104,15 +104,10 @@ export default class Line {
         if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
             const rawLineData = await fetch(rerumURI).then(resp => {
                 if (resp.ok) return resp.json()
+                // Gracefully degrade: don't alter class data if RERUM fetch fails
                 return {}
-                // const rerum_err_out = {
-                //   "status": resp.status ?? 500,
-                //   "message": "RERUM Error"
-                // }
-                // throw rerum_err_out
             })
-            // If there was an issue with getting the line URI to resolve do not alter Class data.
-            if (!(rawLineData.id || rawLineData["@id"])) return
+            if (!(rawLineData.id || rawLineData["@id"])) return this
             // We don't have Class getters and setters for these properties...
             if (rawLineData.body) this.body = rawLineData.body
             if (rawLineData.target) this.target = rawLineData.target
