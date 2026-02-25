@@ -102,12 +102,27 @@ export default class Line {
     async #loadAnnotationDataFromRerum() {
         const rerumURI = this.id
         if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawLineData = await fetch(rerumURI).then(resp => {
+            const rawLineData = await fetch(rerumURI).then(async (resp) => {
                 if (resp.ok) return resp.json()
-                // Gracefully degrade: don't alter class data if RERUM fetch fails
-                return {}
+                // The response from RERUM indicates a failure, likely with a specific code and textual body
+                let rerumErrorMessage
+                try {
+                   rerumErrorMessage = await resp.text()
+                }
+                catch (err) {
+                   rerumErrorMessage = undefined
+                }
+                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
+                err.status = resp.status ?? 502
+                err.message = rerumErrorMessage ?? `A RERUM error occurred for ${rerumURI}`
+                throw err
             })
-            if (!(rawLineData.id || rawLineData["@id"])) return this
+            if (!(rawLineData.id || rawLineData["@id"])) {
+                // A 200 with garbled data, call it a fail
+                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
+                err.status = 502
+                throw err
+            }
             // We don't have Class getters and setters for these properties...
             if (rawLineData.body) this.body = rawLineData.body
             if (rawLineData.target) this.target = rawLineData.target
@@ -116,7 +131,6 @@ export default class Line {
             if (rawLineData.label) this.label = rawLineData.label
             if (rawLineData.type) this.type = rawLineData.type
             this.#tinyAction = 'update'
-
         }
         return this
     }
