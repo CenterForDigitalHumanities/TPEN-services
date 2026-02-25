@@ -39,7 +39,7 @@ router.get('/:lineId', async (req, res) => {
     const line = new Line(lineRef)
     if (req.query.text === 'blob') {
       const textBlob = await line.asTextBlob()
-      return res.text(textBlob)
+      return res.type('text/plain').send(textBlob)
     }
     const jsonObj = await line.asJSON(true)
     res.json(jsonObj)

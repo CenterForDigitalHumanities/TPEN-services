@@ -102,7 +102,7 @@ export default class Line {
     async #loadAnnotationDataFromRerum() {
         let rerumURI = this.id
         if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawLineData = await fetch(ref).then(resp => {
+            const rawLineData = await fetch(rerumURI).then(resp => {
                 if (resp.ok) return resp.json()
                 return {}
                 // const rerum_err_out = {
@@ -112,7 +112,7 @@ export default class Line {
                 // throw rerum_err_out
             })
             // If there was an issue with getting the line URI to resolve do not alter Class data.
-            if ((rawLineData.id || rawLineData["@id"])) return
+            if (!(rawLineData.id || rawLineData["@id"])) return
             // We don't have Class getters and setters for these properties...
             if (rawLineData.body) this.body = rawLineData.body
             if (rawLineData.target) this.target = rawLineData.target
@@ -121,7 +121,9 @@ export default class Line {
             if (rawLineData.label) this.label = rawLineData.label
             if (rawLineData.type) this.type = rawLineData.type
             this.#tinyAction = 'update'
-        } 
+
+        }
+        return this
     }
     /**
      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
@@ -301,6 +303,8 @@ function isVariantTextualBody(body) {
  * @returns {string} The text content of the annotation, or empty string if no textual body exists.
  */
 function extractTextFromAnnotationBody(body) {
+    console.log("Extra text from Anno body")
+    console.log(body)
     if (body === null || body === undefined) return ''
     if (Array.isArray(body)) {
         const textualBody = body.find(b => isVariantTextualBody(b))
