@@ -96,8 +96,6 @@ export default class Line {
      * Resolve the RERUM URI of the Line and sync Line properties with the Annotation properties.
      * The RERUM data will take preferences and overwrite any properties that are already set.
      * Only RERUM URIs are supported.
-     *
-     * @returns {Promise} Resolves to the updated Layer object as stored in Project.
      */
     async #loadAnnotationDataFromRerum() {
         const rerumURI = this.id
