@@ -102,7 +102,8 @@ router.post('/', auth0Middleware(), async (req, res) => {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
     }
-    res.status(201).json(newLine.asJSON(true))
+    const jsonObj = await newLine.asJSON(true)
+    res.status(201).json(jsonObj)
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
@@ -178,7 +179,8 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
     }
-    res.json(line.asJSON(true))
+    const jsonObj = await line.asJSON(true)
+    res.json(jsonObj)
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
@@ -254,7 +256,8 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
     }
-    res.json(line.asJSON(true))
+    const jsonObj = await line.asJSON(true)
+    res.json(jsonObj)
   } catch (error) {
     // Handle version conflicts with optimistic locking
     if (error.status === 409) {
@@ -332,7 +335,8 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId).columns = saveWholeColumns
       await project.update()
     }
-    res.json(line.asJSON(true))
+    const jsonObj = await line.asJSON(true)
+    res.json(jsonObj)
   } catch (error) {    // Handle version conflicts with optimistic locking
     if (error.status === 409) {
       return handleVersionConflict(res, error)

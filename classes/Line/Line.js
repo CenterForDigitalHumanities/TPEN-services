@@ -100,7 +100,7 @@ export default class Line {
      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
      */
     async #loadAnnotationDataFromRerum() {
-        let rerumURI = this.id
+        const rerumURI = this.id
         if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
             const rawLineData = await fetch(rerumURI).then(resp => {
                 if (resp.ok) return resp.json()
@@ -267,7 +267,6 @@ export default class Line {
         return true
     }
 }
-    
 
 /**
  * Extract the text value from a textual body entry.
@@ -303,8 +302,6 @@ function isVariantTextualBody(body) {
  * @returns {string} The text content of the annotation, or empty string if no textual body exists.
  */
 function extractTextFromAnnotationBody(body) {
-    console.log("Extra text from Anno body")
-    console.log(body)
     if (body === null || body === undefined) return ''
     if (Array.isArray(body)) {
         const textualBody = body.find(b => isVariantTextualBody(b))
