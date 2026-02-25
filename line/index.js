@@ -49,7 +49,7 @@ router.get('/:lineId', async (req, res) => {
         }
         throw rerum_err_out
       })
-      rawLineText = rawLineData.hasOwnProperty("body") ? extractTextFromAnnotationBody(rawLineData.body) : ""
+      rawLineText = extractTextFromAnnotationBody(rawLineData?.body)
       line = rawLineData
     } else {
       line = new Line({ lineRef })
