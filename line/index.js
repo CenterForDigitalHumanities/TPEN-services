@@ -37,7 +37,7 @@ router.get('/:lineId', async (req, res) => {
     if (!lineRef) {
       return respondWithError(res, 404, `Line with ID '${lineId}' not found in project '${projectId}'`)
     }
-    let ref = lineRef.id ?? lineRef
+    const ref = lineRef.id ?? lineRef
     let line
     let rawLineText = ""
     if (ref.startsWith?.(process.env.RERUMIDPREFIX)) {
