@@ -36,11 +36,11 @@ router.get('/:lineId', async (req, res) => {
     if (!lineRef) {
       return respondWithError(res, 404, `Line with ID '${lineId}' not found in project '${projectId}'`)
     }
-    line = new Line(lineRef)
+    const line = new Line(lineRef)
     if (req.query.text === 'blob') {
       return res.text(line.asTextBlob())
     }
-    res.json(line.asJson())
+    res.json(line.asJSON(true))
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message)
   }
