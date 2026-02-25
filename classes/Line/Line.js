@@ -120,6 +120,7 @@ export default class Line {
             if (!(rawLineData.id || rawLineData["@id"])) {
                 // A 200 with garbled data, call it a fail
                 const err = new Error(`A RERUM error occurred for ${rerumURI}`)
+                err.message = `A RERUM error occurred for ${rerumURI}`
                 err.status = 502
                 throw err
             }
