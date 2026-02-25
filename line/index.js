@@ -37,21 +37,7 @@ router.get('/:lineId', async (req, res) => {
     if (!lineRef) {
       return respondWithError(res, 404, `Line with ID '${lineId}' not found in project '${projectId}'`)
     }
-    const ref = lineRef.id ?? lineRef
-    let line
-    if (ref.startsWith?.(process.env.RERUMIDPREFIX)) {
-      const rawLineData = await fetch(ref).then(resp => {
-        if (resp.ok) return resp.json()
-        const rerum_err_out = {
-          "status": resp.status ?? 500,
-          "message": "RERUM Error"
-        }
-        throw rerum_err_out
-      })
-      line = rawLineData
-    } else {
-      line = new Line({ lineRef })
-    }
+    line = new Line({ lineRef })
     if (req.query.text === 'blob') {
       return res.type('text/plain').send(line?.asTextBlob?.() ?? extractTextFromAnnotationBody(line?.body))
     }
