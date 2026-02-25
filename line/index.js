@@ -39,7 +39,7 @@ router.get('/:lineId', async (req, res) => {
     let ref = lineRef.id ?? lineRef
     let line
     if (ref.startsWith?.(process.env.RERUMIDPREFIX)) {
-      let rawLineData = await fetch(ref).then(resp => resp.json()).catch(err => {return {}})
+      let rawLineData = await fetch(ref).then(resp => resp.json()).catch(err => { return {} })
       line = new Line(rawLineData)
     }
     else{
