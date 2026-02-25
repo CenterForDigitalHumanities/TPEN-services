@@ -38,9 +38,11 @@ router.get('/:lineId', async (req, res) => {
     }
     const line = new Line(lineRef)
     if (req.query.text === 'blob') {
-      return res.text(line.asTextBlob())
+      const textBlob = await line.asTextBlob()
+      return res.text(textBlob)
     }
-    res.json(line.asJSON(true))
+    const jsonObj = await line.asJSON(true)
+    res.json(jsonObj)
   } catch (error) {
     return respondWithError(res, error.status ?? 500, error.message)
   }

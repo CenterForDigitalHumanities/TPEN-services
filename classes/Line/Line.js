@@ -227,7 +227,7 @@ export default class Line {
         return this.update()
     }
 
-    asJSON(isLD) {
+    async asJSON(isLD) {
         if (!this.body) await this.#loadAnnotationDataFromRerum()
         return isLD ? {
             '@context': 'http://iiif.io/api/presentation/3/context.json',
@@ -252,7 +252,7 @@ export default class Line {
      *
      * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
-    asTextBlob() {
+    async asTextBlob() {
         if (!this.body) await this.#loadAnnotationDataFromRerum()
         return extractTextFromAnnotationBody(this.body)
     }
