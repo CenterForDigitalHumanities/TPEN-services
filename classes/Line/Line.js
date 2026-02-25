@@ -105,14 +105,14 @@ export default class Line {
             const rawLineData = await fetch(rerumURI).then(async (resp) => {
                 if (resp.ok) return resp.json()
                 // The response from RERUM indicates a failure, likely with a specific code and textual body
-                let rerumErrorMessage
+                let rerumErrorMessage = `${resp.status ?? 500}: `
                 try {
-                   rerumErrorMessage = await resp.text()
+                   rerumErrorMessage += await resp.text()
                 }
                 catch (err) {
                    rerumErrorMessage = undefined
                 }
-                const err = new Error(rerumErrorMessage ?? `A RERUM error occurred for ${rerumURI}`)
+                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${rerumURI}`)
                 err.status = 502
                 throw err
             })
