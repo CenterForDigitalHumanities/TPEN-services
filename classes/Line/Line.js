@@ -6,6 +6,7 @@ const databaseTiny = new dbDriver("tiny")
 /**
  * Extract the text value from a textual body entry.
  * Priority: value → cnt:asChars → chars → raw body.
+ *
  * @param {string|Object} body - A textual body entry.
  * @returns {*} The text content, or the raw body if no text property found.
  */
@@ -16,6 +17,7 @@ function extractTextValue(body) {
 /**
  * Determine whether the given body entry is a textual body variant.
  * Recognizes: plain string, object with `value`, `chars`, or `cnt:asChars` string property.
+ *
  * @param {*} body - A single body entry (string, object, or other).
  * @returns {boolean} True if the body is a textual body variant.
  */
@@ -25,24 +27,24 @@ function isVariantTextualBody(body) {
 
 /**
  * Extract the plain text content from raw Annotation body data
- *
  * Handles all W3C Web Annotation body format variants:
  * - Plain string body
  * - Object body with `value`, `chars`, or `cnt:asChars` property
  * - Array of bodies (returns text from the first textual body found)
  * - null/undefined/empty array bodies return empty string
  *
+ * @param {*} body - A single body entry (string, object, array, or other).
  * @returns {string} The text content of the annotation, or empty string if no textual body exists.
  */
-export function extractTextFromAnnotationBody(annoBody) {
-    if (annoBody === null || annoBody === undefined) return ''
-    if (Array.isArray(annoBody)) {
-        const textualBody = annoBody.find(b => isVariantTextualBody(b))
+export function extractTextFromAnnotationBody(body) {
+    if (body === null || body === undefined) return ''
+    if (Array.isArray(body)) {
+        const textualBody = body.find(b => isVariantTextualBody(b))
         if (!textualBody) return ''
         return extractTextValue(textualBody)
     }
-    if (isVariantTextualBody(annoBody)) {
-        return extractTextValue(annoBody)
+    if (isVariantTextualBody(body)) {
+        return extractTextValue(body)
     }
     return ''
 }
