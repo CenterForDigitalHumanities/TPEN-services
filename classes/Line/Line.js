@@ -112,15 +112,13 @@ export default class Line {
                 catch (err) {
                    rerumErrorMessage = undefined
                 }
-                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
-                err.status = resp.status ?? 502
-                err.message = rerumErrorMessage ?? `A RERUM error occurred for ${rerumURI}`
+                const err = new Error(rerumErrorMessage ?? `A RERUM error occurred for ${rerumURI}`)
+                err.status = 502
                 throw err
             })
             if (!(rawLineData.id || rawLineData["@id"])) {
                 // A 200 with garbled data, call it a fail
                 const err = new Error(`A RERUM error occurred for ${rerumURI}`)
-                err.message = `A RERUM error occurred for ${rerumURI}`
                 err.status = 502
                 throw err
             }
