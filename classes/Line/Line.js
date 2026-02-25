@@ -9,7 +9,7 @@ const databaseTiny = new dbDriver("tiny")
  * @param {string|Object} body - A textual body entry.
  * @returns {*} The text content, or the raw body if no text property found.
  */
-export function extractTextValue(body) {
+function extractTextValue(body) {
     return body?.value ?? body?.['cnt:asChars'] ?? body?.chars ?? body
 }
 
@@ -19,8 +19,32 @@ export function extractTextValue(body) {
  * @param {*} body - A single body entry (string, object, or other).
  * @returns {boolean} True if the body is a textual body variant.
  */
-export function isVariantTextualBody(body) {
+function isVariantTextualBody(body) {
     return typeof extractTextValue(body) === 'string'
+}
+
+/**
+ * Extract the plain text content from raw Annotation body data
+ *
+ * Handles all W3C Web Annotation body format variants:
+ * - Plain string body
+ * - Object body with `value`, `chars`, or `cnt:asChars` property
+ * - Array of bodies (returns text from the first textual body found)
+ * - null/undefined/empty array bodies return empty string
+ *
+ * @returns {string} The text content of the annotation, or empty string if no textual body exists.
+ */
+export function extractTextFromAnnotationBody(annoBody) {
+    if (annoBody === null || annoBody === undefined) return ''
+    if (Array.isArray(annoBody)) {
+        const textualBody = annoBody.find(b => isVariantTextualBody(b))
+        if (!textualBody) return ''
+        return extractTextValue(textualBody)
+    }
+    if (isVariantTextualBody(annoBody)) {
+        return extractTextValue(annoBody)
+    }
+    return ''
 }
 
 export default class Line {
@@ -235,7 +259,7 @@ export default class Line {
     }
 
     /**
-     * Extract the plain text content from the annotation body.
+     * Extract the plain text content from the Line body.
      *
      * Handles all W3C Web Annotation body format variants:
      * - Plain string body
@@ -243,19 +267,11 @@ export default class Line {
      * - Array of bodies (returns text from the first textual body found)
      * - null/undefined/empty array bodies return empty string
      *
-     * @returns {string} The text content of the annotation, or empty string if no textual body exists.
+     * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
-    textContent() {
+    asTextBlob() {
         if (this.body === null || this.body === undefined) return ''
-        if (Array.isArray(this.body)) {
-            const textualBody = this.body.find(b => isVariantTextualBody(b))
-            if (!textualBody) return ''
-            return extractTextValue(textualBody)
-        }
-        if (isVariantTextualBody(this.body)) {
-            return extractTextValue(this.body)
-        }
-        return ''
+        return extractTextFromAnnotationBody(this.body)
     }
 
     async delete() {

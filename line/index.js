@@ -6,6 +6,7 @@ import { isSuspiciousJSON } from '../utilities/checkIfSuspicious.js'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import { respondWithError, getProjectById, findLineInPage, updatePageAndProject, findPageById, handleVersionConflict, withOptimisticLocking } from '../utilities/shared.js'
 import Line from '../classes/Line/Line.js'
+import { extractTextFromAnnotationBody } from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
 import Project from '../classes/Project/Project.js'
 import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
@@ -38,15 +39,24 @@ router.get('/:lineId', async (req, res) => {
     }
     let ref = lineRef.id ?? lineRef
     let line
+    let rawLineText = ""
     if (ref.startsWith?.(process.env.RERUMIDPREFIX)) {
-      let rawLineData = await fetch(ref).then(resp => resp.json()).catch(err => { return {} })
-      line = new Line(rawLineData)
+      let rawLineData = await fetch(ref).then(resp => {
+        if (resp.ok) return resp.json()
+        let rerum_err_out = {
+          "status": resp.status ?? 500,
+          "message": "RERUM Error"
+        }
+        throw rerum_err_out
+      })
+      rawLineText = rawLineData.hasOwnProperty("body") ? extractTextFromAnnotationBody(rawLineData.body) : ""
+      line = rawLineData
     }
     else{
       line = new Line({ lineRef })
     }
     if (req.query.text === 'blob') {
-      return res.type('text/plain').send(line?.textContent?.() ?? '')
+      return res.type('text/plain').send(line?.textContent?.() ?? rawLineText)
     }
     res.json(line?.asJSON?.(true) ?? line)
   } catch (error) {
