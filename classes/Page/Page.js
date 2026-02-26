@@ -159,7 +159,7 @@ export default class Page {
      * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
      * @returns {Promise<Object>} The Page as JSON.
      */
-    async asJSON(isLD) {
+    asJSON(isLD) {
         if (isLD) {
             const result = {
                 '@context': 'http://iiif.io/api/presentation/3/context.json',

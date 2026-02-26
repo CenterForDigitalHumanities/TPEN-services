@@ -421,17 +421,24 @@ export const resolveReference = async (annotationId) => {
   if (!annotationId || !annotationId.startsWith("http")) {
     throw new Error('Proper Annotation URI is required')
   }
-  try {
-    const response = await fetch(annotationId)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch annotation from RERUM: ${response.statusText}`)
+  const annotation = await fetch(annotationId).then(async (resp) => {
+    if (resp.ok) return resp.json()
+    let rerumErrorMessage = `${resp.status ?? 500}: ${annotationId} - `
+    try {
+      rerumErrorMessage += await resp.text()
+    } catch (err) {
+      rerumErrorMessage = undefined
     }
-    const annotation = await response.json()
-    return annotation
-  } catch (error) {
-    console.error(`Error fetching annotation: ${annotationId}`, error)
-    throw new Error(`Failed to fetch annotation from RERUM: ${error.message}`)
-  }
+    const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${annotationId}`)
+    err.status = 502
+    throw err
+  })
+  .catch(err => {
+    if (err.status === 502) throw err
+    console.error(`Network error fetching annotation: ${annotationId}`, err)
+    throw err
+  })
+  return annotation
 }
 
 /**
