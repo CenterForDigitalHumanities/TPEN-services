@@ -54,7 +54,7 @@ export default class Page {
         let canvasLabel = canvas.label ?? `Page ${canvas.id.split('/').pop()}`
         const page = {
             data: {
-                "@context": "http://www.w3.org/ns/anno.jsonld",
+                "@context": "http://iiif.io/api/presentation/3/context.json",
                 id,
                 type: "AnnotationPage",
                 label: ProjectFactory.getLabelAsString(canvasLabel),
@@ -73,7 +73,7 @@ export default class Page {
         const prev = this.prev ?? null
         const next = this.next ?? null
         const pageAsAnnotationPage = {
-            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "@context": "http://iiif.io/api/presentation/3/context.json",
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
@@ -94,9 +94,22 @@ export default class Page {
             return this
         }
         // ...else Update the existing page in RERUM
-        const existingPage = await fetch(this.id).then(res => res.json())
-        if (!existingPage) {
-            throw new Error(`Failed to find Page in RERUM: ${this.id}`)
+        const existingPage = await fetch(this.id).then(async (resp) => {
+            if (resp.ok) return resp.json()
+            let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+            try {
+                rerumErrorMessage += await resp.text()
+            } catch (err) {
+                rerumErrorMessage = undefined
+            }
+            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${this.id}`)
+            err.status = 502
+            throw err
+        })
+        if (!(existingPage?.id || existingPage?.["@id"])) {
+            const err = new Error(`A RERUM error occurred for ${this.id}`)
+            err.status = 502
+            throw err
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
         
@@ -142,49 +155,6 @@ export default class Page {
     }
 
     /**
-     * Fetches and syncs Page data from RERUM, hydrating this instance with the full AnnotationPage properties.
-     * Only fetches if the Page ID indicates a RERUM resource.
-     * @returns {Promise<Page>} This Page instance with updated properties.
-     */
-    async #loadPageDataFromRerum() {
-        const rerumURI = this.id
-        if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawPageData = await fetch(rerumURI).then(async (resp) => {
-                if (resp.ok) return resp.json()
-                let rerumErrorMessage = `${resp.status ?? 500}: ${rerumURI} - `
-                try {
-                    rerumErrorMessage += await resp.text()
-                } catch (err) {
-                    rerumErrorMessage = undefined
-                }
-                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${rerumURI}`)
-                err.status = 502
-                throw err
-            })
-            if (!(rawPageData.id || rawPageData["@id"])) {
-                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
-                err.status = 502
-                throw err
-            }
-            if (rawPageData.target) this.target = rawPageData.target
-            if (rawPageData.items) this.items = rawPageData.items
-            if (rawPageData.creator) this.creator = rawPageData.creator
-            if (rawPageData.prev !== undefined) this.prev = rawPageData.prev
-            if (rawPageData.next !== undefined) this.next = rawPageData.next
-            if (rawPageData.label) {
-                this.label = ProjectFactory.getLabelAsString(rawPageData.label)
-            }
-            if (rawPageData.partOf) {
-                this.partOf = Array.isArray(rawPageData.partOf)
-                    ? rawPageData.partOf[0]?.id ?? rawPageData.partOf
-                    : rawPageData.partOf
-            }
-            this.#tinyAction = 'update'
-        }
-        return this
-    }
-
-    /**
      * Returns a JSON representation of the Page as a W3C AnnotationPage.
      * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
      * @returns {Promise<Object>} The Page as JSON.
@@ -192,7 +162,7 @@ export default class Page {
     async asJSON(isLD) {
         if (isLD) {
             const result = {
-                '@context': 'http://www.w3.org/ns/anno.jsonld',
+                '@context': 'http://iiif.io/api/presentation/3/context.json',
                 id: this.id,
                 type: 'AnnotationPage',
                 label: { "none": [this.label] },

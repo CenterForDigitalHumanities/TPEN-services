@@ -97,11 +97,11 @@ router.route('/:pageId')
       if (hasSuspiciousPageData(req.body)) return respondWithError(res, 400, "Suspicious page data will not be processed.")
       // Find the page object
       const page = await findPageById(pageId, projectId)
-      page.creator = user.agent.split('/').pop()
-      page.partOf = layerId
       if (!page) {
         return respondWithError(res, 404, 'No page found with that ID.')
       }
+      page.creator = user.agent.split('/').pop()
+      page.partOf = layerId
 
       const itemsProvided = Array.isArray(update.items) && update.items.length > 0
       let splitIds = itemsProvided ? splitFilterIds(update.items) : []
@@ -564,7 +564,8 @@ router.route('/:pageId/resolved')
           resolvedItems.map(async (item) => {
             if (!item?.id || !item?.target) return item
             const line = new Line(item)
-            return line.asJSON(true)
+            const { '@context': _context, ...lineData } = await line.asJSON(true)
+            return lineData
           })
         )
       }

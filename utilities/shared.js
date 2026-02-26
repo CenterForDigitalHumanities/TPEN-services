@@ -225,35 +225,47 @@ export async function findPageById(pageId, projectId, rerum) {
       if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
          pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
       }
-      const rerum_obj = await fetch(pageId).then(res => {
-         if (res.ok) return res.json()
-         if (!res.ok) return {}
+      const rerum_obj = await fetch(pageId).then(async (resp) => {
+         if (resp.ok) return resp.json()
+         let rerumErrorMessage = `${resp.status ?? 500}: ${pageId} - `
+         try {
+            rerumErrorMessage += await resp.text()
+         } catch (err) {
+            rerumErrorMessage = undefined
+         }
+         const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${pageId}`)
+         err.status = 502
+         throw err
       })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) {
-         const rawLabel = rerum_obj.label
-         const label = typeof rawLabel === 'string'
-            ? rawLabel
-            : (rawLabel && typeof rawLabel === 'object'
-               ? (Object.values(rawLabel).find(v => Array.isArray(v)) ?? []).join(', ')
-               : '')
-         const partOf = Array.isArray(rerum_obj.partOf)
-            ? rerum_obj.partOf[0]?.id ?? rerum_obj.partOf
-            : rerum_obj.partOf
-         return new Page(partOf ?? '', {
-            id: rerum_obj.id ?? rerum_obj["@id"],
-            label,
-            target: rerum_obj.target,
-            items: rerum_obj.items ?? [],
-            creator: rerum_obj.creator ?? null,
-            partOf,
-            prev: rerum_obj.prev ?? null,
-            next: rerum_obj.next ?? null
-         })
+      .catch(err => {
+         if (err.status === 502) throw err
+         console.error("Network error with rerum")
+         throw err
+      })
+      if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
+         const err = new Error(`A RERUM error occurred for ${pageId}`)
+         err.status = 502
+         throw err
       }
+      const rawLabel = rerum_obj.label
+      const label = typeof rawLabel === 'string'
+         ? rawLabel
+         : (rawLabel && typeof rawLabel === 'object'
+            ? (Object.values(rawLabel).find(v => Array.isArray(v)) ?? []).join(', ')
+            : '')
+      const partOf = Array.isArray(rerum_obj.partOf)
+         ? rerum_obj.partOf[0]?.id ?? rerum_obj.partOf
+         : rerum_obj.partOf
+      return new Page(partOf ?? '', {
+         id: rerum_obj.id ?? rerum_obj["@id"],
+         label,
+         target: rerum_obj.target,
+         items: rerum_obj.items ?? [],
+         creator: rerum_obj.creator ?? null,
+         partOf,
+         prev: rerum_obj.prev ?? null,
+         next: rerum_obj.next ?? null
+      })
    }
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {

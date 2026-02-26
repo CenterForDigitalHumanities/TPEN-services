@@ -53,14 +53,19 @@ export default class Line {
             this.#tinyAction = 'update'
             return this
         }
-        // ...else Update the existing page in RERUM
-        const existingLine = await fetch(this.id).then(res => res.json())
-        .catch(err => {
-            if (err.status === 404) {
-                // If the line doesn't exist, we can create it
-                return null
+        // ...else Update the existing line in RERUM
+        const existingLine = await fetch(this.id).then(async (resp) => {
+            if (resp.ok) return resp.json()
+            if (resp.status === 404) return null
+            let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+            try {
+                rerumErrorMessage += await resp.text()
+            } catch (err) {
+                rerumErrorMessage = undefined
             }
-            throw new Error(`Failed to fetch existing Line from RERUM: ${err.message}`)
+            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${this.id}`)
+            err.status = 502
+            throw err
         })
 
         if (!existingLine) {
@@ -238,7 +243,7 @@ export default class Line {
 
     async asJSON(isLD) {
         if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
-        return isLD ? {
+        const result = isLD ? {
             '@context': 'http://iiif.io/api/presentation/3/context.json',
             id: this.id,
             type: 'Annotation',
@@ -250,6 +255,8 @@ export default class Line {
             body: this.body ?? '',
             target: this.target ?? '',
         }
+        if (isLD && this.creator) result.creator = this.creator
+        return result
     }
 
     asHTML() {
