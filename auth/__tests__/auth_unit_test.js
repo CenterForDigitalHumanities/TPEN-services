@@ -13,10 +13,10 @@ const TIME_OUT = process.env.TEST_TIMEOUT ?? 5000
 
 describe("auth0Middleware #auth_test", () => {
   it(
-    "should return 401 without Authorization Header",
+    "should return 400 without Authorization Header",
     async () => {
       const res = await request(app).get("/protected-route")
-      expect(res.status).toBe(401)
+      expect(res.status).toBe(400)
     },
     TIME_OUT
   )

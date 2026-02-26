@@ -191,6 +191,10 @@ describe('Check to see that all expected route patterns exist. #exists_unit', ()
     it('GET /project/:projectId/collaborator/:collaboratorId/decline -- decline project invitation', () => {
       expect(routeExists('/:projectId/collaborator/:collaboratorId/decline', 'get')).toBe(true)
     })
+
+    it('POST /project/:projectId/leave -- member leave project', () => {
+      expect(routeExists('/:id/leave', 'post')).toBe(true)
+    })
   })
   
   describe('Project custom roles routes', () => {

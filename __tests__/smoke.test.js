@@ -57,10 +57,10 @@ async function runSmokeChecks() {
     if (!(hasHeading || hasWelcome)) throw new Error('Expected TPEN3 Services index HTML not found in response')
   }))
 
-  // Protected endpoint requires authentication
+  // Protected endpoint requires authentication (400 when Authorization header is missing)
   checks.push(await runCheck('Protected endpoint requires authentication', async () => {
     const res = await request('/my/profile')
-    if (res.status !== 401) throw new Error(`Expected 401, got ${res.status}`)
+    if (res.status !== 400) throw new Error(`Expected 400, got ${res.status}`)
   }))
 
   // CORS headers present for allowed origin

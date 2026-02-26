@@ -6,7 +6,15 @@ import {fileURLToPath} from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const sendMail = async (email, subject, message) => {
+/**
+ * Send an email using the HTML template.
+ * @param {string} email - Recipient email address.
+ * @param {string} subject - Email subject line.
+ * @param {string} message - HTML message body content.
+ * @param {string} [userName] - Recipient display name for the greeting.
+ * @returns {Promise<{status: number, message: string}>}
+ */
+export const sendMail = async (email, subject, message, userName) => {
   if (!email || typeof email !== "string") {
     return {
       status: 400,
@@ -32,7 +40,8 @@ export const sendMail = async (email, subject, message) => {
   const templatepath = path.join(__dirname, "template.html")
   let htmlTemplate = fs.readFileSync(templatepath, "utf-8")
 
-  htmlTemplate = htmlTemplate.replace("{{userName}}", "TPEN User")
+  const displayName = userName || email.split("@")[0]
+  htmlTemplate = htmlTemplate.replace("{{userName}}", displayName)
   htmlTemplate = htmlTemplate.replace("{{subject}}", subject)
   htmlTemplate = htmlTemplate.replace("{{messageBody}}", message)
 
@@ -44,14 +53,14 @@ export const sendMail = async (email, subject, message) => {
     "TPEN_EMAIL_CC"
   ]
 
-  requiredEnvVars.forEach(varName => {
+  for (const varName of requiredEnvVars) {
     if (!process.env[varName]) {
       return {
         status: 500,
         message: `${varName} environment variable is not set.`
       }
     }
-  })
+  }
 
    try {
     const transporter = nodemailer.createTransport({
@@ -59,13 +68,14 @@ export const sendMail = async (email, subject, message) => {
       port: process.env.SMTP_PORT,
     })
 
-    transporter.verify((error, success) => {
-      if (error) {
-        console.log("Error in SMTP configuration: ", error)
-        return {status: 500, message: error.toString()}
-      }
+    // Verify SMTP connection before attempting to send
+    try {
+      await transporter.verify()
       console.log("Server is ready to take our messages")
-    })
+    } catch (error) {
+      console.error("Error in SMTP configuration: ", error)
+      return {status: 500, message: `SMTP connection failed: ${error.message}`}
+    }
 
     const mailOptions = {
       from: process.env.TPEN_SUPPORT_EMAIL,

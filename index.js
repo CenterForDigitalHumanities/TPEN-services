@@ -34,8 +34,7 @@ router
   .get(function (_req,res) {
     fs.readFile('API.md', 'utf8', (err, data) => {
       if (err) {
-        respondWithError(res, 500, 'Failed to read API.md')
-        return
+        return respondWithError(res, 500, 'Failed to read API.md')
       }
       res.format({
         html: () => res.send(makeCleanFileFromMarkdown(data))
@@ -49,7 +48,7 @@ router
     respondWithHTML(res)
   })
   .all((_req, res, next) => {
-    respondWithError(res, 404, 'There is nothing for you here.')
+    return respondWithError(res, 404, 'There is nothing for you here.')
   })
 
 export { router as default }

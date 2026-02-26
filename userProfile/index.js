@@ -20,6 +20,6 @@ router.route("/:id").get(async (req, res) => {
   }
   if (!publicProfile) return respondWithError(res, 404, "User not found")
   res.status(200).json(publicProfile)
-}).all((req, res) => respondWithError(res, 405, "Improper request method. Use GET instead"))
+}).all((req, res) => { return respondWithError(res, 405, "Improper request method. Use GET instead") })
 
 export default router

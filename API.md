@@ -248,20 +248,35 @@ Users can always see and manipulate their own profile. The profile object is a p
 - **Description**: Retrieve a list of projects the authenticated user is a member of.
 - **Responses**:
 
-    - **200**: Projects found
+    - **200**: Projects found (or empty list if user has no projects)
         ```json
-        [
-            {
-                "_id": "hexstring",
-                "label": "string",
-                "roles": ["string"]
-            }, ...
-        ]
+        {
+            "metrics": {
+                "newest": "project:hexstring/page:hexstring",
+                "lastModified": "project:hexstring/page:hexstring",
+                "myRecent": "hexstring"
+            },
+            "projects": [
+                {
+                    "_id": "hexstring",
+                    "label": "string",
+                    "roles": ["string"]
+                }, ...
+            ]
+        }
+        ```
+        
+        When the user has no projects, returns:
+        ```json
+        {
+            "metrics": null,
+            "projects": []
+        }
         ```
     - **401**: Unauthorized
     - **500**: Server error
 
-The response is a list of projects the user is a member of regardless of the permissions afforded to them in each project.
+The response includes a list of projects the user is a member of regardless of the permissions afforded to them in each project, along with metrics about the newest and most recently modified projects.
 
 #### `GET /user/:id`
 
@@ -406,3 +421,65 @@ Note that you may not empty the canvases of an existing layer.  If the `canvases
         }
         ```
     - **500**: Server error
+
+#### `GET /project/:projectId/page/:pageid/resolved`
+
+- **Description**: Get a fully resolved page with complete annotation data from RERUM. This endpoint resolves all annotation references in the page's items array by fetching the full annotation objects from RERUM which will include the Annotation body.
+- **Parameters**:
+  - `projectId`: ID of the project.
+  - `pageId`: The ID of the page.
+
+- **Responses**:
+
+    - **200**: Page found with fully resolved annotations
+        ```json
+        {
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "id": "string",
+            "type": "AnnotationPage",
+            "label": {
+                "none":[
+                    "TPEN3 Page"
+                ]
+            },
+            "target": "string",
+            "items": [
+                {
+                    "@context": "http://iiif.io/api/presentation/3/context.json",
+                    "id": "string",
+                    "type": "Annotation",
+                    "motivation": "transcribing",
+                    "target": {
+                        "source": "string",
+                        "type": "SpecificResource",
+                        "selector": {
+                            "type": "FragmentSelector",
+                            "value": "string"
+                        }
+                    },
+                    "creator": "string",
+                    "body": {
+                        "type": "TextualBody",
+                        "value": "string",
+                        "format": "text/plain"
+                    },
+                    "_createdAt": "timestamp",
+                    "_modifiedAt": "timestamp",
+                    "__rerum": {
+                        "@context": "http://store.rerum.io/v1/context.json",
+                        "createdAt": "timestamp",
+                        "isOverwritten": "string"
+                    }
+                }
+            ],
+            "partOf": [{"type":"Collection"}],
+            "prev": "string",
+            "next": "string",
+            "_createdAt": "timestamp",
+            "_modifiedAt": "timestamp"
+        }
+        ```
+    - **404**: Page not found
+    - **500**: Server error
+
+**Note**: This endpoint is useful when you need complete annotation data in a single request instead of making multiple API calls to fetch individual annotations from RERUM. The annotations are resolved in parallel for better performance.

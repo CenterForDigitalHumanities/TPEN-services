@@ -13,6 +13,7 @@ import memberUpgradeRouter from "./memberUpgradeRouter.js"
 import memberDeclineInviteRouter from "./memberDeclineInviteRouter.js"
 import projectCopyRouter from "./projectCopyRouter.js"
 import customMetadataRouter from "./customMetadataRouter.js"
+import memberLeaveRouter from "./memberLeaveRouter.js"
 
 const router = express.Router({ mergeParams: true })
 router.use(cors(common_cors))
@@ -29,6 +30,7 @@ router.use(metadataRouter)
 router.use(projectToolsRouter)
 router.use(projectCopyRouter)
 router.use(customMetadataRouter)
+router.use(memberLeaveRouter)
 
 // Nested route for layers within a project
 router.use('/:projectId/layer', layerRouter)

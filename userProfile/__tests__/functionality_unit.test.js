@@ -9,6 +9,7 @@ describe('Testing /user/:id helper functions) #testThis', () => {
   })
  
   it("returns true for valid id",()=>{
-    expect(validateID(123)).toBe(true)
+    // Use a valid 24-character hex string (MongoDB ObjectId format)
+    expect(validateID("507f1f77bcf86cd799439011")).toBe(true)
   }) 
 })

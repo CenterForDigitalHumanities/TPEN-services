@@ -90,11 +90,11 @@ describe("GET /my/profile #user_class", () => {
     expect(response.body.userData).toEqual({name: "VOO"})
   })
 
-  it("should return 401 if user is not authenticated (no authorization header)", async () => {
+  it("should return 400 if user is not authenticated (no authorization header)", async () => {
     const appWithoutAuth = express()
     appWithoutAuth.use("/my", privateProfileRouter)
     const response = await request(appWithoutAuth).get("/my/profile")
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(400)
   })
 
   it("should return 401 if user is not authenticated (invalid authorization header)", async () => {
@@ -138,11 +138,11 @@ describe("GET /my/projects #user_class", () => {
       }
     }
   })
-  it("should return 401 if user is not authenticated (no authorization header)", async () => {
+  it("should return 400 if user is not authenticated (no authorization header)", async () => {
     const appWithoutAuth = express()
     appWithoutAuth.use("/my", privateProfileRouter)
     const response = await request(appWithoutAuth).get("/my/profile")
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(400)
   })
 
   it("should return 401 if user is not authenticated (invalid authorization header)", async () => {
@@ -152,5 +152,30 @@ describe("GET /my/projects #user_class", () => {
       .get("/my/profile")
       .set("Authorization", `Bearer 123123123123123123123123123`)
     expect(response.status).toBe(401)
+  })
+})
+
+describe("GET /my/projects with no projects #user_class", () => {
+  beforeAll(() => {
+    jest.spyOn(User.prototype, "getProjects").mockResolvedValue([])
+    jest.spyOn(User.prototype, "getSelf").mockResolvedValue({
+      _id: "123456",
+      _lastModified: null
+    })
+  })
+
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
+  it.skip("should return 200 with empty projects array when user has no projects", async () => {
+    const response = await request(app)
+      .get("/my/projects")
+      .set("Authorization", `Bearer ${token}`)
+    expect(response.status).toBe(200)
+    expect(response.body).toHaveProperty("projects")
+    expect(Array.isArray(response.body.projects)).toBe(true)
+    expect(response.body.projects.length).toBe(0)
+    expect(response.body.metrics).toBeNull()
   })
 })

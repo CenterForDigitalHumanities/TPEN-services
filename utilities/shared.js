@@ -45,22 +45,21 @@ export function validateID(id, type = "mongo") {
 
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message) {
-   res.status(status).json({ message })
+   return res.status(status).json({ message })
 }
 
 // Fetch a project by ID
 export const getProjectById = async (projectId, res) => {
    const project = await Project.getById(projectId)
    if (!project) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return null
+      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
    }
    return project
 }
 
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
-   const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
+   const line = page.items?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
    if (!line) {
       return null
    }
@@ -119,21 +118,64 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   page.creator ??= await fetchUserAgent(userId)
-   // .update() returns a Page prepped for saving to Project
-   const updatedPage = await page.update()
+   const agent = await fetchUserAgent(userId)
+   page.creator ??= agent
+   let error_out
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) throw new Error("Cannot update Page.  Its Layer was not found.")
+   if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) {
+      error_out = new Error("Cannot update Page.  Its Layer was not found.")
+      error_out.status = 500
+      throw error_out
+   }
    const layer = project.data.layers[layerIndex]
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
-   layer.pages[pageIndex] = updatedPage
-   if (updatedPage.id.startsWith(process.env.RERUMIDPREFIX)) {
-      // If Page id has changed, we need to update the Layer (and the Project)
+
+   // Determine if page will actually be saved to RERUM (same logic as Page.update())
+   const isAlreadyInRerum = page.id.startsWith(process.env.RERUMIDPREFIX)
+   const hasContent = page.items?.length > 0
+   const willBeSavedToRerum = isAlreadyInRerum || hasContent
+
+   if (willBeSavedToRerum) {
+      // Predict the RERUM page ID (same logic as Page.#setRerumId)
+      const rerumPageId = isAlreadyInRerum
+         ? page.id
+         : `${process.env.RERUMIDPREFIX}${page.id.split("/").pop()}`
+
+      // Create formatted page with predicted ID for layer reference
+      const formattedPage = {
+         id: rerumPageId,
+         label: page.label,
+         target: page.target,
+         items: page.items ?? [],
+         columns: layer.pages[pageIndex].columns
+      }
+
+      // Update layer's pages array BEFORE creating Layer
+      layer.pages[pageIndex] = formattedPage
       const updatedLayer = new Layer(project._id, layer)
-      updatedLayer.creator ??= await fetchUserAgent(userId)
-      project.data.layers[layerIndex] = await updatedLayer.update()
-      await recordModification(project, page.id, userId)
+      updatedLayer.creator ??= agent
+
+      try {
+         const [, finalLayer] = await Promise.all([
+            page.update(),
+            updatedLayer.update()
+         ])
+         project.data.layers[layerIndex] = finalLayer
+         await recordModification(project, rerumPageId, userId)
+      } catch (err) {
+         error_out = new Error(`There was an error updating Page and Project data`)
+         error_out.status = 500
+         console.error(`There was an error updating Page and Project data`, err)
+         throw error_out
+      }
+   } else {
+      // Page won't be saved to RERUM (no content, not already in RERUM)
+      // Just update local page reference in layer without touching RERUM
+      const updatedPage = await page.update()
+      updatedPage.columns = layer.pages[pageIndex].columns
+      layer.pages[pageIndex] = updatedPage
    }
+
    await project.update()
 }
 
@@ -240,7 +282,7 @@ export async function findLayerById(layerId, projectId, rerum = false) {
       if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
    }
    const p = await Project.getById(projectId)
-   if (!p) {
+   if (!p?.data) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
       throw error
@@ -326,13 +368,124 @@ export const fetchUserAgent = async (userId) => {
  */
 export const handleVersionConflict = (res, error) => {
   return res.status(409).json({
-    error: error.message,
-    currentVersion: error.currentVersion,
+    message: error.message,
     code: 'VERSION_CONFLICT',
+    currentVersion: error.currentVersion,
     details: 'The document was modified by another process.',
     // Include additional context if available
     ...(error.pageId && { pageId: error.pageId }),
     ...(error.layerId && { layerId: error.layerId }),
     ...(error.lineId && { lineId: error.lineId })
   })
+}
+
+/**
+ * Fetch a single annotation from RERUM by its ID
+ * @param {string} annotationId - The ID/URL of the annotation to fetch (supports both RERUM and TPEN3 formats)
+ * @returns {Promise<Object>} The full annotation object from RERUM
+ * @throws {Error} If the annotation cannot be fetched or parsed
+ */
+export const resolveReference = async (annotationId) => {
+  if (!annotationId || !annotationId.startsWith("http")) {
+    throw new Error('Proper Annotation URI is required')
+  }
+  try {
+    const response = await fetch(annotationId)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch annotation from RERUM: ${response.statusText}`)
+    }
+    const annotation = await response.json()
+    return annotation
+  } catch (error) {
+    console.error(`Error fetching annotation: ${annotationId}`, error)
+    throw new Error(`Failed to fetch annotation from RERUM: ${error.message}`)
+  }
+}
+
+/**
+ * Resolve all annotations in a page's items array by fetching their full data from RERUM
+ * @param {Array} items - Array of annotation items (can be IDs or partial objects)
+ * @returns {Promise<Array>} Array of fully resolved annotation objects
+ */
+export const resolveReferences = async (items) => {
+  if (!Array.isArray(items)) return []
+
+  // Process all items in parallel for better performance
+  const resolvedItems = await Promise.all(
+    items.map(async (item) => {
+      // If item is a string, it's an annotation ID - fetch from RERUM
+      if (typeof item === 'string') {
+        try {
+          return await resolveReference(item)
+        } catch (error) {
+          console.error(`Failed to resolve annotation ${item}:`, error)
+          // Return the ID string if fetching fails
+          return { id: item, error: error.message }
+        }
+      }
+      // If item is an object with an id, try to fetch the full annotation
+      if (item && typeof item === 'object' && item.id) {
+        try {
+          const fullAnnotation = await resolveReference(item.id)
+          // Merge with resolved annotation properties taking precedence over local
+          return { ...item, ...fullAnnotation }
+        } catch (error) {
+          console.error(`Failed to resolve annotation ${item.id}:`, error)
+          return item
+        }
+      }
+      // For any other format, return as-is
+      return item
+    })
+  )
+
+  return resolvedItems
+}
+
+/**
+ * Deep equality comparison that is order-insensitive for object properties.
+ * Arrays are compared in order, but object key order does not matter.
+ *
+ * @param {*} a - First value to compare
+ * @param {*} b - Second value to compare
+ * @returns {boolean} True if values are deeply equal
+ */
+const deepEqual = (a, b) => {
+  if (a === b) return true
+  if (a == null || b == null) return a === b
+  if (typeof a !== typeof b) return false
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((val, i) => deepEqual(val, b[i]))
+  }
+
+  if (typeof a === 'object') {
+    const keysA = Object.keys(a)
+    const keysB = Object.keys(b)
+    if (keysA.length !== keysB.length) return false
+    return keysA.every(key => Object.hasOwn(b, key) && deepEqual(a[key], b[key]))
+  }
+
+  return false
+}
+
+/**
+ * Compare two annotations to detect meaningful content changes.
+ * Only compares body and target - other fields (id, creator, motivation, etc.)
+ * are not considered content changes.
+ *
+ * Uses order-insensitive deep comparison since both body and target can be
+ * complex objects and property order should not affect equality.
+ *
+ * NOTE: This function is intentionally placed in shared.js rather than as a
+ * private method in Line.js to enable unit testing without mocking.
+ *
+ * @param {Object} existing - The existing annotation
+ * @param {Object} compare - The incoming annotation to compare
+ * @returns {boolean} True if there are meaningful changes, false otherwise
+ */
+export const hasAnnotationChanges = (existing, compare) => {
+  return !deepEqual(existing?.body, compare?.body) ||
+         !deepEqual(existing?.target, compare?.target)
 }

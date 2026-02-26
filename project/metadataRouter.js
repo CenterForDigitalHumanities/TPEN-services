@@ -11,7 +11,7 @@ router.route("/:projectId/metadata").put(auth0Middleware(), screenContentMiddlew
   const { projectId } = req.params
   const metadata = req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!metadata || !Array.isArray(metadata)) {
     return respondWithError(res, 400, "Invalid metadata provided. Expected an array of objects with 'label' and 'value'.")
   }
