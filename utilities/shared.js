@@ -163,6 +163,7 @@ export const updatePageAndProject = async (page, project, userId) => {
          project.data.layers[layerIndex] = finalLayer
          await recordModification(project, rerumPageId, userId)
       } catch (err) {
+         if (err.status === 502) throw err
          error_out = new Error(`There was an error updating Page and Project data`)
          error_out.status = 500
          console.error(`There was an error updating Page and Project data`, err)
@@ -240,7 +241,7 @@ export async function findPageById(pageId, projectId, rerum) {
       .catch(err => {
          if (err.status === 502) throw err
          const genericRerumNetworkError = new Error(`500: ${pageId} - A RERUM error occurred`)
-         err.status = 502
+         genericRerumNetworkError.status = 502
          throw genericRerumNetworkError
       })
       if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
@@ -432,7 +433,7 @@ export const resolveReference = async (annotationId) => {
   .catch(err => {
       if (err.status === 502) throw err
       const genericRerumNetworkError = new Error(`500: ${annotationId} - A RERUM error occurred`)
-      err.status = 502
+      genericRerumNetworkError.status = 502
       throw genericRerumNetworkError
   })
   if (!(annotation?.id || annotation?.["@id"])) {
@@ -472,7 +473,7 @@ export const resolveReferences = async (items) => {
           return { ...item, ...fullAnnotation }
         } catch (error) {
           console.error(`Failed to resolve annotation ${item.id}:`, error)
-          return item
+          return { id: item.id, error: error.message }
         }
       }
       // For any other format, return as-is

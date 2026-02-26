@@ -109,13 +109,13 @@ export default class Page {
         .catch(err => {
             if (err.status === 502) throw err
             const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
-            err.status = 502
+            genericRerumNetworkError.status = 502
             throw genericRerumNetworkError
         })
         if (!(existingPage?.id || existingPage?.["@id"])) {
-            const err = new Error(`500: ${this.id} - A RERUM error occurred`)
-            err.status = 502
-            throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
         

@@ -70,7 +70,7 @@ export default class Line {
         .catch(err => {
             if (err.status === 502) throw err
             const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
-            err.status = 502
+            genericRerumNetworkError.status = 502
             throw genericRerumNetworkError
         })
         if (!(existingLine?.id || existingLine?.["@id"])) {
@@ -107,31 +107,30 @@ export default class Line {
      * Only RERUM URIs are supported.
      */
     async #loadAnnotationDataFromRerum() {
-        const rerumURI = this.id
-        if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawLineData = await fetch(rerumURI).then(async (resp) => {
+        if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawLineData = await fetch(this.id).then(async (resp) => {
                 if (resp.ok) return resp.json()
                 // The response from RERUM indicates a failure, likely with a specific code and textual body
-                let rerumErrorMessage = `${resp.status ?? 500}: ${rerumURI} - `
+                let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
                 try {
                    rerumErrorMessage += await resp.text()
                 }
                 catch (err) {
                    rerumErrorMessage = undefined
                 }
-                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${rerumURI} - A RERUM error occurred`)
+                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
                 err.status = 502
                 throw err
             })
             .catch(err => {
                 if (err.status === 502) throw err
-                const genericRerumNetworkError = new Error(`500: ${rerumURI} - A RERUM error occurred`)
-                err.status = 502
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
                 throw genericRerumNetworkError
             })
             if (!(rawLineData.id || rawLineData["@id"])) {
                 // A 200 with garbled data, call it a fail
-                const genericRerumNetworkError = new Error(`500: ${rerumURI} - A RERUM error occurred`)
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
                 genericRerumNetworkError.status = 502
                 throw genericRerumNetworkError
             }
