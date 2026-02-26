@@ -191,8 +191,8 @@ export default class Group {
         const member = this.data.members[memberId]
         if (!member) {
             throw {
-              status: 400,
-              message: "User is not a member of this group"
+                status: 400,
+                message: "User is not a member of this group"
             }
         }
         const userRoles = member.roles
@@ -324,8 +324,8 @@ export default class Group {
             await this.addMemberRoles(this.data.creator, "OWNER", true, false)
         }
         if (!this.getByRole("LEADER")?.length) {
-                        await this.addMemberRoles(this.data.creator, "LEADER", false, false)
-                }
+            await this.addMemberRoles(this.data.creator, "LEADER", false, false)
+        }
     }
 
     static async createNewGroup(creator, payload) {
