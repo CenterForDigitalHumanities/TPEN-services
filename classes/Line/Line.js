@@ -131,6 +131,7 @@ export default class Line {
         }
         return this
     }
+
     /**
      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
@@ -236,7 +237,7 @@ export default class Line {
     }
 
     async asJSON(isLD) {
-        if (!this.body) await this.#loadAnnotationDataFromRerum()
+        if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
         return isLD ? {
             '@context': 'http://iiif.io/api/presentation/3/context.json',
             id: this.id,
@@ -261,7 +262,7 @@ export default class Line {
      * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
     async asTextBlob() {
-        if (!this.body) await this.#loadAnnotationDataFromRerum()
+        if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
         return extractTextFromAnnotationBody(this.body)
     }
 
@@ -279,7 +280,7 @@ export default class Line {
  * Priority: value → cnt:asChars → chars → raw body.
  *
  * @param {string|Object} body - A textual body entry.
- * @returns {*} The text content, or the raw body if no text property found.
+ * @returns {string|*} The text string if a known text property exists, otherwise the raw body value.
  */
 function extractTextValue(body) {
     return body?.value ?? body?.['cnt:asChars'] ?? body?.chars ?? body
