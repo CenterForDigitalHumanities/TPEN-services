@@ -157,7 +157,7 @@ export default class Page {
     /**
      * Returns a JSON representation of the Page as a W3C AnnotationPage.
      * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
-     * @returns {Promise<Object>} The Page as JSON.
+     * @returns {Object} The Page as JSON.
      */
     asJSON(isLD) {
         if (isLD) {

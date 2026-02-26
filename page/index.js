@@ -57,7 +57,7 @@ router.route('/:pageId')
       if (!page) {
         return respondWithError(res, 404, 'No page found with that ID.')
       }
-      res.status(200).json(await page.asJSON(true))
+      res.status(200).json(page.asJSON(true))
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
@@ -236,7 +236,7 @@ router.route('/:pageId')
         await updatePrevAndNextColumns(pageInProject)
         await project.update()
       }
-      res.status(200).json(await page.asJSON(true))
+      res.status(200).json(page.asJSON(true))
     } catch (error) {
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
@@ -569,7 +569,7 @@ router.route('/:pageId/resolved')
           })
         )
       }
-      res.status(200).json(await page.asJSON(true))
+      res.status(200).json(page.asJSON(true))
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
