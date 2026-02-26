@@ -324,8 +324,8 @@ export default class Group {
             await this.addMemberRoles(this.data.creator, "OWNER", true, false)
         }
         if (!this.getByRole("LEADER")?.length) {
-                        await this.addMemberRoles(this.data.creator, "LEADER", false, false)
-                }
+            await this.addMemberRoles(this.data.creator, "LEADER", false, false)
+        }
     }
 
     static async createNewGroup(creator, payload) {
