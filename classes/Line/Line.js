@@ -132,7 +132,7 @@ export default class Line {
             if (!(rawLineData.id || rawLineData["@id"])) {
                 // A 200 with garbled data, call it a fail
                 const genericRerumNetworkError = new Error(`500: ${rerumURI} - A RERUM error occurred`)
-                err.status = 502
+                genericRerumNetworkError.status = 502
                 throw genericRerumNetworkError
             }
             // We don't have Class getters and setters for these properties...

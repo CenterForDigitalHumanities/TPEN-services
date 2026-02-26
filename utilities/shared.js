@@ -245,7 +245,7 @@ export async function findPageById(pageId, projectId, rerum) {
       })
       if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
          const genericRerumNetworkError = new Error(`500: ${pageId} - A RERUM error occurred`)
-         err.status = 502
+         genericRerumNetworkError.status = 502
          throw genericRerumNetworkError
       }
       const rawLabel = rerum_obj.label
@@ -437,7 +437,7 @@ export const resolveReference = async (annotationId) => {
   })
   if (!(annotation?.id || annotation?.["@id"])) {
       const genericRerumNetworkError = new Error(`500: ${annotationId} - A RERUM error occurred`)
-      err.status = 502
+      genericRerumNetworkError.status = 502
       throw genericRerumNetworkError
   }
   return annotation
