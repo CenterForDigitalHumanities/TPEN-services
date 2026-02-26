@@ -30,11 +30,11 @@ router.get('/:lineId', async (req, res) => {
       .find(page => findLineInPage(page, lineId))
 
     if (!pageContainingLine) {
-      return respondWithError(res, 404, `Page with ID '${pageId}' not found in project '${projectId}'`)
+      return respondWithError(res, 404, `Line with ID '${lineId}' not found in Page '${pageId}'`)
     }
     const lineRef = findLineInPage(pageContainingLine, lineId)
     if (!lineRef) {
-      return respondWithError(res, 404, `Line with ID '${lineId}' not found in project '${projectId}'`)
+      return respondWithError(res, 404, `Line with ID '${lineId}' not found in Page '${pageId}'`)
     }
     const line = new Line(lineRef)
     if (req.query.text === 'blob') {
