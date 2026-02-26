@@ -233,7 +233,27 @@ export async function findPageById(pageId, projectId, rerum) {
             console.error("Network error with rerum")
             throw err
          })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
+      if (rerum_obj?.id || rerum_obj["@id"]) {
+         const rawLabel = rerum_obj.label
+         const label = typeof rawLabel === 'string'
+            ? rawLabel
+            : (rawLabel && typeof rawLabel === 'object'
+               ? (Object.values(rawLabel).find(v => Array.isArray(v)) ?? []).join(', ')
+               : '')
+         const partOf = Array.isArray(rerum_obj.partOf)
+            ? rerum_obj.partOf[0]?.id ?? rerum_obj.partOf
+            : rerum_obj.partOf
+         return new Page(partOf ?? '', {
+            id: rerum_obj.id ?? rerum_obj["@id"],
+            label,
+            target: rerum_obj.target,
+            items: rerum_obj.items ?? [],
+            creator: rerum_obj.creator ?? null,
+            partOf,
+            prev: rerum_obj.prev ?? null,
+            next: rerum_obj.next ?? null
+         })
+      }
    }
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {

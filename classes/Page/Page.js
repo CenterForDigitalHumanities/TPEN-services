@@ -141,6 +141,83 @@ export default class Page {
         }
     }
 
+    /**
+     * Fetches and syncs Page data from RERUM, hydrating this instance with the full AnnotationPage properties.
+     * Only fetches if the Page ID indicates a RERUM resource.
+     * @returns {Promise<Page>} This Page instance with updated properties.
+     */
+    async #loadPageDataFromRerum() {
+        const rerumURI = this.id
+        if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawPageData = await fetch(rerumURI).then(async (resp) => {
+                if (resp.ok) return resp.json()
+                let rerumErrorMessage = `${resp.status ?? 500}: ${rerumURI} - `
+                try {
+                    rerumErrorMessage += await resp.text()
+                } catch (err) {
+                    rerumErrorMessage = undefined
+                }
+                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${rerumURI}`)
+                err.status = 502
+                throw err
+            })
+            if (!(rawPageData.id || rawPageData["@id"])) {
+                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
+                err.status = 502
+                throw err
+            }
+            if (rawPageData.target) this.target = rawPageData.target
+            if (rawPageData.items) this.items = rawPageData.items
+            if (rawPageData.creator) this.creator = rawPageData.creator
+            if (rawPageData.prev !== undefined) this.prev = rawPageData.prev
+            if (rawPageData.next !== undefined) this.next = rawPageData.next
+            if (rawPageData.label) {
+                this.label = ProjectFactory.getLabelAsString(rawPageData.label)
+            }
+            if (rawPageData.partOf) {
+                this.partOf = Array.isArray(rawPageData.partOf)
+                    ? rawPageData.partOf[0]?.id ?? rawPageData.partOf
+                    : rawPageData.partOf
+            }
+            this.#tinyAction = 'update'
+        }
+        return this
+    }
+
+    /**
+     * Returns a JSON representation of the Page as a W3C AnnotationPage.
+     * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
+     * @returns {Promise<Object>} The Page as JSON.
+     */
+    async asJSON(isLD) {
+        if (isLD) {
+            const result = {
+                '@context': 'http://www.w3.org/ns/anno.jsonld',
+                id: this.id,
+                type: 'AnnotationPage',
+                label: { "none": [this.label] },
+                target: this.target,
+                partOf: Array.isArray(this.partOf)
+                    ? this.partOf
+                    : [{ id: this.partOf, type: "AnnotationCollection" }],
+                items: this.items ?? [],
+                prev: this.prev ?? null,
+                next: this.next ?? null
+            }
+            if (this.creator) result.creator = this.creator
+            return result
+        }
+        return {
+            id: this.id,
+            label: this.label,
+            target: this.target,
+            items: this.items ?? [],
+            partOf: this.partOf,
+            prev: this.prev ?? null,
+            next: this.next ?? null
+        }
+    }
+
     async delete() {
         if (this.#tinyAction === 'update') {
             // associated Annotations in RERUM will be left intact

@@ -57,27 +57,7 @@ router.route('/:pageId')
       if (!page) {
         return respondWithError(res, 404, 'No page found with that ID.')
       }
-      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
-        res.status(200).json(page)
-        return
-      }
-      // build as AnnotationPage
-      const pageAsAnnotationPage = {
-        '@context': 'http://www.w3.org/ns/anno.jsonld',
-        id: page.id,
-        type: 'AnnotationPage',
-        label: { none: [page.label] },
-        target: page.target,
-        partOf: [{
-          id: page.partOf,
-          type: "AnnotationCollection"
-        }],
-        items: page.items ?? [],
-        prev: page.prev ?? null,
-        next: page.next ?? null
-      }
-      res.status(200).json(pageAsAnnotationPage)
+      res.status(200).json(await page.asJSON(true))
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
@@ -256,7 +236,7 @@ router.route('/:pageId')
         await updatePrevAndNextColumns(pageInProject)
         await project.update()
       }
-      res.status(200).json(page)
+      res.status(200).json(await page.asJSON(true))
     } catch (error) {
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
@@ -578,19 +558,17 @@ router.route('/:pageId/resolved')
       if (!page) {
         return respondWithError(res, 404, 'No page found with that ID.')
       }
-      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // RERUM pages already have fully resolved items
-        res.status(200).json(page)
-        return
-      }
-      // Resolve all annotation references in the items array
-      let resolvedPage = page
       if (page.items && page.items.length > 0) {
-        // Resolve all annotations in the items array
         const resolvedItems = await resolveReferences(page.items)
-        resolvedPage = { ...page, items: resolvedItems }
+        page.items = await Promise.all(
+          resolvedItems.map(async (item) => {
+            if (!item?.id || !item?.target) return item
+            const line = new Line(item)
+            return line.asJSON(true)
+          })
+        )
       }
-      res.status(200).json(resolvedPage)
+      res.status(200).json(await page.asJSON(true))
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
