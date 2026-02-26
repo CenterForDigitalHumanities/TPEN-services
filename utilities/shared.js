@@ -233,14 +233,20 @@ export async function findPageById(pageId, projectId, rerum) {
          } catch (err) {
             rerumErrorMessage = undefined
          }
-         const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${pageId}`)
+         const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${pageId} - A RERUM error occurred`)
          err.status = 502
          throw err
       })
-      if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
-         const err = new Error(`A RERUM error occurred for ${pageId}`)
+      .catch(err => {
+         if (err.status === 502) throw err
+         const genericRerumNetworkError = new Error(`500: ${pageId} - A RERUM error occurred`)
          err.status = 502
-         throw err
+         throw genericRerumNetworkError
+      })
+      if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
+         const genericRerumNetworkError = new Error(`500: ${pageId} - A RERUM error occurred`)
+         err.status = 502
+         throw genericRerumNetworkError
       }
       const rawLabel = rerum_obj.label
       const label = typeof rawLabel === 'string'
@@ -419,10 +425,21 @@ export const resolveReference = async (annotationId) => {
     } catch (err) {
       rerumErrorMessage = undefined
     }
-    const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${annotationId}`)
+    const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${annotationId} - A RERUM error occurred`)
     err.status = 502
     throw err
   })
+  .catch(err => {
+      if (err.status === 502) throw err
+      const genericRerumNetworkError = new Error(`500: ${annotationId} - A RERUM error occurred`)
+      err.status = 502
+      throw genericRerumNetworkError
+  })
+  if (!(annotation?.id || annotation?.["@id"])) {
+      const genericRerumNetworkError = new Error(`500: ${annotationId} - A RERUM error occurred`)
+      err.status = 502
+      throw genericRerumNetworkError
+  }
   return annotation
 }
 

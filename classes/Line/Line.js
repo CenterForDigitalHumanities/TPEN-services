@@ -63,16 +63,20 @@ export default class Line {
             } catch (err) {
                 rerumErrorMessage = undefined
             }
-            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${this.id}`)
+            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
             err.status = 502
             throw err
         })
-
-        if (!existingLine) {
+        .catch(err => {
+            if (err.status === 502) throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            err.status = 502
+            throw genericRerumNetworkError
+        })
+        if (!(existingLine?.id || existingLine?.["@id"])) {
             // This id doesn't exist in RERUM, so we need to create it
             this.#tinyAction = 'create'
         }
-
         // Skip RERUM update if no content changes detected
         // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
@@ -115,15 +119,21 @@ export default class Line {
                 catch (err) {
                    rerumErrorMessage = undefined
                 }
-                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${rerumURI}`)
+                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${rerumURI} - A RERUM error occurred`)
                 err.status = 502
                 throw err
             })
+            .catch(err => {
+                if (err.status === 502) throw err
+                const genericRerumNetworkError = new Error(`500: ${rerumURI} - A RERUM error occurred`)
+                err.status = 502
+                throw genericRerumNetworkError
+            })
             if (!(rawLineData.id || rawLineData["@id"])) {
                 // A 200 with garbled data, call it a fail
-                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
+                const genericRerumNetworkError = new Error(`500: ${rerumURI} - A RERUM error occurred`)
                 err.status = 502
-                throw err
+                throw genericRerumNetworkError
             }
             // We don't have Class getters and setters for these properties...
             if ('body' in rawLineData) this.body = rawLineData.body

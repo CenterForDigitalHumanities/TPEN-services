@@ -102,12 +102,18 @@ export default class Page {
             } catch (err) {
                 rerumErrorMessage = undefined
             }
-            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${this.id}`)
+            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
             err.status = 502
             throw err
         })
+        .catch(err => {
+            if (err.status === 502) throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            err.status = 502
+            throw genericRerumNetworkError
+        })
         if (!(existingPage?.id || existingPage?.["@id"])) {
-            const err = new Error(`A RERUM error occurred for ${this.id}`)
+            const err = new Error(`500: ${this.id} - A RERUM error occurred`)
             err.status = 502
             throw err
         }
