@@ -237,11 +237,6 @@ export async function findPageById(pageId, projectId, rerum) {
          err.status = 502
          throw err
       })
-      .catch(err => {
-         if (err.status === 502) throw err
-         console.error("Network error with rerum")
-         throw err
-      })
       if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
          const err = new Error(`A RERUM error occurred for ${pageId}`)
          err.status = 502
@@ -276,25 +271,20 @@ export async function findPageById(pageId, projectId, rerum) {
    const layerContainingPage = projectData.layers.find(layer =>
       layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
    )
-
    if (!layerContainingPage) {
       const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
       error.status = 404
       throw error
    }
-
    const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
-
    if (pageIndex < 0) {
       const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
       error.status = 404
       throw error
    }
-
    const page = layerContainingPage.pages[pageIndex]
    page.prev = layerContainingPage.pages[pageIndex - 1]?.id ?? null
    page.next = layerContainingPage.pages[pageIndex + 1]?.id ?? null
-
    return new Page(layerContainingPage.id, page)
 }
 
@@ -431,11 +421,6 @@ export const resolveReference = async (annotationId) => {
     }
     const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${annotationId}`)
     err.status = 502
-    throw err
-  })
-  .catch(err => {
-    if (err.status === 502) throw err
-    console.error(`Network error fetching annotation: ${annotationId}`, err)
     throw err
   })
   return annotation
