@@ -179,8 +179,6 @@ export default class Page {
 
     /**
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
-      * FIXME: This will save to RERUM even if there has been no content change
-      * The rerum variable below is true if the content has changed.
       *
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
@@ -212,7 +210,8 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     async asJSON(isLD) {
-        if (!this.items || (Array.isArray(this.items) && this.items.length === 0)) await this.#loadAnnotationPageDataFromRerum()
+        const hasStubs = !this.items || !this.items.length || this.items.some(item => !('body' in item))
+        if (hasStubs) await this.#loadAnnotationPageDataFromRerum()
         let result
         if (isLD) {
             result = {

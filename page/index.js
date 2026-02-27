@@ -559,6 +559,7 @@ router.route('/:pageId/resolved')
             if (!item?.id || !item?.target) return item
             const line = new Line(item)
             const lineJson = await line.asJSON(true)
+            delete lineJson['@context']
             return lineJson
           })
         )

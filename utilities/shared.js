@@ -222,7 +222,7 @@ export const getLayerContainingPage = (project, pageId) => {
 
 // Find a page by ID (moved from page/index.js)
 export async function findPageById(pageId, projectId) {
-   const projectData = (await getProjectById(projectId))?.data
+   const projectData = (await Project.getById(projectId))?.data
    if (!projectData) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
