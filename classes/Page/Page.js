@@ -1,5 +1,5 @@
 import dbDriver from "../../database/driver.js"
-import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 import ProjectFactory from "../Project/ProjectFactory.js"
 
 const databaseTiny = new dbDriver("tiny")
@@ -171,7 +171,10 @@ export default class Page {
             return this
         } catch (err) {
             if (err.status === 409) {
-                throw handleVersionConflict(null, err)
+                const conflictError = new Error(err.message ?? 'Version conflict while saving Page to RERUM')
+                conflictError.status = 409
+                conflictError.currentVersion = err.currentVersion
+                throw conflictError
             }
             throw err
         }
