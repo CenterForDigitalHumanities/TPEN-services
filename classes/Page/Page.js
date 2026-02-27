@@ -137,7 +137,7 @@ export default class Page {
                 line = await new Line(lineRef).asJSON(true)
               }
               catch(err) {
-                line = { id: item, error: err.message }
+                line = { id: lineRef.id, error: err.message }
               }
               return line
             })
@@ -254,7 +254,7 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     async asJSON(isLD) {
-        if (!(this.items || this.items.length || this.partOf || this.target || 'prev' in this || 'next' in this)) {
+        if (!(this.items || this.items?.length || this.partOf || this.target || 'prev' in this || 'next' in this)) {
             await this.#loadAnnotationPageDataFromRerum()
         } 
         let result
