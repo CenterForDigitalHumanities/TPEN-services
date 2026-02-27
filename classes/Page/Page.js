@@ -129,7 +129,7 @@ export default class Page {
             this.items.map(async (item) => {
               // If item is a string, it's an annotation ID - fetch from RERUM
               let lineRef
-              if (typeof item === "string") lineRef = { "id": item, "target":"" }
+              if (typeof item === "string") lineRef = { "id": item, "target":"placeholder" }
               else if (typeof item === "object" && item.id) lineRef = item
               else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
               let line
@@ -254,7 +254,7 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     async asJSON(isLD) {
-        if (!(this.items || this.items?.length || this.partOf || this.target || 'prev' in this || 'next' in this)) {
+        if (!(this.items?.length || this.partOf || this.target || 'prev' in this || 'next' in this)) {
             await this.#loadAnnotationPageDataFromRerum()
         } 
         let result
