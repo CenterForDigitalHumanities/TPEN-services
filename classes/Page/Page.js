@@ -133,7 +133,7 @@ export default class Page {
                 // If item is a string, it's an annotation ID - fetch from RERUM
                 let lineRef
                 // target is required by Line constructor but will be overwritten by RERUM data
-                // since body will be undefined, Line.asJSON() always calls to RERUM.
+                // since #hydrated is false, Line.asJSON() always fetches from RERUM.
                 if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
                 else if (typeof item === "object" && item.id) lineRef = item
                 else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
