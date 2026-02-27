@@ -8,7 +8,7 @@ let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveReferences } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
 import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
@@ -551,19 +551,8 @@ router.route('/:pageId/resolved')
     const { projectId, pageId } = req.params
     try {
       const pageData = await findPageById(pageId, projectId)
+      await pageData.resolvePageItems()
       const pageJson = await pageData.asJSON(true)
-      if (pageJson.items && pageJson.items.length > 0) {
-        const resolvedItems = await resolveReferences(pageJson.items)
-        pageJson.items = await Promise.all(
-          resolvedItems.map(async (item) => {
-            if (!item?.id || !item?.target) return item
-            const line = new Line(item)
-            const lineJson = await line.asJSON(true)
-            delete lineJson['@context']
-            return lineJson
-          })
-        )
-      }
       res.status(200).json(pageJson)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')

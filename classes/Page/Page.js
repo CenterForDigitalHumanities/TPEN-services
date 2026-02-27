@@ -1,6 +1,7 @@
 import dbDriver from "../../database/driver.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
 import ProjectFactory from "../Project/ProjectFactory.js"
+import Line from "../Line/Line.js"
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -115,6 +116,36 @@ export default class Page {
         return this
     }
 
+    /**
+     * Resolve all annotations in a page's items array by fetching their full data from RERUM.
+     * Once resolved load the resolved data into the Page class items array.
+     *
+     * @param {Array} items - Array of annotation items (can be IDs or partial objects)
+     * @returns {Promise<Array>} Array of fully resolved annotation objects
+     */
+    async #loadAnnotationPageItemsFromRerum() {
+        if (!Array.isArray(this.items)) return []
+        // Process all items in parallel for better performance
+        const resolvedItems = await Promise.all(
+            this.items.map(async (item) => {
+              // If item is a string, it's an annotation ID - fetch from RERUM
+              let lineRef
+              if (typeof item === "string") lineRef = { "id": item, "target":"" }
+              if (typeof item === "object" && item.id) lineRef = item
+              let line
+              try {
+                line = await new Line(lineRef).asJSON(true)
+              }
+              catch(err) {
+                line = { id: item, error: err.message }
+              }
+              return line
+            })
+        )
+        this.items = resolvedItems
+        return resolvedItems
+    }
+
     async #savePageToRerum() {
         const prev = this.prev ?? null
         const next = this.next ?? null
@@ -173,6 +204,8 @@ export default class Page {
             if (err.status === 409) {
                 const conflictError = new Error(err.message ?? 'Version conflict while saving Page to RERUM')
                 conflictError.status = 409
+                conflictError.code = 'VERSION_CONFLICT'
+                conflictError.details = 'The document was modified by another process.'
                 conflictError.currentVersion = err.currentVersion
                 throw conflictError
             }
@@ -192,6 +225,14 @@ export default class Page {
             await this.#savePageToRerum()
         }
         return this.#formatPageForProject()
+    }
+
+    /**
+     * Resolve all item references in this Page by fetching full annotation data from RERUM.
+     * @returns {Promise<Array>} Array of fully resolved annotation objects.
+     */
+    async resolvePageItems() {
+        return this.#loadAnnotationPageItemsFromRerum()
     }
 
     asProjectPage() {

@@ -136,7 +136,7 @@ export default class Line {
             }
             // We don't have Class getters and setters for these properties...
             if ('body' in rawLineData) this.body = rawLineData.body
-            if (rawLineData.target) this.target = rawLineData.target
+            if ('target' in rawLineData) this.target = rawLineData.target
             if (rawLineData.creator) this.creator = rawLineData.creator
             if (rawLineData.motivation) this.motivation = rawLineData.motivation
             if (rawLineData.label) this.label = rawLineData.label
