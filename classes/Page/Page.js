@@ -147,6 +147,7 @@ export default class Page {
                 return line
             })
         )
+        this.items = resolvedItems
         return resolvedItems
     }
 
