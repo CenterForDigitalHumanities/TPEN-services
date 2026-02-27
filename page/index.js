@@ -53,11 +53,12 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const page = await findPageById(pageId, projectId, true)
+      const page = await findPageById(pageId, projectId)
       if (!page) {
         return respondWithError(res, 404, 'No page found with that ID.')
       }
-      res.status(200).json(page.asJSON(true))
+      const pageJson = await page.asJSON(true)
+      res.status(200).json(pageJson)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
@@ -236,7 +237,8 @@ router.route('/:pageId')
         await updatePrevAndNextColumns(pageInProject)
         await project.update()
       }
-      res.status(200).json(page.asJSON(true))
+      const pageJson = await page.asJSON(true)
+      res.status(200).json(pageJson)
     } catch (error) {
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
@@ -554,22 +556,23 @@ router.route('/:pageId/resolved')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const page = await findPageById(pageId, projectId, true)
+      const pageData = await findPageById(pageId, projectId)
       if (!page) {
         return respondWithError(res, 404, 'No page found with that ID.')
       }
-      if (page.items && page.items.length > 0) {
+      const pageJson = await pageData.asJSON(true)
+      if (pageJson.items && pageJson.items.length > 0) {
         const resolvedItems = await resolveReferences(page.items)
-        page.items = await Promise.all(
+        pageJson.items = await Promise.all(
           resolvedItems.map(async (item) => {
             if (!item?.id || !item?.target) return item
             const line = new Line(item)
-            const { '@context': _context, ...lineData } = await line.asJSON(true)
-            return lineData
+            const lineJson = await line.asJSON(true)
+            return lineJson
           })
         )
       }
-      res.status(200).json(page.asJSON(true))
+      res.status(200).json(pageJson)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }

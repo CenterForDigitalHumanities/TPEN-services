@@ -221,54 +221,7 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
-export async function findPageById(pageId, projectId, rerum) {
-   if (rerum) {
-      if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
-         pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
-      }
-      const rerum_obj = await fetch(pageId).then(async (resp) => {
-         if (resp.ok) return resp.json()
-         let rerumErrorMessage = `${resp.status ?? 500}: ${pageId} - `
-         try {
-            rerumErrorMessage += await resp.text()
-         } catch (err) {
-            rerumErrorMessage = undefined
-         }
-         const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${pageId} - A RERUM error occurred`)
-         err.status = 502
-         throw err
-      })
-      .catch(err => {
-         if (err.status === 502) throw err
-         const genericRerumNetworkError = new Error(`500: ${pageId} - A RERUM error occurred`)
-         genericRerumNetworkError.status = 502
-         throw genericRerumNetworkError
-      })
-      if (!(rerum_obj?.id || rerum_obj?.["@id"])) {
-         const genericRerumNetworkError = new Error(`500: ${pageId} - A RERUM error occurred`)
-         genericRerumNetworkError.status = 502
-         throw genericRerumNetworkError
-      }
-      const rawLabel = rerum_obj.label
-      const label = typeof rawLabel === 'string'
-         ? rawLabel
-         : (rawLabel && typeof rawLabel === 'object'
-            ? (Object.values(rawLabel).find(v => Array.isArray(v)) ?? []).join(', ')
-            : '')
-      const partOf = Array.isArray(rerum_obj.partOf)
-         ? rerum_obj.partOf[0]?.id ?? rerum_obj.partOf
-         : rerum_obj.partOf
-      return new Page(partOf ?? '', {
-         id: rerum_obj.id ?? rerum_obj["@id"],
-         label,
-         target: rerum_obj.target,
-         items: rerum_obj.items ?? [],
-         creator: rerum_obj.creator ?? null,
-         partOf,
-         prev: rerum_obj.prev ?? null,
-         next: rerum_obj.next ?? null
-      })
-   }
+export async function findPageById(pageId, projectId) {
    const projectData = (await getProjectById(projectId))?.data
    if (!projectData) {
       const error = new Error(`Project with ID '${projectId}' not found`)

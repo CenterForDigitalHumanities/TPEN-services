@@ -69,6 +69,47 @@ export default class Page {
         return new Page(layerId, page.data)
     }
 
+    /**
+     * Resolve the RERUM URI of the Page and sync Page properties with the AnnotationPage properties.
+     * The RERUM data will take preferences and overwrite any properties that are already set.
+     * Only RERUM URIs are supported.
+     */
+    async #loadAnnotationPageDataFromRerum() {
+        if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawPageData = await fetch(this.id).then(async (resp) => {
+                if (resp.ok) return resp.json()
+                // The response from RERUM indicates a failure, likely with a specific code and textual body
+                let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+                try {
+                   rerumErrorMessage += await resp.text()
+                }
+                catch (err) {
+                   rerumErrorMessage = undefined
+                }
+                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
+                err.status = 502
+                throw err
+            })
+            .catch(err => {
+                if (err.status === 502) throw err
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            })
+            if (!(rawPageData.id || rawPageData["@id"])) {
+                // A 200 with garbled data, call it a fail
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            }
+            this.#tinyAction = 'update'
+            // TODO get the properties from the AnnotationPage and load them into the Page class data.
+            // See https://devstore.rerum.io/v1/id/6924af5afd914fee3b08debd for an example AnnotationPage object from RERUM
+            return this
+        }
+        return this
+    }
+
     async #savePageToRerum() {
         const prev = this.prev ?? null
         const next = this.next ?? null
@@ -166,8 +207,10 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     asJSON(isLD) {
+        if (!this.items) await this.#loadAnnotationPageDataFromRerum()
+        let result
         if (isLD) {
-            const result = {
+            result = {
                 '@context': 'http://iiif.io/api/presentation/3/context.json',
                 id: this.id,
                 type: 'AnnotationPage',
@@ -181,17 +224,19 @@ export default class Page {
                 next: this.next ?? null
             }
             if (this.creator) result.creator = this.creator
-            return result
         }
-        return {
-            id: this.id,
-            label: this.label,
-            target: this.target,
-            items: this.items ?? [],
-            partOf: this.partOf,
-            prev: this.prev ?? null,
-            next: this.next ?? null
+        else{
+            result = {
+                id: this.id,
+                label: this.label,
+                target: this.target,
+                items: this.items ?? [],
+                partOf: this.partOf,
+                prev: this.prev ?? null,
+                next: this.next ?? null
+            }
         }
+        return result
     }
 
     async delete() {

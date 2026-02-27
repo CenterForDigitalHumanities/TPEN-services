@@ -252,19 +252,24 @@ export default class Line {
 
     async asJSON(isLD) {
         if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
-        const result = isLD ? {
-            '@context': 'http://iiif.io/api/presentation/3/context.json',
-            id: this.id,
-            type: 'Annotation',
-            motivation: this.motivation ?? 'transcribing',
-            target: this.target,
-            body: this.body,
-        } : {
-            id: this.id,
-            body: this.body ?? '',
-            target: this.target ?? '',
+        if (isLD) {
+            result = {
+                '@context': 'http://iiif.io/api/presentation/3/context.json',
+                id: this.id,
+                type: 'Annotation',
+                motivation: this.motivation ?? 'transcribing',
+                target: this.target,
+                body: this.body,
+            }
+            if (this.creator) result.creator = this.creator
         }
-        if (isLD && this.creator) result.creator = this.creator
+        else{
+            result = {
+                id: this.id,
+                body: this.body ?? '',
+                target: this.target ?? '',
+            }
+        }
         return result
     }
 
