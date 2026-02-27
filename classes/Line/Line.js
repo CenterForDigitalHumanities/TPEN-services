@@ -83,9 +83,9 @@ export default class Line {
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
             return this  // Return without versioning
         }
-
+        const action = this.#tinyAction === 'create' ? 'save' : this.#tinyAction
         const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
-        const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.id)
+        const newURI = await databaseTiny[action](updatedLine).then(res => res.id)
         .catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })
