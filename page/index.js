@@ -54,9 +54,6 @@ router.route('/:pageId')
     const { projectId, pageId } = req.params
     try {
       const page = await findPageById(pageId, projectId)
-      if (!page) {
-        return respondWithError(res, 404, 'No page found with that ID.')
-      }
       const pageJson = await page.asJSON(true)
       res.status(200).json(pageJson)
     } catch (error) {
@@ -98,9 +95,6 @@ router.route('/:pageId')
       if (hasSuspiciousPageData(req.body)) return respondWithError(res, 400, "Suspicious page data will not be processed.")
       // Find the page object
       const page = await findPageById(pageId, projectId)
-      if (!page) {
-        return respondWithError(res, 404, 'No page found with that ID.')
-      }
       page.creator = user.agent.split('/').pop()
       page.partOf = layerId
 
@@ -557,12 +551,9 @@ router.route('/:pageId/resolved')
     const { projectId, pageId } = req.params
     try {
       const pageData = await findPageById(pageId, projectId)
-      if (!page) {
-        return respondWithError(res, 404, 'No page found with that ID.')
-      }
       const pageJson = await pageData.asJSON(true)
       if (pageJson.items && pageJson.items.length > 0) {
-        const resolvedItems = await resolveReferences(page.items)
+        const resolvedItems = await resolveReferences(pageJson.items)
         pageJson.items = await Promise.all(
           resolvedItems.map(async (item) => {
             if (!item?.id || !item?.target) return item

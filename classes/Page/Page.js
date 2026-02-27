@@ -212,7 +212,7 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     async asJSON(isLD) {
-        if (!this.items) await this.#loadAnnotationPageDataFromRerum()
+        if (!this.items || (Array.isArray(this.items) && this.items.length === 0)) await this.#loadAnnotationPageDataFromRerum()
         let result
         if (isLD) {
             result = {
@@ -230,7 +230,7 @@ export default class Page {
             }
             if (this.creator) result.creator = this.creator
         }
-        else{
+        else {
             result = {
                 id: this.id,
                 label: this.label,

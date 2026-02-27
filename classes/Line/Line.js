@@ -252,6 +252,7 @@ export default class Line {
 
     async asJSON(isLD) {
         if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
+        let result
         if (isLD) {
             result = {
                 '@context': 'http://iiif.io/api/presentation/3/context.json',
@@ -263,7 +264,7 @@ export default class Line {
             }
             if (this.creator) result.creator = this.creator
         }
-        else{
+        else {
             result = {
                 id: this.id,
                 body: this.body ?? '',
