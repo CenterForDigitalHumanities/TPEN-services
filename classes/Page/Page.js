@@ -129,22 +129,24 @@ export default class Page {
         // Process all items in parallel for better performance
         const resolvedItems = await Promise.all(
             this.items.map(async (item) => {
-              // If item is a string, it's an annotation ID - fetch from RERUM
-              let lineRef
-              if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
-              else if (typeof item === "object" && item.id) lineRef = item
-              else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
-              let line
-              try {
-                line = await new Line(lineRef).asJSON(true)
-              }
-              catch(err) {
-                line = { id: lineRef.id, error: err.message }
-              }
-              return line
+                // If item is a string, it's an annotation ID - fetch from RERUM
+                let lineRef
+                // target is required by Line constructor but will be overwritten by RERUM data
+                // since body will be undefined, Line.asJSON() always calls #loadAnnotationDataFromRerum()
+                if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
+                else if (typeof item === "object" && item.id) lineRef = item
+                else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
+                let line
+                try {
+                    line = await new Line(lineRef).asJSON(true)
+                }
+                catch(err) {
+                    line = { id: lineRef.id, error: err.message }
+                }
+                delete line["@context"]
+                return line
             })
         )
-        this.items = resolvedItems
         return resolvedItems
     }
 
