@@ -117,10 +117,9 @@ export default class Page {
     }
 
     /**
-     * Resolve all annotations in a page's items array by fetching their full data from RERUM.
-     * Once resolved load the resolved data into the Page class items array.
+     * Resolve all annotations in this Page's items array by fetching their full data from RERUM.
+     * Once resolved, replaces this.items with the resolved data.
      *
-     * @param {Array} items - Array of annotation items (can be IDs or partial objects)
      * @returns {Promise<Array>} Array of fully resolved annotation objects
      */
     async #loadAnnotationPageItemsFromRerum() {
@@ -131,7 +130,8 @@ export default class Page {
               // If item is a string, it's an annotation ID - fetch from RERUM
               let lineRef
               if (typeof item === "string") lineRef = { "id": item, "target":"" }
-              if (typeof item === "object" && item.id) lineRef = item
+              else if (typeof item === "object" && item.id) lineRef = item
+              else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
               let line
               try {
                 line = await new Line(lineRef).asJSON(true)
@@ -254,8 +254,9 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     async asJSON(isLD) {
-        const hasStubs = !this.items || !this.items.length || this.items.some(item => !('body' in item))
-        if (hasStubs) await this.#loadAnnotationPageDataFromRerum()
+        if (!(this.items || this.items.length || this.partOf || this.target || 'prev' in this || 'next' in this)) {
+            await this.#loadAnnotationPageDataFromRerum()
+        } 
         let result
         if (isLD) {
             result = {
