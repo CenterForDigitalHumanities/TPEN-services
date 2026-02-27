@@ -7,6 +7,7 @@ const databaseTiny = new dbDriver("tiny")
 
 export default class Page {
     #tinyAction = 'create'
+    #hydrated = false
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -105,13 +106,14 @@ export default class Page {
             }
             this.#tinyAction = 'update'
             this.id = rawPageData.id ?? rawPageData["@id"] ?? this.id
-            if (rawPageData.target) this.target = rawPageData.target
+            if ('target' in rawPageData) this.target = rawPageData.target
             if ('items' in rawPageData) this.items = rawPageData.items
             if (rawPageData.creator) this.creator = rawPageData.creator
             if (rawPageData.label) this.label = ProjectFactory.getLabelAsString(rawPageData.label)
-            if (rawPageData.partOf) this.partOf = Array.isArray(rawPageData.partOf) ? rawPageData.partOf[0]?.id ?? rawPageData.partOf[0] : rawPageData.partOf
+            if ('partOf' in rawPageData) this.partOf = Array.isArray(rawPageData.partOf) ? rawPageData.partOf[0]?.id ?? rawPageData.partOf[0] : rawPageData.partOf
             if ('prev' in rawPageData) this.prev = rawPageData.prev
             if ('next' in rawPageData) this.next = rawPageData.next
+            this.#hydrated = true
         }
         return this
     }
@@ -129,7 +131,7 @@ export default class Page {
             this.items.map(async (item) => {
               // If item is a string, it's an annotation ID - fetch from RERUM
               let lineRef
-              if (typeof item === "string") lineRef = { "id": item, "target":"placeholder" }
+              if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
               else if (typeof item === "object" && item.id) lineRef = item
               else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
               let line
@@ -254,9 +256,9 @@ export default class Page {
      * @returns {Object} The Page as JSON.
      */
     async asJSON(isLD) {
-        if (!(this.items?.length || this.partOf || this.target || 'prev' in this || 'next' in this)) {
+        if (!this.#hydrated && this.id?.startsWith?.(process.env.RERUMIDPREFIX)) {
             await this.#loadAnnotationPageDataFromRerum()
-        } 
+        }
         let result
         if (isLD) {
             result = {
