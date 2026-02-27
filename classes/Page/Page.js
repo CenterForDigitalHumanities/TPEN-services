@@ -8,6 +8,7 @@ const databaseTiny = new dbDriver("tiny")
 export default class Page {
     #tinyAction = 'create'
     #hydrated = false
+    #itemsResolved = false
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -107,7 +108,7 @@ export default class Page {
             this.#tinyAction = 'update'
             this.id = rawPageData.id ?? rawPageData["@id"] ?? this.id
             if ('target' in rawPageData) this.target = rawPageData.target
-            if ('items' in rawPageData) this.items = rawPageData.items
+            if ('items' in rawPageData && !this.#itemsResolved) this.items = rawPageData.items
             if (rawPageData.creator) this.creator = rawPageData.creator
             if (rawPageData.label) this.label = ProjectFactory.getLabelAsString(rawPageData.label)
             if ('partOf' in rawPageData) this.partOf = Array.isArray(rawPageData.partOf) ? rawPageData.partOf[0]?.id ?? rawPageData.partOf[0] : rawPageData.partOf
@@ -132,7 +133,7 @@ export default class Page {
                 // If item is a string, it's an annotation ID - fetch from RERUM
                 let lineRef
                 // target is required by Line constructor but will be overwritten by RERUM data
-                // since body will be undefined, Line.asJSON() always calls #loadAnnotationDataFromRerum()
+                // since body will be undefined, Line.asJSON() always calls to RERUM.
                 if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
                 else if (typeof item === "object" && item.id) lineRef = item
                 else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
@@ -148,6 +149,7 @@ export default class Page {
             })
         )
         this.items = resolvedItems
+        this.#itemsResolved = true
         return resolvedItems
     }
 

@@ -5,6 +5,7 @@ const databaseTiny = new dbDriver("tiny")
 export default class Line {
 
     #tinyAction = 'create'
+    #hydrated = false
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -142,6 +143,7 @@ export default class Line {
             if (rawLineData.label) this.label = rawLineData.label
             if (rawLineData.type) this.type = rawLineData.type
             this.#tinyAction = 'update'
+            this.#hydrated = true
         }
         return this
     }
@@ -251,7 +253,7 @@ export default class Line {
     }
 
     async asJSON(isLD) {
-        if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
+        if (!this.#hydrated) await this.#loadAnnotationDataFromRerum()
         let result
         if (isLD) {
             result = {
@@ -284,7 +286,7 @@ export default class Line {
      * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
     async asTextBlob() {
-        if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
+        if (!this.#hydrated) await this.#loadAnnotationDataFromRerum()
         return extractTextFromAnnotationBody(this.body)
     }
 
