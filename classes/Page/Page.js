@@ -103,9 +103,14 @@ export default class Page {
                 throw genericRerumNetworkError
             }
             this.#tinyAction = 'update'
-            // TODO get the properties from the AnnotationPage and load them into the Page class data.
-            // See https://devstore.rerum.io/v1/id/6924af5afd914fee3b08debd for an example AnnotationPage object from RERUM
-            return this
+            this.id = rawPageData.id ?? rawPageData["@id"] ?? this.id
+            if (rawPageData.target) this.target = rawPageData.target
+            if ('items' in rawPageData) this.items = rawPageData.items
+            if (rawPageData.creator) this.creator = rawPageData.creator
+            if (rawPageData.label) this.label = ProjectFactory.getLabelAsString(rawPageData.label)
+            if (rawPageData.partOf) this.partOf = Array.isArray(rawPageData.partOf) ? rawPageData.partOf[0]?.id ?? rawPageData.partOf[0] : rawPageData.partOf
+            if ('prev' in rawPageData) this.prev = rawPageData.prev
+            if ('next' in rawPageData) this.next = rawPageData.next
         }
         return this
     }
@@ -206,7 +211,7 @@ export default class Page {
      * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
      * @returns {Object} The Page as JSON.
      */
-    asJSON(isLD) {
+    async asJSON(isLD) {
         if (!this.items) await this.#loadAnnotationPageDataFromRerum()
         let result
         if (isLD) {
