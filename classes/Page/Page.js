@@ -135,7 +135,10 @@ export default class Page {
                 // target is required by Line constructor but will be overwritten by RERUM data
                 // since #hydrated is false, Line.asJSON() always fetches from RERUM.
                 if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
-                else if (typeof item === "object" && item.id) lineRef = item
+                else if (typeof item === "object" && item.id) {
+                    lineRef = item
+                    if (!lineRef.target) lineRef.target = "pending-resolution"
+                }
                 else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
                 let line
                 try {
@@ -161,7 +164,11 @@ export default class Page {
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
-            items: this.items ?? [],
+            items: (this.items ?? []).map(item =>
+                typeof item === 'object' && item.id
+                    ? { id: item.id, type: item.type ?? 'Annotation' }
+                    : item
+            ),
             prev,
             next,
             creator: await fetchUserAgent(this.creator),
