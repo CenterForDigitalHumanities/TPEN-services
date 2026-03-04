@@ -52,6 +52,7 @@ export default class Line {
                     throw new Error(`Failed to save Line to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
+            this.#hydrated = true
             return this
         }
         // ...else Update the existing line in RERUM
@@ -81,6 +82,7 @@ export default class Line {
         // Skip RERUM update if no content changes detected
         // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
+            this.#hydrated = true
             return this  // Return without versioning
         }
         const action = this.#tinyAction === 'create' ? 'save' : this.#tinyAction
@@ -91,6 +93,7 @@ export default class Line {
         })
         this.id = newURI
         this.#tinyAction = 'update'
+        this.#hydrated = true
         return this
     }
 

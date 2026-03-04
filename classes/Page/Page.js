@@ -175,6 +175,7 @@ export default class Page {
                     throw new Error(`Failed to save Page to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
+            this.#hydrated = true
             return this
         }
         // ...else Update the existing page in RERUM
@@ -206,6 +207,7 @@ export default class Page {
         // Handle optimistic locking version if available
         try {
             await databaseTiny.overwrite(updatedPage)
+            this.#hydrated = true
             return this
         } catch (err) {
             if (err.status === 409) {
