@@ -170,7 +170,7 @@ export default class Page {
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
         if (this.#tinyAction === 'create') {
-            const saved = await databaseTiny.save(pageAsAnnotationPage)
+            await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
                     console.error(err, pageAsAnnotationPage)
                     throw new Error(`Failed to save Page to RERUM: ${err.message}`)
@@ -204,13 +204,9 @@ export default class Page {
             throw genericRerumNetworkError
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-        try {
-            await databaseTiny.overwrite(updatedPage)
-            this.#hydrated = true
-            return this
-        } catch (err) {
-            throw err
-        }
+        await databaseTiny.overwrite(updatedPage)
+        this.#hydrated = true
+        return this
     }
 
     /**
