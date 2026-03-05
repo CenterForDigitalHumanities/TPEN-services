@@ -69,10 +69,10 @@ router.route('/:layerId')
             console.error(error)
             // Handle version conflicts with optimistic locking
             if (error.status === 409) {
-                if(res.headersSent) return
+                if (res.headersSent) return
                 return handleVersionConflict(res, error)
             } else {
-                if(res.headersSent) return
+                if (res.headersSent) return
                 return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
             }
         }
