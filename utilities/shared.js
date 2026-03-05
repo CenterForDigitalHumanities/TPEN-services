@@ -86,16 +86,19 @@ export const updateLayerAndProject = async (layer, project, userId) => {
       if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
          // update the references to the Layer in the Project
          // Pages all have their partOf set to the Layer.id
-         const pageOverwrites = []
-         updatedLayer.pages.forEach(async page => {
-            page.partOf[0].id = updatedLayer.id
-            if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
-               // overwrite the Page in RERUM
-               const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
-               if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
-               oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
-               pageOverwrites.push(databaseTiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
-            }
+         const pageOverwrites  = updatedLayer.pages
+           .filter(page => page.id.startsWith(process.env.RERUMIDPREFIX))
+           .map(async page => {
+              page.partOf[0].id = updatedLayer.id
+              const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
+              if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
+              oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
+              return databaseTiny.overwrite(oldPage)
+           })
+            // Also set partOf for non-RERUM pages
+           updatedLayer.pages.forEach(page => {
+              page.partOf[0].id = updatedLayer.id
+           })
             // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
             // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
             // but retains its reference to the Annotation Collection in its partOf.

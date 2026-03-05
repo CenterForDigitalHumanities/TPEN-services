@@ -7,7 +7,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { findPageById, findLayerById, updateLayerAndProject, respondWithError } from '../utilities/shared.js'
+import { findPageById, findLayerById, updateLayerAndProject, respondWithError, handleVersionConflict } from '../utilities/shared.js'
 import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
 const router = express.Router({ mergeParams: true })

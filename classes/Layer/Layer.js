@@ -1,5 +1,4 @@
 import dbDriver from "../../database/driver.js"
-import { handleVersionConflict } from "../../utilities/shared.js"
 import Page from "../Page/Page.js"
 import { fetchUserAgent } from "../../utilities/shared.js"
 import ProjectFactory from "../Project/ProjectFactory.js"
