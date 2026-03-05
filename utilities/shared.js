@@ -163,6 +163,7 @@ export const updatePageAndProject = async (page, project, userId) => {
          project.data.layers[layerIndex] = finalLayer
          await recordModification(project, rerumPageId, userId)
       } catch (err) {
+         if (err.status === 502 || err.status === 409) throw err
          error_out = new Error(`There was an error updating Page and Project data`)
          error_out.status = 500
          console.error(`There was an error updating Page and Project data`, err)
@@ -220,22 +221,8 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
-export async function findPageById(pageId, projectId, rerum) {
-   if (rerum) {
-      if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
-         pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
-      }
-      const rerum_obj = await fetch(pageId).then(res => {
-         if (res.ok) return res.json()
-         if (!res.ok) return {}
-      })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
-   }
-   const projectData = (await getProjectById(projectId))?.data
+export async function findPageById(pageId, projectId) {
+   const projectData = (await Project.getById(projectId))?.data
    if (!projectData) {
       const error = new Error(`Project with ID '${projectId}' not found`)
       error.status = 404
@@ -244,25 +231,20 @@ export async function findPageById(pageId, projectId, rerum) {
    const layerContainingPage = projectData.layers.find(layer =>
       layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
    )
-
    if (!layerContainingPage) {
       const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
       error.status = 404
       throw error
    }
-
    const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
-
    if (pageIndex < 0) {
       const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
       error.status = 404
       throw error
    }
-
    const page = layerContainingPage.pages[pageIndex]
    page.prev = layerContainingPage.pages[pageIndex - 1]?.id ?? null
    page.next = layerContainingPage.pages[pageIndex + 1]?.id ?? null
-
    return new Page(layerContainingPage.id, page)
 }
 
@@ -377,69 +359,6 @@ export const handleVersionConflict = (res, error) => {
     ...(error.layerId && { layerId: error.layerId }),
     ...(error.lineId && { lineId: error.lineId })
   })
-}
-
-/**
- * Fetch a single annotation from RERUM by its ID
- * @param {string} annotationId - The ID/URL of the annotation to fetch (supports both RERUM and TPEN3 formats)
- * @returns {Promise<Object>} The full annotation object from RERUM
- * @throws {Error} If the annotation cannot be fetched or parsed
- */
-export const resolveReference = async (annotationId) => {
-  if (!annotationId || !annotationId.startsWith("http")) {
-    throw new Error('Proper Annotation URI is required')
-  }
-  try {
-    const response = await fetch(annotationId)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch annotation from RERUM: ${response.statusText}`)
-    }
-    const annotation = await response.json()
-    return annotation
-  } catch (error) {
-    console.error(`Error fetching annotation: ${annotationId}`, error)
-    throw new Error(`Failed to fetch annotation from RERUM: ${error.message}`)
-  }
-}
-
-/**
- * Resolve all annotations in a page's items array by fetching their full data from RERUM
- * @param {Array} items - Array of annotation items (can be IDs or partial objects)
- * @returns {Promise<Array>} Array of fully resolved annotation objects
- */
-export const resolveReferences = async (items) => {
-  if (!Array.isArray(items)) return []
-
-  // Process all items in parallel for better performance
-  const resolvedItems = await Promise.all(
-    items.map(async (item) => {
-      // If item is a string, it's an annotation ID - fetch from RERUM
-      if (typeof item === 'string') {
-        try {
-          return await resolveReference(item)
-        } catch (error) {
-          console.error(`Failed to resolve annotation ${item}:`, error)
-          // Return the ID string if fetching fails
-          return { id: item, error: error.message }
-        }
-      }
-      // If item is an object with an id, try to fetch the full annotation
-      if (item && typeof item === 'object' && item.id) {
-        try {
-          const fullAnnotation = await resolveReference(item.id)
-          // Merge with resolved annotation properties taking precedence over local
-          return { ...item, ...fullAnnotation }
-        } catch (error) {
-          console.error(`Failed to resolve annotation ${item.id}:`, error)
-          return item
-        }
-      }
-      // For any other format, return as-is
-      return item
-    })
-  )
-
-  return resolvedItems
 }
 
 /**

@@ -5,6 +5,7 @@ const databaseTiny = new dbDriver("tiny")
 export default class Line {
 
     #tinyAction = 'create'
+    #hydrated = false
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -51,36 +52,48 @@ export default class Line {
                     throw new Error(`Failed to save Line to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
+            this.#hydrated = true
             return this
         }
-        // ...else Update the existing page in RERUM
-        const existingLine = await fetch(this.id).then(res => res.json())
-        .catch(err => {
-            if (err.status === 404) {
-                // If the line doesn't exist, we can create it
-                return null
+        // ...else Update the existing line in RERUM
+        const existingLine = await fetch(this.id).then(async (resp) => {
+            if (resp.ok) return resp.json()
+            if (resp.status === 404) return null
+            let rerumErrorMessage
+            try {
+                rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+            } catch (e) {
+                rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
             }
-            throw new Error(`Failed to fetch existing Line from RERUM: ${err.message}`)
+            const err = new Error(rerumErrorMessage)
+            err.status = 502
+            throw err
         })
-
-        if (!existingLine) {
+        .catch(err => {
+            if (err.status === 502) throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
+        })
+        if (!(existingLine?.id || existingLine?.["@id"])) {
             // This id doesn't exist in RERUM, so we need to create it
             this.#tinyAction = 'create'
         }
-
         // Skip RERUM update if no content changes detected
         // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
         if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
+            this.#hydrated = true
             return this  // Return without versioning
         }
-
+        const action = this.#tinyAction === 'create' ? 'save' : this.#tinyAction
         const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
-        const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.id)
+        const newURI = await databaseTiny[action](updatedLine).then(res => res.id)
         .catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })
         this.id = newURI
         this.#tinyAction = 'update'
+        this.#hydrated = true
         return this
     }
 
@@ -98,36 +111,41 @@ export default class Line {
      * Only RERUM URIs are supported.
      */
     async #loadAnnotationDataFromRerum() {
-        const rerumURI = this.id
-        if (rerumURI.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawLineData = await fetch(rerumURI).then(async (resp) => {
+        if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawLineData = await fetch(this.id).then(async (resp) => {
                 if (resp.ok) return resp.json()
                 // The response from RERUM indicates a failure, likely with a specific code and textual body
-                let rerumErrorMessage = `${resp.status ?? 500}: ${rerumURI} - `
+                let rerumErrorMessage
                 try {
-                   rerumErrorMessage += await resp.text()
+                    rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+                } catch (e) {
+                    rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
                 }
-                catch (err) {
-                   rerumErrorMessage = undefined
-                }
-                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: A RERUM error occurred for ${rerumURI}`)
+                const err = new Error(rerumErrorMessage)
                 err.status = 502
                 throw err
             })
+            .catch(err => {
+                if (err.status === 502) throw err
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            })
             if (!(rawLineData.id || rawLineData["@id"])) {
                 // A 200 with garbled data, call it a fail
-                const err = new Error(`A RERUM error occurred for ${rerumURI}`)
-                err.status = 502
-                throw err
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
             }
             // We don't have Class getters and setters for these properties...
             if ('body' in rawLineData) this.body = rawLineData.body
-            if (rawLineData.target) this.target = rawLineData.target
+            if ('target' in rawLineData) this.target = rawLineData.target
             if (rawLineData.creator) this.creator = rawLineData.creator
             if (rawLineData.motivation) this.motivation = rawLineData.motivation
             if (rawLineData.label) this.label = rawLineData.label
             if (rawLineData.type) this.type = rawLineData.type
             this.#tinyAction = 'update'
+            this.#hydrated = true
         }
         return this
     }
@@ -237,19 +255,27 @@ export default class Line {
     }
 
     async asJSON(isLD) {
-        if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
-        return isLD ? {
-            '@context': 'http://iiif.io/api/presentation/3/context.json',
-            id: this.id,
-            type: 'Annotation',
-            motivation: this.motivation ?? 'transcribing',
-            target: this.target,
-            body: this.body,
-        } : {
-            id: this.id,
-            body: this.body ?? '',
-            target: this.target ?? '',
+        if (!this.#hydrated) await this.#loadAnnotationDataFromRerum()
+        let result
+        if (isLD) {
+            result = {
+                '@context': 'http://iiif.io/api/presentation/3/context.json',
+                id: this.id,
+                type: 'Annotation',
+                motivation: this.motivation ?? 'transcribing',
+                target: this.target,
+                body: this.body,
+            }
+            if (this.creator) result.creator = this.creator
         }
+        else {
+            result = {
+                id: this.id,
+                body: this.body ?? '',
+                target: this.target ?? '',
+            }
+        }
+        return result
     }
 
     asHTML() {
@@ -262,7 +288,7 @@ export default class Line {
      * @returns {string} The text content of the Line, or empty string if no textual body exists.
      */
     async asTextBlob() {
-        if (this.body === undefined) await this.#loadAnnotationDataFromRerum()
+        if (!this.#hydrated) await this.#loadAnnotationDataFromRerum()
         return extractTextFromAnnotationBody(this.body)
     }
 

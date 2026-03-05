@@ -1,11 +1,14 @@
 import dbDriver from "../../database/driver.js"
-import { handleVersionConflict, fetchUserAgent } from "../../utilities/shared.js"
+import { fetchUserAgent } from "../../utilities/shared.js"
 import ProjectFactory from "../Project/ProjectFactory.js"
+import Line from "../Line/Line.js"
 
 const databaseTiny = new dbDriver("tiny")
 
 export default class Page {
     #tinyAction = 'create'
+    #hydrated = false
+    #itemsResolved = false
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -54,7 +57,7 @@ export default class Page {
         let canvasLabel = canvas.label ?? `Page ${canvas.id.split('/').pop()}`
         const page = {
             data: {
-                "@context": "http://www.w3.org/ns/anno.jsonld",
+                "@context": "http://iiif.io/api/presentation/3/context.json",
                 id,
                 type: "AnnotationPage",
                 label: ProjectFactory.getLabelAsString(canvasLabel),
@@ -69,15 +72,97 @@ export default class Page {
         return new Page(layerId, page.data)
     }
 
+    /**
+     * Resolve the RERUM URI of the Page and sync Page properties with the AnnotationPage properties.
+     * The RERUM data will take preferences and overwrite any properties that are already set.
+     * Only RERUM URIs are supported.
+     */
+    async #loadAnnotationPageDataFromRerum() {
+        if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawPageData = await fetch(this.id).then(async (resp) => {
+                if (resp.ok) return resp.json()
+                // The response from RERUM indicates a failure, likely with a specific code and textual body
+                let rerumErrorMessage
+                try {
+                    rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+                } catch (e) {
+                    rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
+                }
+                const err = new Error(rerumErrorMessage)
+                err.status = 502
+                throw err
+            })
+            .catch(err => {
+                if (err.status === 502) throw err
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            })
+            if (!(rawPageData.id || rawPageData["@id"])) {
+                // A 200 with garbled data, call it a fail
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            }
+            this.#tinyAction = 'update'
+            this.id = rawPageData.id ?? rawPageData["@id"] ?? this.id
+            if ('target' in rawPageData) this.target = rawPageData.target
+            if ('items' in rawPageData && !this.#itemsResolved) this.items = rawPageData.items
+            if (rawPageData.creator) this.creator = rawPageData.creator
+            if (rawPageData.label) this.label = ProjectFactory.getLabelAsString(rawPageData.label)
+            if ('partOf' in rawPageData) this.partOf = Array.isArray(rawPageData.partOf) ? rawPageData.partOf[0]?.id ?? rawPageData.partOf[0] : rawPageData.partOf
+            if ('prev' in rawPageData) this.prev = rawPageData.prev
+            if ('next' in rawPageData) this.next = rawPageData.next
+            this.#hydrated = true
+        }
+        return this
+    }
+
+    /**
+     * Resolve all annotations in this Page's items array by fetching their full data from RERUM.
+     * Once resolved, replaces this.items with the resolved data.
+     *
+     * @returns {Promise<Array>} Array of fully resolved annotation objects
+     */
+    async #loadAnnotationPageItemsFromRerum() {
+        if (!Array.isArray(this.items)) return []
+        // Process all items in parallel for better performance
+        const resolvedItems = await Promise.all(
+            this.items.map(async (item) => {
+                // If item is a string, it's an annotation ID - fetch from RERUM
+                let lineRef
+                // target is required by Line constructor but will be overwritten by RERUM data
+                // since #hydrated is false, Line.asJSON() always fetches from RERUM.
+                if (item?.id) {
+                    lineRef = { ...item, target: item.target ?? "pending-resolution" }
+                }
+                else if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
+                else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
+                let line = await new Line(lineRef).asJSON(true).catch(err => {
+                    return { id: lineRef.id, error: err.message }
+                })
+                delete line["@context"]
+                return line
+            })
+        )
+        this.items = resolvedItems
+        this.#itemsResolved = true
+        return resolvedItems
+    }
+
     async #savePageToRerum() {
         const prev = this.prev ?? null
         const next = this.next ?? null
         const pageAsAnnotationPage = {
-            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "@context": "http://iiif.io/api/presentation/3/context.json",
             id: this.id,
             type: "AnnotationPage",
             label: { "none": [this.label] },
-            items: this.items ?? [],
+            items: (this.items ?? []).map(item =>
+                typeof item === 'object' && item.id
+                    ? { id: item.id, type: item.type ?? 'Annotation' }
+                    : item
+            ),
             prev,
             next,
             creator: await fetchUserAgent(this.creator),
@@ -85,37 +170,47 @@ export default class Page {
             partOf: [{ id: this.partOf, type: "AnnotationCollection" }]
         }
         if (this.#tinyAction === 'create') {
-            const saved = await databaseTiny.save(pageAsAnnotationPage)
+            await databaseTiny.save(pageAsAnnotationPage)
                 .catch(err => {
                     console.error(err, pageAsAnnotationPage)
                     throw new Error(`Failed to save Page to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
+            this.#hydrated = true
             return this
         }
         // ...else Update the existing page in RERUM
-        const existingPage = await fetch(this.id).then(res => res.json())
-        if (!existingPage) {
-            throw new Error(`Failed to find Page in RERUM: ${this.id}`)
+        const existingPage = await fetch(this.id).then(async (resp) => {
+            if (resp.ok) return resp.json()
+            let rerumErrorMessage
+            try {
+                rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+            } catch (e) {
+                rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
+            }
+            const err = new Error(rerumErrorMessage)
+            err.status = 502
+            throw err
+        })
+        .catch(err => {
+            if (err.status === 502) throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
+        })
+        if (!(existingPage?.id || existingPage?.["@id"])) {
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-        
-        // Handle optimistic locking version if available
-        try {
-            await databaseTiny.overwrite(updatedPage)
-            return this
-        } catch (err) {
-            if (err.status === 409) {
-                throw handleVersionConflict(null, err)
-            }
-            throw err
-        }
+        await databaseTiny.overwrite(updatedPage)
+        this.#hydrated = true
+        return this
     }
 
     /**
       * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
-      * FIXME: This will save to RERUM even if there has been no content change
-      * The rerum variable below is true if the content has changed.
       *
       * @returns {Promise} Resolves to the updated Layer object as stored in Project.
       */
@@ -126,6 +221,14 @@ export default class Page {
             await this.#savePageToRerum()
         }
         return this.#formatPageForProject()
+    }
+
+    /**
+     * Resolve all item references in this Page by fetching full annotation data from RERUM.
+     * @returns {Promise<Array>} Array of fully resolved annotation objects.
+     */
+    async resolvePageItems() {
+        return this.#loadAnnotationPageItemsFromRerum()
     }
 
     asProjectPage() {
@@ -139,6 +242,46 @@ export default class Page {
             target: this.target,
             items: this.items ?? []
         }
+    }
+
+    /**
+     * Returns a JSON representation of the Page as a W3C AnnotationPage.
+     * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
+     * @returns {Object} The Page as JSON.
+     */
+    async asJSON(isLD) {
+        if (!this.#hydrated && this.id?.startsWith?.(process.env.RERUMIDPREFIX)) {
+            await this.#loadAnnotationPageDataFromRerum()
+        }
+        let result
+        if (isLD) {
+            result = {
+                '@context': 'http://iiif.io/api/presentation/3/context.json',
+                id: this.id,
+                type: 'AnnotationPage',
+                label: { "none": [this.label] },
+                target: this.target,
+                partOf: Array.isArray(this.partOf)
+                    ? this.partOf
+                    : [{ id: this.partOf, type: "AnnotationCollection" }],
+                items: this.items ?? [],
+                prev: this.prev ?? null,
+                next: this.next ?? null
+            }
+            if (this.creator) result.creator = this.creator
+        }
+        else {
+            result = {
+                id: this.id,
+                label: this.label,
+                target: this.target,
+                items: this.items ?? [],
+                partOf: this.partOf,
+                prev: this.prev ?? null,
+                next: this.next ?? null
+            }
+        }
+        return result
     }
 
     async delete() {

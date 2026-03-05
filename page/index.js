@@ -8,7 +8,7 @@ let router = express.Router({ mergeParams: true })
 import Project from '../classes/Project/Project.js'
 import Line from '../classes/Line/Line.js'
 import Column from '../classes/Column/Column.js'
-import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict, resolveReferences } from '../utilities/shared.js'
+import { findPageById, respondWithError, getLayerContainingPage, updatePageAndProject, handleVersionConflict } from '../utilities/shared.js'
 import { isSuspiciousValueString } from "../utilities/checkIfSuspicious.js"
 import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
@@ -53,31 +53,9 @@ router.route('/:pageId')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const page = await findPageById(pageId, projectId, true)
-      if (!page) {
-        return respondWithError(res, 404, 'No page found with that ID.')
-      }
-      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // If the page is a RERUM document, we need to fetch it from the server
-        res.status(200).json(page)
-        return
-      }
-      // build as AnnotationPage
-      const pageAsAnnotationPage = {
-        '@context': 'http://www.w3.org/ns/anno.jsonld',
-        id: page.id,
-        type: 'AnnotationPage',
-        label: { none: [page.label] },
-        target: page.target,
-        partOf: [{
-          id: page.partOf,
-          type: "AnnotationCollection"
-        }],
-        items: page.items ?? [],
-        prev: page.prev ?? null,
-        next: page.next ?? null
-      }
-      res.status(200).json(pageAsAnnotationPage)
+      const page = await findPageById(pageId, projectId)
+      const pageJson = await page.asJSON(true)
+      res.status(200).json(pageJson)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
@@ -119,9 +97,6 @@ router.route('/:pageId')
       const page = await findPageById(pageId, projectId)
       page.creator = user.agent.split('/').pop()
       page.partOf = layerId
-      if (!page) {
-        return respondWithError(res, 404, 'No page found with that ID.')
-      }
 
       const itemsProvided = Array.isArray(update.items) && update.items.length > 0
       let splitIds = itemsProvided ? splitFilterIds(update.items) : []
@@ -256,7 +231,8 @@ router.route('/:pageId')
         await updatePrevAndNextColumns(pageInProject)
         await project.update()
       }
-      res.status(200).json(page)
+      const pageJson = await page.asJSON(true)
+      res.status(200).json(pageJson)
     } catch (error) {
       // Handle version conflicts with optimistic locking
       if (error.status === 409) {
@@ -574,23 +550,10 @@ router.route('/:pageId/resolved')
   .get(async (req, res) => {
     const { projectId, pageId } = req.params
     try {
-      const page = await findPageById(pageId, projectId, true)
-      if (!page) {
-        return respondWithError(res, 404, 'No page found with that ID.')
-      }
-      if (page.id?.startsWith(process.env.RERUMIDPREFIX)) {
-        // RERUM pages already have fully resolved items
-        res.status(200).json(page)
-        return
-      }
-      // Resolve all annotation references in the items array
-      let resolvedPage = page
-      if (page.items && page.items.length > 0) {
-        // Resolve all annotations in the items array
-        const resolvedItems = await resolveReferences(page.items)
-        resolvedPage = { ...page, items: resolvedItems }
-      }
-      res.status(200).json(resolvedPage)
+      const pageData = await findPageById(pageId, projectId)
+      await pageData.resolvePageItems()
+      const pageJson = await pageData.asJSON(true)
+      res.status(200).json(pageJson)
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
     }
