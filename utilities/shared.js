@@ -80,7 +80,6 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
-   let error_out
    const updatedLayer = await layer.update()
    try{
       if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
@@ -95,14 +94,13 @@ export const updateLayerAndProject = async (layer, project, userId) => {
               oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
               return databaseTiny.overwrite(oldPage)
            })
-            // Also set partOf for non-RERUM pages
-           updatedLayer.pages.forEach(page => {
-              page.partOf[0].id = updatedLayer.id
-           })
-            // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
-            // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
-            // but retains its reference to the Annotation Collection in its partOf.
+         // Also set partOf for non-RERUM pages
+         updatedLayer.pages.forEach(page => {
+           page.partOf[0].id = updatedLayer.id
          })
+         // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
+         // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
+         // but retains its reference to the Annotation Collection in its partOf.
          await Promise.all(pageOverwrites)
       }
       project.data.layers[layerIndex] = updatedLayer
@@ -110,7 +108,7 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    }
    catch (err) {
       if (err.status === 502 || err.status === 409) throw err
-      error_out = new Error(`There was an error updating Layer and Page data`)
+      const error_out = new Error(`There was an error updating Layer and Page data`)
       error_out.status = 500
       console.error(`There was an error updating Layer and Page data`, err)
       throw error_out
