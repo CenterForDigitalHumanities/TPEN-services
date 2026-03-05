@@ -29,7 +29,6 @@ router.route('/:layerId')
     })
     .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
         const { projectId, layerId } = req.params
-        let label = req.body?.label
         const update = req.body
         const providedPages = update?.pages
         const user = req.user
