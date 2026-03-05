@@ -112,7 +112,7 @@ export default class Line {
      */
     async #loadAnnotationDataFromRerum() {
         if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawLineData = await fetch(this.id+"x").then(async (resp) => {
+            const rawLineData = await fetch(this.id).then(async (resp) => {
                 if (resp.ok) return resp.json()
                 // The response from RERUM indicates a failure, likely with a specific code and textual body
                 let rerumErrorMessage
