@@ -248,21 +248,7 @@ export async function findPageById(pageId, projectId) {
    return new Page(layerContainingPage.id, page)
 }
 
-export async function findLayerById(layerId, projectId, rerum = false) {
-   if (rerum) {
-      if (!layerId?.startsWith(process.env.RERUMIDPREFIX)) {
-         layerId = process.env.RERUMIDPREFIX + layerId.split("/").pop()
-      }
-      const rerum_obj = await fetch(layerId).then(res => {
-         if (res.ok) return res.json()
-         if (!res.ok) return {}
-      })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
-   }
+export async function findLayerById(layerId, projectId) {
    const p = await Project.getById(projectId)
    if (!p?.data) {
       const error = new Error(`Project with ID '${projectId}' not found`)
@@ -283,7 +269,7 @@ export async function findLayerById(layerId, projectId, rerum = false) {
       error.status = 422
       throw error
    }
-   return new Layer(projectId, { "id": layer.id, "label": layer.label, "pages": layer.pages })
+   return new Layer(projectId, { "id": layer.id, "label": layer.label, "pages": layer.pages, "creator": layer.creator })
 }
 
 /**

@@ -10,6 +10,7 @@ describe('Layer Class looks how we expect it to. #Layer_exists_unit', () => {
   it('has useful methods', () => {
     expect(typeof layer.update).toBe('function')
     expect(typeof layer.delete).toBe('function')
+    expect(typeof layer.asJSON).toBe('function')
   })
 
   it('has expected properties', () => {

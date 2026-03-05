@@ -19,27 +19,9 @@ router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
         try {
-            const layer = await findLayerById(layerId, projectId, true)
-            if (!layer) {
-                return respondWithError(res, 404, 'No layer found with that ID.')
-            }
-            if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
-                // If the page is a RERUM document, we need to fetch it from the server
-                res.status(200).json(layer)
-                return
-            }
-            // Make this internal Layer look more like a RERUM AnnotationCollection
-            const layerAsCollection = {
-                '@context': 'http://www.w3.org/ns/anno.jsonld',
-                id: layer.id,
-                type: 'AnnotationCollection',
-                label: { none: [layer.label] },
-                total: layer.pages.length,
-                first: layer.pages.at(0).id,
-                last: layer.pages.at(-1).id
-            }
-            if (layer.creator) layerAsCollection.creator = layer.creator
-            return res.status(200).json(layerAsCollection)
+            const layer = await findLayerById(layerId, projectId)
+            const layerJson = await layer.asJSON(true)
+            return res.status(200).json(layerJson)
         } catch (error) {
             console.error(error)
             return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
@@ -81,7 +63,8 @@ router.route('/:layerId')
                 layer.pages = pages
             }
             await updateLayerAndProject(layer, project, user._id)
-            res.status(200).json(layer)
+            const layerJson = await layer.asJSON(true)
+            res.status(200).json(layerJson)
         } catch (error) {
             console.error(error)
             return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')

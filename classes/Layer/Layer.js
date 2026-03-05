@@ -8,6 +8,14 @@ const databaseTiny = new dbDriver("tiny")
 
 export default class Layer {
     #tinyAction = 'create'
+    #hydrated = false
+
+    #setRerumId() {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
+        }
+        return this
+    }
 
     /**
      * Constructs a Layer from the JSON Object in the Project `layers` Array.
@@ -79,6 +87,7 @@ export default class Layer {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
+        this.#hydrated = true
         return this.#formatCollectionForProject()
     }
 
@@ -86,10 +95,79 @@ export default class Layer {
         return this.#formatCollectionForProject()
     }
 
+    /**
+     * Returns a JSON representation of the Layer as a W3C AnnotationCollection.
+     * @param {boolean} isLD - If true, returns JSON-LD format with @context and type. If false, returns a simple object.
+     * @returns {Promise<Object>} The Layer as JSON.
+     */
+    async asJSON(isLD) {
+        if (!this.#hydrated && this.id?.startsWith?.(process.env.RERUMIDPREFIX)) {
+            await this.#loadAnnotationCollectionDataFromRerum()
+        }
+        let result
+        if (isLD) {
+            result = {
+                '@context': 'http://www.w3.org/ns/anno.jsonld',
+                id: this.id,
+                type: 'AnnotationCollection',
+                label: { "none": [this.label] },
+                total: this.pages.length,
+                first: this.pages.at(0).id,
+                last: this.pages.at(-1).id
+            }
+            if (this.creator) result.creator = this.creator
+        }
+        else {
+            result = {
+                id: this.id,
+                label: this.label,
+                pages: this.pages,
+                creator: this.creator
+            }
+        }
+        return result
+    }
+
     // Private Methods
-    #setRerumId() {
-        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
-            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
+
+    /**
+     * Resolve the RERUM URI of the Layer and sync Layer properties with the AnnotationCollection properties.
+     * The RERUM data will take preference and overwrite any properties that are already set.
+     * Only RERUM URIs are supported.
+     */
+    async #loadAnnotationCollectionDataFromRerum() {
+        if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawLayerData = await fetch(this.id).then(async (resp) => {
+                if (resp.ok) return resp.json()
+                let rerumErrorMessage
+                try {
+                    rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+                } catch (e) {
+                    rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
+                }
+                const err = new Error(rerumErrorMessage)
+                err.status = 502
+                throw err
+            })
+            .catch(err => {
+                if (err.status === 502) throw err
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            })
+            if (!(rawLayerData.id || rawLayerData["@id"])) {
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            }
+            this.#tinyAction = 'update'
+            this.id = rawLayerData.id ?? rawLayerData["@id"] ?? this.id
+            if (rawLayerData.label) this.label = ProjectFactory.getLabelAsString(rawLayerData.label)
+            if (rawLayerData.creator) this.creator = rawLayerData.creator
+            if ('total' in rawLayerData) this.total = rawLayerData.total
+            if ('first' in rawLayerData) this.first = rawLayerData.first
+            if ('last' in rawLayerData) this.last = rawLayerData.last
+            this.#hydrated = true
         }
         return this
     }
@@ -121,21 +199,43 @@ export default class Layer {
         if (this.#tinyAction === 'create') {
             await databaseTiny.save(layerAsCollection).catch(err => {
                 console.error(err, layerAsCollection)
-                throw new Error(`Failed to save Layer to RERUM: ${err.message}`)
+                const saveError = new Error(`Failed to save Layer to RERUM: ${err.message}`)
+                saveError.status = 502
+                throw saveError
             })
             this.#tinyAction = 'update'
+            this.#hydrated = true
             return this
         }
 
-        const existingLayer = await fetch(this.id).then(res => res.json())
-        if (!existingLayer) {
-            throw new Error(`Layer not found in RERUM: ${this.id}`)
+        const existingLayer = await fetch(this.id).then(async (resp) => {
+            if (resp.ok) return resp.json()
+            let rerumErrorMessage
+            try {
+                rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+            } catch (e) {
+                rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
+            }
+            const err = new Error(rerumErrorMessage)
+            err.status = 502
+            throw err
+        })
+        .catch(err => {
+            if (err.status === 502) throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
+        })
+        if (!(existingLayer?.id || existingLayer?.["@id"])) {
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
         }
         const updatedLayer = { ...existingLayer, ...layerAsCollection }
-        
-        // Handle optimistic locking version if available        
+
         try {
             await databaseTiny.overwrite(updatedLayer)
+            this.#hydrated = true
             return this
         } catch (err) {
             if (err.status === 409) {
