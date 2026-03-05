@@ -111,9 +111,9 @@ export default class Layer {
                 id: this.id,
                 type: 'AnnotationCollection',
                 label: { "none": [this.label] },
-                total: this.pages.length,
-                first: this.pages.at(0).id,
-                last: this.pages.at(-1).id
+                total: this.total ?? this.pages.length,
+                first: this.first ?? this.pages.at(0)?.id,
+                last: this.last ?? this.pages.at(-1)?.id
             }
             if (this.creator) result.creator = this.creator
         }
@@ -232,16 +232,8 @@ export default class Layer {
             throw genericRerumNetworkError
         }
         const updatedLayer = { ...existingLayer, ...layerAsCollection }
-
-        try {
-            await databaseTiny.overwrite(updatedLayer)
-            this.#hydrated = true
-            return this
-        } catch (err) {
-            if (err.status === 409) {
-                throw handleVersionConflict(null, err)
-            }
-            throw err
-        }
+        await databaseTiny.overwrite(updatedLayer)
+        this.#hydrated = true
+        return this
     }
 }

@@ -80,30 +80,38 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
+   let error_out
    const updatedLayer = await layer.update()
-   if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
-      // update the references to the Layer in the Project
-      // Pages all have their partOf set to the Layer.id
-      const pageOverwrites = []
-      updatedLayer.pages.forEach(async page => {
-         page.partOf[0].id = updatedLayer.id
-         if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
-            // overwrite the Page in RERUM
-            const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
-            if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
-            oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
-            pageOverwrites.push(databaseTiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
-         }
-         // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
-         // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
-         // but retains its reference to the Annotation Collection in its partOf.
-      })
-      await Promise.all(pageOverwrites).catch(err => {
-         console.error("Error overwriting pages in RERUM", err)
-      }) 
+   try{
+      if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
+         // update the references to the Layer in the Project
+         // Pages all have their partOf set to the Layer.id
+         const pageOverwrites = []
+         updatedLayer.pages.forEach(async page => {
+            page.partOf[0].id = updatedLayer.id
+            if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
+               // overwrite the Page in RERUM
+               const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
+               if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
+               oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
+               pageOverwrites.push(databaseTiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
+            }
+            // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
+            // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
+            // but retains its reference to the Annotation Collection in its partOf.
+         })
+         await Promise.all(pageOverwrites)
+      }
+      project.data.layers[layerIndex] = updatedLayer
+      await project.update()
    }
-   project.data.layers[layerIndex] = updatedLayer
-   await project.update()
+   catch (err) {
+      if (err.status === 502 || err.status === 409) throw err
+      error_out = new Error(`There was an error updating Layer and Page data`)
+      error_out.status = 500
+      console.error(`There was an error updating Layer and Page data`, err)
+      throw error_out
+   }
 }
 
 /**

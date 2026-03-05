@@ -67,11 +67,18 @@ router.route('/:layerId')
             res.status(200).json(layerJson)
         } catch (error) {
             console.error(error)
-            return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
+            // Handle version conflicts with optimistic locking
+            if (error.status === 409) {
+                if(res.headersSent) return
+                return handleVersionConflict(res, error)
+            } else {
+                if(res.headersSent) return
+                return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
+            }
         }
     })
     .all((req, res) => {
-        return respondWithError(res, 405, 'Improper request method. Use GET instead.')
+        return respondWithError(res, 405, 'Improper request method. Use GET or PUT.')
     })
 
 // Route to create a new layer within a project
