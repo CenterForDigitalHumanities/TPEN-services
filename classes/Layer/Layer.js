@@ -107,7 +107,7 @@ export default class Layer {
         let result
         if (isLD) {
             result = {
-                '@context': 'http://www.w3.org/ns/anno.jsonld',
+                '@context': 'http://iiif.io/api/presentation/3/context.json',
                 id: this.id,
                 type: 'AnnotationCollection',
                 label: { "none": [this.label] },
@@ -186,7 +186,7 @@ export default class Layer {
 
     async #saveCollectionToRerum() {
         const layerAsCollection = {
-            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "@context": "http://iiif.io/api/presentation/3/context.json",
             id: this.id,
             type: "AnnotationCollection",
             label: { "none": [this.label] },
