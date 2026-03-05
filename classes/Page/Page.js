@@ -82,14 +82,13 @@ export default class Page {
             const rawPageData = await fetch(this.id).then(async (resp) => {
                 if (resp.ok) return resp.json()
                 // The response from RERUM indicates a failure, likely with a specific code and textual body
-                let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+                let rerumErrorMessage
                 try {
-                   rerumErrorMessage += await resp.text()
+                    rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+                } catch (e) {
+                    rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
                 }
-                catch (err) {
-                   rerumErrorMessage = undefined
-                }
-                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
+                const err = new Error(rerumErrorMessage)
                 err.status = 502
                 throw err
             })
@@ -134,19 +133,15 @@ export default class Page {
                 let lineRef
                 // target is required by Line constructor but will be overwritten by RERUM data
                 // since #hydrated is false, Line.asJSON() always fetches from RERUM.
-                if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
-                else if (typeof item === "object" && item.id) {
+                if(item?.id) {
                     lineRef = item
-                    if (!lineRef.target) lineRef.target = "pending-resolution"
+                    lineRef.target ??= "pending-resolution"
                 }
+                else if (typeof item === "string") lineRef = { "id": item, "target":"pending-resolution" }
                 else return { id: item?.id ?? item, error: "Unrecognized Page item format" }
-                let line
-                try {
-                    line = await new Line(lineRef).asJSON(true)
-                }
-                catch(err) {
-                    line = { id: lineRef.id, error: err.message }
-                }
+                let line = await new Line(lineRef).asJSON(true).catch(err => {
+                    return { id: lineRef.id, error: err.message }
+                })
                 delete line["@context"]
                 return line
             })
@@ -188,13 +183,13 @@ export default class Page {
         // ...else Update the existing page in RERUM
         const existingPage = await fetch(this.id).then(async (resp) => {
             if (resp.ok) return resp.json()
-            let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+            let rerumErrorMessage
             try {
-                rerumErrorMessage += await resp.text()
-            } catch (err) {
-                rerumErrorMessage = undefined
+                rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+            } catch (e) {
+                rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
             }
-            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
+            const err = new Error(rerumErrorMessage)
             err.status = 502
             throw err
         })
@@ -210,21 +205,11 @@ export default class Page {
             throw genericRerumNetworkError
         }
         const updatedPage = { ...existingPage, ...pageAsAnnotationPage }
-        
-        // Handle optimistic locking version if available
         try {
             await databaseTiny.overwrite(updatedPage)
             this.#hydrated = true
             return this
         } catch (err) {
-            if (err.status === 409) {
-                const conflictError = new Error(err.message ?? 'Version conflict while saving Page to RERUM')
-                conflictError.status = 409
-                conflictError.code = 'VERSION_CONFLICT'
-                conflictError.details = 'The document was modified by another process.'
-                conflictError.currentVersion = err.currentVersion
-                throw conflictError
-            }
             throw err
         }
     }

@@ -59,13 +59,13 @@ export default class Line {
         const existingLine = await fetch(this.id).then(async (resp) => {
             if (resp.ok) return resp.json()
             if (resp.status === 404) return null
-            let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+            let rerumErrorMessage
             try {
-                rerumErrorMessage += await resp.text()
-            } catch (err) {
-                rerumErrorMessage = undefined
+                rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+            } catch (e) {
+                rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
             }
-            const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
+            const err = new Error(rerumErrorMessage)
             err.status = 502
             throw err
         })
@@ -112,17 +112,16 @@ export default class Line {
      */
     async #loadAnnotationDataFromRerum() {
         if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
-            const rawLineData = await fetch(this.id).then(async (resp) => {
+            const rawLineData = await fetch(this.id+"x").then(async (resp) => {
                 if (resp.ok) return resp.json()
                 // The response from RERUM indicates a failure, likely with a specific code and textual body
-                let rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - `
+                let rerumErrorMessage
                 try {
-                   rerumErrorMessage += await resp.text()
+                    rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+                } catch (e) {
+                    rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
                 }
-                catch (err) {
-                   rerumErrorMessage = undefined
-                }
-                const err = new Error(rerumErrorMessage ?? `${resp.status ?? 500}: ${this.id} - A RERUM error occurred`)
+                const err = new Error(rerumErrorMessage)
                 err.status = 502
                 throw err
             })

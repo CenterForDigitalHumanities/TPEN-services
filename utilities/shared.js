@@ -163,7 +163,7 @@ export const updatePageAndProject = async (page, project, userId) => {
          project.data.layers[layerIndex] = finalLayer
          await recordModification(project, rerumPageId, userId)
       } catch (err) {
-         if (err.status === 502) throw err
+         if (err.status === 502 || err.status === 409) throw err
          error_out = new Error(`There was an error updating Page and Project data`)
          error_out.status = 500
          console.error(`There was an error updating Page and Project data`, err)
