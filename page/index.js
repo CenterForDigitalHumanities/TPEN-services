@@ -74,16 +74,15 @@ router.route('/:pageId')
     if (Array.isArray(update.items) && update.items.some(item => (typeof item !== 'object' && typeof item !== 'string') || item === null)) {
       return respondWithError(res, 400, 'Each item must be an object')
     }
+    const project = new Project(projectId)
     try {
-      const projectObj = new Project(projectId)
-      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+      if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
         return respondWithError(res, 403, 'You do not have permission to update this page')
       }
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
     }
-    const project = await Project.getById(projectId)
-    if (!project) {
+    if (!project?.data) {
       return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
     }
     const layerId = getLayerContainingPage(project, pageId)?.id
@@ -276,9 +275,9 @@ router.route('/:pageId/column')
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
 
+    const project = new Project(projectId)
     try {
-      const projectObj = new Project(projectId)
-      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+      if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
         return respondWithError(res, 403, 'You do not have permission to update columns on this page')
       }
     } catch (error) {
@@ -299,7 +298,6 @@ router.route('/:pageId/column')
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     try {
-      const project = await Project.getById(projectId)
       if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
@@ -360,9 +358,9 @@ router.route('/:pageId/column')
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
 
+    const project = new Project(projectId)
     try {
-      const projectObj = new Project(projectId)
-      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+      if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
         return respondWithError(res, 403, 'You do not have permission to merge columns on this page')
       }
     } catch (error) {
@@ -380,7 +378,6 @@ router.route('/:pageId/column')
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     try {
-      const project = await Project.getById(projectId)
       if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
@@ -439,9 +436,9 @@ router.route('/:pageId/column')
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
 
+    const project = new Project(projectId)
     try {
-      const projectObj = new Project(projectId)
-      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
+      if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PAGE))) {
         return respondWithError(res, 403, 'You do not have permission to update columns on this page')
       }
     } catch (error) {
@@ -459,7 +456,6 @@ router.route('/:pageId/column')
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     try {
-      const project = await Project.getById(projectId)
       if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
@@ -514,11 +510,10 @@ router.route('/:pageId/clear-columns')
     if (!projectId) return respondWithError(res, 400, "Project ID is required")
     if (!pageId) return respondWithError(res, 400, "Page ID is required")
     try {
-      const projectObj = new Project(projectId)
-      if (!(await projectObj.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.PAGE))) {
+      const project = new Project(projectId)
+      if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.PAGE))) {
         return respondWithError(res, 403, 'You do not have permission to clear columns on this page')
       }
-      const project = await Project.getById(projectId)
       if (!project?.data) return respondWithError(res, 404, "Project not found")
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)

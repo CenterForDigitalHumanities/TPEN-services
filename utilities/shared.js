@@ -48,17 +48,6 @@ export function respondWithError(res, status, message) {
    return res.status(status).json({ message })
 }
 
-// Fetch a project by ID
-export const getProjectById = async (projectId) => {
-   const project = await Project.getById(projectId)
-   if (!project) {
-      const error = new Error(`Project with ID '${projectId}' not found`)
-      error.status = 404
-      throw error
-   }
-   return project
-}
-
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
    const line = page.items?.find(l => l.id.split('/').pop() === lineId.split('/').pop())

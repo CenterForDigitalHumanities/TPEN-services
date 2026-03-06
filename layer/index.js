@@ -37,12 +37,11 @@ router.route('/:layerId')
         if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
         try {
             if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
-            const projectObj = new Project(projectId)
-            if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
+            const project = new Project(projectId)
+            if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
                 return respondWithError(res, 403, 'You do not have permission to update this layer')
             }
-            const project = await Project.getById(projectId)
-            if (!project?._id) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
+            if (!project?.data) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
             const layer = await findLayerById(layerId, projectId)
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
@@ -94,12 +93,11 @@ router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req,
     }
     try {
         if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
-        const projectObj = new Project(projectId)
-        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
+        const project = new Project(projectId)
+        if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
             return respondWithError(res, 403, 'You do not have permission to create layers in this project')
         }
-        const project = await Project.getById(projectId)
-        if (!project) return respondWithError(res, 404, 'Project does not exist')
+        if (!project?.data) return respondWithError(res, 404, 'Project does not exist')
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()
