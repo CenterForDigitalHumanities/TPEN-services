@@ -76,7 +76,7 @@ export const updateLayerAndProject = async (layer, project, userId) => {
       err.status = 404
       throw err
    }
-   try{
+   try {
       const updatedLayer = await layer.update()
       if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
          // update the references to the Layer in the Project
