@@ -263,9 +263,7 @@ export async function findLayerById(layerId, projectId) {
       error.status = 404
       throw error
    }
-   const layer = layerId.length < 6
-      ? p.data.layers[parseInt(layerId) + 1]
-      : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+   const layer = p.data.layers.find(l => l.id.split('/').pop() === layerId.split('/').pop())
    if (!layer) {
       const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
       error.status = 404

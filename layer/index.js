@@ -44,7 +44,6 @@ router.route('/:layerId')
             const project = await Project.getById(projectId)
             if (!project?._id) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
             const layer = await findLayerById(layerId, projectId)
-            if (!layer?.id) return respondWithError(res, 404, `Layer '${layerId}' not found in project`)
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
                 layer[key] = update[key]
