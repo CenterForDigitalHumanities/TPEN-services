@@ -93,6 +93,9 @@ export default class Layer {
             this.#setRerumId()
             await this.#saveCollectionToRerum()
         }
+        this.total = this.pages.length
+        this.first = this.pages.at(0)?.id
+        this.last = this.pages.at(-1)?.id
         this.#hydrated = true
         return this.#formatCollectionForProject()
     }
