@@ -57,8 +57,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to create lines in this project')
     }
-    const project = await getProjectById(req.params.projectId, res)
-    if (!project) return
+    const project = await getProjectById(req.params.projectId)
     const page = await findPageById(req.params.pageId, req.params.projectId)
 
     if (!req.body || (Array.isArray(req.body) && req.body.length === 0)) {
@@ -82,12 +81,11 @@ router.post('/', auth0Middleware(), async (req, res) => {
       const savedLine = await newLine.update()
       page.items.push(savedLine)
     }
-    const ifNewContent = (page.items && page.items.length)
     const pageId = req.params.pageId.split('/').pop()
     const pageProject = project.data.layers.flatMap(layer => layer.pages).find(p => p.id.split('/').pop() === pageId)
     const saveWholeColumns = pageProject?.columns
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id, ifNewContent),
+      () => updatePageAndProject(page, project, user._id),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
@@ -161,7 +159,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
       }
     }
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id, true),
+      () => updatePageAndProject(page, project, user._id),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
@@ -237,7 +235,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
       }
     }
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id, true),
+      () => updatePageAndProject(page, project, user._id),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           if(res.headersSent) return
@@ -289,8 +287,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     const page = await findPageById(req.params.pageId, req.params.projectId)
     const findOldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!findOldLine) {
-      respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
-      return
+      return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
     }
     let oldLine = await fetch(findOldLine.id).then(res => res.json())
     delete oldLine.label
@@ -320,7 +317,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       }
     }
     await withOptimisticLocking(
-      () => updatePageAndProject(page, project, user._id, true),
+      () => updatePageAndProject(page, project, user._id),
       (currentVersion) => {
         if(!currentVersion || currentVersion.type !== 'AnnotationPage') {
           return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')

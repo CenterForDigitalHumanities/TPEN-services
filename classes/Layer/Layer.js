@@ -201,16 +201,15 @@ export default class Layer {
             label: { "none": [this.label] },
             creator: await fetchUserAgent(this.creator),
             total: this.pages.length,
-            first: this.pages.at(0).id,
-            last: this.pages.at(-1).id
+            first: this.pages.at(0)?.id,
+            last: this.pages.at(-1)?.id
         }
 
         if (this.#tinyAction === 'create') {
-            await databaseTiny.save(layerAsCollection).catch(err => {
+            await databaseTiny.save(layerAsCollection)
+            .catch(err => {
                 console.error(err, layerAsCollection)
-                const saveError = new Error(`Failed to save Layer to RERUM: ${err.message}`)
-                saveError.status = 502
-                throw saveError
+                throw new Error(`Failed to save Layer to RERUM: ${err.message}`)
             })
             this.#tinyAction = 'update'
             this.#hydrated = true

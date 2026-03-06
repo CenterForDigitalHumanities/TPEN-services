@@ -49,10 +49,12 @@ export function respondWithError(res, status, message) {
 }
 
 // Fetch a project by ID
-export const getProjectById = async (projectId, res) => {
+export const getProjectById = async (projectId) => {
    const project = await Project.getById(projectId)
    if (!project) {
-      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+      const error = new Error(`Project with ID '${projectId}' not found`)
+      error.status = 404
+      throw error
    }
    return project
 }
@@ -80,8 +82,13 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
-   const updatedLayer = await layer.update()
+   if (layerIndex < 0) {
+      const err = new Error(`Layer not found in project`)
+      err.status = 404
+      throw err
+   }
    try{
+      const updatedLayer = await layer.update()
       if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
          // update the references to the Layer in the Project
          // Pages all have their partOf set to the Layer.id

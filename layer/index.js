@@ -50,7 +50,7 @@ router.route('/:layerId')
             })
             Object.keys(layer).forEach(key => {
                 if (layer[key] === undefined || layer[key] === null) {
-                  // Remove properties that are undefined or null.  prev and next can be null
+                  // Remove properties that are undefined or null.  first and last can be null
                   if (key !== "first" && key !== "last") delete layer[key]
                   else layer[key] = null
                 }
