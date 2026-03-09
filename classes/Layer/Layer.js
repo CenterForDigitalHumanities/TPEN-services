@@ -18,12 +18,9 @@ export default class Layer {
      * @param {string} label The label of the layer. This is the Layer stored in the Project.
      * @param {Array} pages The pages in the layer by reference.
      * @param {string|null} [creator=null] The creator/agent URI for this layer.
-     * @param {number} [total] The total number of pages. Defaults to pages.length.
-     * @param {string} [first] The ID of the first page. Defaults to pages[0].id.
-     * @param {string} [last] The ID of the last page. Defaults to pages[-1].id.
      * @seeAlso {@link Layer.build}
      */
-    constructor(projectId, { id, label, pages, creator = null, total, first, last }) {
+    constructor(projectId, { id, label, pages, creator = null }) {
         if (!projectId) {
             throw new Error("Project ID is required to create a Layer instance.")
         }
@@ -113,9 +110,9 @@ export default class Layer {
                 id: this.id,
                 type: 'AnnotationCollection',
                 label: { "none": [this.label] },
-                total: this.total,
-                first: this.first,
-                last: this.last
+                total: this.pages.length,
+                first: this.pages.at(0)?.id,
+                last: this.pages.at(-1)?.id
             }
             if (this.creator) result.creator = this.creator
         }
