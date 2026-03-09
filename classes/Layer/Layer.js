@@ -32,9 +32,9 @@ export default class Layer {
         this.label = label
         this.creator = creator
         this.pages = pages
-        this.total = total ?? pages.length
-        this.first = first ?? pages.at(0)?.id
-        this.last = last ?? pages.at(-1)?.id
+        this.total = pages.length
+        this.first = pages.at(0)?.id
+        this.last = pages.at(-1)?.id
         if (this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.#tinyAction = 'update'
         }
@@ -168,9 +168,6 @@ export default class Layer {
             this.id = rawLayerData.id ?? rawLayerData["@id"] ?? this.id
             if (rawLayerData.label) this.label = ProjectFactory.getLabelAsString(rawLayerData.label)
             if (rawLayerData.creator) this.creator = rawLayerData.creator
-            if ('total' in rawLayerData) this.total = rawLayerData.total
-            if ('first' in rawLayerData) this.first = rawLayerData.first
-            if ('last' in rawLayerData) this.last = rawLayerData.last
             this.#hydrated = true
         }
         return this
