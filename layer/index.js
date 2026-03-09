@@ -41,7 +41,7 @@ router.route('/:layerId')
             if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
                 return respondWithError(res, 403, 'You do not have permission to update this layer')
             }
-            if (!project?.data) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
+            if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
             const layer = await findLayerById(layerId, projectId)
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
@@ -97,7 +97,7 @@ router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req,
         if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
             return respondWithError(res, 403, 'You do not have permission to create layers in this project')
         }
-        if (!project?.data) return respondWithError(res, 404, 'Project does not exist')
+        if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()

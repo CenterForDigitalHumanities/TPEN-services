@@ -83,7 +83,7 @@ router.route('/:pageId')
       return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
     }
     if (!project?.data) {
-      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+      return respondWithError(res, 404, `Project ${projectId} was not found`)
     }
     const layerId = getLayerContainingPage(project, pageId)?.id
     if (!layerId) {
@@ -298,7 +298,7 @@ router.route('/:pageId/column')
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     try {
-      if (!project?.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -378,7 +378,7 @@ router.route('/:pageId/column')
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     try {
-      if (!project?.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -456,7 +456,7 @@ router.route('/:pageId/column')
       return respondWithError(res, 400, "Suspicious column label will not be processed.")
     }
     try {
-      if (!project?.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")
@@ -514,7 +514,7 @@ router.route('/:pageId/clear-columns')
       if (!(await project.checkUserAccess(user._id, ACTIONS.DELETE, SCOPES.ALL, ENTITIES.PAGE))) {
         return respondWithError(res, 403, 'You do not have permission to clear columns on this page')
       }
-      if (!project?.data) return respondWithError(res, 404, "Project not found")
+      if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
       
       const page = project.data.layers.map(layer => layer.pages.find(p => p.id.split('/').pop() === pageId)).find(p => p)
       if (!page) return respondWithError(res, 404, "Page not found in project")

@@ -23,7 +23,7 @@ router.get('/:lineId', async (req, res) => {
   try {
     const project = await Project.getById(projectId)
     if (!project?.data) {
-      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
+      return respondWithError(res, 404, `Project ${projectId} was not found`)
     }
     const pageContainingLine = project.data.layers
       .flatMap(layer => layer.pages)
@@ -57,6 +57,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
     if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to create lines in this project')
     }
+    if (!project?.data) return respondWithError(res, 404, `Project ${req.params.projectId} was not found`)
     const page = await findPageById(req.params.pageId, req.params.projectId)
 
     if (!req.body || (Array.isArray(req.body) && req.body.length === 0)) {
@@ -120,6 +121,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to update lines in this project')
     }
+    if (!project?.data) return respondWithError(res, 404, `Project ${req.params.projectId} was not found`)
     const page = await findPageById(req.params.pageId, req.params.projectId)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
@@ -198,6 +200,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.TEXT, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to update line text in this project')
     }
+    if (!project?.data) return respondWithError(res, 404, `Project ${req.params.projectId} was not found`)
     if (typeof req.body !== 'string') {
       return respondWithError(res, 400, 'Invalid request body. Expected a string.')
     }
@@ -275,6 +278,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
     if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.SELECTOR, ENTITIES.LINE))) {
       return respondWithError(res, 403, 'You do not have permission to update line bounds in this project')
     }
+    if (!project?.data) return respondWithError(res, 404, `Project ${req.params.projectId} was not found`)
     const isValidBound = v => (Number.isInteger(v) && v >= 0) || (typeof v === 'string' && /^\d+$/.test(v))
     if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || !isValidBound(req.body.x) || !isValidBound(req.body.y) || !isValidBound(req.body.w) || !isValidBound(req.body.h)) {
       return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h as non-negative integers.')

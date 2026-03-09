@@ -103,8 +103,8 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    }
    catch (err) {
       if (err.status === 502 || err.status === 409) throw err
-      const error_out = new Error(`There was an error updating Layer and Page data`)
-      error_out.status = 500
+      const error_out = new Error(err.message ?? `There was an error updating Layer and Page data`)
+      error_out.status = err.status ?? 500
       console.error(`There was an error updating Layer and Page data`, err)
       throw error_out
    }
