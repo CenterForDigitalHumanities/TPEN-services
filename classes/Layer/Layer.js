@@ -123,8 +123,7 @@ export default class Layer {
             result = {
                 id: this.id,
                 label: this.label,
-                pages: this.pages,
-                creator: this.creator
+                pages: this.pages
             }
         }
         return result
