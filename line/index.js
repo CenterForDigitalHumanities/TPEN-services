@@ -22,9 +22,7 @@ router.get('/:lineId', async (req, res) => {
   }
   try {
     const project = await Project.getById(projectId)
-    if (!project?.data) {
-      return respondWithError(res, 404, `Project ${projectId} was not found`)
-    }
+    if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
     const pageContainingLine = project.data.layers
       .flatMap(layer => layer.pages)
       .find(page => findLineInPage(page, lineId))

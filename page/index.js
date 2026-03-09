@@ -82,9 +82,7 @@ router.route('/:pageId')
     } catch (error) {
       return respondWithError(res, error.status ?? 500, error.message ?? 'Error checking permissions')
     }
-    if (!project?.data) {
-      return respondWithError(res, 404, `Project ${projectId} was not found`)
-    }
+    if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
     const layerId = getLayerContainingPage(project, pageId)?.id
     if (!layerId) {
       return respondWithError(res, 404, `Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
