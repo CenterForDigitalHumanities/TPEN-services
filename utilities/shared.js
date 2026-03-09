@@ -271,7 +271,7 @@ export async function findLayerById(layerId, projectId) {
       error.status = 422
       throw error
    }
-   return new Layer(projectId, { "id": layer.id, "label": layer.label, "pages": layer.pages, "creator": layer.creator })
+   return new Layer(projectId, { "id": layer.id, "label": layer.label, "pages": layer.pages })
 }
 
 /**

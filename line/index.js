@@ -91,8 +91,8 @@ router.post('/', auth0Middleware(), async (req, res) => {
           return respondWithError(res, 409, 'Version conflict while updating the page. Please try again.')
         }
         currentVersion.items = [...(currentVersion.items ?? []), ...(page.items ?? [])]
-      Object.assign(page, currentVersion)
-      return updatePageAndProject(page, project, user._id)
+        Object.assign(page, currentVersion)
+        return updatePageAndProject(page, project, user._id)
     })
     if (res.headersSent) return
     // Updating the project again to save updated columns as columns is not handled in updatePageAndProject
