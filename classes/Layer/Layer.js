@@ -9,13 +9,6 @@ export default class Layer {
     #tinyAction = 'create'
     #hydrated = false
 
-    #setRerumId() {
-        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
-            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
-        }
-        return this
-    }
-
     /**
      * Constructs a Layer from the JSON Object in the Project `layers` Array.
      * This never creates a new Layer, but rather wraps existing data in a Layer object.
@@ -138,6 +131,12 @@ export default class Layer {
     }
 
     // Private Methods
+    #setRerumId() {
+        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
+            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
+        }
+        return this
+    }
 
     /**
      * Resolve the RERUM URI of the Layer and sync Layer properties with the AnnotationCollection properties.
