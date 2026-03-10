@@ -159,6 +159,12 @@ export const updatePageAndProject = async (page, project, userId) => {
       const updatedLayer = new Layer(project._id, layer)
       updatedLayer.creator ??= agent
 
+      // Predict the layer's RERUM ID so the page references the upgraded layer
+      const isLayerAlreadyInRerum = layer.id.startsWith(process.env.RERUMIDPREFIX)
+      if (!isLayerAlreadyInRerum) {
+         page.partOf = `${process.env.RERUMIDPREFIX}${layer.id.split("/").pop()}`
+      }
+
       try {
          const [, finalLayer] = await Promise.all([
             page.update(),
