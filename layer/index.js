@@ -7,7 +7,7 @@ import cors from 'cors'
 import common_cors from '../utilities/common_cors.json' with {type: 'json'}
 import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
-import { findPageById, findLayerById, updateLayerAndProject, respondWithError } from '../utilities/shared.js'
+import { findPageById, findLayerById, updateLayerAndProject, respondWithError, handleVersionConflict } from '../utilities/shared.js'
 import { ACTIONS, ENTITIES, SCOPES } from '../project/groups/permissions_parameters.js'
 
 const router = express.Router({ mergeParams: true })
@@ -19,27 +19,9 @@ router.route('/:layerId')
     .get(async (req, res) => {
         const { projectId, layerId } = req.params
         try {
-            const layer = await findLayerById(layerId, projectId, true)
-            if (!layer) {
-                return respondWithError(res, 404, 'No layer found with that ID.')
-            }
-            if (layer.id?.startsWith(process.env.RERUMIDPREFIX)) {
-                // If the page is a RERUM document, we need to fetch it from the server
-                res.status(200).json(layer)
-                return
-            }
-            // Make this internal Layer look more like a RERUM AnnotationCollection
-            const layerAsCollection = {
-                '@context': 'http://www.w3.org/ns/anno.jsonld',
-                id: layer.id,
-                type: 'AnnotationCollection',
-                label: { none: [layer.label] },
-                total: layer.pages.length,
-                first: layer.pages.at(0).id,
-                last: layer.pages.at(-1).id
-            }
-            if (layer.creator) layerAsCollection.creator = layer.creator
-            return res.status(200).json(layerAsCollection)
+            const layer = await findLayerById(layerId, projectId)
+            const layerJson = await layer.asJSON(true)
+            return res.status(200).json(layerJson)
         } catch (error) {
             console.error(error)
             return respondWithError(res, error.status ?? 500, error.message ?? 'Internal Server Error')
@@ -47,7 +29,6 @@ router.route('/:layerId')
     })
     .put(auth0Middleware(), screenContentMiddleware(), async (req, res) => {
         const { projectId, layerId } = req.params
-        let label = req.body?.label
         const update = req.body
         const providedPages = update?.pages
         const user = req.user
@@ -56,21 +37,19 @@ router.route('/:layerId')
         if (!layerId) return respondWithError(res, 400, 'Layer ID is required')
         try {
             if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
-            const projectObj = new Project(projectId)
-            if (!(await projectObj.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
+            const project = new Project(projectId)
+            if (!(await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.LAYER))) {
                 return respondWithError(res, 403, 'You do not have permission to update this layer')
             }
-            const project = await Project.getById(projectId)
-            if (!project?._id) return respondWithError(res, 404, `Project '${projectId}' does not exist`)
+            if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
             const layer = await findLayerById(layerId, projectId)
-            if (!layer?.id) return respondWithError(res, 404, `Layer '${layerId}' not found in project`)
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
                 layer[key] = update[key]
             })
             Object.keys(layer).forEach(key => {
                 if (layer[key] === undefined || layer[key] === null) {
-                  // Remove properties that are undefined or null.  prev and next can be null
+                  // Remove properties that are undefined or null.  first and last can be null
                   if (key !== "first" && key !== "last") delete layer[key]
                   else layer[key] = null
                 }
@@ -81,14 +60,22 @@ router.route('/:layerId')
                 layer.pages = pages
             }
             await updateLayerAndProject(layer, project, user._id)
-            res.status(200).json(layer)
+            const layerJson = await layer.asJSON(true)
+            res.status(200).json(layerJson)
         } catch (error) {
             console.error(error)
-            return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
+            // Handle version conflicts with optimistic locking
+            if (error.status === 409) {
+                if (res.headersSent) return
+                return handleVersionConflict(res, error)
+            } else {
+                if (res.headersSent) return
+                return respondWithError(res, error.status ?? 500, error.message ?? 'Error updating layer')
+            }
         }
     })
     .all((req, res) => {
-        return respondWithError(res, 405, 'Improper request method. Use GET instead.')
+        return respondWithError(res, 405, 'Improper request method. Use GET or PUT.')
     })
 
 // Route to create a new layer within a project
@@ -106,12 +93,11 @@ router.route('/').post(auth0Middleware(), screenContentMiddleware(), async (req,
     }
     try {
         if (hasSuspiciousLayerData(req.body)) return respondWithError(res, 400, "Suspicious layer data will not be processed.")
-        const projectObj = new Project(projectId)
-        if (!(await projectObj.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
+        const project = new Project(projectId)
+        if (!(await project.checkUserAccess(user._id, ACTIONS.CREATE, SCOPES.ALL, ENTITIES.LAYER))) {
             return respondWithError(res, 403, 'You do not have permission to create layers in this project')
         }
-        const project = await Project.getById(projectId)
-        if (!project) return respondWithError(res, 404, 'Project does not exist')
+        if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
         const newLayer = Layer.build(projectId, label, canvases)
         project.addLayer(newLayer.asProjectLayer())
         await project.update()

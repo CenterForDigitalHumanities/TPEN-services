@@ -48,15 +48,6 @@ export function respondWithError(res, status, message) {
    return res.status(status).json({ message })
 }
 
-// Fetch a project by ID
-export const getProjectById = async (projectId, res) => {
-   const project = await Project.getById(projectId)
-   if (!project) {
-      return respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-   }
-   return project
-}
-
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
    const line = page.items?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
@@ -80,30 +71,43 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
-   const updatedLayer = await layer.update()
-   if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
-      // update the references to the Layer in the Project
-      // Pages all have their partOf set to the Layer.id
-      const pageOverwrites = []
-      updatedLayer.pages.forEach(async page => {
-         page.partOf[0].id = updatedLayer.id
-         if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
-            // overwrite the Page in RERUM
-            const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
-            if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
-            oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
-            pageOverwrites.push(databaseTiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
-         }
+   if (layerIndex < 0) {
+      const err = new Error(`Layer not found in project`)
+      err.status = 404
+      throw err
+   }
+   try {
+      const updatedLayer = await layer.update()
+      if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
+         // update the references to the Layer in the Project
+         // Pages all have their partOf set to the Layer.id
+         const pageOverwrites  = updatedLayer.pages
+           .filter(page => page.id.startsWith(process.env.RERUMIDPREFIX))
+           .map(async page => {
+              const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
+              if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
+              oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
+              return databaseTiny.overwrite(oldPage)
+           })
+         // Also set partOf for all pages, RERUM or temp
+         updatedLayer.pages.forEach(page => {
+            if (page.partOf?.[0]) page.partOf[0].id = updatedLayer.id
+         })
          // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
          // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
          // but retains its reference to the Annotation Collection in its partOf.
-      })
-      await Promise.all(pageOverwrites).catch(err => {
-         console.error("Error overwriting pages in RERUM", err)
-      }) 
+         await Promise.all(pageOverwrites)
+      }
+      project.data.layers[layerIndex] = updatedLayer
+      await project.update()
    }
-   project.data.layers[layerIndex] = updatedLayer
-   await project.update()
+   catch (err) {
+      if (err.status === 502 || err.status === 409) throw err
+      const error_out = new Error(err.message ?? `There was an error updating Layer and Page data`)
+      error_out.status = err.status ?? 500
+      console.error(`There was an error updating Layer and Page data`, err)
+      throw error_out
+   }
 }
 
 /**
@@ -154,6 +158,12 @@ export const updatePageAndProject = async (page, project, userId) => {
       layer.pages[pageIndex] = formattedPage
       const updatedLayer = new Layer(project._id, layer)
       updatedLayer.creator ??= agent
+
+      // Predict the layer's RERUM ID so the page references the upgraded layer
+      const isLayerAlreadyInRerum = layer.id.startsWith(process.env.RERUMIDPREFIX)
+      if (!isLayerAlreadyInRerum) {
+         page.partOf = `${process.env.RERUMIDPREFIX}${layer.id.split("/").pop()}`
+      }
 
       try {
          const [, finalLayer] = await Promise.all([
@@ -224,7 +234,7 @@ export const getLayerContainingPage = (project, pageId) => {
 export async function findPageById(pageId, projectId) {
    const projectData = (await Project.getById(projectId))?.data
    if (!projectData) {
-      const error = new Error(`Project with ID '${projectId}' not found`)
+      const error = new Error(`Project ${projectId} was not found`)
       error.status = 404
       throw error
    }
@@ -248,30 +258,14 @@ export async function findPageById(pageId, projectId) {
    return new Page(layerContainingPage.id, page)
 }
 
-export async function findLayerById(layerId, projectId, rerum = false) {
-   if (rerum) {
-      if (!layerId?.startsWith(process.env.RERUMIDPREFIX)) {
-         layerId = process.env.RERUMIDPREFIX + layerId.split("/").pop()
-      }
-      const rerum_obj = await fetch(layerId).then(res => {
-         if (res.ok) return res.json()
-         if (!res.ok) return {}
-      })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
-   }
+export async function findLayerById(layerId, projectId) {
    const p = await Project.getById(projectId)
    if (!p?.data) {
-      const error = new Error(`Project with ID '${projectId}' not found`)
+      const error = new Error(`Project ${projectId} was not found`)
       error.status = 404
       throw error
    }
-   const layer = layerId.length < 6
-      ? p.data.layers[parseInt(layerId) + 1]
-      : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+   const layer = p.data.layers.find(l => l.id.split('/').pop() === layerId.split('/').pop())
    if (!layer) {
       const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
       error.status = 404
