@@ -267,7 +267,7 @@ export default class Group {
         if (!this.isValidRolesMap(roles))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = roles
-        await this.update()
+        return this.update()
     }
 
     async addCustomRoles(roleMap) {
@@ -277,7 +277,7 @@ export default class Group {
         if (!this.isValidRolesMap(roleMap))
             throw new Error("Invalid roles. Must be a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
         this.data.customRoles = { ...this.data.customRoles, ...roleMap }
-        await this.update()
+        return this.update()
     }
 
     async removeCustomRoles(roleName) {
@@ -286,7 +286,7 @@ export default class Group {
         }
 
         delete this.data.customRoles[roleName]
-        await this.update()
+        return this.update()
     }
 
     async save() {
