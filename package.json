@@ -33,7 +33,7 @@
       "inviteMemberTests": "node --import ./env-loader.js --experimental-vm-modules node_modules/jest/bin/jest.js -t inviteMemberTests "
    },
    "dependencies": {
-      "@iiif/helpers": "^1.5.7",
+      "@iiif/helpers": "^1.5.8",
       "cookie-parser": "^1.4.7",
       "cors": "^2.8.5",
       "debug": "^4.4.3",
