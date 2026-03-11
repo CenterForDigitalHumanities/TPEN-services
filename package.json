@@ -44,7 +44,7 @@
       "express-oauth2-jwt-bearer": "^1.7.4",
       "image-size": "^2.0.2",
       "jsdom": "27.0.0",
-      "mariadb": "^3.4.5",
+      "mariadb": "^3.5.2",
       "marked": "^17.0.4",
       "mime-types": "^3.0.2",
       "mongodb": "^7.1.0",
