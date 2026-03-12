@@ -102,6 +102,11 @@ export const updateLayerAndProject = async (layer, project, userId) => {
                  genericRerumNetworkError.status = 502
                  throw genericRerumNetworkError
               })
+              if (!(oldPage?.id || oldPage?.["@id"])) {
+                 const err = new Error(`500: ${page.id} - A RERUM error occurred`)
+                 err.status = 502
+                 throw err
+              }
               oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
               return databaseTiny.overwrite(oldPage)
            })
