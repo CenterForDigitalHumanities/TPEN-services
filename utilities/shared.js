@@ -84,8 +84,29 @@ export const updateLayerAndProject = async (layer, project, userId) => {
          const pageOverwrites  = updatedLayer.pages
            .filter(page => page.id.startsWith(process.env.RERUMIDPREFIX))
            .map(async page => {
-              const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
-              if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
+              const oldPage = await fetch(page.id).then(async (resp) => {
+                 if (resp.ok) return resp.json()
+                 let rerumErrorMessage
+                 try {
+                    rerumErrorMessage = `${resp.status ?? 500}: ${page.id} - ${await resp.text()}`
+                 } catch (e) {
+                    rerumErrorMessage = `500: ${page.id} - A RERUM error occurred`
+                 }
+                 const err = new Error(rerumErrorMessage)
+                 err.status = 502
+                 throw err
+              })
+              .catch(err => {
+                 if (err.status === 502) throw err
+                 const genericRerumNetworkError = new Error(`500: ${page.id} - A RERUM error occurred`)
+                 genericRerumNetworkError.status = 502
+                 throw genericRerumNetworkError
+              })
+              if (!(oldPage?.id || oldPage?.["@id"])) {
+                 const err = new Error(`500: ${page.id} - A RERUM error occurred`)
+                 err.status = 502
+                 throw err
+              }
               oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
               return databaseTiny.overwrite(oldPage)
            })
