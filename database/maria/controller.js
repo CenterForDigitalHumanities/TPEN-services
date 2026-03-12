@@ -6,7 +6,7 @@
  * https://github.com/thehabes 
  */ 
 
-import mariadb from 'mariadb'
+import * as mariadb from 'mariadb'
 
 class DatabaseController {
     constructor(connect=false) {
