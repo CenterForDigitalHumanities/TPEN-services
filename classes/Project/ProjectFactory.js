@@ -729,6 +729,7 @@ export default class ProjectFactory {
    * manifest data is assembled, and the final JSON is saved to the filesystem.
    * 
    * @param {string} projectId - Project ID for a specific project.
+   * @param {Object|null} preloadedProjectData - Pre-loaded project data to avoid a redundant DB query. Falls back to loadAsUser() if null.
    * @returns {Object} - Returns the assembled IIIF manifest object.
    * 
    * The manifest follows the IIIF Presentation API 3.0 specification and includes:
@@ -1006,7 +1007,7 @@ export default class ProjectFactory {
       },
       {
         $set: {
-          roles: { $mergeObjects: [{ $ifNull: ['$thisGroup.customRoles', {}] }, Group.defaultRoles] },
+          roles: { $mergeObjects: [Group.defaultRoles, { $ifNull: ['$thisGroup.customRoles', {}] }] },
         }
       },
       {
