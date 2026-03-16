@@ -742,6 +742,9 @@ export default class ProjectFactory {
     }
 
     const project = preloadedProjectData ?? await ProjectFactory.loadAsUser(projectId, null)
+    if (!project || project instanceof Error) {
+      throw { status: project?.status || 404, message: project?.message || `No project found with ID '${projectId}'` }
+    }
     const manifestJson = await this.fetchJson(project.manifest[0])
 
     const manifest = {

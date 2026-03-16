@@ -280,7 +280,7 @@ export async function findPageById(pageId, projectId, project = null) {
 }
 
 export async function findLayerById(layerId, projectId, project = null) {
-   const p = project ?? await Project.getById(projectId)
+   const p = project?.data ? project : await Project.getById(projectId)
    if (!p?.data) {
       const error = new Error(`Project ${projectId} was not found`)
       error.status = 404

@@ -186,9 +186,12 @@ router.route("/:id").get(auth0Middleware(), async (req, res) => {
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
-    // loadAsUser() returns an Error object (not throws) on DB failure; check both null and error cases
+    // loadAsUser() returns an Error object (not throws) on DB failure
     const projectData = await ProjectFactory.loadAsUser(id, user._id)
-    if (!projectData || projectData instanceof Error) {
+    if (projectData instanceof Error) {
+      return respondWithError(res, projectData.status || 500, projectData.message ?? "An error occurred while fetching the project data.")
+    }
+    if (!projectData) {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
     }
     if (!userHasAccess(projectData, user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)) {
