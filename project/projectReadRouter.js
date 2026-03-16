@@ -109,8 +109,11 @@ function userHasAccess(projectData, userId, action, scope, entity) {
   if (!userRoleNames || !Array.isArray(userRoleNames)) return false
   const rolePermissions = projectData.roles ?? {}
   return userRoleNames.some(role => {
-    const perms = rolePermissions[role]
-    if (!perms || !Array.isArray(perms)) return false
+    let perms = rolePermissions[role]
+    if (!perms) return false
+    // Custom roles may store permissions as a space-delimited string
+    if (typeof perms === 'string') perms = perms.split(' ')
+    if (!Array.isArray(perms)) return false
     return perms.some(perm => {
       const [permAction, permScope, permEntity] = perm.split("_")
       return (permAction === action || permAction === "*") &&
