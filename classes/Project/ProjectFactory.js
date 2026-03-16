@@ -736,12 +736,12 @@ export default class ProjectFactory {
    * - A dynamically fetched list of manifest items, including canvases and their annotations.
    * - All elements are embedded in the manifest object.
    */
-  static async exportManifest(projectId) {
+  static async exportManifest(projectId, preloadedProjectData = null) {
     if (!projectId) {
       throw { status: 400, message: "No project ID provided" }
     }
 
-    const project = await ProjectFactory.loadAsUser(projectId, null)
+    const project = preloadedProjectData ?? await ProjectFactory.loadAsUser(projectId, null)
     const manifestJson = await this.fetchJson(project.manifest[0])
 
     const manifest = {

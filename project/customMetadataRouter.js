@@ -90,8 +90,7 @@ router.route("/:id/custom").get(auth0Middleware(), async (req, res) => {
             return respondWithError(res, 403, "You do not have permission to read this project's metadata")
         }
 
-        // Fetch the project from database
-        const projectData = await database.findOne({ _id: id }, "projects")
+        const projectData = project.data
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
@@ -139,8 +138,8 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
         // Get namespace from request origin
         const namespace = getNamespaceFromOrigin(req)
 
-        // Fetch the full project data
-        const projectData = await database.findOne({ _id: id }, "projects")
+        // Use the already-loaded project data
+        const projectData = project.data
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
@@ -195,8 +194,8 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
         // Get namespace from request origin
         const namespace = getNamespaceFromOrigin(req)
 
-        // Fetch the full project data
-        const projectData = await database.findOne({ _id: id }, "projects")
+        // Use the already-loaded project data
+        const projectData = project.data
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
