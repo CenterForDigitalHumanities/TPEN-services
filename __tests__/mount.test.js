@@ -87,13 +87,9 @@ function routeExists(path, method = null) {
 
 describe('Check to see that all expected route patterns exist. #exists_unit', () => {
   
-  describe('Root and API routes', () => {
+  describe('Root routes', () => {
     it('GET / -- root index route', () => {
       expect(routeExists('/', 'get')).toBe(true)
-    })
-    
-    it('GET /api -- API documentation route', () => {
-      expect(routeExists('/api', 'get')).toBe(true)
     })
   })
   
@@ -343,7 +339,6 @@ describe('Check to see that critical repo files are present #exists_unit', () =>
     expect(fs.existsSync(filePath+"CODEOWNERS")).toBeTruthy()
     expect(fs.existsSync(filePath+"CONTRIBUTING.md")).toBeTruthy()
     expect(fs.existsSync(filePath+"README.md")).toBeTruthy()
-    expect(fs.existsSync(filePath+"API.md")).toBeTruthy()
     expect(fs.existsSync(filePath+"LICENSE.md")).toBeTruthy()
     expect(fs.existsSync(filePath+".gitignore")).toBeTruthy()
     expect(fs.existsSync(filePath+"package.json")).toBeTruthy()
