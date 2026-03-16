@@ -109,12 +109,14 @@ function userHasAccess(projectData, userId, action, scope, entity) {
   if (!userRoleNames || !Array.isArray(userRoleNames)) return false
   const rolePermissions = projectData.roles ?? {}
   return userRoleNames.some(role => {
-    const perm = rolePermissions[role]
-    if (!perm) return false
-    const [permAction, permScope, permEntity] = perm.split("_")
-    return (permAction === action || permAction === "*") &&
-           (permScope === scope || permScope === "*") &&
-           (permEntity === entity || permEntity === "*")
+    const perms = rolePermissions[role]
+    if (!perms || !Array.isArray(perms)) return false
+    return perms.some(perm => {
+      const [permAction, permScope, permEntity] = perm.split("_")
+      return (permAction === action || permAction === "*") &&
+             (permScope === scope || permScope === "*") &&
+             (permEntity === entity || permEntity === "*")
+    })
   })
 }
 
