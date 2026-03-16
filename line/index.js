@@ -56,7 +56,7 @@ router.post('/', auth0Middleware(), async (req, res) => {
       return respondWithError(res, 403, 'You do not have permission to create lines in this project')
     }
     if (!project?.data) return respondWithError(res, 404, `Project ${req.params.projectId} was not found`)
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId, project)
 
     if (!req.body || (Array.isArray(req.body) && req.body.length === 0)) {
       return respondWithError(res, 400, "Request body with line data is required")
@@ -120,7 +120,7 @@ router.put('/:lineId', auth0Middleware(), screenContentMiddleware(), async (req,
       return respondWithError(res, 403, 'You do not have permission to update lines in this project')
     }
     if (!project?.data) return respondWithError(res, 404, `Project ${req.params.projectId} was not found`)
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId, project)
     let oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -202,7 +202,7 @@ router.patch('/:lineId/text', auth0Middleware(), screenContentMiddleware(), asyn
     if (typeof req.body !== 'string') {
       return respondWithError(res, 400, 'Invalid request body. Expected a string.')
     }
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId, project)
     const oldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!oldLine) {
       return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)
@@ -282,7 +282,7 @@ router.patch('/:lineId/bounds', auth0Middleware(), async (req, res) => {
       return respondWithError(res, 400, 'Invalid request body. Expected an object with x, y, w, and h as non-negative integers.')
     }
     const bounds = { x: parseInt(req.body.x, 10), y: parseInt(req.body.y, 10), w: parseInt(req.body.w, 10), h: parseInt(req.body.h, 10) }
-    const page = await findPageById(req.params.pageId, req.params.projectId)
+    const page = await findPageById(req.params.pageId, req.params.projectId, project)
     const findOldLine = page.items?.find(l => l.id.split('/').pop() === req.params.lineId?.split('/').pop())
     if (!findOldLine) {
       return respondWithError(res, 404, `Line with ID '${req.params.lineId}' not found in page '${req.params.pageId}'`)

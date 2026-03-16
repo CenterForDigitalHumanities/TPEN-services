@@ -252,8 +252,8 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
-export async function findPageById(pageId, projectId) {
-   const projectData = (await Project.getById(projectId))?.data
+export async function findPageById(pageId, projectId, project = null) {
+   const projectData = project?.data ?? (await Project.getById(projectId))?.data
    if (!projectData) {
       const error = new Error(`Project ${projectId} was not found`)
       error.status = 404
@@ -279,8 +279,8 @@ export async function findPageById(pageId, projectId) {
    return new Page(layerContainingPage.id, page)
 }
 
-export async function findLayerById(layerId, projectId) {
-   const p = await Project.getById(projectId)
+export async function findLayerById(layerId, projectId, project = null) {
+   const p = project?.data ? project : await Project.getById(projectId)
    if (!p?.data) {
       const error = new Error(`Project ${projectId} was not found`)
       error.status = 404

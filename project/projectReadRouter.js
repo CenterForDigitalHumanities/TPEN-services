@@ -92,6 +92,37 @@ function filterProjectInterfaces(project, namespaces) {
   }
 }
 
+/**
+ * Check whether a user has the required access on a project loaded via ProjectFactory.loadAsUser().
+ * This avoids a second database round-trip when the project data (with collaborators/roles) is
+ * already available from the loadAsUser aggregation result.
+ *
+ * @param {Object} projectData - The project object returned by ProjectFactory.loadAsUser()
+ * @param {string} userId - The user ID to check
+ * @param {string} action - Required action (e.g. ACTIONS.READ)
+ * @param {string} scope - Required scope (e.g. SCOPES.ALL)
+ * @param {string} entity - Required entity (e.g. ENTITIES.PROJECT)
+ * @returns {boolean}
+ */
+function userHasAccess(projectData, userId, action, scope, entity) {
+  const userRoleNames = projectData?.collaborators?.[userId]?.roles
+  if (!userRoleNames || !Array.isArray(userRoleNames)) return false
+  const rolePermissions = projectData.roles ?? {}
+  return userRoleNames.some(role => {
+    let perms = rolePermissions[role]
+    if (!perms) return false
+    // Custom roles may store permissions as a space-delimited string
+    if (typeof perms === 'string') perms = perms.split(' ')
+    if (!Array.isArray(perms)) return false
+    return perms.some(perm => {
+      const [permAction, permScope, permEntity] = perm.split("_")
+      return (permAction === action || permAction === "*") &&
+             (permScope === scope || permScope === "*") &&
+             (permEntity === entity || permEntity === "*")
+    })
+  })
+}
+
 
 router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
   const { id } = req.params
@@ -100,14 +131,14 @@ router.route("/:id/manifest").get(auth0Middleware(), async (req, res) => {
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
-    if (!await new Project(id).checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
+    const project = new Project(id)
+    if (!await project.checkUserAccess(user._id, ACTIONS.UPDATE, SCOPES.ALL, ENTITIES.PROJECT)) {
       return respondWithError(res, 403, "You do not have permission to export this project")
     }
-    const project = await ProjectFactory.loadAsUser(id, null)
-    if (!project) {
+    if (!project.data) {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
     }
-    const manifest = await ProjectFactory.exportManifest(id)
+    const manifest = await ProjectFactory.exportManifest(id, project.data)
     await ProjectFactory.uploadFileToGitHub(manifest, `${id}`)
     res.status(200).json(manifest)
   } catch (error) {
@@ -158,13 +189,16 @@ router.route("/:id").get(auth0Middleware(), async (req, res) => {
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
-    const project = new Project(id)
-    if (!(await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT))) {
-      return respondWithError(res, 403, "You do not have permission to view this project")
-    }
+    // loadAsUser() returns an Error object (not throws) on DB failure
     const projectData = await ProjectFactory.loadAsUser(id, user._id)
+    if (projectData instanceof Error) {
+      return respondWithError(res, projectData.status || 500, projectData.message ?? "An error occurred while fetching the project data.")
+    }
     if (!projectData) {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
+    }
+    if (!userHasAccess(projectData, user._id, ACTIONS.READ, SCOPES.ALL, ENTITIES.PROJECT)) {
+      return respondWithError(res, 403, "You do not have permission to view this project")
     }
 
     // Filter interfaces based on origin and query parameters

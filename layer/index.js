@@ -42,7 +42,7 @@ router.route('/:layerId')
                 return respondWithError(res, 403, 'You do not have permission to update this layer')
             }
             if (!project?.data) return respondWithError(res, 404, `Project ${projectId} was not found`)
-            const layer = await findLayerById(layerId, projectId)
+            const layer = await findLayerById(layerId, projectId, project)
             // Only update top-level properties that are present in the request
             Object.keys(update ?? {}).forEach(key => {
                 layer[key] = update[key]
@@ -56,7 +56,7 @@ router.route('/:layerId')
             })
             let pages = []
             if (providedPages && Array.isArray(providedPages) && providedPages.length > 0) {
-                pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId) ))
+                pages = await Promise.all(providedPages.map(p => findPageById(p.split("/").pop(), projectId, project) ))
                 layer.pages = pages
             }
             await updateLayerAndProject(layer, project, user._id)
