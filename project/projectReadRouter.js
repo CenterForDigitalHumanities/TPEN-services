@@ -106,7 +106,7 @@ function filterProjectInterfaces(project, namespaces) {
  */
 function userHasAccess(projectData, userId, action, scope, entity) {
   const userRoleNames = projectData?.collaborators?.[userId]?.roles
-  if (!userRoleNames) return false
+  if (!userRoleNames || !Array.isArray(userRoleNames)) return false
   const rolePermissions = projectData.roles ?? {}
   return userRoleNames.some(role => {
     const perm = rolePermissions[role]
@@ -184,6 +184,7 @@ router.route("/:id").get(auth0Middleware(), async (req, res) => {
   if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
   if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
   try {
+    // loadAsUser() returns an Error object (not throws) on DB failure; check both null and error cases
     const projectData = await ProjectFactory.loadAsUser(id, user._id)
     if (!projectData || projectData instanceof Error) {
       return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
