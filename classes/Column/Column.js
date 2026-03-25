@@ -122,7 +122,7 @@ export default class Column {
             if (!projectId || typeof projectId !== 'string') {
                 throw new Error('projectId must be a non-empty string')
             }
-            if (!label || typeof label !== 'string' || label.trim().length === 0) {
+            if (typeof label !== 'string' || label.trim().length === 0) {
                 throw new Error('label must be a non-empty string')
             }
             if (!Array.isArray(annotations)) {
