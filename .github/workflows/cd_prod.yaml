@@ -79,6 +79,7 @@ jobs:
           git stash
           git checkout main
           git pull
+          npm version prerelease --preid=alpha
           npm install
           pm2 start ecosystem.config.json --env production --cwd .
       - name: Wait for service to be ready
