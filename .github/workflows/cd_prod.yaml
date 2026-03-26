@@ -79,6 +79,7 @@ jobs:
           git stash
           git checkout main
           git pull
+          npm version minor --no-git-tag-version
           npm version prerelease --preid=alpha
           npm install
           pm2 start ecosystem.config.json --env production --cwd .
