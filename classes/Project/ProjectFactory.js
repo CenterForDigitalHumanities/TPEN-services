@@ -729,6 +729,7 @@ export default class ProjectFactory {
    * manifest data is assembled, and the final JSON is saved to the filesystem.
    * 
    * @param {string} projectId - Project ID for a specific project.
+   * @param {Object|null} preloadedProjectData - Pre-loaded project data to avoid a redundant DB query. Falls back to loadAsUser() if null.
    * @returns {Object} - Returns the assembled IIIF manifest object.
    * 
    * The manifest follows the IIIF Presentation API 3.0 specification and includes:
@@ -736,12 +737,15 @@ export default class ProjectFactory {
    * - A dynamically fetched list of manifest items, including canvases and their annotations.
    * - All elements are embedded in the manifest object.
    */
-  static async exportManifest(projectId) {
+  static async exportManifest(projectId, preloadedProjectData = null) {
     if (!projectId) {
       throw { status: 400, message: "No project ID provided" }
     }
 
-    const project = await ProjectFactory.loadAsUser(projectId, null)
+    const project = preloadedProjectData ?? await ProjectFactory.loadAsUser(projectId, null)
+    if (!project || project instanceof Error) {
+      throw { status: project?.status || 404, message: project?.message || `No project found with ID '${projectId}'` }
+    }
     const manifestJson = await this.fetchJson(project.manifest[0])
 
     const manifest = {
@@ -1003,7 +1007,7 @@ export default class ProjectFactory {
       },
       {
         $set: {
-          roles: { $mergeObjects: [{ $ifNull: ['$thisGroup.customRoles', {}] }, Group.defaultRoles] },
+          roles: { $mergeObjects: [Group.defaultRoles, { $ifNull: ['$thisGroup.customRoles', {}] }] },
         }
       },
       {

@@ -99,4 +99,3 @@ For production deployments:
 4. Never commit production secrets to the repository
 
 See [CONFIG.md](./CONFIG.md) for detailed deployment instructions.
- 

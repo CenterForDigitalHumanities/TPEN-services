@@ -45,22 +45,12 @@ export function validateID(id, type = "mongo") {
 
 // Send a failure response with the proper code and message
 export function respondWithError(res, status, message) {
-   res.status(status).json({ message })
-}
-
-// Fetch a project by ID
-export const getProjectById = async (projectId, res) => {
-   const project = await Project.getById(projectId)
-   if (!project) {
-      respondWithError(res, 404, `Project with ID '${projectId}' not found`)
-      return null
-   }
-   return project
+   return res.status(status).json({ message })
 }
 
 // Find a line in a page
 export const findLineInPage = (page, lineId) => {
-   const line = page.lines?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
+   const line = page.items?.find(l => l.id.split('/').pop() === lineId.split('/').pop())
    if (!line) {
       return null
    }
@@ -81,30 +71,64 @@ export const updateLayerAndProject = async (layer, project, userId) => {
    if (!userId) throw new Error(`Must know user id to update layer`)
    if (!layer.creator) layer.creator = await fetchUserAgent(userId)
    const layerIndex = project.data.layers.findIndex(l => l.id.split("/").pop() === layer.id.split("/").pop())
-   const updatedLayer = await layer.update()
-   if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
-      // update the references to the Layer in the Project
-      // Pages all have their partOf set to the Layer.id
-      const pageOverwrites = []
-      updatedLayer.pages.forEach(async page => {
-         page.partOf[0].id = updatedLayer.id
-         if(page.id.startsWith(process.env.RERUMIDPREFIX)) {
-            // overwrite the Page in RERUM
-            const oldPage = await databaseTiny.find({_id: page.id.split("/").pop()})
-            if(!oldPage) throw new Error(`Page with ID ${page.id} not found in RERUM`)
-            oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
-            pageOverwrites.push(databaseTiny.overwrite(oldPage).catch(_err => { throw new Error(`Failed to overwrite page ${oldPage.id} in RERUM`) }))
-         }
+   if (layerIndex < 0) {
+      const err = new Error(`Layer not found in project`)
+      err.status = 404
+      throw err
+   }
+   try {
+      const updatedLayer = await layer.update()
+      if(project.data.layers[layerIndex]?.id !== updatedLayer.id) {
+         // update the references to the Layer in the Project
+         // Pages all have their partOf set to the Layer.id
+         const pageOverwrites  = updatedLayer.pages
+           .filter(page => page.id.startsWith(process.env.RERUMIDPREFIX))
+           .map(async page => {
+              const oldPage = await fetch(page.id).then(async (resp) => {
+                 if (resp.ok) return resp.json()
+                 let rerumErrorMessage
+                 try {
+                    rerumErrorMessage = `${resp.status ?? 500}: ${page.id} - ${await resp.text()}`
+                 } catch (e) {
+                    rerumErrorMessage = `500: ${page.id} - A RERUM error occurred`
+                 }
+                 const err = new Error(rerumErrorMessage)
+                 err.status = 502
+                 throw err
+              })
+              .catch(err => {
+                 if (err.status === 502) throw err
+                 const genericRerumNetworkError = new Error(`500: ${page.id} - A RERUM error occurred`)
+                 genericRerumNetworkError.status = 502
+                 throw genericRerumNetworkError
+              })
+              if (!(oldPage?.id || oldPage?.["@id"])) {
+                 const err = new Error(`500: ${page.id} - A RERUM error occurred`)
+                 err.status = 502
+                 throw err
+              }
+              oldPage.partOf = [{ id: updatedLayer.id, type: "AnnotationCollection" }]
+              return databaseTiny.overwrite(oldPage)
+           })
+         // Also set partOf for all pages, RERUM or temp
+         updatedLayer.pages.forEach(page => {
+            if (page.partOf?.[0]) page.partOf[0].id = updatedLayer.id
+         })
          // Note that if the page is not in RERUM and is removed from the Layer, it just disappears without
          // tending to any of its Annotations. If it is in RERUM and removed from the Layer it is orphaned
          // but retains its reference to the Annotation Collection in its partOf.
-      })
-      await Promise.all(pageOverwrites).catch(err => {
-         console.error("Error overwriting pages in RERUM", err)
-      }) 
+         await Promise.all(pageOverwrites)
+      }
+      project.data.layers[layerIndex] = updatedLayer
+      await project.update()
    }
-   project.data.layers[layerIndex] = updatedLayer
-   await project.update()
+   catch (err) {
+      if (err.status === 502 || err.status === 409) throw err
+      const error_out = new Error(err.message ?? `There was an error updating Layer and Page data`)
+      error_out.status = err.status ?? 500
+      console.error(`There was an error updating Layer and Page data`, err)
+      throw error_out
+   }
 }
 
 /**
@@ -119,21 +143,71 @@ export const updatePageAndProject = async (page, project, userId) => {
    if (!project) throw new Error(`Must know project to update Page`)
    if (!page) throw new Error(`A Page must be provided to update`)
    if (!userId) throw new Error(`Must know user id to update layer`)
-   page.creator ??= await fetchUserAgent(userId)
-   // .update() returns a Page prepped for saving to Project
-   const updatedPage = await page.update()
+   const agent = await fetchUserAgent(userId)
+   page.creator ??= agent
+   let error_out
    const layerIndex = project.data.layers.findIndex(l => l.pages.some(p => p.id.split('/').pop() === page.id.split('/').pop()))
-   if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) throw new Error("Cannot update Page.  Its Layer was not found.")
+   if (layerIndex < 0 || layerIndex === undefined || layerIndex === null) {
+      error_out = new Error("Cannot update Page.  Its Layer was not found.")
+      error_out.status = 500
+      throw error_out
+   }
    const layer = project.data.layers[layerIndex]
    const pageIndex = layer.pages.findIndex(p => p.id.split('/').pop() === page.id.split('/').pop())
-   layer.pages[pageIndex] = updatedPage
-   if (updatedPage.id.startsWith(process.env.RERUMIDPREFIX)) {
-      // If Page id has changed, we need to update the Layer (and the Project)
+
+   // Determine if page will actually be saved to RERUM (same logic as Page.update())
+   const isAlreadyInRerum = page.id.startsWith(process.env.RERUMIDPREFIX)
+   const hasContent = page.items?.length > 0
+   const willBeSavedToRerum = isAlreadyInRerum || hasContent
+
+   if (willBeSavedToRerum) {
+      // Predict the RERUM page ID (same logic as Page.#setRerumId)
+      const rerumPageId = isAlreadyInRerum
+         ? page.id
+         : `${process.env.RERUMIDPREFIX}${page.id.split("/").pop()}`
+
+      // Create formatted page with predicted ID for layer reference
+      const formattedPage = {
+         id: rerumPageId,
+         label: page.label,
+         target: page.target,
+         items: page.items ?? [],
+         columns: layer.pages[pageIndex].columns
+      }
+
+      // Update layer's pages array BEFORE creating Layer
+      layer.pages[pageIndex] = formattedPage
       const updatedLayer = new Layer(project._id, layer)
-      updatedLayer.creator ??= await fetchUserAgent(userId)
-      project.data.layers[layerIndex] = await updatedLayer.update()
-      await recordModification(project, page.id, userId)
+      updatedLayer.creator ??= agent
+
+      // Predict the layer's RERUM ID so the page references the upgraded layer
+      const isLayerAlreadyInRerum = layer.id.startsWith(process.env.RERUMIDPREFIX)
+      if (!isLayerAlreadyInRerum) {
+         page.partOf = `${process.env.RERUMIDPREFIX}${layer.id.split("/").pop()}`
+      }
+
+      try {
+         const [, finalLayer] = await Promise.all([
+            page.update(),
+            updatedLayer.update()
+         ])
+         project.data.layers[layerIndex] = finalLayer
+         await recordModification(project, rerumPageId, userId)
+      } catch (err) {
+         if (err.status === 502 || err.status === 409) throw err
+         error_out = new Error(`There was an error updating Page and Project data`)
+         error_out.status = 500
+         console.error(`There was an error updating Page and Project data`, err)
+         throw error_out
+      }
+   } else {
+      // Page won't be saved to RERUM (no content, not already in RERUM)
+      // Just update local page reference in layer without touching RERUM
+      const updatedPage = await page.update()
+      updatedPage.columns = layer.pages[pageIndex].columns
+      layer.pages[pageIndex] = updatedPage
    }
+
    await project.update()
 }
 
@@ -178,76 +252,41 @@ export const getLayerContainingPage = (project, pageId) => {
 }
 
 // Find a page by ID (moved from page/index.js)
-export async function findPageById(pageId, projectId, rerum) {
-   if (rerum) {
-      if (!pageId?.startsWith(process.env.RERUMIDPREFIX)) {
-         pageId = process.env.RERUMIDPREFIX + pageId.split("/").pop()
-      }
-      const rerum_obj = await fetch(pageId).then(res => {
-         if (res.ok) return res.json()
-         if (!res.ok) return {}
-      })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
-   }
-   const projectData = (await getProjectById(projectId))?.data
+export async function findPageById(pageId, projectId, project = null) {
+   const projectData = project?.data ?? (await Project.getById(projectId))?.data
    if (!projectData) {
-      const error = new Error(`Project with ID '${projectId}' not found`)
+      const error = new Error(`Project ${projectId} was not found`)
       error.status = 404
       throw error
    }
    const layerContainingPage = projectData.layers.find(layer =>
       layer.pages.some(p => p.id.split('/').pop() === pageId.split('/').pop())
    )
-
    if (!layerContainingPage) {
       const error = new Error(`Layer containing page with ID '${pageId}' not found in project '${projectId}'`)
       error.status = 404
       throw error
    }
-
    const pageIndex = layerContainingPage.pages.findIndex(p => p.id.split('/').pop() === pageId.split('/').pop())
-
    if (pageIndex < 0) {
       const error = new Error(`Page with ID '${pageId}' not found in project '${projectId}'`)
       error.status = 404
       throw error
    }
-
    const page = layerContainingPage.pages[pageIndex]
    page.prev = layerContainingPage.pages[pageIndex - 1]?.id ?? null
    page.next = layerContainingPage.pages[pageIndex + 1]?.id ?? null
-
    return new Page(layerContainingPage.id, page)
 }
 
-export async function findLayerById(layerId, projectId, rerum = false) {
-   if (rerum) {
-      if (!layerId?.startsWith(process.env.RERUMIDPREFIX)) {
-         layerId = process.env.RERUMIDPREFIX + layerId.split("/").pop()
-      }
-      const rerum_obj = await fetch(layerId).then(res => {
-         if (res.ok) return res.json()
-         if (!res.ok) return {}
-      })
-         .catch(err => {
-            console.error("Network error with rerum")
-            throw err
-         })
-      if (rerum_obj?.id || rerum_obj["@id"]) return rerum_obj
-   }
-   const p = await Project.getById(projectId)
-   if (!p) {
-      const error = new Error(`Project with ID '${projectId}' not found`)
+export async function findLayerById(layerId, projectId, project = null) {
+   const p = project?.data ? project : await Project.getById(projectId)
+   if (!p?.data) {
+      const error = new Error(`Project ${projectId} was not found`)
       error.status = 404
       throw error
    }
-   const layer = layerId.length < 6
-      ? p.data.layers[parseInt(layerId) + 1]
-      : p.data.layers.find(layer => layer.id.split('/').pop() === layerId.split('/').pop())
+   const layer = p.data.layers.find(l => l.id.split('/').pop() === layerId.split('/').pop())
    if (!layer) {
       const error = new Error(`Layer with ID '${layerId}' not found in project '${projectId}'`)
       error.status = 404
@@ -326,13 +365,61 @@ export const fetchUserAgent = async (userId) => {
  */
 export const handleVersionConflict = (res, error) => {
   return res.status(409).json({
-    error: error.message,
-    currentVersion: error.currentVersion,
+    message: error.message,
     code: 'VERSION_CONFLICT',
+    currentVersion: error.currentVersion,
     details: 'The document was modified by another process.',
     // Include additional context if available
     ...(error.pageId && { pageId: error.pageId }),
     ...(error.layerId && { layerId: error.layerId }),
     ...(error.lineId && { lineId: error.lineId })
   })
+}
+
+/**
+ * Deep equality comparison that is order-insensitive for object properties.
+ * Arrays are compared in order, but object key order does not matter.
+ *
+ * @param {*} a - First value to compare
+ * @param {*} b - Second value to compare
+ * @returns {boolean} True if values are deeply equal
+ */
+const deepEqual = (a, b) => {
+  if (a === b) return true
+  if (a == null || b == null) return a === b
+  if (typeof a !== typeof b) return false
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((val, i) => deepEqual(val, b[i]))
+  }
+
+  if (typeof a === 'object') {
+    const keysA = Object.keys(a)
+    const keysB = Object.keys(b)
+    if (keysA.length !== keysB.length) return false
+    return keysA.every(key => Object.hasOwn(b, key) && deepEqual(a[key], b[key]))
+  }
+
+  return false
+}
+
+/**
+ * Compare two annotations to detect meaningful content changes.
+ * Only compares body and target - other fields (id, creator, motivation, etc.)
+ * are not considered content changes.
+ *
+ * Uses order-insensitive deep comparison since both body and target can be
+ * complex objects and property order should not affect equality.
+ *
+ * NOTE: This function is intentionally placed in shared.js rather than as a
+ * private method in Line.js to enable unit testing without mocking.
+ *
+ * @param {Object} existing - The existing annotation
+ * @param {Object} compare - The incoming annotation to compare
+ * @returns {boolean} True if there are meaningful changes, false otherwise
+ */
+export const hasAnnotationChanges = (existing, compare) => {
+  return !deepEqual(existing?.body, compare?.body) ||
+         !deepEqual(existing?.target, compare?.target)
 }

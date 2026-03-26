@@ -21,6 +21,8 @@ import userProfileRouter from './userProfile/index.js'
 import privateProfileRouter from './userProfile/privateProfile.js'
 import proxyRouter from './utilities/proxy.js'
 import feedbackRouter from './feedback/feedbackRoutes.js'
+import routeErrorHandler from './utilities/routeErrorHandler.js'
+import { respondWithError } from './utilities/shared.js'
 
 let app = express()
 
@@ -65,10 +67,11 @@ app.use(express.static(path.join(__dirname, 'public')))
  */
 app.all('*_', (req, res, next) => {
   if (process.env.DOWN === 'true') {
-    return res.status(503).json({
-      message:
-        'TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later.'
-    })
+    return respondWithError(
+      res,
+      503,
+      'TPEN3 services are down for updates or maintenance at this time.  We apologize for the inconvenience.  Try again later.'
+    )
   }
   next()
 })
@@ -82,9 +85,12 @@ app.use('/my', privateProfileRouter)
 app.use('/proxy', proxyRouter)
 app.use('/beta', feedbackRouter)
 
+// Centralized error handling middleware
+app.use(routeErrorHandler)
+
 //catch 404 because of an invalid site path
 app.use('*_', (req, res) => {
-  res.status(404).json({ message: res.statusMessage ?? 'This page does not exist' })
+  return respondWithError(res, 404, res.statusMessage ?? 'This page does not exist')
 })
 
 export { app as default }

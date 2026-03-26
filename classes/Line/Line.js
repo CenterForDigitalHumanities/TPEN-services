@@ -1,10 +1,11 @@
 import dbDriver from "../../database/driver.js"
-import { fetchUserAgent } from "../../utilities/shared.js"
-
+import { fetchUserAgent, hasAnnotationChanges } from "../../utilities/shared.js"
 const databaseTiny = new dbDriver("tiny")
+
 export default class Line {
 
     #tinyAction = 'create'
+    #hydrated = false
     #setRerumId() {
         if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
             this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
@@ -42,7 +43,7 @@ export default class Line {
             motivation: this.motivation ?? "transcribing",
             target: this.target,
             creator: await fetchUserAgent(this.creator),
-            body: this.body
+            body: this.body ?? []
         }
         if (this.label) lineAsAnnotation.label = { "none": [this.label] }
         if (this.#tinyAction === 'create') {
@@ -51,50 +52,116 @@ export default class Line {
                     throw new Error(`Failed to save Line to RERUM: ${err.message}`)
                 })
             this.#tinyAction = 'update'
+            this.#hydrated = true
             return this
         }
-        // ...else Update the existing page in RERUM
-        const existingLine = await fetch(this.id).then(res => res.json())
-        .catch(err => {
-            if (err.status === 404) {
-                // If the line doesn't exist, we can create it
-                return null
+        // ...else Update the existing line in RERUM
+        const existingLine = await fetch(this.id).then(async (resp) => {
+            if (resp.ok) return resp.json()
+            if (resp.status === 404) return null
+            let rerumErrorMessage
+            try {
+                rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+            } catch (e) {
+                rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
             }
-            throw new Error(`Failed to fetch existing Line from RERUM: ${err.message}`)
+            const err = new Error(rerumErrorMessage)
+            err.status = 502
+            throw err
         })
-
-        if (!existingLine) {
+        .catch(err => {
+            if (err.status === 502) throw err
+            const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+            genericRerumNetworkError.status = 502
+            throw genericRerumNetworkError
+        })
+        if (!(existingLine?.id || existingLine?.["@id"])) {
             // This id doesn't exist in RERUM, so we need to create it
             this.#tinyAction = 'create'
         }
+        // Skip RERUM update if no content changes detected
+        // Uses hasAnnotationChanges from shared.js instead of a private Class method for testability.
+        if (existingLine && !hasAnnotationChanges(existingLine, lineAsAnnotation)) {
+            this.#hydrated = true
+            return this  // Return without versioning
+        }
+        const action = this.#tinyAction === 'create' ? 'save' : this.#tinyAction
         const updatedLine = existingLine ? { ...existingLine, ...lineAsAnnotation } : lineAsAnnotation
-        const newURI = await databaseTiny[this.#tinyAction](updatedLine).then(res => res.id)
+        const newURI = await databaseTiny[action](updatedLine).then(res => res.id)
         .catch(err => {
             throw new Error(`Failed to update Line in RERUM: ${err.message}`)
         })
         this.id = newURI
         this.#tinyAction = 'update'
+        this.#hydrated = true
         return this
     }
-   /**
+
+    #updateLineForPage() {
+        return {
+            id: this.id,
+            type: this.type ?? "Annotation",
+            target: this.target
+        }
+    }
+
+    /**
+     * Resolve the RERUM URI of the Line and sync Line properties with the Annotation properties.
+     * The RERUM data will take preferences and overwrite any properties that are already set.
+     * Only RERUM URIs are supported.
+     */
+    async #loadAnnotationDataFromRerum() {
+        if (this.id.startsWith?.(process.env.RERUMIDPREFIX)) {
+            const rawLineData = await fetch(this.id).then(async (resp) => {
+                if (resp.ok) return resp.json()
+                // The response from RERUM indicates a failure, likely with a specific code and textual body
+                let rerumErrorMessage
+                try {
+                    rerumErrorMessage = `${resp.status ?? 500}: ${this.id} - ${await resp.text()}`
+                } catch (e) {
+                    rerumErrorMessage = `500: ${this.id} - A RERUM error occurred`
+                }
+                const err = new Error(rerumErrorMessage)
+                err.status = 502
+                throw err
+            })
+            .catch(err => {
+                if (err.status === 502) throw err
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            })
+            if (!(rawLineData.id || rawLineData["@id"])) {
+                // A 200 with garbled data, call it a fail
+                const genericRerumNetworkError = new Error(`500: ${this.id} - A RERUM error occurred`)
+                genericRerumNetworkError.status = 502
+                throw genericRerumNetworkError
+            }
+            // We don't have Class getters and setters for these properties...
+            if ('body' in rawLineData) this.body = rawLineData.body
+            if ('target' in rawLineData) this.target = rawLineData.target
+            if (rawLineData.creator) this.creator = rawLineData.creator
+            if (rawLineData.motivation) this.motivation = rawLineData.motivation
+            if (rawLineData.label) this.label = rawLineData.label
+            if (rawLineData.type) this.type = rawLineData.type
+            this.#tinyAction = 'update'
+            this.#hydrated = true
+        }
+        return this
+    }
+
+    /**
      * Check the Project for any RERUM documents and either upgrade a local version or overwrite the RERUM version.
      * @returns {Promise} Resolves to the updated Layer object as stored in Project.
      */
-   async update() {
-    if (this.#tinyAction === 'update' || this.body) {
-        this.#setRerumId()
-        await this.#saveLineToRerum()
+    async update() {
+        if (this.#tinyAction === 'update' || this.body) {
+            this.#setRerumId()
+            await this.#saveLineToRerum()
+        }
+        return this.#updateLineForPage()
     }
-    return this.#updateLineForPage()
-}
-    
-#updateLineForPage() {
-    return {
-        id: this.id,
-        type: this.type ?? "Annotation",
-        target: this.target
-    }
-}
+
     /**
      * Updates the textual content of the annotation body.
      *
@@ -115,14 +182,13 @@ export default class Line {
         if (typeof text !== 'string') throw new Error('Text content must be a string')
         if (!this.body) this.body = "" // simple variant for no body
         this.creator = options.creator
-        const isVariantTextualBody = body => typeof (body?.chars ?? body?.['cnt:asChars'] ?? body?.value ?? body) === 'string'
 
         if (Array.isArray(this.body)) {
             const textualBodies = this.body.filter(body => isVariantTextualBody(body))
             if (textualBodies.length !== 1) throw new Error(textualBodies.length > 1 ? 'Multiple textual bodies found. Cannot determine which one to update.' : 'No textual body found in the array to update.')
 
             const textualBody = textualBodies[0]
-            const currentValue = textualBody.value ?? textualBody.chars ?? textualBody['cnt:asChars'] ?? textualBody
+            const currentValue = extractTextValue(textualBody)
             if (currentValue === text) return this
             Object.assign(textualBody, { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language })
             // discard Annotation-level options if only one body entry is modified.
@@ -130,7 +196,7 @@ export default class Line {
         }
 
         if (isVariantTextualBody(this.body)) {
-            const currentValue = this.body.chars ?? this.body['cnt:asChars'] ?? this.body.value ?? this.body
+            const currentValue = extractTextValue(this.body)
             if (currentValue === text) return this
             this.body = { type: 'TextualBody', value: text, format: options.format ?? "text/plain", language: options.language }
             return this.update()
@@ -139,12 +205,48 @@ export default class Line {
         throw new Error('Unexpected body format. Cannot update text.')
     }
 
-    async updateBounds({x, y, w, h}) {
-        if (!x || !y || !w || !h) {
-            throw new Error('Bounds ({x,y,w,h}) must be provided')
+    updateTargetXYWH(target, x, y, w, h) {
+        if (typeof target === "object" && target.selector?.value) {
+            const hasPixel = target.selector.value.includes("pixel:")
+            const prefix = hasPixel ? "xywh=pixel:" : "xywh="
+            return {
+                ...target,
+                selector: {
+                    ...target.selector,
+                    value: `${prefix}${x},${y},${w},${h}`
+                }
+            }
         }
+
+        if (typeof target === "object" && target.id) {
+            const hasPixel = /xywh=pixel/.test(target.id)
+            const prefix = hasPixel ? "#xywh=pixel:" : "#xywh="
+            return {
+                ...target,
+                id: target.id.replace(/#xywh(=pixel)?:?.*/, `${prefix}${x},${y},${w},${h}`)
+            }
+        }
+
+        if (typeof target === "string") {
+            const hasPixel = /xywh=pixel/.test(target)
+            const prefix = hasPixel ? "#xywh=pixel:" : "#xywh="
+            if (target.includes("#xywh")) {
+                return target.replace(/#xywh(=pixel)?:?.*/, `${prefix}${x},${y},${w},${h}`)
+            }
+            return `${target}#xywh=pixel:${x},${y},${w},${h}`
+        }
+        throw new Error("Unsupported target format")
+    }
+
+    async updateBounds({x, y, w, h}, options = {}) {
+        const isValidBound = v => (Number.isInteger(v) && v >= 0) || (typeof v === 'string' && /^\d+$/.test(v))
+        if (!isValidBound(x) || !isValidBound(y) || !isValidBound(w) || !isValidBound(h)) {
+            throw new Error('Bounds ({x,y,w,h}) must be non-negative integers')
+        }
+        x = parseInt(x, 10); y = parseInt(y, 10); w = parseInt(w, 10); h = parseInt(h, 10)
+        if (options.creator) this.creator = options.creator
         this.target ??= ''
-        const newTarget = `${this.target.split('=')[0]}=${x},${y},${w},${h}`
+        const newTarget = this.updateTargetXYWH(this.target, x, y, w, h)
         if (this.target === newTarget) {
             return this
         }
@@ -152,23 +254,42 @@ export default class Line {
         return this.update()
     }
 
-    asJSON(isLD) {
-        return isLD ? {
-            '@context': 'http://iiif.io/api/presentation/3/context.json',
-            id: this.id,
-            type: 'Annotation',
-            motivation: this.motivation ?? 'transcribing',
-            target: this.target,
-            body: this.body,
-        } : {
-            id: this.id,
-            body: this.body ?? '',
-            target: this.target ?? '',
+    async asJSON(isLD) {
+        if (!this.#hydrated) await this.#loadAnnotationDataFromRerum()
+        let result
+        if (isLD) {
+            result = {
+                '@context': 'http://iiif.io/api/presentation/3/context.json',
+                id: this.id,
+                type: 'Annotation',
+                motivation: this.motivation ?? 'transcribing',
+                target: this.target,
+                body: this.body,
+            }
+            if (this.creator) result.creator = this.creator
         }
+        else {
+            result = {
+                id: this.id,
+                body: this.body ?? '',
+                target: this.target ?? '',
+            }
+        }
+        return result
     }
 
     asHTML() {
         return Promise.resolve('<html><body>This is the HTML document content.</body></html>')
+    }
+
+    /**
+     * Extract the plain text content from the Line body.
+     *
+     * @returns {string} The text content of the Line, or empty string if no textual body exists.
+     */
+    async asTextBlob() {
+        if (!this.#hydrated) await this.#loadAnnotationDataFromRerum()
+        return extractTextFromAnnotationBody(this.body)
     }
 
     async delete() {
@@ -178,4 +299,50 @@ export default class Line {
         }
         return true
     }
+}
+
+/**
+ * Extract the text value from a textual body entry.
+ * Priority: value → cnt:asChars → chars → raw body.
+ *
+ * @param {string|Object} body - A textual body entry.
+ * @returns {string|*} The text string if a known text property exists, otherwise the raw body value.
+ */
+function extractTextValue(body) {
+    return body?.value ?? body?.['cnt:asChars'] ?? body?.chars ?? body
+}
+
+/**
+ * Determine whether the given body entry is a textual body variant.
+ * Recognizes: plain string, object with `value`, `chars`, or `cnt:asChars` string property.
+ *
+ * @param {*} body - A single body entry (string, object, or other).
+ * @returns {boolean} True if the body is a textual body variant.
+ */
+function isVariantTextualBody(body) {
+    return typeof extractTextValue(body) === 'string'
+}
+
+/**
+ * Extract the plain text content from raw Annotation body data
+ * Handles all W3C Web Annotation body format variants:
+ * - Plain string body
+ * - Object body with `value`, `chars`, or `cnt:asChars` property
+ * - Array of bodies (returns text from the first textual body found)
+ * - null/undefined/empty array bodies return empty string
+ *
+ * @param {*} body - A single body entry (string, object, array, or other).
+ * @returns {string} The text content of the annotation, or empty string if no textual body exists.
+ */
+function extractTextFromAnnotationBody(body) {
+    if (body === null || body === undefined) return ''
+    if (Array.isArray(body)) {
+        const textualBody = body.find(b => isVariantTextualBody(b))
+        if (!textualBody) return ''
+        return extractTextValue(textualBody)
+    }
+    if (isVariantTextualBody(body)) {
+        return extractTextValue(body)
+    }
+    return ''
 }

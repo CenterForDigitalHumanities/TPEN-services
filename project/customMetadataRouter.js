@@ -74,17 +74,23 @@ function deepUpsert(target, source) {
 }
 
 // GET /project/:id/custom - Returns array of namespace keys
-router.route("/:id/custom").get(async (req, res) => {
+router.route("/:id/custom").get(auth0Middleware(), async (req, res) => {
+    const user = req.user
     const { id } = req.params
 
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
 
     try {
         const project = new Project(id)
 
-        // Fetch the project from database
-        const projectData = await database.findOne({ _id: id }, "projects")
+        // Check if user has read access to the project options
+        if (!await project.checkUserAccess(user._id, ACTIONS.READ, SCOPES.OPTIONS, ENTITIES.PROJECT)) {
+            return respondWithError(res, 403, "You do not have permission to read this project's metadata")
+        }
+
+        const projectData = project.data
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
@@ -109,7 +115,7 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
     const payload = req.body
 
 
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -132,8 +138,8 @@ router.route("/:id/custom").post(auth0Middleware(), async (req, res) => {
         // Get namespace from request origin
         const namespace = getNamespaceFromOrigin(req)
 
-        // Fetch the full project data
-        const projectData = await database.findOne({ _id: id }, "projects")
+        // Use the already-loaded project data
+        const projectData = project.data
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
@@ -164,7 +170,7 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
     const { id } = req.params
     const payload = req.body
 
-    if (!user) return respondWithError(res, 401, "Unauthenticated request")
+    if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
     if (!id) return respondWithError(res, 400, "No TPEN3 ID provided")
     if (!validateID(id)) return respondWithError(res, 400, "The TPEN3 project ID provided is invalid")
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -188,8 +194,8 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
         // Get namespace from request origin
         const namespace = getNamespaceFromOrigin(req)
 
-        // Fetch the full project data
-        const projectData = await database.findOne({ _id: id }, "projects")
+        // Use the already-loaded project data
+        const projectData = project.data
 
         if (!projectData) {
             return respondWithError(res, 404, `No TPEN3 project with ID '${id}' found`)
@@ -228,7 +234,7 @@ router.route("/:id/custom").put(auth0Middleware(), async (req, res) => {
 })
 
 router.route("/:id/custom").all((_, res) => {
-    respondWithError(res, 405, "Improper request method. Use GET, POST, or PUT instead")
+    return respondWithError(res, 405, "Improper request method. Use GET, POST, or PUT instead")
 })
 
 export default router

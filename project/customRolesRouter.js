@@ -12,7 +12,7 @@ const router = express.Router({ mergeParams: true })
 router.get('/:projectId/customRoles', auth0Middleware(), async (req, res) => {
   const { projectId } = req.params
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   try {
     const project = new Project(projectId)
     if (!project) {
@@ -29,7 +29,7 @@ router.get('/:projectId/customRoles', auth0Middleware(), async (req, res) => {
     res.status(200).json(customRoles)
   } catch (error) {
     console.error(error)
-    respondWithError(res, error.status ?? 500, error.message ?? "Internal Server Error")
+    return respondWithError(res, error.status ?? 500, error.message ?? "Internal Server Error")
   }
 })
 
@@ -38,7 +38,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
   const { projectId } = req.params
   let customRoles = req.body.roles ?? req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!Object.keys(customRoles).length) {
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
@@ -52,7 +52,7 @@ router.post('/:projectId/addCustomRoles', auth0Middleware(), async (req, res) =>
     await group.addCustomRoles(customRoles)
     res.status(201).json({ message: 'Custom roles added successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Error adding custom roles.')
   }
 })
 
@@ -61,7 +61,7 @@ router.put('/:projectId/updateCustomRoles', auth0Middleware(), async (req, res) 
   const { projectId } = req.params
   let roles = req.body.roles ?? req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (!Object.keys(roles).length) {
     return respondWithError(res, 400, "Custom roles must be provided as a JSON Object with keys as roles and values as arrays of permissions or space-delimited strings.")
   }
@@ -75,7 +75,7 @@ router.put('/:projectId/updateCustomRoles', auth0Middleware(), async (req, res) 
     await group.updateCustomRoles(roles)
     res.status(200).json({ message: 'Custom roles set successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Error setting custom roles.')
   }
 })
 
@@ -84,7 +84,7 @@ router.delete('/:projectId/removeCustomRoles', auth0Middleware(), async (req, re
   const { projectId } = req.params
   let rolesToRemove = req.body.roles ?? req.body
   const user = req.user
-  if (!user) return respondWithError(res, 401, "Unauthenticated request")
+  if (!user) return respondWithError(res, 401, "Not authenticated. Please provide a valid, unexpired Bearer token")
   if (typeof rolesToRemove === 'object' && !Array.isArray(rolesToRemove)) {
     rolesToRemove = Object.keys(rolesToRemove)
   }
@@ -103,7 +103,7 @@ router.delete('/:projectId/removeCustomRoles', auth0Middleware(), async (req, re
     await group.removeCustomRoles(rolesToRemove)
     res.status(200).json({ message: 'Custom roles removed successfully.' })
   } catch (error) {
-    respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
+    return respondWithError(res, error.status ?? 500, error.message ?? 'Error removing custom roles.')
   }
 })
 

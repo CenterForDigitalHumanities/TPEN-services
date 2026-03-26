@@ -1,6 +1,7 @@
 import https from 'node:https'
 import express from 'express'
 import cors from 'cors'
+import { respondWithError } from './shared.js'
 import common_cors from "../utilities/common_cors.json" with {type: "json"}
 
 const requireHeader = [
@@ -23,7 +24,7 @@ const sizeLimit = 2e8 // 200 MB
 const proxy = (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
   let targetUrl = req.originalUrl.replace(/^\/+proxy\/+/, '')
-  if (!targetUrl) return res.status(400).send('No URL provided')
+  if (!targetUrl) return respondWithError(res, 400, 'No URL provided')
   const headers = {}
   for (const header in req.headers) {
     if (!excludedClientHeaders.has(header.toLowerCase())) {
@@ -34,12 +35,16 @@ const proxy = (req, res, next) => {
   headers['X-Forwarded-For'] = (forwardedFor ? forwardedFor + ',' : '') + req.connection.remoteAddress
   try {
     const parsedUrl = new URL(targetUrl)
+    // Only allow http and https protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return respondWithError(res, 400, 'Only HTTP and HTTPS URLs are supported')
+    }
     if (parsedUrl.protocol === 'http:') {
       parsedUrl.protocol = 'https:'
       targetUrl = parsedUrl.toString()
     }
   } catch {
-    return res.status(400).send('Invalid URL')
+    return respondWithError(res, 400, 'Invalid URL')
   }
   let data = 0
   const proxyReq = https.request(targetUrl, {
@@ -47,7 +52,7 @@ const proxy = (req, res, next) => {
     headers
   }, (proxyRes) => {
     if (Number(proxyRes.headers['content-length']) > sizeLimit) {
-      res.status(413).send(`ERROR 413: Maximum allowed size is ${sizeLimit} bytes.`)
+      respondWithError(res, 413, `Maximum allowed size is ${sizeLimit} bytes`)
       proxyReq.destroy()
       return
     }
@@ -60,7 +65,7 @@ const proxy = (req, res, next) => {
     proxyRes.on('data', chunk => {
       data += chunk.length
       if (data > sizeLimit) {
-        res.status(413).send(`ERROR 413: Maximum allowed size is ${sizeLimit} bytes.`)
+        respondWithError(res, 413, `Maximum allowed size is ${sizeLimit} bytes`)
         proxyReq.destroy()
         res.end()
         return
@@ -72,7 +77,7 @@ const proxy = (req, res, next) => {
     })
   })
   proxyReq.on('error', err => {
-    res.status(500).send(`Proxy Error: ${err.message}`)
+    return respondWithError(res, 500, 'Proxy request failed')
   })
   proxyReq.end()
 }
