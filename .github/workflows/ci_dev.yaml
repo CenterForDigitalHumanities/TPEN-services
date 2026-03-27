@@ -51,4 +51,14 @@ jobs:
         run: |
           npm install
           npm run E2Etests
+
+      - name: Bump version (patch + prerelease)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          npm version prerelease --preid=alpha
+          git add package.json package-lock.json || true
+          git commit -m "ci: bump version (patch+prerelease) [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:development || echo "No changes to push"
           
