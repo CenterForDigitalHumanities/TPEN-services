@@ -185,37 +185,26 @@ router.route('/:pageId')
               }
             }
           }
-          if (!oldId.startsWith(process.env.RERUMIDPREFIX)) {
+          const columnToUpdate = pageColumnsUpdate?.find(col => col.lines.includes(newId))
+          if (columnToUpdate) {
+            const columnDB = new Column(columnToUpdate.id)
+            const columnData = await columnDB.getColumnData()
             const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
-            const newColumnRecord = await Column.createNewColumn(pageId, projectId, null, [newId, ...(splitIdsEntry ? splitIdsEntry[newId] : [])])
-            const newColumn = {
-              id: newColumnRecord._id,
-              label: newColumnRecord.label,
-              lines: newColumnRecord.lines
-            }
-            pageColumnsUpdate = pageColumnsUpdate ? [...pageColumnsUpdate, newColumn] : [newColumn]
-          } else {
-            const columnToUpdate = pageColumnsUpdate.find(col => col.lines.includes(newId))
-            if (columnToUpdate) {
-              const columnDB = new Column(columnToUpdate.id)
-              const columnData = await columnDB.getColumnData()
-              const splitIdsEntry = splitIds.find(pair => Object.keys(pair)[0] === newId)
-              if (splitIdsEntry) {
-                const dateIds = splitIdsEntry[newId]
-                columnData.lines.push(...dateIds)
-                columnDB.data = columnData
-                await columnDB.update()
-                pageColumnsUpdate = pageColumnsUpdate.map(col => {
-                  if (col.id === columnToUpdate.id) {
-                    return {
-                      id: columnToUpdate.id,
-                      label: columnToUpdate.label,
-                      lines: columnData.lines
-                    }
+            if (splitIdsEntry) {
+              const dateIds = splitIdsEntry[newId]
+              columnData.lines.push(...dateIds)
+              columnDB.data = columnData
+              await columnDB.update()
+              pageColumnsUpdate = pageColumnsUpdate.map(col => {
+                if (col.id === columnToUpdate.id) {
+                  return {
+                    id: columnToUpdate.id,
+                    label: columnToUpdate.label,
+                    lines: columnData.lines
                   }
-                  return col
-                })
-              }
+                }
+                return col
+              })
             }
           }
         }
