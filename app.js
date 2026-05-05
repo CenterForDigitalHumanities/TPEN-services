@@ -31,23 +31,24 @@ const corsOptions = {
   origin: true, // Allow all origins
   credentials: true,
   optionsSuccessStatus: 200,
-  methods : "GET,OPTIONS,HEAD,PUT,PATCH,DELETE,POST",
+  methods : 'GET,OPTIONS,HEAD,PUT,PATCH,DELETE,POST',
   allowedHeaders : [
-      'Content-Type',
-      'Content-Length',
-      'Allow',
-      'Authorization',
-      'Location',
-      'Connection',
-      'Keep-Alive',
-      'Date',
-      'Cache-Control',
-      'Last-Modified',
-      'Link',
-      'Origin',
-      'Referrer',
-      'User-Agent'
-    ]
+    'Content-Type',
+    'Content-Length',
+    'Allow',
+    'Authorization',
+    'Location',
+    'Connection',
+    'Keep-Alive',
+    'Date',
+    'Cache-Control',
+    'Last-Modified',
+    'Link',
+    'Origin',
+    'Referrer',
+    'User-Agent'
+  ],
+  exposedHeaders: '*'
 }
 
 //Middleware to use
