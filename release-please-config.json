@@ -1,0 +1,10 @@
+{
+  "release-type": "node",
+  "prerelease": true,
+  "prerelease-type": "alpha",
+  "packages": {
+    ".": {
+      "package-name": "tpen3-services"
+    }
+  }
+}
