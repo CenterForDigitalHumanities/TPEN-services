@@ -214,11 +214,11 @@ export default class Tools {
         {
             "label": "History Tool",
             "toolName": "history",
-            "custom": { 
-                "enabled": true, 
+            "custom": {
+                "enabled": true,
                 "tagName": "tpen-line-history"
             },
-            "url": "https://app.t-pen.org/components/line-history/index.js",
+            "url": "https://centerfordigitalhumanities.github.io/tpen-line-history/tpen-line-history.js",
             "location": "pane"
         },
         {
