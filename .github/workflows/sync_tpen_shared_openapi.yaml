@@ -37,7 +37,7 @@ jobs:
         with:
           token: ${{ secrets.RERUM_OPENAPI_SYNC_TOKEN }}
           path: rerum_openapi
-          base: main
+          base: development
           branch: chore/sync-tpen-services-shared-components
           commit-message: >-
             chore(openapi): sync TPEN services shared components from
