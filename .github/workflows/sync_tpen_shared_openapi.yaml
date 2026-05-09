@@ -1,0 +1,50 @@
+name: Sync TPEN shared OpenAPI artifact
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - openapi/components/tpen-services-shared-components.openapi.yaml
+      - .github/workflows/sync_tpen_shared_openapi.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-shared-openapi-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TPEN-services
+        uses: actions/checkout@v4
+
+      - name: Checkout cubap/rerum_openapi
+        uses: actions/checkout@v4
+        with:
+          repository: cubap/rerum_openapi
+          token: ${{ secrets.RERUM_OPENAPI_SYNC_TOKEN }}
+          path: rerum_openapi
+
+      - name: Copy shared OpenAPI artifact into receiver repository
+        run: |
+          mkdir -p rerum_openapi/schemas/openapi
+          cp openapi/components/tpen-services-shared-components.openapi.yaml \
+            rerum_openapi/schemas/openapi/tpen-services-shared-components.openapi.yaml
+
+      - name: Create or update sync pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.RERUM_OPENAPI_SYNC_TOKEN }}
+          path: rerum_openapi
+          base: main
+          branch: chore/sync-tpen-services-shared-components
+          commit-message: >-
+            chore(openapi): sync TPEN services shared components from
+            CenterForDigitalHumanities/TPEN-services@${{ github.sha }}
+          title: 'chore(openapi): sync TPEN services shared components'
+          body: |
+            Automated sync from CenterForDigitalHumanities/TPEN-services.
+
+            Source: `openapi/components/tpen-services-shared-components.openapi.yaml`
+            Target: `schemas/openapi/tpen-services-shared-components.openapi.yaml`

@@ -1,0 +1,5 @@
+openapi: 3.1.0
+info:
+  title: TPEN Services Shared OpenAPI Components
+  version: 1.0.0
+components: {}
