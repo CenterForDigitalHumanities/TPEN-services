@@ -16,7 +16,7 @@ TPEN Services is a Node.js Express API service for TPEN3 (Transcription for Pale
 
 ### Environment Configuration
 
-TPEN Services uses a layered configuration approach with `--import ./env-loader.js` using the dotenv package:
+TPEN Services uses a layered configuration approach with Node native env-file flags:
 
 - `config.env` - Safe defaults (committed to repo, no secrets)
   - Works out-of-the-box for local Docker/MongoDB/MariaDB
@@ -33,10 +33,10 @@ TPEN Services uses a layered configuration approach with `--import ./env-loader.
   - Contains actual secrets and environment-specific values
   - Overrides values from `config.env`
 
-Configuration loading order (via `--import ./env-loader.js` using the dotenv package):
+Configuration loading order (via Node CLI env-file flags in npm scripts):
 
 1. `config.env` is loaded first (provides safe defaults)
-2. `.env.{NODE_ENV}` is loaded second (environment-specific: .env.development, .env.production, .env.test)
+2. `.env.development` is loaded second (development defaults)
 3. `.env` is loaded last (local/server overrides - HIGHEST PRIORITY)
 
 This allows developers to work immediately with sensible defaults while keeping secrets out of the repository.
@@ -48,19 +48,15 @@ This allows developers to work immediately with sensible defaults while keeping 
 - Start the application: `npm start` or `npm run dev`
 - Test the root endpoint: `curl http://localhost:3011/` -- should return HTML containing the TPEN3 Services index (heading + welcome text)
 - Run unit tests that don't require databases: `npm run unitTests` -- many tests pass without database connections
-- Run existence tests: `npm run existsTests` -- validates route registration and class imports
 - Run all tests: `npm run allTests` -- Full test suite confirming full app functionality
 - ALWAYS wait for full test completion. Tests may appear to hang but should complete within 2 minutes. 
 - NOTE: Application may crash after serving initial requests due to database connection attempts - this is expected behavior without running MongoDB/MariaDB.
 
 ### Test Categories Available
 - `npm run allTests` -- Full test suite which requires .env settings
-- `npm run unitTests` -- Core unit tests (some require databases)
-- `npm run existsTests` -- Route and class existence validation (database-independent)
-- `npm run functionsTests` -- Function-level tests
-- `npm run E2Etests` -- End-to-end API tests
-- `npm run dbTests` -- Database-specific tests (require running databases)
-- `npm run authTest` -- Authentication tests (require Auth0 configuration)
+- `npm run unitTests` -- Fast local seam checks
+- `npm run E2Etests` -- CI-oriented integration seam checks
+- `npm run test:coverage` -- Coverage report via c8
 
 ### Expected Test Behavior
 - Tests requiring databases will timeout/fail without MongoDB/MariaDB running
@@ -108,8 +104,8 @@ Required for external services:
 1. Do not overwrite the existing .env file.  If an .env file does not exist or is not populated then copy environment configuration: `cp .env.development .env`
 2. Install dependencies with `npm install`
 3. Make code changes
-4. Test with: `npm run existsTests` (fast, database-independent)
-5. For all other tests use `npm run allTests`
+4. Test with: `npm run unitTests` (fast, database-independent)
+5. For full validation use `npm run allTests`
 6. Test manually: `curl http://localhost:3011/` and relevant endpoints
 
 NEVER CANCEL long-running commands. Application builds and tests are designed to complete within documented timeouts. Always wait for completion to ensure accurate validation of changes.

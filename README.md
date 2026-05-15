@@ -36,7 +36,7 @@ Services required by TPEN interfaces in order to interact with data.
 
 ### Configuration Files
 
-TPEN Services uses a layered configuration approach with `--import ./env-loader.js` using the dotenv package:
+TPEN Services uses a layered configuration approach with Node's native env-file support:
 
 - **`config.env`** - Safe defaults, committed to repository
   - Works out-of-the-box for local Docker/MongoDB/MariaDB
@@ -58,10 +58,10 @@ TPEN Services uses a layered configuration approach with `--import ./env-loader.
   - Contains your specific settings and secrets
   - Overrides values from `config.env`
 
-Configuration is loaded via `--import ./env-loader.js` using the dotenv package:
+Configuration is loaded via Node CLI flags in npm scripts:
 
 1. `config.env` is loaded first (provides safe defaults)
-2. `.env.{NODE_ENV}` is loaded second (environment-specific: .env.development, .env.production, .env.test)
+2. `.env.development` is loaded second (development defaults)
 3. `.env` is loaded last (local/server overrides - HIGHEST PRIORITY)
 
 ### Environment Variables
@@ -79,14 +79,17 @@ See [CONFIG.md](./CONFIG.md) for complete configuration documentation.
 ## Testing
 
 ```bash
-# Run all tests
+# Fast local regression suite (node:test)
+npm test
+
+# Run local + integration seams
 npm run allTests
 
-# Run specific test suites
-npm run unitTests      # Core unit tests
-npm run existsTests    # Route/class validation
-npm run E2Etests       # End-to-end API tests
-npm run dbTests        # Database tests
+# Run only CI-oriented integration seams
+npm run E2Etests
+
+# Coverage with c8
+npm run test:coverage
 ```
 
 ## Deployment
