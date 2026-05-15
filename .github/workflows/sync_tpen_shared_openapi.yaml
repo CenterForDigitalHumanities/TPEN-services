@@ -1,4 +1,4 @@
-name: Sync TPEN shared OpenAPI artifact
+name: Sync shared TPEN OpenAPI artifact
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
       - development
     paths:
       - openapi/components/tpen-services-shared-components.openapi.yaml
-      - .github/workflows/sync_tpen_shared_openapi.yaml
   workflow_dispatch:
 
 permissions:
@@ -23,28 +22,28 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: cubap/rerum_openapi
-          token: ${{ secrets.RERUM_OPENAPI_SYNC_TOKEN }}
+          token: ${{ secrets.OPENAPI }}
           path: rerum_openapi
 
       - name: Copy shared OpenAPI artifact into receiver repository
         run: |
-          mkdir -p rerum_openapi/schemas/openapi
           cp openapi/components/tpen-services-shared-components.openapi.yaml \
             rerum_openapi/schemas/openapi/tpen-services-shared-components.openapi.yaml
 
       - name: Create or update sync pull request
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.RERUM_OPENAPI_SYNC_TOKEN }}
+          token: ${{ secrets.OPENAPI }}
           path: rerum_openapi
-          base: development
-          branch: chore/sync-tpen-services-shared-components
-          commit-message: >-
-            chore(openapi): sync TPEN services shared components from
-            CenterForDigitalHumanities/TPEN-services@${{ github.sha }}
-          title: 'chore(openapi): sync TPEN services shared components'
+          branch: automation/sync-tpen-shared-openapi-artifact
+          delete-branch: true
+          commit-message: Sync shared TPEN OpenAPI artifact from TPEN-services
+          title: Sync shared TPEN OpenAPI artifact from TPEN-services
           body: |
-            Automated sync from CenterForDigitalHumanities/TPEN-services.
+            Automated sync from `${{ github.repository }}` at `${{ github.sha }}`.
 
-            Source: `openapi/components/tpen-services-shared-components.openapi.yaml`
-            Target: `schemas/openapi/tpen-services-shared-components.openapi.yaml`
+            Source:
+            - `openapi/components/tpen-services-shared-components.openapi.yaml`
+
+            Target:
+            - `schemas/openapi/tpen-services-shared-components.openapi.yaml`
