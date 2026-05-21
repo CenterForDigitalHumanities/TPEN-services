@@ -32,6 +32,15 @@ describe('OpenAPI shared artifacts', () => {
       'sync workflow must cp the canonical source artifact to the receiver target path (this exact direction)'
     )
     assert.match(workflow, /repository: cubap\/rerum_openapi/, 'workflow must check out cubap/rerum_openapi as the receiver')
-    assert.match(workflow, /secrets\.OPENAPI/, 'workflow must read the org-level OPENAPI secret — a rename here breaks the sync silently at receiver checkout')
+    assert.match(
+      workflow,
+      /peter-evans\/create-pull-request@v\d+/,
+      'workflow must pin a major version of peter-evans/create-pull-request — an unpinned action drifts silently across runs'
+    )
+    assert.match(
+      workflow,
+      /secrets\.OPENAPI(?!\w)/,
+      'workflow must read the org-level OPENAPI secret — a rename to OPENAPI_FOO breaks the sync silently at receiver checkout'
+    )
   })
 })
