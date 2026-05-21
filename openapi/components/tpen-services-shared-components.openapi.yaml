@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: TPEN Services Shared OpenAPI Components
+  version: 0.1.0
+  description: Shared reusable OpenAPI components for TPEN services contracts.
+externalDocs:
+  description: TPEN-services API reference
+  url: https://api.t-pen.org/API.html
+x-upstream-provider:
+  name: TPEN-services
+  baseUrl: https://api.t-pen.org
+components:
+  schemas: {}

@@ -1,0 +1,54 @@
+name: Sync TPEN-services shared OpenAPI artifact
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - openapi/components/tpen-services-shared-components.openapi.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync TPEN-services shared OpenAPI artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TPEN-services
+        uses: actions/checkout@v4
+
+      - name: Checkout receiver repository
+        uses: actions/checkout@v4
+        with:
+          repository: cubap/rerum_openapi
+          ref: main
+          token: ${{ secrets.OPENAPI }}
+          path: receiver
+
+      # No `test -f` guard: the receiver target may not exist on the first
+      # sync; cp creates it. Once the receiver registry references this file,
+      # add `test -f receiver/schemas/openapi/tpen-services-shared-components.openapi.yaml`
+      # to catch retargeted copies.
+
+      - name: Copy canonical shared artifact
+        run: cp openapi/components/tpen-services-shared-components.openapi.yaml receiver/schemas/openapi/tpen-services-shared-components.openapi.yaml
+
+      - name: Create or update sync pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.OPENAPI }}
+          path: receiver
+          add-paths: schemas/openapi/tpen-services-shared-components.openapi.yaml
+          commit-message: "chore: sync TPEN-services shared OpenAPI artifact"
+          branch: sync/tpen-services-shared-openapi
+          base: main
+          delete-branch: true
+          title: "chore: sync TPEN-services shared OpenAPI artifact"
+          body: |
+            Syncs the canonical TPEN-services shared OpenAPI artifact from CenterForDigitalHumanities/TPEN-services.
+
+            - Source commit: ${{ github.sha }}
+            - Source artifact: `openapi/components/tpen-services-shared-components.openapi.yaml`
+            - Target artifact: `schemas/openapi/tpen-services-shared-components.openapi.yaml`

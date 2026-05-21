@@ -343,4 +343,10 @@ describe('Check to see that critical repo files are present #exists_unit', () =>
     expect(fs.existsSync(filePath+".gitignore")).toBeTruthy()
     expect(fs.existsSync(filePath+"package.json")).toBeTruthy()
   })
+
+  it('shared OpenAPI sync files', () => {
+    const filePath = './'
+    expect(fs.existsSync(filePath+"openapi/components/tpen-services-shared-components.openapi.yaml")).toBeTruthy()
+    expect(fs.existsSync(filePath+".github/workflows/sync_tpen_shared_openapi.yaml")).toBeTruthy()
+  })
 })
