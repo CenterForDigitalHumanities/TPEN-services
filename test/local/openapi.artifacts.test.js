@@ -23,9 +23,15 @@ describe('OpenAPI shared artifacts', () => {
     const workflowPath = path.join(repoRoot, '.github/workflows/sync_tpen_shared_openapi.yaml')
     const workflow = fs.readFileSync(workflowPath, 'utf8')
 
-    assert.match(workflow, /openapi\/components\/tpen-services-shared-components\.openapi\.yaml/, 'workflow must reference the canonical shared-components source path')
+    // Pin the cp invocation as a single regex so source→target direction is enforced.
+    // Each path appears 3× in this workflow (trigger filter, cp command, PR body), so
+    // a global substring match for either side cannot detect a swap or a deleted cp step.
+    assert.match(
+      workflow,
+      /run:\s*cp\s+openapi\/components\/tpen-services-shared-components\.openapi\.yaml\s+receiver\/schemas\/openapi\/tpen-services-shared-components\.openapi\.yaml/,
+      'sync workflow must cp the canonical source artifact to the receiver target path (this exact direction)'
+    )
     assert.match(workflow, /repository: cubap\/rerum_openapi/, 'workflow must check out cubap/rerum_openapi as the receiver')
-    assert.match(workflow, /schemas\/openapi\/tpen-services-shared-components\.openapi\.yaml/, 'workflow must reference the receiver shared-components target path')
     assert.match(workflow, /secrets\.OPENAPI/, 'workflow must read the org-level OPENAPI secret — a rename here breaks the sync silently at receiver checkout')
   })
 })

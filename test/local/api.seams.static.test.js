@@ -26,12 +26,26 @@ describe('API seam contracts (static)', () => {
   it('keeps column and clear-column page route seams', () => {
     const pageSource = readWorkspaceFile('page/index.js')
 
+    // Slice each route's block from its `router.route(...)` declaration up to the next
+    // top-level `router.` call. This anchors method/middleware assertions to a single
+    // route so a mutation removing auth from one route can't be masked by an identical
+    // chain on a sibling route.
+    const sliceRoute = (path) => {
+      const pattern = new RegExp(`router\\.route\\('${path}'\\)([\\s\\S]*?)\\n(?:router\\.|export )`)
+      return pageSource.match(pattern)?.[1] ?? ''
+    }
+
     assert.match(pageSource, /router\.route\('\/:pageId\/column'\)/, 'page router must declare a /:pageId/column route')
-    assert.match(pageSource, /\.post\(auth0Middleware\(\)/, '/:pageId/column must accept POST guarded by auth0Middleware')
-    assert.match(pageSource, /\.put\(auth0Middleware\(\)/, '/:pageId/column must accept PUT guarded by auth0Middleware')
-    assert.match(pageSource, /\.patch\(auth0Middleware\(\)/, '/:pageId/column must accept PATCH guarded by auth0Middleware')
+    const columnRoute = sliceRoute('\\/:pageId\\/column')
+    assert.notEqual(columnRoute, '', '/:pageId/column route block must be extractable')
+    assert.match(columnRoute, /\.post\(auth0Middleware\(\)/, '/:pageId/column must accept POST guarded by auth0Middleware')
+    assert.match(columnRoute, /\.put\(auth0Middleware\(\)/, '/:pageId/column must accept PUT guarded by auth0Middleware')
+    assert.match(columnRoute, /\.patch\(auth0Middleware\(\)/, '/:pageId/column must accept PATCH guarded by auth0Middleware')
+
     assert.match(pageSource, /router\.route\('\/:pageId\/clear-columns'\)/, 'page router must declare a /:pageId/clear-columns route')
-    assert.match(pageSource, /\.delete\(auth0Middleware\(\)/, '/:pageId/clear-columns must accept DELETE guarded by auth0Middleware')
+    const clearColumnsRoute = sliceRoute('\\/:pageId\\/clear-columns')
+    assert.notEqual(clearColumnsRoute, '', '/:pageId/clear-columns route block must be extractable')
+    assert.match(clearColumnsRoute, /\.delete\(auth0Middleware\(\)/, '/:pageId/clear-columns must accept DELETE guarded by auth0Middleware')
   })
 
   it('keeps line route write seams and text patch endpoint', () => {
