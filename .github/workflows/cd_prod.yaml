@@ -86,4 +86,4 @@ jobs:
       - name: Run smoke tests
         run: |
           cd /srv/node/tpen-services/
-          SMOKE_TEST_URL=https://api.t-pen.org node __tests__/smoke.test.js
+          npm run test:integration

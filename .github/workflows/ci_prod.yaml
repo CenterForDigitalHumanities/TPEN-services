@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: main
 jobs:
-  test:
+  local_seams:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -50,8 +50,66 @@ jobs:
       - name: Install dependencies and run the test
         run: |
           npm install
-          npm run E2Etests
+          npm run test:local
 
+  integration_seams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Create .env from secrets
+        uses: SpicyPizza/create-envfile@v2
+        with:
+          fail_on_empty: false
+          sort_keys: false
+          envkey_DOWN: ${{ secrets.DOWN }}
+          envkey_SERVERURL: ${{ secrets.SERVERURL }}
+          envkey_MONGODBNAME: ${{ secrets.MONGODBNAME }}
+          envkey_MONGODB: ${{ secrets.MONGODB }}
+          envkey_TPENPROJECTS: ${{ secrets.TPENPROJECTS }}
+          envkey_TPENGROUPS: ${{ secrets.TPENGROUPS }}
+          envkey_TPENUSERS: ${{ secrets.TPENUSERS }}
+          envkey_MARIADBNAME: ${{ secrets.MARIADBNAME }}
+          envkey_MARIADB: ${{ secrets.MARIADB }}
+          envkey_MARIADBUSER: ${{ secrets.MARIADBUSER }}
+          envkey_MARIADBPASSWORD: ${{ secrets.MARIADBPASSWORD }}
+          envkey_RERUMIDPREFIX: ${{ secrets.RERUMIDPREFIX }}
+          envkey_TINYPEN: ${{ secrets.TINYPEN }}
+          envkey_AUDIENCE: ${{ secrets.AUDIENCE }}
+          envkey_DOMAIN: ${{ secrets.DOMAIN }}
+          envkey_TPEN_SUPPORT_EMAIL: ${{ secrets.TPEN_SUPPORT_EMAIL }}
+          envkey_SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          envkey_SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          envkey_TPEN_EMAIL_CC: ${{ secrets.TPEN_EMAIL_CC }}
+      - name: Setup Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: "24"
+      - name: Cache node modules
+        uses: actions/cache@master
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies and run the test
+        run: |
+          npm install
+          npm run test:integration
+
+  bump_version:
+    runs-on: ubuntu-latest
+    needs: [local_seams, integration_seams]
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: "24"
       - name: Bump version (minor + prerelease)
         run: |
           git config user.name "github-actions[bot]"
