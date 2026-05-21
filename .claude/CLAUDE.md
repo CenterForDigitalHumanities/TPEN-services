@@ -40,7 +40,7 @@ TPEN Services is a Node.js Express API service for TPEN3 (Transcription for Pale
 - [IIIF Presentation API](https://iiif.io/api/presentation/)
 - [W3C Web Annotation](https://www.w3.org/TR/annotation-model/)
 - [Web Components MDN](https://developer.mozilla.org/en-US/docs/Web/Web_Components)
-- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [Node.js Test Runner](https://nodejs.org/api/test.html)
 - [TPEN3 Project Homepage](https://three.t-pen.org)
 - [TPEN3 Services API](https://dev.api.t-pen.org)
 - [TPEN3 Services GitHub](https://github.com/CenterForDigitalHumanities/TPEN-services)
