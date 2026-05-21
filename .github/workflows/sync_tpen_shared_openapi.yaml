@@ -1,4 +1,4 @@
-name: Sync shared TPEN OpenAPI artifact
+name: Sync TPEN-services shared OpenAPI artifact
 
 on:
   push:
@@ -12,38 +12,43 @@ permissions:
   contents: read
 
 jobs:
-  sync-shared-openapi-artifact:
+  sync:
+    name: Sync TPEN-services shared OpenAPI artifact
     runs-on: ubuntu-latest
     steps:
       - name: Checkout TPEN-services
         uses: actions/checkout@v4
 
-      - name: Checkout cubap/rerum_openapi
+      - name: Checkout receiver repository
         uses: actions/checkout@v4
         with:
           repository: cubap/rerum_openapi
+          ref: main
           token: ${{ secrets.OPENAPI }}
-          path: rerum_openapi
+          path: receiver
 
-      - name: Copy shared OpenAPI artifact into receiver repository
-        run: |
-          cp openapi/components/tpen-services-shared-components.openapi.yaml \
-            rerum_openapi/schemas/openapi/tpen-services-shared-components.openapi.yaml
+      # No `test -f` guard: the receiver target may not exist on the first
+      # sync; cp creates it. Once the receiver registry references this file,
+      # add `test -f receiver/schemas/openapi/tpen-services-shared-components.openapi.yaml`
+      # to catch retargeted copies.
+
+      - name: Copy canonical shared artifact
+        run: cp openapi/components/tpen-services-shared-components.openapi.yaml receiver/schemas/openapi/tpen-services-shared-components.openapi.yaml
 
       - name: Create or update sync pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.OPENAPI }}
-          path: rerum_openapi
-          branch: automation/sync-tpen-shared-openapi-artifact
+          path: receiver
+          add-paths: schemas/openapi/tpen-services-shared-components.openapi.yaml
+          commit-message: "chore: sync TPEN-services shared OpenAPI artifact"
+          branch: sync/tpen-services-shared-openapi
+          base: main
           delete-branch: true
-          commit-message: Sync shared TPEN OpenAPI artifact from TPEN-services
-          title: Sync shared TPEN OpenAPI artifact from TPEN-services
+          title: "chore: sync TPEN-services shared OpenAPI artifact"
           body: |
-            Automated sync from `${{ github.repository }}` at `${{ github.sha }}`.
+            Syncs the canonical TPEN-services shared OpenAPI artifact from CenterForDigitalHumanities/TPEN-services.
 
-            Source:
-            - `openapi/components/tpen-services-shared-components.openapi.yaml`
-
-            Target:
-            - `schemas/openapi/tpen-services-shared-components.openapi.yaml`
+            - Source commit: ${{ github.sha }}
+            - Source artifact: `openapi/components/tpen-services-shared-components.openapi.yaml`
+            - Target artifact: `schemas/openapi/tpen-services-shared-components.openapi.yaml`
