@@ -28,4 +28,24 @@ describe('API seam integration', () => {
     assert.match(appSource, /app\.use\(cors\(corsOptions\)\)/, 'app must register the cors middleware with the configured options')
     assert.match(appSource, /app\.use\('\*_', \(req, res\) => \{/, 'app must register the catch-all 404 handler')
   })
+
+  it('keeps maintenance-mode .all gate in app source', () => {
+    const appSource = fs.readFileSync(path.join(repoRoot, 'app.js'), 'utf8')
+
+    // app.js declares two `*_` handlers: the maintenance .all gate (runs first,
+    // returns 503 when DOWN=true) and the catch-all .use 404. Anchor on the
+    // .all+DOWN condition together so a mutation that removes the gate — or
+    // inverts the env check — fails this test rather than silently letting
+    // traffic through during a declared outage.
+    assert.match(
+      appSource,
+      /app\.all\('\*_', \(req, res, next\) => \{[\s\S]*?process\.env\.DOWN === 'true'/,
+      'app must declare an .all maintenance gate that branches on DOWN === "true"'
+    )
+    assert.match(
+      appSource,
+      /respondWithError\(\s*res,\s*503,/,
+      'maintenance gate must respond with 503 (not a generic 500 or 4xx)'
+    )
+  })
 })

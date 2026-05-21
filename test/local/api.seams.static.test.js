@@ -46,6 +46,11 @@ describe('API seam contracts (static)', () => {
     const clearColumnsRoute = sliceRoute('\\/:pageId\\/clear-columns')
     assert.notEqual(clearColumnsRoute, '', '/:pageId/clear-columns route block must be extractable')
     assert.match(clearColumnsRoute, /\.delete\(auth0Middleware\(\)/, '/:pageId/clear-columns must accept DELETE guarded by auth0Middleware')
+
+    assert.match(pageSource, /router\.route\('\/:pageId\/resolved'\)/, 'page router must declare a /:pageId/resolved read endpoint')
+    const resolvedRoute = sliceRoute('\\/:pageId\\/resolved')
+    assert.notEqual(resolvedRoute, '', '/:pageId/resolved route block must be extractable')
+    assert.match(resolvedRoute, /\.get\(async \(req, res\) => \{/, '/:pageId/resolved must accept GET — read seam is part of the published contract')
   })
 
   it('keeps line route write seams and text patch endpoint', () => {
