@@ -76,7 +76,9 @@ jobs:
           LATEST_TAG="$(git tag -l 'v*' --sort=-v:refname | head -n1)"
 
           if [ -z "$LATEST_TAG" ]; then
-            # First release: publish exactly what package.json declares.
+            # First release: seed from package.json. The version is carried as-is
+            # here; the iterator strip below turns 0.1.1-alpha.0 into the
+            # v0.1.1-alpha tag.
             NEXT="$(node -p "require('./package.json').version")"
             echo "No prior release tag — seeding first release from package.json: ${NEXT}"
           else
