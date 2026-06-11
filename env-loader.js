@@ -1,75 +1,46 @@
 /**
  * Environment Variable Loader
  *
- * Preloads environment variables before application starts.
- * Uses --import flag to guarantee execution before any other imports.
+ * Bootstraps environment variables before the application starts.
+ * Imported at the top of bin/tpen3_services.js so PM2 (which invokes
+ * `node ./bin/tpen3_services.js` directly, bypassing the npm scripts'
+ * --env-file flags) still loads the same layered config.
  *
- * ENVIRONMENT VARIABLE LOADING PRIORITY (lowest to highest):
- * 1. config.env              - Safe defaults for all environments (committed)
- * 2. .env.{NODE_ENV}         - Environment-specific (.env.development, .env.production) (committed)
- * 3. .env                    - Local/server secrets and overrides (gitignored) ← HIGHEST PRIORITY
+ * LOADING PRIORITY (highest to lowest):
+ *   1. .env                - Local/server overrides (gitignored)
+ *   2. .env.{NODE_ENV}     - Environment-specific (.env.development, .env.production)
+ *   3. config.env          - Safe defaults (committed)
  *
- * Each level overrides values from levels above it.
+ * Files are loaded in priority order (highest first) because Node's
+ * native `process.loadEnvFile()` does NOT override values already present
+ * in process.env — so the first file to define a key wins.
  *
- * FOR LOCAL DEVELOPMENT:
- * - Create a .env file with your local database connections, API keys, etc.
- * - .env is gitignored and will override ALL other environment files
- * - Never commit .env - it contains your personal/local settings
- *
- * FOR SERVERS (Production/Development):
- * - Server .env files contain production/staging database URLs and secrets
- * - .env overrides committed .env.production or .env.development values
- * - No need to rename existing .env files on servers
- *
- * FOR TESTING:
- * - Tests run with NODE_ENV='test' by default
- * - Your local .env overrides will apply to tests
- * - Ensures tests use your local database connections
- *
- * COMMITTED FILES (in git):
- * - config.env          ✓ Safe defaults for all environments
- * - .env.development    ✓ Development environment settings
- * - .env.production     ✓ Production environment settings
- *
- * GITIGNORED FILES (local/server only):
- * - .env                ✗ Your personal/server secrets (HIGHEST PRIORITY)
- *
- * VIEWING OUTPUT LOGS:
- * When running under PM2, env-loader.js output appears in PM2's system logs
- * (~/.pm2/pm2.log), NOT in application logs (./logs/pm2-out.log), because
- * this module executes BEFORE the application starts.
- *
- * To view env-loader output:
- * - PM2 system logs: pm2 logs --lines 50 --nostream
- * - Application logs: tail -f ./logs/pm2-out.log
+ * This intentionally mirrors the priority of the npm scripts'
+ * `--env-file=config.env --env-file-if-exists=.env.development --env-file-if-exists=.env`
+ * chain, where `--env-file` CLI flags DO override and the last file wins.
+ * Both code paths converge on the same end-state precedence.
  */
 
-import dotenv from 'dotenv'
-import { existsSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 
-// Get the directory where this file lives (absolute path)
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const env = process.env.NODE_ENV || 'development'
 
-// Load in priority order (later files override earlier ones)
-// Using absolute paths to ensure they work in PM2 cluster mode on RHEL
 const files = [
-  join(__dirname, 'config.env'),        // 1. Base defaults (lowest priority)
-  join(__dirname, `.env.${env}`),       // 2. Environment-specific (.env.development, .env.production, .env.test)
-  join(__dirname, '.env')               // 3. Local/server overrides (HIGHEST PRIORITY)
+  join(__dirname, '.env'),
+  join(__dirname, `.env.${env}`),
+  join(__dirname, 'config.env')
 ]
 
-files.forEach(file => {
+for (const file of files) {
   if (existsSync(file)) {
-    dotenv.config({ path: file, override: true })
-    console.log(`✓ Loaded environment file: ${file}`)
+    process.loadEnvFile(file)
+    console.log(`\x1b[32m✓\x1b[0m Loaded environment file: ${file}`)
   } else {
-    console.log(`✗ Missing environment file: ${file}`)
+    console.log(`\x1b[33m✗\x1b[0m Missing environment file: ${file}`)
   }
-})
+}
 
-console.log(`✓ Environment loaded: ${env}`)
+console.log(`\x1b[1m✓ Environment loaded:\x1b[0m ${env}`)

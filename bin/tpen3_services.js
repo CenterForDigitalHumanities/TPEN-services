@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-// Load environment variables before anything else
+// Bootstrap env vars before any other import. PM2 invokes this script
+// directly (no --env-file flags), so the entry point must self-load.
 import '../env-loader.js'
 
 /**

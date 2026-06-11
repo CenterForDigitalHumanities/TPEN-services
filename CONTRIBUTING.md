@@ -126,7 +126,7 @@ curl http://localhost:3011
 
 ## Testing
 
-TPEN Services uses Jest for testing with multiple test suites:
+TPEN Services uses Node.js built-in test runner (`node:test`) with `c8` for coverage:
 
 ### Run All Tests
 ```bash
@@ -135,31 +135,18 @@ npm run allTests
 
 ### Run Specific Test Suites
 ```bash
-# Unit tests only
+# Fast local seam checks
 npm run unitTests
 
-# End-to-end tests
+# CI-oriented integration seam checks
 npm run E2Etests
 
-# Database tests
-npm run dbTests
-
-# Authentication tests
-npm run authTest
-
-# User class tests
-npm run userClassTests
-
-# Import functionality tests
-npm run importTests
-
-# Member invitation tests
-npm run inviteMemberTests
+# Coverage report
+npm run test:coverage
 ```
 
 ### Test Requirements
-- Some tests require database connections and will be skipped if databases are not available
-- Authentication tests require proper Auth0 configuration ( currently skipped )
+- Current suites focus on API seam and validation contract regressions, and are designed to run without live DB dependencies
 - Ensure your `.env` file is properly configured before running tests
 
 ## Code Style and Best Practices
@@ -179,7 +166,7 @@ npm run inviteMemberTests
 - **API Routes**: Organized in feature folders (`project/`, `manifest/`, `line/`, etc.)
 - **Classes**: Located in `classes/` directory
 - **Utilities**: Helper functions in `utilities/` directory
-- **Tests**: Use `__tests__` directories or `.test.js` suffix
+- **Tests**: Use the `test/local` and `test/integration` directories with `.test.js` files
 
 ### Error Handling
 - Use appropriate HTTP status codes
@@ -245,7 +232,7 @@ TPEN-services/
 ├── line/              # Line/annotation routes
 ├── userProfile/       # User profile routes
 ├── utilities/         # Helper functions
-├── __tests__/         # Global tests
+├── test/              # node:test suites (local and integration)
 ├── app.js             # Express app configuration
 ├── package.json       # Dependencies and scripts
 ├── config.env         # Safe defaults (committed)
@@ -271,7 +258,7 @@ TPEN-services/
 - [TPEN Project Homepage](https://t-pen.org/TPEN3)
 - [Express.js Documentation](https://expressjs.com/)
 - [MongoDB Documentation](https://docs.mongodb.com/)
-- [Jest Testing Framework](https://jestjs.io/)
+- [Node.js Test Runner](https://nodejs.org/api/test.html)
 - [Auth0 Documentation](https://auth0.com/docs)
 
 ## License
