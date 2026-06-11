@@ -104,15 +104,16 @@ jobs:
             exit 0
           fi
 
-          # Treat any version carrying a prerelease identifier (e.g. -alpha) as a pre-release.
-          PRERELEASE_FLAG=""
-          case "$NEXT" in
-            *-*) PRERELEASE_FLAG="--prerelease" ;;
-          esac
-
+          # Publish as the repo's "Latest" release rather than a GitHub
+          # pre-release. While in early access every promotion is an -alpha, and
+          # "Latest" is the signal consumers actually follow — so the newest
+          # promotion must own it. The overall pre-release/early-access state is
+          # carried by the separate `early-access` tag/release, not by flagging
+          # each version as a GitHub pre-release. --latest is explicit so the new
+          # release always takes the badge from the prior one.
           gh release create "$TAG" \
             --target "$GITHUB_SHA" \
             --title "$TAG" \
             --generate-notes \
-            $PRERELEASE_FLAG
+            --latest
           echo "Published release $TAG"
