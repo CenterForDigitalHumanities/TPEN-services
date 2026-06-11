@@ -1,0 +1,47 @@
+name: Release on push to main
+
+# Cuts a GitHub Release (and its tag) for whatever version package.json
+# declares on main. The version is pinned in the branch being merged, so the
+# release is deterministic: merge a branch whose package.json says 0.1.1-alpha
+# and this publishes v0.1.1-alpha. Idempotent — skips if the tag already exists.
+
+on:
+  push:
+    branches: main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version from package.json
+        id: pkg
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create release if the tag does not exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+        run: |
+          TAG="v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — nothing to do."
+            exit 0
+          fi
+          # Treat any version carrying a prerelease identifier (e.g. -alpha) as a pre-release.
+          PRERELEASE_FLAG=""
+          case "$VERSION" in
+            *-*) PRERELEASE_FLAG="--prerelease" ;;
+          esac
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes \
+            $PRERELEASE_FLAG
+          echo "Published release $TAG"
