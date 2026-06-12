@@ -8,16 +8,15 @@ name: Release on push to main
 # bot needs write access to a protected branch.
 #
 #   - First release ever (no v* tag yet): seed from package.json. With
-#     package.json at 0.1.1-alpha.0 this publishes v0.1.1-alpha.
+#     package.json at 0.1.3 this publishes v0.1.3.
 #   - Every release after that: bump the latest tag. Default is a patch bump
-#     (v0.1.1-alpha -> v0.1.2-alpha). The development -> main merge commit can
-#     opt into a larger bump via trigger words:
-#       "BREAKING CHANGE" / "type!:" / "[major]"  -> major  (v0.1.1-alpha -> v1.0.0-alpha)
-#       "feat:" / "feat(scope):" / "[minor]"      -> minor  (v0.1.1-alpha -> v0.2.0-alpha)
-#       anything else (default)                   -> patch  (v0.1.1-alpha -> v0.1.2-alpha)
+#     (v0.1.3 -> v0.1.4). The development -> main merge commit can opt into a
+#     larger bump via trigger words:
+#       "BREAKING CHANGE" / "type!:" / "[major]"  -> major  (v0.1.3 -> v1.0.0)
+#       "feat:" / "feat(scope):" / "[minor]"      -> minor  (v0.1.3 -> v0.2.0)
+#       anything else (default)                   -> patch  (v0.1.3 -> v0.1.4)
 #
-# npm keeps a numeric prerelease iterator internally (e.g. -alpha.0); it is
-# stripped for the tag/release name only (v0.1.2-alpha.0 -> v0.1.2-alpha).
+# Tags are plain semver (vMAJOR.MINOR.PATCH) — no prerelease suffix.
 #
 # package.json's version is no longer the source of truth after the first
 # release — the release tags are. It is kept only to seed that first release.
@@ -93,41 +92,35 @@ jobs:
           LATEST_TAG="$(git tag -l 'v*' --sort=-v:refname | head -n1)"
 
           if [ -z "$LATEST_TAG" ]; then
-            # First release: seed from package.json. The version is carried as-is
-            # here; the iterator strip below turns 0.1.1-alpha.0 into the
-            # v0.1.1-alpha tag.
+            # First release: seed from package.json, carried as-is.
             NEXT="$(node -p "require('./package.json').version")"
             echo "No prior release tag — seeding first release from package.json: ${NEXT}"
           else
             # Derive the next version by bumping the latest tag with npm's semver engine.
+            # Bumping a prerelease tag with a plain level drops the suffix rather than
+            # incrementing (npm/semver behaviour), so the first release after retiring
+            # the -alpha line promotes v0.1.3-alpha -> v0.1.3; subsequent bumps are
+            # ordinary semver increments.
             BASE="${LATEST_TAG#v}"
             TMP="$(mktemp -d)"
             printf '{"name":"x","version":"%s"}\n' "$BASE" > "$TMP/package.json"
-            ( cd "$TMP" && npm version "pre${LEVEL}" --preid=alpha --no-git-tag-version >/dev/null )
+            ( cd "$TMP" && npm version "${LEVEL}" --no-git-tag-version >/dev/null )
             NEXT="$(node -p "require('${TMP}/package.json').version")"
             rm -rf "$TMP"
             echo "Latest release ${LATEST_TAG} -> next version ${NEXT}"
           fi
 
-          # Strip the numeric prerelease iterator for the tag only (-alpha.0 -> -alpha).
-          TAG_VERSION="$NEXT"
-          if [[ "$NEXT" =~ -[0-9A-Za-z-]+[.][0-9]+$ ]]; then
-            TAG_VERSION="${NEXT%.*}"
-          fi
-          TAG="v${TAG_VERSION}"
+          TAG="v${NEXT}"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists — nothing to do."
             exit 0
           fi
 
-          # Publish as the repo's "Latest" release rather than a GitHub
-          # pre-release. While in early access every promotion is an -alpha, and
-          # "Latest" is the signal consumers actually follow — so the newest
-          # promotion must own it. The overall pre-release/early-access state is
-          # carried by the separate `early-access` tag/release, not by flagging
-          # each version as a GitHub pre-release. --latest is explicit so the new
-          # release always takes the badge from the prior one.
+          # Publish as the repo's "Latest" release. Every promotion to main is a
+          # production release, so it must own the "Latest" badge that consumers
+          # follow. --latest is explicit so the new release always takes the badge
+          # from the prior one.
           gh release create "$TAG" \
             --target "$GITHUB_SHA" \
             --title "$TAG" \
