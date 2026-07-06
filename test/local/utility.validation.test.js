@@ -124,4 +124,28 @@ describe('Validation utilities', () => {
     assert.equal(result.isValid, false)
     assert.match(result.errors ?? '', /language map/)
   })
+
+  it('rejects a language map label whose values are only empty strings', () => {
+    const payload = buildValidProjectPayload()
+    payload.metadata = [
+      { label: { en: [''] }, value: 'test value' }
+    ]
+
+    const result = validateProjectPayload(payload)
+
+    assert.equal(result.isValid, false)
+    assert.match(result.errors ?? '', /language map/)
+  })
+
+  it('rejects a language map where one of several keys is malformed', () => {
+    const payload = buildValidProjectPayload()
+    payload.metadata = [
+      { label: { en: ['Author'], fr: [123] }, value: 'test value' }
+    ]
+
+    const result = validateProjectPayload(payload)
+
+    assert.equal(result.isValid, false)
+    assert.match(result.errors ?? '', /language map/)
+  })
 })

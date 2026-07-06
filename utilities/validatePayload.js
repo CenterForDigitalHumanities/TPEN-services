@@ -1,11 +1,12 @@
 /**
  * Validates that a language map object (per IIIF spec) has at least one language key
- * with an array of string values.
- * 
+ * and that every language key maps to a non-empty array of strings.
+ *
  * @param {Object} langMap - Object keyed by IETF language tag (e.g., { "en": ["value"], "fr": ["valeur"] }).
+ * @param {boolean} [allowEmpty=true] - Whether empty or whitespace-only string values are permitted.
  * @returns {boolean} - True if the language map is valid.
  */
-function validateLanguageMap(langMap) {
+function validateLanguageMap(langMap, allowEmpty = true) {
   if (typeof langMap !== 'object' || langMap === null)
     return false
 
@@ -13,9 +14,11 @@ function validateLanguageMap(langMap) {
   if (keys.length === 0)
     return false
 
-  return keys.some(key => {
+  return keys.every(key => {
     const values = langMap[key]
-    return Array.isArray(values) && values.length > 0 && values.every(v => typeof v === 'string')
+    return Array.isArray(values)
+      && values.length > 0
+      && values.every(v => typeof v === 'string' && (allowEmpty || v.trim() !== ''))
   })
 }
 
@@ -48,7 +51,7 @@ function validateMetadataField(fieldName, fieldValue, allowEmpty) {
   }
 
   // Language map
-  if (!validateLanguageMap(fieldValue)) {
+  if (!validateLanguageMap(fieldValue, allowEmpty)) {
     const message = allowEmpty
       ? `metadata item ${fieldName} must be a valid language map with string values`
       : `metadata item ${fieldName} must be a valid language map with non-empty string values`
