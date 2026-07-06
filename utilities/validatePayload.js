@@ -36,10 +36,7 @@ function validateMetadataField(fieldName, fieldValue, allowEmpty) {
 
   // Invalid type entirely
   if (!isString && !isLangMap) {
-    const message = fieldName === 'label'
-      ? `metadata item label must be a string or language map object`
-      : 'metadata item value cannot be processed'
-    return { isValid: false, errors: message }
+    return { isValid: false, errors: `metadata item ${fieldName} must be a string or language map object` }
   }
 
   // Plain string
