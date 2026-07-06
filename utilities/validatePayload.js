@@ -1,4 +1,64 @@
 /**
+ * Validates that a language map object (per IIIF spec) has at least one language key
+ * and that every language key maps to a non-empty array of strings.
+ *
+ * @param {Object} langMap - Object keyed by IETF language tag (e.g., { "en": ["value"], "fr": ["valeur"] }).
+ * @param {boolean} [allowEmpty=true] - Whether empty or whitespace-only string values are permitted.
+ * @returns {boolean} - True if the language map is valid.
+ */
+function validateLanguageMap(langMap, allowEmpty = true) {
+  if (typeof langMap !== 'object' || langMap === null)
+    return false
+
+  const keys = Object.keys(langMap)
+  if (keys.length === 0)
+    return false
+
+  return keys.every(key => {
+    const values = langMap[key]
+    return Array.isArray(values)
+      && values.length > 0
+      && values.every(v => typeof v === 'string' && (allowEmpty || v.trim() !== ''))
+  })
+}
+
+/**
+ * Validates a metadata label or value field that can be a plain string or a language map.
+ * 
+ * @param {string} fieldName - The field name for error messages ("label" or "value").
+ * @param {*} fieldValue - The value to validate.
+ * @param {boolean} allowEmpty - Whether empty strings are permitted (true for values, false for labels).
+ * @returns {Object|null} - Returns { isValid: false, errors: string } on failure, or null on success.
+ */
+function validateMetadataField(fieldName, fieldValue, allowEmpty) {
+  const isString = typeof fieldValue === 'string'
+  const isLangMap = typeof fieldValue === 'object' && fieldValue !== null
+
+  // Invalid type entirely
+  if (!isString && !isLangMap) {
+    return { isValid: false, errors: `metadata item ${fieldName} must be a string or language map object` }
+  }
+
+  // Plain string
+  if (isString) {
+    if (!allowEmpty && fieldValue.trim() === '') {
+      return { isValid: false, errors: `metadata item ${fieldName} must be a non-empty string` }
+    }
+    return null
+  }
+
+  // Language map
+  if (!validateLanguageMap(fieldValue, allowEmpty)) {
+    const message = allowEmpty
+      ? `metadata item ${fieldName} must be a valid language map with string values`
+      : `metadata item ${fieldName} must be a valid language map with non-empty string values`
+    return { isValid: false, errors: message }
+  }
+
+  return null
+}
+
+/**
  * Validate that the provided data payload is a valid Project object.
  * This function validates both the presence and the data types of required project properties.
  * 
@@ -49,15 +109,12 @@ export function validateProjectPayload(payload) {
       return { isValid: false, errors: 'metadata item must have label and value properties' }
     }
 
-    // Validate label and value are non-empty strings
-    if (typeof metadataItem.label?.none?.[0] === 'string' && metadataItem.label?.none?.[0].trim() === '') 
-      return { isValid: false, errors: 'metadata item label must be a non-empty language map' }
+    // Validate label and value - accept plain string or language-mapped object (any IETF language tag)
+    const labelError = validateMetadataField('label', metadataItem.label, false)
+    if (labelError) return labelError
 
-    if (typeof metadataItem.label === 'string' && metadataItem.label.trim() === '') 
-      return { isValid: false, errors: 'metadata item label must be a non-empty string' }
-
-    if (typeof metadataItem.value?.none?.[0] !== 'string' && typeof metadataItem.value !== 'string')
-      return { isValid: false, errors: 'metadata item value cannot be processed' }
+    const valueError = validateMetadataField('value', metadataItem.value, true)
+    if (valueError) return valueError
 
     // Ensure no extra properties beyond label and value
     const allowedProps = ['label', 'value']
