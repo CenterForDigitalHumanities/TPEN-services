@@ -3,6 +3,9 @@ import Project from '../classes/Project/Project.js'
 import Layer from '../classes/Layer/Layer.js'
 import Page from '../classes/Page/Page.js'
 import User from '../classes/User/User.js'
+import { toRerumPageId } from './rerumId.js'
+
+export { toRerumPageId }
 
 const databaseTiny = new dbDriver("tiny")
 
@@ -162,9 +165,7 @@ export const updatePageAndProject = async (page, project, userId) => {
 
    if (willBeSavedToRerum) {
       // Predict the RERUM page ID (same logic as Page.#setRerumId)
-      const rerumPageId = isAlreadyInRerum
-         ? page.id
-         : `${process.env.RERUMIDPREFIX}${page.id.split("/").pop()}`
+      const rerumPageId = toRerumPageId(page.id)
 
       // Create formatted page with predicted ID for layer reference
       const formattedPage = {
