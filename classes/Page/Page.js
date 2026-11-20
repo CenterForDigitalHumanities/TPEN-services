@@ -1,5 +1,5 @@
 import dbDriver from "../../database/driver.js"
-import { fetchUserAgent } from "../../utilities/shared.js"
+import { fetchUserAgent, toRerumPageId } from "../../utilities/shared.js"
 import ProjectFactory from "../Project/ProjectFactory.js"
 import Line from "../Line/Line.js"
 
@@ -10,9 +10,7 @@ export default class Page {
     #hydrated = false
     #itemsResolved = false
     #setRerumId() {
-        if (!this.id.startsWith(process.env.RERUMIDPREFIX)) {
-            this.id = `${process.env.RERUMIDPREFIX}${this.id.split("/").pop()}`
-        }
+        this.id = toRerumPageId(this.id)
         return this
     }
 
